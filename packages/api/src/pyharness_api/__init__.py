@@ -12,6 +12,10 @@
 | POST   | ``/sessions/{id}/cancel``    |                               | ``{"cancelled"}``                           |
 | DELETE | ``/sessions/{id}``           |                               | ``{"deleted"}``                             |
 | GET    | ``/sessions/{id}/stream``    |                               | SSE of the running turn; 204 when idle      |
+| GET    | ``/settings/model``          |                               | model settings: default, providers, catalog |
+| PUT    | ``/settings/model``          | ``model settings``            | preflight, save, restart when supervised    |
+| POST   | ``/settings/model/test``     | ``model settings``            | one short completion: reply, latency        |
+| POST   | ``/settings/model/models``   | ``model settings``            | model ids of the endpoint                   |
 
 | status | condition                                 |
 |--------|-------------------------------------------|
@@ -20,10 +24,14 @@
 | 503    | restart pending (``Retry-After: 2``)      |
 
 ``decision``: ``{"type": "approve"}`` or ``{"type": "reject"}``.
+
+``model settings``: ``{"provider", "model", "base_url"?, "api_key"?}``. ``api_key`` absent or ``null``
+keeps the saved key; ``""`` clears it. Secrets are returned masked.
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any, AsyncIterator
 
@@ -32,11 +40,12 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 name = "pyharness-api"
-inject = ["http", "agents"]
+inject = ["http", "agents", "llm"]
 
 
 class Config(BaseModel):
     prefix: str = "/api"
+    llm_entry: str = Field("llm", description="Entry id of the model registry the settings page edits.")
 
 
 class NewSession(BaseModel):
@@ -49,6 +58,29 @@ class NewMessage(BaseModel):
 
 class Approvals(BaseModel):
     decisions: list[dict[str, Any]]
+
+
+class ModelSettings(BaseModel):
+    provider: str = Field(..., min_length=1)
+    model: str = Field("", description="Model name; may contain ':'")
+    base_url: str | None = None
+    api_key: str | None = Field(None, description="None keeps the saved key; '' clears it.")
+
+    def overrides(self) -> dict[str, Any]:
+        """Options that override the saved ones for a probe (an empty key means: use the saved one)."""
+        out: dict[str, Any] = {}
+        if self.base_url is not None and self.base_url.strip():
+            out["base_url"] = self.base_url.strip()
+        if self.api_key:
+            out["api_key"] = self.api_key
+        return out
+
+    def patch(self) -> dict[str, Any]:
+        """Config patch for the llm entry (deep-merged)."""
+        options: dict[str, Any] = {"base_url": (self.base_url or "").strip() or None}
+        if self.api_key is not None:
+            options["api_key"] = self.api_key or None
+        return {"default": f"{self.provider}:{self.model}", "providers": {self.provider: options}}
 
 
 def _sse(events: AsyncIterator[dict[str, Any]]) -> StreamingResponse:
@@ -165,5 +197,70 @@ def build_router(ctx: Any) -> APIRouter:
     return router
 
 
+def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
+    from pyharness import manage
+    from pyharness_llm import LLMConfigError
+
+    router = APIRouter()
+
+    def llm() -> Any:
+        service = ctx.get("llm", None)
+        if service is None:
+            raise HTTPException(503, "model registry (ctx.llm) unavailable")
+        return service
+
+    @router.get("/settings/model")
+    async def get_model_settings() -> dict[str, Any]:
+        lifecycle = ctx.lifecycle
+        return {
+            **llm().describe(),
+            "entry": llm_entry,
+            "generation": lifecycle.generation,
+            "supervised": lifecycle.supervised,
+            "restart_pending": lifecycle.restart_pending is not None,
+            "editable": ctx.get("profile", None) is not None,
+        }
+
+    @router.put("/settings/model")
+    async def put_model_settings(body: ModelSettings) -> dict[str, Any]:
+        profile = ctx.get("profile", None)
+        if profile is None:
+            raise HTTPException(409, "no profile: model settings are read-only in this harness")
+        if not body.model.strip() and body.provider != "echo":
+            raise HTTPException(422, "model is required")
+        body.model = body.model.strip() or "echo"
+        result = await manage.set_entry_config(profile, llm_entry, body.patch(), baseline=ctx.loader.snapshot())
+        if result.get("application") == "saved":
+            lifecycle = ctx.lifecycle
+            if lifecycle.supervised:
+                # Request after the response is written; the worker exits 75 once holds are released.
+                asyncio.get_running_loop().call_later(
+                    0.3, lifecycle.request_restart, f"model settings: {body.provider}:{body.model}"
+                )
+                result["application"] = "restart-scheduled"
+            else:
+                result["application"] = "saved-restart-required"
+        result["default"] = f"{body.provider}:{body.model}"
+        result["generation"] = ctx.lifecycle.generation
+        return result
+
+    @router.post("/settings/model/test")
+    async def test_model_settings(body: ModelSettings) -> dict[str, Any]:
+        try:
+            return await llm().probe(body.provider, body.model.strip() or "echo", **body.overrides())
+        except LLMConfigError as exc:
+            return {"ok": False, "error": str(exc)}
+
+    @router.post("/settings/model/models")
+    async def list_models(body: ModelSettings) -> dict[str, Any]:
+        try:
+            return {"ok": True, **await llm().list_models(body.provider, **body.overrides())}
+        except LLMConfigError as exc:
+            return {"ok": False, "error": str(exc), "models": []}
+
+    return router
+
+
 def apply(ctx: Any, config: Config) -> None:
     ctx.http.include_router(build_router(ctx), prefix=config.prefix, tags=["pyharness"])
+    ctx.http.include_router(build_settings_router(ctx, config.llm_entry), prefix=config.prefix, tags=["pyharness"])

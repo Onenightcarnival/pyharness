@@ -1365,6 +1365,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "pyharness-agent" },
     { name = "pyharness-core" },
+    { name = "pyharness-llm" },
 ]
 
 [package.metadata]
@@ -1372,6 +1373,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.110" },
     { name = "pyharness-agent", editable = "packages/agent" },
     { name = "pyharness-core", editable = "packages/core" },
+    { name = "pyharness-llm", editable = "packages/llm" },
 ]
 
 [[package]]
@@ -1505,6 +1507,7 @@ name = "pyharness-llm"
 version = "0.1.0"
 source = { editable = "packages/llm" }
 dependencies = [
+    { name = "httpx" },
     { name = "langchain" },
     { name = "langchain-core" },
     { name = "pyharness-core" },
@@ -1512,6 +1515,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = ">=0.27" },
     { name = "langchain", specifier = ">=1.0" },
     { name = "langchain-core", specifier = ">=1.0" },
     { name = "pyharness-core", editable = "packages/core" },

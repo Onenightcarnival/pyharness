@@ -49,6 +49,8 @@ uv run pyh run
 
 `PYH_MODEL`：`init_chat_model` 可识别的任意 `provider:model`。
 
+也可在 Web 界面左下角「设置 → 模型服务」里填写服务类型、Base URL、API Key 与模型名：测试连接、保存后预检并重启生效。保存的值写入 profile 补丁（`~/.pyharness/profiles/web/harness.patch.yaml`，`llm` 条目），优先于 `PYH_MODEL`；API Key 为明文。
+
 ## 命令
 
 | 命令 | 效果 |

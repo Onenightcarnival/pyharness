@@ -140,6 +140,7 @@ svg { display: block; }
 .panelList { flex: none; display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
 .panelRow { display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 7px 9px; margin: 0 3px; border: none; border-radius: var(--r-md); background: transparent; color: var(--label-primary); line-height: 22px; text-align: left; }
 .panelRow[aria-current='page'] { background: var(--hover); }
+.iconButton[aria-current='page'] { background: var(--hover); color: var(--label-primary); }
 .panelRow .count { margin-left: auto; color: var(--label-tertiary); font-size: 12px; }
 .region { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .regionHead { flex: none; display: flex; align-items: center; height: 32px; padding: 0 12px; color: var(--label-tertiary); font-size: 12px; line-height: 20px; }
@@ -334,6 +335,38 @@ svg { display: block; }
 .tip { margin-top: 32px; padding: 12px 16px; border-radius: var(--r-xl); background: var(--hover); color: var(--label-secondary); font-size: 13px; line-height: 20px; }
 .tip code { font-family: var(--mono); font-size: 12px; }
 
+/* settings page */
+.statusCard { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border: 0.5px solid var(--border-l3); border-radius: var(--r-xl); background: var(--input-major); }
+.form { display: flex; flex-direction: column; gap: 18px; margin-top: 12px; padding: 20px 20px 16px; border: 0.5px solid var(--border-l3); border-radius: var(--r-panel); background: var(--input-major); }
+.field { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 6px 20px; align-items: start; }
+.fieldLabel { font-size: 13px; line-height: 36px; font-weight: 500; }
+.fieldMain { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.fieldHint { font-size: 12px; line-height: 18px; color: var(--label-tertiary); overflow-wrap: anywhere; }
+.fieldHint[data-tone='error'] { color: var(--error); }
+.inputRow { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.inputRow .input { flex: 1; }
+.input, .select { width: 100%; height: 36px; padding: 0 12px; border: 0.5px solid var(--border-l3); border-radius: var(--r-md); background: var(--bg-base); color: var(--label-primary); font: 14px/22px var(--font); outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+.input::placeholder { color: var(--label-caption); }
+.input:focus, .select:focus { border-color: var(--info); box-shadow: 0 0 0 2px color-mix(in srgb, var(--info) 18%, transparent); }
+.input:disabled, .select:disabled { opacity: 0.5; }
+.input.mono { font-family: var(--mono); font-size: 13px; }
+.selectWrap { position: relative; }
+.select { appearance: none; padding-right: 32px; cursor: pointer; }
+.selectWrap .chev { position: absolute; right: 10px; top: 10px; pointer-events: none; color: var(--label-tertiary); }
+.modelChips { display: flex; flex-wrap: wrap; gap: 6px; }
+.modelChips:empty { display: none; }
+.chipBtn { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border: 0.5px solid var(--border-l3); border-radius: 999px; corner-shape: round; background: transparent; color: var(--label-secondary); font: 12px/18px var(--mono); }
+.chipBtn[aria-pressed='true'] { background: var(--business-tertiary); color: var(--label-bluish); border-color: transparent; }
+.result { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: var(--r-md); background: var(--hover); color: var(--label-secondary); font-size: 13px; line-height: 20px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.result .ico { margin-top: 2px; }
+.result[data-tone='ok'] { background: color-mix(in srgb, var(--success) 10%, transparent); color: var(--success); }
+.result[data-tone='error'] { background: color-mix(in srgb, var(--error) 8%, transparent); color: var(--error); }
+.result[data-tone='warn'] { background: var(--warn-tertiary); color: var(--warn-label); }
+.formFoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding-top: 14px; border-top: 0.5px solid var(--border-l2); }
+.formFoot .fieldHint { flex: 1 1 220px; }
+.formFoot .spacer { display: none; }
+#modelChip { cursor: pointer; }
+
 /* toast */
 .toast { position: fixed; left: 50%; bottom: 96px; transform: translate(-50%, 8px); padding: 8px 14px; border-radius: var(--r-md); background: var(--toast); color: #fff; font-size: 13px; line-height: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 50; max-width: calc(100vw - 32px); }
 .toast[data-show] { opacity: 1; transform: translate(-50%, 0); }
@@ -358,6 +391,7 @@ svg { display: block; }
   .btn:hover:not(:disabled) { background: var(--hover); }
   .btn.primary:hover:not(:disabled) { background: var(--primary-hover); }
   .btn.reject:hover:not(:disabled) { background: var(--hover-danger); color: var(--error); }
+  .chipBtn:hover { background: var(--hover); color: var(--label-primary); }
   .codeBanner button:hover { color: var(--label-primary); }
 }
 .disclosure[data-open] .drow .lead .leadIcon { opacity: 0; }
@@ -377,6 +411,9 @@ svg { display: block; }
   .headline { font-size: 22px; line-height: 28px; }
   .page { padding: 0 16px 32px; }
   .bubble { max-width: 88%; }
+  .field { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .fieldLabel { line-height: 20px; }
+  .form { padding: 16px; border-radius: var(--r-xl); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
@@ -412,6 +449,10 @@ svg { display: block; }
     <symbol id="i-moon" viewBox="0 0 16 16"><path d="M13.25 9.6A5.5 5.5 0 0 1 6.4 2.75a5.5 5.5 0 1 0 6.85 6.85z"/></symbol>
     <symbol id="i-trash" viewBox="0 0 16 16"><path d="M2.75 4.25h10.5M6.25 4.25V2.75h3.5v1.5M4.25 4.25l.6 8.6c.06.79.71 1.4 1.5 1.4h3.3c.79 0 1.44-.61 1.5-1.4l.6-8.6"/></symbol>
     <symbol id="i-box" viewBox="0 0 16 16"><path d="m8 1.75 5.75 3.1v6.3L8 14.25l-5.75-3.1v-6.3z"/><path d="M2.25 4.85 8 8l5.75-3.15M8 8v6.25"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 16 16"><path d="M6.9 1.75h2.2l.35 1.6a5 5 0 0 1 1.3.75l1.55-.5 1.1 1.9-1.2 1.1a5 5 0 0 1 0 1.5l1.2 1.1-1.1 1.9-1.55-.5a5 5 0 0 1-1.3.75l-.35 1.6H6.9l-.35-1.6a5 5 0 0 1-1.3-.75l-1.55.5-1.1-1.9 1.2-1.1a5 5 0 0 1 0-1.5l-1.2-1.1 1.1-1.9 1.55.5a5 5 0 0 1 1.3-.75z"/><circle cx="8" cy="8" r="2"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 16 16"><path d="M13.25 8a5.25 5.25 0 1 1-1.54-3.71"/><path d="M13.25 2.75v2.5h-2.5"/></symbol>
+    <symbol id="i-zap" viewBox="0 0 16 16"><path d="M8.75 1.75 3.5 9h4l-.75 5.25L12.5 7h-4z"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 16 16"><path d="m2.5 2.5 11 11M6.6 6.6A2 2 0 0 0 9.4 9.4M4.1 4.6C2.6 5.8 1.75 8 1.75 8S4 12.25 8 12.25c1.1 0 2.05-.3 2.9-.8M6.9 3.9c.35-.1.72-.15 1.1-.15 4 0 6.25 4.25 6.25 4.25s-.5 1-1.5 2.1"/></symbol>
     <symbol id="i-spinner" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.75" opacity=".25"/><path d="M8 2.25a5.75 5.75 0 0 1 5.75 5.75"/></symbol>
     <!-- Mark: four plugin tiles. -->
     <symbol id="i-mark" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="8.5" height="8.5" rx="2.6" fill="currentColor" stroke="none"/><rect x="13" y="2.5" width="8.5" height="8.5" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="13" width="8.5" height="8.5" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="13" width="8.5" height="8.5" rx="2.6" fill="var(--info)" stroke="none"/></symbol>
@@ -436,6 +477,7 @@ svg { display: block; }
     <div class="foot">
       <span class="avatar"><svg class="ico"><use href="#i-box"/></svg></span>
       <span class="profileText"><span class="profileName" id="profileName">–</span><span class="profileMeta status" id="profileMeta"><span class="dot" data-state="warn"></span><span>…</span></span></span>
+      <button class="iconButton" id="navSettings" data-i18n-title="settings"><svg class="ico"><use href="#i-gear"/></svg></button>
       <button class="iconButton" id="themeToggle" data-i18n-title="theme"><svg class="ico"><use href="#i-moon"/></svg></button>
     </div>
   </aside>
@@ -448,6 +490,7 @@ svg { display: block; }
     </div>
 
     <section class="page" id="pluginsView" hidden></section>
+    <section class="page" id="settingsView" hidden></section>
 
     <div class="conversation" id="chatView" data-phase="hero">
       <div class="scrollBody" id="scroll">
@@ -468,7 +511,7 @@ svg { display: block; }
                 <span class="selectChip" id="workspaceChip"><svg class="ico"><use href="#i-folder"/></svg><span class="label">workspace</span></span>
               </div>
               <div class="right">
-                <span class="selectChip" id="modelChip"><span class="label">model</span></span>
+                <span class="selectChip" id="modelChip" role="button" tabindex="0" data-i18n-title="modelChip"><span class="label">model</span></span>
                 <button class="send" id="send" type="submit" data-i18n-title="send" disabled><svg class="ico"><use href="#i-arrow-up"/></svg></button>
               </div>
             </div>
@@ -510,6 +553,27 @@ const T = zh ? {
   tip: 'Example: <code>write a plugin that adds a tool returning the current time</code>', missing: 'missing', timeNow: 'now', min: 'm', hour: 'h', day: 'd',
   restartFailed: 'No response after restart. Log: the terminal running pyh run.', busy: 'Session running', approvalPending: 'Tool call awaiting approval',
 };
+Object.assign(T, zh ? {
+  settings: '设置', settingsIntro: '当前 profile 的运行设置。保存后在独立进程预检新配置，通过则重启生效，失败则回滚。',
+  modelService: '模型服务', modelChip: '模型设置', provider: '服务类型', baseUrl: 'Base URL', apiKey: 'API Key', model: '模型',
+  baseUrlHint: '留空使用该服务的默认地址。', modelHint: '模型名可含冒号，如 openai-codex:gpt-6.1-sol。', keyKept: '已保存密钥；留空则沿用。', keyNone: '未保存密钥。',
+  envKey: (e) => `未保存密钥；环境变量 ${e} 已设置。`, keyPlain: 'API Key 以明文写入 profile 补丁文件。',
+  installed: '已安装', builtin: '内置，无需凭据。', pluginProvider: '由插件提供。', notInstalled: (pkg, extra) => `未安装 ${pkg}${extra ? `：uv sync --extra ${extra}` : ''}`, notInstalledShort: '未安装',
+  fetchModels: '获取模型列表', fetching: '获取中…', modelsFound: (n) => `${n} 个模型`, modelsNone: '该服务类型不支持列出模型。',
+  test: '测试连接', testing: '测试中…', testOk: (ms) => `连接成功 · ${ms} ms`, save: '保存并重启', saving: '预检中…', noModel: '请填写模型名。',
+  rejected: '预检未通过，已回滚。', restartScheduled: '已保存。重启中…', savedUnsupervised: '已保存。未托管运行：下次启动生效。', restartPendingNote: '重启挂起',
+  current: '当前', readonly: '无 profile：设置只读。', showKey: '显示 / 隐藏密钥',
+} : {
+  settings: 'Settings', settingsIntro: 'Runtime settings of the current profile. A saved change is preflighted in a separate process; it goes live with a restart, or is rolled back.',
+  modelService: 'Model service', modelChip: 'Model settings', provider: 'Provider', baseUrl: 'Base URL', apiKey: 'API key', model: 'Model',
+  baseUrlHint: "Empty: the provider's default endpoint.", modelHint: 'Model names may contain colons, e.g. openai-codex:gpt-6.1-sol.', keyKept: 'A key is saved; leave empty to keep it.', keyNone: 'No key saved.',
+  envKey: (e) => `No key saved; environment variable ${e} is set.`, keyPlain: 'The API key is written in plain text to the profile patch file.',
+  installed: 'installed', builtin: 'Built in; no credentials.', pluginProvider: 'Provided by a plugin.', notInstalled: (pkg, extra) => `${pkg} is not installed${extra ? `: uv sync --extra ${extra}` : ''}`, notInstalledShort: 'not installed',
+  fetchModels: 'List models', fetching: 'Listing…', modelsFound: (n) => `${n} models`, modelsNone: 'This provider cannot list models.',
+  test: 'Test connection', testing: 'Testing…', testOk: (ms) => `Connected · ${ms} ms`, save: 'Save and restart', saving: 'Preflighting…', noModel: 'A model name is required.',
+  rejected: 'Preflight failed; rolled back.', restartScheduled: 'Saved. Restarting…', savedUnsupervised: 'Saved. Unsupervised: applies on the next start.', restartPendingNote: 'restart pending',
+  current: 'Current', readonly: 'No profile: settings are read-only.', showKey: 'Show / hide key',
+});
 document.documentElement.lang = zh ? 'zh-CN' : 'en';
 document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = T[el.dataset.i18n]; });
 document.querySelectorAll('[data-i18n-title]').forEach((el) => { el.title = T[el.dataset.i18nTitle]; el.setAttribute('aria-label', T[el.dataset.i18nTitle]); });
@@ -700,21 +764,26 @@ $('scrim').onclick = () => closeDrawer();
 function closeDrawer() { delete frame.dataset.drawer; }
 $('newSession').onclick = () => { newSession(); closeDrawer(); };
 $('navPlugins').onclick = () => { showPlugins(); closeDrawer(); };
+$('navSettings').onclick = () => { showSettings(); closeDrawer(); };
+$('modelChip').onclick = () => showSettings();
+$('modelChip').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showSettings(); } };
 
 /* ---------- views ---------- */
 function setPhase(phase) {
   $('chatView').dataset.phase = phase;
   const seat = $('composerSeat');
   if (phase === 'hero') $('heroComposer').appendChild(seat); else $('scroll').appendChild(seat);
-  $('topBar').toggleAttribute('data-bordered', phase !== 'hero' || state.view === 'plugins');
+  $('topBar').toggleAttribute('data-bordered', phase !== 'hero' || state.view !== 'chat');
 }
 function setView(view) {
   state.view = view;
   $('pluginsView').hidden = view !== 'plugins';
+  $('settingsView').hidden = view !== 'settings';
   $('chatView').hidden = view !== 'chat';
-  $('navPlugins').toggleAttribute('aria-current', view === 'plugins');
-  if (view === 'plugins') $('navPlugins').setAttribute('aria-current', 'page');
-  $('topBar').toggleAttribute('data-bordered', view === 'plugins' || $('chatView').dataset.phase !== 'hero');
+  for (const [id, name] of [['navPlugins', 'plugins'], ['navSettings', 'settings']]) {
+    if (view === name) $(id).setAttribute('aria-current', 'page'); else $(id).removeAttribute('aria-current');
+  }
+  $('topBar').toggleAttribute('data-bordered', view !== 'chat' || $('chatView').dataset.phase !== 'hero');
 }
 function newSession() {
   state.current = null; state.run = null;
@@ -965,10 +1034,11 @@ async function waitForRestart() {
         }
         await openSession(state.current);
       }
-      return;
+      return h;
     }
   }
   notice.innerHTML = `${icon('alert')}<span>${esc(T.restartFailed)}</span>`;
+  return null;
 }
 
 /* ---------- composer ---------- */
@@ -1039,6 +1109,167 @@ async function showPlugins() {
     <div class="group"><div class="groupHead"><h2 class="groupTitle">${esc(T.bundles)}</h2><span class="groupMeta">${d.bundles.length}</span></div><div class="cards">${bundleCards}</div></div>
     <div class="group"><div class="groupHead"><h2 class="groupTitle">${esc(T.entries)}</h2><span class="groupMeta">${d.entries.length}</span></div><div class="cards">${entryCards}</div></div>
     <div class="tip">${T.tip}</div>`;
+}
+
+/* ---------- settings page ---------- */
+const settings = { data: null, busy: false };
+const sf = (name) => $('settingsView').querySelector(`[data-field="${name}"]`);
+function settingsMarkup() {
+  return `
+    <div class="pageHead"><div><h1 class="pageTitle">${esc(T.settings)}</h1><p class="pageIntro">${esc(T.settingsIntro)}</p></div></div>
+    <div class="group">
+      <div class="groupHead"><h2 class="groupTitle">${esc(T.modelService)}</h2><span class="groupMeta" data-field="currentMeta"></span></div>
+      <div class="statusCard"><span class="pcardIcon">${icon('bulb')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle" data-field="currentModel">–</span><span class="tag" data-tone="outline" data-field="currentProvider"></span><span class="tag" data-tone="warning" data-field="currentPending" hidden>${esc(T.restartPendingNote)}</span></span><span class="pcardDesc" data-field="currentDesc"></span></span></div>
+      <form class="form" data-field="form" autocomplete="off">
+        <div class="field"><label class="fieldLabel" for="sProvider">${esc(T.provider)}</label><div class="fieldMain"><div class="selectWrap"><select class="select" id="sProvider" data-field="provider"></select>${icon('chev-down', 'ico chev')}</div><span class="fieldHint" data-field="providerHint"></span></div></div>
+        <div class="field"><label class="fieldLabel" for="sBaseUrl">${esc(T.baseUrl)}</label><div class="fieldMain"><input class="input mono" id="sBaseUrl" data-field="base_url" type="text" inputmode="url" spellcheck="false" autocomplete="off"><span class="fieldHint">${esc(T.baseUrlHint)}</span></div></div>
+        <div class="field"><label class="fieldLabel" for="sApiKey">${esc(T.apiKey)}</label><div class="fieldMain"><div class="inputRow"><input class="input mono" id="sApiKey" data-field="api_key" type="password" spellcheck="false" autocomplete="new-password"><button type="button" class="btn outline sm" data-field="toggleKey" aria-label="${esc(T.showKey)}">${icon('eye')}</button></div><span class="fieldHint" data-field="keyHint"></span></div></div>
+        <div class="field"><label class="fieldLabel" for="sModel">${esc(T.model)}</label><div class="fieldMain"><div class="inputRow"><input class="input mono" id="sModel" data-field="model" list="sModels" spellcheck="false" autocomplete="off"><datalist id="sModels"></datalist><button type="button" class="btn outline sm" data-field="fetch">${icon('refresh')}<span>${esc(T.fetchModels)}</span></button></div><div class="modelChips" data-field="modelChips"></div><span class="fieldHint">${esc(T.modelHint)}</span></div></div>
+        <div class="result" data-field="result" hidden></div>
+        <div class="formFoot"><span class="fieldHint" data-field="footHint">${esc(T.keyPlain)}</span><span class="spacer"></span><button type="button" class="btn outline" data-field="test">${icon('zap')}<span>${esc(T.test)}</span></button><button type="submit" class="btn primary" data-field="save">${esc(T.save)}</button></div>
+      </form>
+    </div>`;
+}
+function bindSettings() {
+  sf('provider').onchange = () => applyProvider(false);
+  sf('toggleKey').onclick = () => {
+    const key = sf('api_key'); const show = key.type === 'password';
+    key.type = show ? 'text' : 'password'; sf('toggleKey').innerHTML = icon(show ? 'eye-off' : 'eye');
+  };
+  sf('fetch').onclick = fetchModels;
+  sf('test').onclick = testModel;
+  sf('form').onsubmit = (e) => { e.preventDefault(); saveModel(); };
+  sf('modelChips').onclick = (e) => {
+    const chip = e.target.closest('[data-model]'); if (!chip) return;
+    sf('model').value = chip.dataset.model; markChip();
+  };
+  sf('model').oninput = markChip;
+}
+function markChip() {
+  const value = sf('model').value.trim();
+  sf('modelChips').querySelectorAll('[data-model]').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.model === value)));
+}
+async function showSettings() {
+  setView('settings');
+  $('crumb').textContent = T.settings;
+  const view = $('settingsView');
+  if (!view.dataset.built) { view.innerHTML = settingsMarkup(); view.dataset.built = ''; bindSettings(); }
+  await loadSettings();
+}
+async function loadSettings() {
+  let d;
+  try { d = await json('/settings/model'); } catch (err) { showResult('error', err.message); return; }
+  settings.data = d;
+  if (d.provider && !d.catalog.some((c) => c.id === d.provider)) {
+    d.catalog.push({ id: d.provider, title: d.provider, available: true, credentials: true, models_api: null, package: null });
+  }
+  const sel = sf('provider');
+  sel.innerHTML = d.catalog.map((c) => `<option value="${esc(c.id)}">${esc(c.title)}${c.available ? '' : ' · ' + esc(T.notInstalledShort)}</option>`).join('');
+  sel.value = d.provider || 'echo';
+  sf('model').value = d.model || '';
+  sf('modelChips').innerHTML = '';
+  renderCurrent();
+  applyProvider(true);
+  const readonly = !d.editable;
+  sf('save').disabled = readonly;
+  if (readonly) sf('footHint').textContent = T.readonly;
+}
+function renderCurrent() {
+  const d = settings.data;
+  sf('currentModel').textContent = d.model || d.default || '–';
+  sf('currentProvider').textContent = d.provider || '';
+  sf('currentProvider').hidden = !d.provider;
+  sf('currentPending').hidden = !d.restart_pending;
+  const saved = d.providers[d.provider] || {};
+  const info = d.catalog.find((c) => c.id === d.provider) || {};
+  const parts = [`${T.current} · ${T.gen(d.generation)}${d.supervised ? '' : ' · ' + T.unsupervised}`];
+  if (saved.base_url || info.base_url) parts.push(saved.base_url || info.base_url);
+  if (d.env_model) parts.push(`PYH_MODEL=${d.env_model}`);
+  sf('currentDesc').textContent = parts.join(' · ');
+  sf('currentMeta').textContent = d.default || '';
+}
+function currentInfo() {
+  const d = settings.data; const id = sf('provider').value;
+  return (d && d.catalog.find((c) => c.id === id)) || { id, available: true, credentials: true };
+}
+function applyProvider(initial) {
+  const d = settings.data; if (!d) return;
+  const info = currentInfo(); const id = info.id;
+  const saved = d.providers[id] || {};
+  const creds = info.credentials !== false;
+  for (const name of ['base_url', 'api_key', 'toggleKey']) sf(name).disabled = !creds;
+  sf('base_url').value = saved.base_url || '';
+  sf('base_url').placeholder = info.base_url || '';
+  sf('api_key').value = '';
+  sf('api_key').placeholder = saved.api_key || '';
+  sf('keyHint').textContent = !creds ? '' : saved.has_api_key ? T.keyKept : info.env_set ? T.envKey(info.env) : T.keyNone;
+  const hint = sf('providerHint');
+  hint.textContent = info.package == null ? (id === 'echo' ? T.builtin : T.pluginProvider) : info.available ? `${info.package} · ${T.installed}` : T.notInstalled(info.package, info.extra);
+  hint.dataset.tone = info.available === false ? 'error' : '';
+  sf('fetch').disabled = settings.busy || !info.models_api;
+  sf('model').disabled = id === 'echo';
+  if (!initial) { sf('model').value = id === d.provider ? d.model : ''; sf('modelChips').innerHTML = ''; $('sModels').innerHTML = ''; hideResult(); }
+  if (id === 'echo') sf('model').value = 'echo';
+  markChip();
+}
+function payload() {
+  const key = sf('api_key').value;
+  return { provider: sf('provider').value, model: sf('model').value.trim(), base_url: sf('base_url').value.trim(), api_key: key ? key : null };
+}
+function showResult(tone, text, spinning) {
+  const el = sf('result'); el.hidden = false; el.dataset.tone = tone || '';
+  el.innerHTML = `${spinning ? icon('spinner', 'ico spin') : icon(tone === 'ok' ? 'check' : tone === 'error' ? 'x-circle' : 'alert')}<span></span>`;
+  el.querySelector('span').textContent = text;
+}
+function hideResult() { sf('result').hidden = true; }
+function setBusy(on) {
+  settings.busy = on;
+  sf('test').disabled = on; sf('save').disabled = on || !(settings.data && settings.data.editable);
+  sf('fetch').disabled = on || !currentInfo().models_api;
+}
+async function fetchModels() {
+  setBusy(true); showResult('', T.fetching, true);
+  try {
+    const r = await json('/settings/model/models', { method: 'POST', body: JSON.stringify(payload()) });
+    if (!r.ok) { showResult('error', r.error); return; }
+    if (!r.supported) { showResult('warn', T.modelsNone); return; }
+    $('sModels').innerHTML = r.models.map((m) => `<option value="${esc(m)}"></option>`).join('');
+    sf('modelChips').innerHTML = r.models.map((m) => `<button type="button" class="chipBtn" data-model="${esc(m)}">${esc(m)}</button>`).join('');
+    markChip();
+    showResult('ok', T.modelsFound(r.models.length));
+  } catch (err) { showResult('error', err.message); }
+  finally { setBusy(false); }
+}
+async function testModel() {
+  const p = payload(); if (!p.model) { showResult('error', T.noModel); return; }
+  setBusy(true); showResult('', T.testing, true);
+  try {
+    const r = await json('/settings/model/test', { method: 'POST', body: JSON.stringify(p) });
+    if (r.ok) showResult('ok', `${T.testOk(r.latency_ms)} · ${r.reply}`); else showResult('error', r.error);
+  } catch (err) { showResult('error', err.message); }
+  finally { setBusy(false); }
+}
+async function saveModel() {
+  const p = payload(); if (!p.model) { showResult('error', T.noModel); return; }
+  setBusy(true); showResult('', T.saving, true);
+  let r;
+  try { r = await json('/settings/model', { method: 'PUT', body: JSON.stringify(p) }); }
+  catch (err) { showResult('error', err.message); setBusy(false); return; }
+  if (r.application === 'rejected') {
+    const errs = (r.errors || []).map((e) => `${e.entry ? e.entry + ': ' : ''}${e.error}`).join('\n') || r.error || '';
+    showResult('error', `${T.rejected}\n${errs}`.trim()); setBusy(false); return;
+  }
+  if (r.application === 'restart-scheduled') {
+    showResult('warn', T.restartScheduled, true);
+    const h = await waitForRestart();  // may reopen the current session: come back to this page
+    setView('settings'); $('crumb').textContent = T.settings;
+    await loadSettings();
+    showResult(h ? 'ok' : 'error', h ? T.restarted(h.generation) : T.restartFailed);
+  } else {
+    await loadSettings();
+    showResult('ok', T.savedUnsupervised);
+  }
+  setBusy(false);
 }
 
 /* ---------- boot ---------- */

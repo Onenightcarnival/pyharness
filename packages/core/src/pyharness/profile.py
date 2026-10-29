@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import contextlib
+import copy
 import os
 import sys
 from dataclasses import dataclass
@@ -22,7 +23,7 @@ from importlib import metadata
 from pathlib import Path
 from typing import Any, AsyncIterator, Iterator
 
-from .config import ConfigError, PatchOp, Tree, compose, dump_yaml, load_yaml, parse_ops, write_yaml
+from .config import ConfigError, PatchOp, Tree, compose, deep_merge, dump_yaml, load_yaml, parse_ops, write_yaml
 from .plugin import BUNDLE_GROUP, BundleInfo, load_bundle
 
 PATCH_HEADER = "# Patch operations addressed by entry id. Managed by pyharness; comments are not preserved.\n"
@@ -156,6 +157,27 @@ class Profile:
                 break
         else:
             ops.append({"id": entry_id, "disabled": disabled})
+        self.save_patch(ops)
+
+    def set_entry_config(self, entry_id: str, config: dict[str, Any], *, merge: bool = True) -> None:
+        """Patch an entry's ``config`` in the profile patch.
+
+        The entry's last op is reused: with ``merge`` the new keys are deep-merged into its
+        ``config``; otherwise its ``config`` is replaced. Without an op, ``{id, config, merge}`` is appended.
+        """
+        ops = self.patch_ops_raw()
+        for op in reversed(ops):
+            if isinstance(op, dict) and op.get("id") == entry_id and not op.get("remove"):
+                existing = op.get("config")
+                if merge and isinstance(existing, dict):
+                    op["config"] = deep_merge(existing, config)
+                else:
+                    op["config"] = copy.deepcopy(config)
+                    if existing is None:
+                        op["merge"] = merge
+                break
+        else:
+            ops.append({"id": entry_id, "config": copy.deepcopy(config), "merge": merge})
         self.save_patch(ops)
 
     def set_bundle_enabled(self, bundle: str, enabled: bool) -> bool:

@@ -21,3 +21,6 @@ htmlcov/
 .pyharness/
 *.sqlite
 *.sqlite-*
+
+# Claude desktop app
+.claude/

@@ -354,3 +354,26 @@ async def set_entry_enabled(
         if failures:
             return _rejected("preflight", txn, errors=failures, preflight=_compact(report or {}), entry=entry_id)
         return _saved(txn, report, entry=entry_id, enabled=enabled)
+
+
+async def set_entry_config(
+    profile: Profile,
+    entry_id: str,
+    config: dict[str, Any],
+    *,
+    merge: bool = True,
+    baseline: list[dict[str, Any]] | None = None,
+    preflight: bool = True,
+) -> dict[str, Any]:
+    """Patch an entry's ``config`` in the profile patch (see :meth:`Profile.set_entry_config`)."""
+    async with _locked(profile):
+        from .config import find
+
+        if find(profile.compose().tree, entry_id) is None:
+            return {"application": "rejected", "error": f"no entry {entry_id!r} in profile {profile.name!r}"}
+        txn = _Transaction(profile, site=False)
+        profile.set_entry_config(entry_id, config, merge=merge)
+        report, failures = await _preflight(profile, baseline, preflight)
+        if failures:
+            return _rejected("preflight", txn, errors=failures, preflight=_compact(report or {}), entry=entry_id)
+        return _saved(txn, report, entry=entry_id)
