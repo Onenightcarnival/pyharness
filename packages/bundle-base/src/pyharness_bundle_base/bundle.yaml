@@ -1,0 +1,49 @@
+title: Base
+description: Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI.
+patch:
+  # Registries: models, tools, prompt sections.
+  - id: llm
+    name: pyharness-llm
+    config:
+      default: ${env:PYH_MODEL:-echo:echo}
+  - id: tools
+    name: pyharness-tools
+  - id: prompt
+    name: pyharness-prompt
+
+  # Persistence: ctx.checkpointer, ctx.store. Postgres: patch id `checkpoint` (examples/patches/postgres.yaml).
+  - id: checkpoint
+    name: pyharness-checkpoint-sqlite
+    config:
+      path: ${data_dir}/checkpoints.sqlite
+      store_path: ${data_dir}/store.sqlite
+
+  # Workspace: ctx.workspace, ctx.backend. `execute` tool: shell: true.
+  - id: workspace
+    name: pyharness-workspace
+    config:
+      root: ${env:PYH_WORKSPACE:-${cwd}}
+      shell: false
+
+  # Agent loop: ctx.agentLoop. Sessions and runs: ctx.agents.
+  - id: agent-loop
+    name: pyharness-agent-loop-deepagents
+  - id: agents
+    name: pyharness-agent
+
+  # Self-extension: introspection, plugin management.
+  - id: inspect
+    name: pyharness-inspect
+  - id: plugin-manager
+    name: pyharness-plugin-manager
+
+  # HTTP: server, REST + SSE, Web UI.
+  - id: http
+    name: pyharness-http
+    config:
+      host: ${env:PYH_HOST:-127.0.0.1}
+      port: ${env:PYH_PORT:-8765}
+  - id: api
+    name: pyharness-api
+  - id: web-ui
+    name: pyharness-web-ui

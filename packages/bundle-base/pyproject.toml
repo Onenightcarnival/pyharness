@@ -1,0 +1,17 @@
+[project]
+name = "pyharness-bundle-base"
+version = "0.1.0"
+description = "pyharness bundle: base plugin set"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = ["pyharness-core", "pyharness-llm", "pyharness-tools", "pyharness-prompt", "pyharness-agent", "pyharness-agent-loop-deepagents", "pyharness-checkpoint-sqlite", "pyharness-checkpoint-postgres", "pyharness-workspace", "pyharness-http", "pyharness-api", "pyharness-web-ui", "pyharness-inspect", "pyharness-plugin-manager"]
+
+[project.entry-points."pyharness.bundles"]
+base = "pyharness_bundle_base:BUNDLE"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyharness_bundle_base"]

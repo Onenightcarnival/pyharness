@@ -1,0 +1,43 @@
+[project]
+name = "pyharness-monorepo"
+version = "0.1.0"
+description = "pyharness workspace: kernel and kernel plugins"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = ["pyharness-agent", "pyharness-agent-loop-deepagents", "pyharness-api", "pyharness-bundle-base", "pyharness-checkpoint-postgres", "pyharness-checkpoint-sqlite", "pyharness-core", "pyharness-http", "pyharness-inspect", "pyharness-llm", "pyharness-plugin-manager", "pyharness-prompt", "pyharness-tools", "pyharness-web-ui", "pyharness-workspace"]
+
+[project.optional-dependencies]
+deepseek = ["langchain-deepseek"]
+openai = ["langchain-openai"]
+anthropic = ["langchain-anthropic"]
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "httpx>=0.27", "pip"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+pyharness-agent = { workspace = true }
+pyharness-agent-loop-deepagents = { workspace = true }
+pyharness-api = { workspace = true }
+pyharness-bundle-base = { workspace = true }
+pyharness-checkpoint-postgres = { workspace = true }
+pyharness-checkpoint-sqlite = { workspace = true }
+pyharness-core = { workspace = true }
+pyharness-http = { workspace = true }
+pyharness-inspect = { workspace = true }
+pyharness-llm = { workspace = true }
+pyharness-plugin-manager = { workspace = true }
+pyharness-prompt = { workspace = true }
+pyharness-tools = { workspace = true }
+pyharness-web-ui = { workspace = true }
+pyharness-workspace = { workspace = true }
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]

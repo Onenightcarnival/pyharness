@@ -1,0 +1,17 @@
+[project]
+name = "pyharness-prompt"
+version = "0.1.0"
+description = "pyharness plugin: ordered system-prompt sections (ctx.prompt)"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = ["pyharness-core"]
+
+[project.entry-points."pyharness.plugins"]
+pyharness-prompt = "pyharness_prompt:PromptService"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyharness_prompt"]

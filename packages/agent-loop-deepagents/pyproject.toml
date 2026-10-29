@@ -1,0 +1,17 @@
+[project]
+name = "pyharness-agent-loop-deepagents"
+version = "0.1.0"
+description = "pyharness plugin: deepagents agent loop (ctx.agentLoop)"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = ["pyharness-core", "pyharness-tools", "deepagents>=0.7", "langchain>=1.0"]
+
+[project.entry-points."pyharness.plugins"]
+pyharness-agent-loop-deepagents = "pyharness_agent_loop_deepagents:DeepAgentsLoop"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyharness_agent_loop_deepagents"]

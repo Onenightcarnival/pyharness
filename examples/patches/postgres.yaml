@@ -1,0 +1,5 @@
+# Persistence on PostgreSQL. Database encoding: UTF8.
+- id: checkpoint
+  name: pyharness-checkpoint-postgres
+  config:
+    dsn: ${env:PYH_POSTGRES_DSN}

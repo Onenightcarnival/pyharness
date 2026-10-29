@@ -1,0 +1,4 @@
+# `execute` tool: local shell; each call requires approval.
+- id: workspace
+  config: {shell: true}
+  merge: true

@@ -1,0 +1,17 @@
+[project]
+name = "pyharness-llm"
+version = "0.1.0"
+description = "pyharness plugin: chat-model provider registry (ctx.llm)"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = ["pyharness-core", "langchain>=1.0", "langchain-core>=1.0"]
+
+[project.entry-points."pyharness.plugins"]
+pyharness-llm = "pyharness_llm:LLMService"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyharness_llm"]
