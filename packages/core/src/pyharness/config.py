@@ -20,8 +20,9 @@ from __future__ import annotations
 
 import copy
 import os
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -39,7 +40,7 @@ class Entry(BaseModel):
     config: dict[str, Any] | None = None
     disabled: bool = False
     isolate: list[str] = Field(default_factory=list)
-    children: list["Entry"] | None = None
+    children: list[Entry] | None = None
     source: str | None = Field(default=None, description="layer that inserted this entry")
 
     @property

@@ -33,7 +33,8 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import StreamingResponse
@@ -116,7 +117,9 @@ def build_router(ctx: Any) -> APIRouter:
             "restart_pending": lifecycle.restart_pending,
             "profile": profile.name if profile is not None else None,
             "model": getattr(llm, "default", None) if llm is not None else None,
-            "workspace": {"name": workspace.root.name or str(workspace.root), "path": str(workspace.root)} if workspace is not None else None,
+            "workspace": {"name": workspace.root.name or str(workspace.root), "path": str(workspace.root)}
+            if workspace is not None
+            else None,
         }
 
     @router.get("/plugins")
@@ -198,8 +201,9 @@ def build_router(ctx: Any) -> APIRouter:
 
 
 def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
-    from pyharness import manage
     from pyharness_llm import LLMConfigError
+
+    from pyharness import manage
 
     router = APIRouter()
 
@@ -234,9 +238,7 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
             lifecycle = ctx.lifecycle
             if lifecycle.supervised:
                 # Request after the response is written; the worker exits 75 once holds are released.
-                asyncio.get_running_loop().call_later(
-                    0.3, lifecycle.request_restart, f"model settings: {body.provider}:{body.model}"
-                )
+                asyncio.get_running_loop().call_later(0.3, lifecycle.request_restart, f"model settings: {body.provider}:{body.model}")
                 result["application"] = "restart-scheduled"
             else:
                 result["application"] = "saved-restart-required"

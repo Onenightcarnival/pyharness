@@ -30,9 +30,10 @@ import os
 import shutil
 import sys
 import time
+from collections.abc import AsyncIterator
 from importlib import metadata, util
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from .plugin import BUNDLE_GROUP
 from .preflight import run_preflight
@@ -59,7 +60,7 @@ async def _run(cmd: list[str], timeout: float = 600.0) -> tuple[int, str]:
     proc = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
     try:
         out, _ = await asyncio.wait_for(proc.communicate(), timeout)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         proc.kill()
         await proc.wait()
         return 124, f"timed out after {timeout:.0f}s"

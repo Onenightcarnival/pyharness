@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import inspect
 import logging
+from collections.abc import Callable, Iterable
 from contextvars import ContextVar
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from pydantic import BaseModel
 
@@ -24,7 +25,7 @@ if TYPE_CHECKING:  # pragma: no cover
 Disposer = Callable[[], Any]
 
 _MISSING: Any = object()
-_caller: ContextVar["Context | None"] = ContextVar("pyharness_caller", default=None)
+_caller: ContextVar[Context | None] = ContextVar("pyharness_caller", default=None)
 
 
 class ServiceError(RuntimeError):
@@ -42,13 +43,13 @@ class ServiceConflict(ServiceError):
 class Scope:
     """Service namespace. A group with ``isolate`` has its own scope for the listed keys."""
 
-    def __init__(self, parent: "Scope | None" = None, isolate: Iterable[str] = (), label: str = "root") -> None:
+    def __init__(self, parent: Scope | None = None, isolate: Iterable[str] = (), label: str = "root") -> None:
         self.parent = parent
         self.isolate = set(isolate)
         self.label = label
         self.services: dict[str, tuple[Any, str]] = {}
 
-    def owner_scope(self, key: str) -> "Scope":
+    def owner_scope(self, key: str) -> Scope:
         scope = self
         while scope.parent is not None and key not in scope.isolate:
             scope = scope.parent
@@ -81,7 +82,7 @@ class Scope:
 class Context:
     """Per-plugin view of the harness. Unknown attributes resolve to services (``ctx.tools``)."""
 
-    def __init__(self, root: "Root", runtime: "EntryRuntime | None", scope: Scope) -> None:
+    def __init__(self, root: Root, runtime: EntryRuntime | None, scope: Scope) -> None:
         self._root = root
         self._runtime = runtime
         self._scope = scope
@@ -101,11 +102,11 @@ class Context:
         return self._runtime.entry.name or self._runtime.entry.id
 
     @property
-    def root(self) -> "Root":
+    def root(self) -> Root:
         return self._root
 
     @property
-    def events(self) -> "EventBus":
+    def events(self) -> EventBus:
         return self._root.events
 
     @property
@@ -328,4 +329,3 @@ __all__ = [
     "ServiceNotFound",
     "unwrap",
 ]
-

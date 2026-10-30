@@ -22,11 +22,12 @@ from __future__ import annotations
 import difflib
 import importlib
 import inspect
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from importlib import metadata
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Iterable
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -127,11 +128,7 @@ def to_spec(obj: Any, fallback_name: str) -> PluginSpec:
 def call_apply(spec: PluginSpec, ctx: Any, config: Any) -> Any:
     assert spec.apply is not None
     try:
-        params = [
-            p
-            for p in inspect.signature(spec.apply).parameters.values()
-            if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
-        ]
+        params = [p for p in inspect.signature(spec.apply).parameters.values() if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)]
     except (TypeError, ValueError):  # pragma: no cover
         params = []
     if len(params) >= 2:

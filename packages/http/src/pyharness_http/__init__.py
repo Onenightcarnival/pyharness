@@ -17,7 +17,8 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import socket
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from fastapi import APIRouter, FastAPI
 from pydantic import BaseModel, Field

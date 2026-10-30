@@ -22,8 +22,9 @@ Pipeline:
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 from langchain_core.tools import BaseTool
 from langchain_core.tools import tool as as_tool

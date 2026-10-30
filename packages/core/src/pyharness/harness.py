@@ -15,8 +15,9 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from .config import Tree, compose, parse_ops
 from .lifecycle import Lifecycle
@@ -95,7 +96,7 @@ class Harness:
     async def stop(self) -> None:
         await self.loader.stop()
 
-    async def __aenter__(self) -> "Harness":
+    async def __aenter__(self) -> Harness:
         await self.start()
         try:
             await self.ready()

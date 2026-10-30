@@ -8,10 +8,10 @@ import os
 
 import httpx
 import pytest
-
-from pyharness import Harness, Profile, manage
-from pyharness.config import iter_entries
 from pyharness_llm import mask_secret, split_spec, translate_options
+
+from pyharness import Harness, Profile
+from pyharness.config import iter_entries
 
 
 @pytest.fixture
@@ -37,7 +37,10 @@ def test_helpers():
     assert mask_secret(None) is None
     assert translate_options("deepseek", {"base_url": "u", "api_key": None, "temperature": 0}) == {"api_base": "u", "temperature": 0}
     assert translate_options("google_genai", {"api_key": "k"}) == {"google_api_key": "k"}
-    assert translate_options("openai", {"base_url": "http://127.0.0.1:1/v1"}) == {"base_url": "http://127.0.0.1:1/v1", "use_responses_api": False}
+    assert translate_options("openai", {"base_url": "http://127.0.0.1:1/v1"}) == {
+        "base_url": "http://127.0.0.1:1/v1",
+        "use_responses_api": False,
+    }
     assert translate_options("openai", {"base_url": "http://x/v1", "use_responses_api": True})["use_responses_api"] is True
     assert "use_responses_api" not in translate_options("openai", {"api_key": "k"})
 
@@ -61,7 +64,9 @@ def test_set_entry_config_merges_into_the_profile_patch(profile):
 
 
 async def test_settings_api_describes_masks_and_saves(profile):
-    patch = base_patch([{"id": "llm", "config": {"providers": {"echo": {"api_key": "secret-value-9876", "base_url": "http://echo"}}}, "merge": True}])
+    patch = base_patch(
+        [{"id": "llm", "config": {"providers": {"echo": {"api_key": "secret-value-9876", "base_url": "http://echo"}}}, "merge": True}]
+    )
     async with Harness(profile, patch=patch) as h:
         http = h.get("http")
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=http.app), base_url="http://t", timeout=120) as client:
@@ -83,7 +88,12 @@ async def test_settings_api_describes_masks_and_saves(profile):
             # Listing models: unsupported provider → supported false; unreachable endpoint → error, no exception.
             r = (await client.post("/api/settings/model/models", json={"provider": "echo", "model": "echo"})).json()
             assert r == {"ok": True, "supported": False, "models": []}
-            r = (await client.post("/api/settings/model/models", json={"provider": "openai", "model": "m", "base_url": "http://127.0.0.1:9", "api_key": "k"})).json()
+            r = (
+                await client.post(
+                    "/api/settings/model/models",
+                    json={"provider": "openai", "model": "m", "base_url": "http://127.0.0.1:9", "api_key": "k"},
+                )
+            ).json()
             assert r["ok"] is False and r["models"] == []
 
             # Save: preflighted in a separate process; unsupervised → applies on the next start.
@@ -157,7 +167,9 @@ async def test_live_openai_compatible_service(profile):
             health = (await client.get("/api/health")).json()
             assert health["model"] == f"openai:{LIVE['MODEL']}"
             session = (await client.post("/api/sessions", json={})).json()
-            res = await client.post(f"/api/sessions/{session['id']}/messages", json={"content": "Reply with exactly the word PONG and nothing else."})
+            res = await client.post(
+                f"/api/sessions/{session['id']}/messages", json={"content": "Reply with exactly the word PONG and nothing else."}
+            )
             events = [json.loads(line[6:]) for line in res.text.splitlines() if line.startswith("data: ")]
             assert events[-1]["outcome"] == "completed", events
             text = "".join(e["text"] for e in events if e["type"] == "token")

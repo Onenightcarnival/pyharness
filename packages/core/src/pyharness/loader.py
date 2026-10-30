@@ -17,8 +17,9 @@ import inspect
 import logging
 import time
 import traceback
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from .config import Entry, Tree, interpolate
 from .context import Context, Scope, _maybe_await

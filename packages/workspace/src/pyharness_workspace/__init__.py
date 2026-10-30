@@ -73,9 +73,7 @@ async def apply(ctx: Any, config: Config) -> None:
     if profile is not None:
         home = Path(profile.home).resolve()
         if root == home or home in root.parents:
-            raise RuntimeError(
-                f"workspace root {root} is inside the harness home {home}; choose another directory (PYH_WORKSPACE)"
-            )
+            raise RuntimeError(f"workspace root {root} is inside the harness home {home}; choose another directory (PYH_WORKSPACE)")
         if root in home.parents:
             protected.append(home)
             ctx.logger.warning("harness home %s inside the workspace: file tools denied on it", home)

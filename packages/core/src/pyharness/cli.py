@@ -74,10 +74,7 @@ def cmd_plugin(args: argparse.Namespace) -> int:
 
         setup_logging("WARNING")
         report = asyncio.run(preflight_in_process(profile))
-        rows = [
-            {k: e.get(k) for k in ("id", "name", "state", "source", "missing", "error") if e.get(k)}
-            for e in report["entries"]
-        ]
+        rows = [{k: e.get(k) for k in ("id", "name", "state", "source", "missing", "error") if e.get(k)} for e in report["entries"]]
         _print({"bundles": profile.installed_bundles(), "entries": rows})
         return 0
     if action == "install":

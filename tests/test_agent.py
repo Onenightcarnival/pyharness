@@ -8,7 +8,8 @@ import httpx
 import pytest
 
 from pyharness import Harness, Profile
-from testkit import scripted, tools as testtools
+from testkit import scripted
+from testkit import tools as testtools
 
 
 def scripted_patch(replies, *, extra=None):

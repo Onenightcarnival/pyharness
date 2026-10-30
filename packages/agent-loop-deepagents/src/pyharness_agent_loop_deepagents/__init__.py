@@ -32,13 +32,12 @@ from typing import Any
 
 from langchain.agents.middleware import AgentMiddleware
 from pydantic import BaseModel, Field
-
-from pyharness import Service
 from pyharness_tools import ToolCall
 
+from pyharness import Service
+
 DEFAULT_SYSTEM_PROMPT = (
-    "Role: agent inside pyharness, a plugin-based agent harness.\n"
-    "Style: direct answers; tools where they help; failures reported plainly."
+    "Role: agent inside pyharness, a plugin-based agent harness.\nStyle: direct answers; tools where they help; failures reported plainly."
 )
 
 

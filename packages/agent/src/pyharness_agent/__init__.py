@@ -24,8 +24,9 @@ import asyncio
 import json
 import time
 import uuid
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import Any
 
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, HumanMessage, ToolMessage
 from pydantic import BaseModel, Field
@@ -356,9 +357,7 @@ class AgentService(Service):
                     await self.ctx.parallel("agent/turn-end", turn)
                 except Exception:  # pragma: no cover
                     self.ctx.logger.exception("turn-end bookkeeping failed")
-                await handle.publish(
-                    {"type": "done", "outcome": outcome, "restart_pending": lifecycle.restart_pending is not None}
-                )
+                await handle.publish({"type": "done", "outcome": outcome, "restart_pending": lifecycle.restart_pending is not None})
                 await handle.finish()
 
     @staticmethod
@@ -407,8 +406,7 @@ class AgentService(Service):
         rollback_note = ""
         if rollback:
             rollback_note = (
-                "\nRollback: generation {gen} failed to boot ({err}). The previous configuration is active; "
-                "the change is not applied."
+                "\nRollback: generation {gen} failed to boot ({err}). The previous configuration is active; the change is not applied."
             ).format(gen=rollback.get("failed_generation"), err=rollback.get("error"))
         fields = _SafeFields(
             generation=lifecycle.generation,

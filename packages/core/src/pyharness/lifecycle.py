@@ -34,8 +34,9 @@ import json
 import logging
 import os
 import time
+from collections.abc import AsyncIterator, Iterable
 from pathlib import Path
-from typing import Any, AsyncIterator, Iterable
+from typing import Any
 
 log = logging.getLogger("pyharness.lifecycle")
 

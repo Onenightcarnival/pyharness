@@ -24,7 +24,8 @@ import asyncio
 import importlib.util
 import os
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
@@ -117,7 +118,7 @@ class EchoChatModel(BaseChatModel):
         )
         return ChatResult(generations=[ChatGeneration(message=AIMessage(content=reply))])
 
-    def bind_tools(self, tools: Any, **kwargs: Any) -> "EchoChatModel":
+    def bind_tools(self, tools: Any, **kwargs: Any) -> EchoChatModel:
         return self
 
 
@@ -251,8 +252,18 @@ class LLMService(Service):
         for name, owner in registered.items():
             if name not in PROVIDERS:
                 catalog.append(
-                    {"id": name, "title": f"{name} (plugin {owner})", "package": None, "extra": None, "base_url": None,
-                     "available": True, "env": None, "env_set": False, "models_api": None, "credentials": False}
+                    {
+                        "id": name,
+                        "title": f"{name} (plugin {owner})",
+                        "package": None,
+                        "extra": None,
+                        "base_url": None,
+                        "available": True,
+                        "env": None,
+                        "env_set": False,
+                        "models_api": None,
+                        "credentials": False,
+                    }
                 )
         return {
             "default": self.config.default,
@@ -272,7 +283,7 @@ class LLMService(Service):
         started = time.monotonic()
         try:
             reply = await asyncio.wait_for(chat.ainvoke([HumanMessage(content=PROBE_PROMPT)]), timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise LLMConfigError(f"no reply within {timeout:.0f}s") from None
         except Exception as exc:
             raise LLMConfigError(f"{type(exc).__name__}: {exc}") from exc

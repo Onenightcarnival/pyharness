@@ -18,10 +18,11 @@ import contextlib
 import copy
 import os
 import sys
+from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass
 from importlib import metadata
 from pathlib import Path
-from typing import Any, AsyncIterator, Iterator
+from typing import Any
 
 from .config import ConfigError, PatchOp, Tree, compose, deep_merge, dump_yaml, load_yaml, parse_ops, write_yaml
 from .plugin import BUNDLE_GROUP, BundleInfo, load_bundle
@@ -67,7 +68,7 @@ class Profile:
         return self.manifest_path.exists()
 
     @classmethod
-    def init(cls, name: str = "web", template: str | None = None, home: str | None = None, *, force: bool = False) -> "Profile":
+    def init(cls, name: str = "web", template: str | None = None, home: str | None = None, *, force: bool = False) -> Profile:
         profile = cls(name, home)
         if profile.exists() and not force:
             return profile
@@ -79,7 +80,7 @@ class Profile:
             profile.patch_path.write_text(PATCH_HEADER + "[]\n", encoding="utf-8")
         return profile
 
-    def require(self) -> "Profile":
+    def require(self) -> Profile:
         if not self.exists():
             raise ConfigError(f"profile {self.name!r} does not exist under {self.home}; create: `pyh init --profile {self.name}`")
         return self
@@ -208,7 +209,15 @@ class Profile:
             for ep in dist.entry_points:
                 if ep.group == BUNDLE_GROUP and ep.name not in seen:
                     seen.add(ep.name)
-                    out.append({"bundle": ep.name, "dist": dist.name, "version": dist.version, "enabled": ep.name in enabled, "installed": "profile"})
+                    out.append(
+                        {
+                            "bundle": ep.name,
+                            "dist": dist.name,
+                            "version": dist.version,
+                            "enabled": ep.name in enabled,
+                            "installed": "profile",
+                        }
+                    )
         for ep in metadata.entry_points(group=BUNDLE_GROUP):
             if ep.name in seen:
                 continue

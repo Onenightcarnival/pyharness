@@ -7,6 +7,8 @@ Python 3.12（`.python-version`），uv。
 ```bash
 uv sync                         # workspace 与 dev 依赖组
 uv run pytest -q                # 全部测试
+uv run ruff format .            # 格式化
+uv run ruff check --fix .       # lint；规则见 pyproject.toml [tool.ruff]
 ```
 
 | 测试 | 条件 |
@@ -61,4 +63,4 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 |---|---|
 | 粒度 | 一个提交一件事 |
 | 说明首行 | 英文祈使句，不超过 72 个字符 |
-| 提交前 | `uv run pytest -q` 通过 |
+| 提交前 | `uv run ruff format .`、`uv run ruff check .`、`uv run pytest -q` 通过；CI 检查格式与 lint |

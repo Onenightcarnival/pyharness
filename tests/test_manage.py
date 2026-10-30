@@ -87,9 +87,7 @@ async def test_agent_installs_a_bundle_through_the_tool(profile, example_bundle,
     replies = [
         {
             "content": "",
-            "tool_calls": [
-                {"name": "plugin_manager", "args": {"action": "install_bundle", "target": "/plugins/audit"}, "id": "pm1"}
-            ],
+            "tool_calls": [{"name": "plugin_manager", "args": {"action": "install_bundle", "target": "/plugins/audit"}, "id": "pm1"}],
         },
         {"content": "installed"},
     ]
@@ -120,4 +118,6 @@ async def test_read_only_actions_need_no_approval(profile):
         events = await agents.start_run(session["id"], "list plugins").wait()
         assert not any(e["type"] == "interrupt" for e in events)
         listing = json.loads(next(e for e in events if e["type"] == "tool_result")["content"])
-        assert {"id": "plugin-manager", "name": "pyharness-plugin-manager", "state": "active", "source": "bundle:base"} in listing["entries"]
+        assert {"id": "plugin-manager", "name": "pyharness-plugin-manager", "state": "active", "source": "bundle:base"} in listing[
+            "entries"
+        ]

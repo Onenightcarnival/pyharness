@@ -45,9 +45,7 @@ async def preflight_in_process(profile: Profile, extra_patches: list[str] | None
     for entry in report["entries"]:
         if entry["state"] == "failed":
             report["errors"].append({"stage": "start", "entry": entry["id"], "error": entry.get("error")})
-    report["pending"] = [
-        {"entry": e["id"], "missing": e.get("missing", [])} for e in report["entries"] if e["state"] == "pending"
-    ]
+    report["pending"] = [{"entry": e["id"], "missing": e.get("missing", [])} for e in report["entries"] if e["state"] == "pending"]
     report["ok"] = not report["errors"]
     return report
 
@@ -73,12 +71,10 @@ async def run_preflight(profile: Profile, extra_patches: list[str] | None = None
     env = dict(os.environ)
     env.setdefault("PYH_CWD", os.getcwd())
     env["PYH_LOG_LEVEL"] = env.get("PYH_PREFLIGHT_LOG_LEVEL", "WARNING")
-    proc = await asyncio.create_subprocess_exec(
-        *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=env
-    )
+    proc = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=env)
     try:
         out, err = await asyncio.wait_for(proc.communicate(), timeout)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         proc.kill()
         await proc.wait()
         return {"ok": False, "errors": [{"stage": "preflight", "error": f"timed out after {timeout:.0f}s"}], "entries": []}
@@ -91,7 +87,11 @@ async def run_preflight(profile: Profile, extra_patches: list[str] | None = None
             except json.JSONDecodeError:
                 break
     tail = err.decode("utf-8", "replace")[-4000:]
-    return {"ok": False, "errors": [{"stage": "preflight", "error": f"preflight process exited {proc.returncode}", "stderr": tail}], "entries": []}
+    return {
+        "ok": False,
+        "errors": [{"stage": "preflight", "error": f"preflight process exited {proc.returncode}", "stderr": tail}],
+        "entries": [],
+    }
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -115,4 +115,3 @@ def main(argv: list[str] | None = None) -> None:
 
 if __name__ == "__main__":  # pragma: no cover
     main()
-

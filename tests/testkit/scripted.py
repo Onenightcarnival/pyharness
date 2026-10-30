@@ -41,7 +41,7 @@ class ScriptedModel(BaseChatModel):
             message = AIMessage(content="(script exhausted)")
         return ChatResult(generations=[ChatGeneration(message=message)])
 
-    def bind_tools(self, tools: Any, **kwargs: Any) -> "ScriptedModel":
+    def bind_tools(self, tools: Any, **kwargs: Any) -> ScriptedModel:
         return self
 
 

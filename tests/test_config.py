@@ -39,7 +39,12 @@ def test_config_is_replaced_without_merge():
 
 def test_duplicate_ids_rejected():
     with pytest.raises(ConfigError):
-        compose(layers(("a", [{"id": "g", "children": [{"id": "x", "name": "p"}]}, {"id": "y", "name": "p"}]), ("b", [{"id": "y", "children": [{"id": "x", "name": "p"}]}])))
+        compose(
+            layers(
+                ("a", [{"id": "g", "children": [{"id": "x", "name": "p"}]}, {"id": "y", "name": "p"}]),
+                ("b", [{"id": "y", "children": [{"id": "x", "name": "p"}]}]),
+            )
+        )
 
 
 def test_unknown_fields_rejected():

@@ -103,7 +103,7 @@ class Inspector:
                 "methods": _methods(value, detail=True) if isinstance(value, Service) else [],
             }
         rows = []
-        for key, (value, owner, scope) in sorted(visible.items()):
+        for key, (value, owner, _scope) in sorted(visible.items()):
             value = unwrap(value)
             doc = _inspect.getdoc(type(value)) or ""
             rows.append({"key": key, "owner": owner, "type": type(value).__qualname__, "doc": doc.splitlines()[0] if doc else ""})

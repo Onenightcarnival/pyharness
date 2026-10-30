@@ -44,7 +44,10 @@ async def run_turn(h, text="go"):
 async def test_subagent_tool_calls_use_the_pipeline(profile):
     testtools.RESULTS.clear()
     replies = [
-        {"content": "", "tool_calls": [{"name": "task", "args": {"description": "shout x", "subagent_type": "general-purpose"}, "id": "t1"}]},
+        {
+            "content": "",
+            "tool_calls": [{"name": "task", "args": {"description": "shout x", "subagent_type": "general-purpose"}, "id": "t1"}],
+        },
         {"content": "", "tool_calls": [{"name": "shout", "args": {"text": "from subagent"}, "id": "s1"}]},
         {"content": "subagent done"},
         {"content": "all done"},
@@ -169,7 +172,9 @@ async def test_approval_gates_are_per_owner(profile):
 # inspect: interpolated values redacted -----------------------------------------------------------
 async def test_inspect_redacts_environment_values(profile, monkeypatch):
     monkeypatch.setenv("PYH_TEST_SECRET", "sk-very-secret")
-    patch = scripted([], extra=[{"id": "llm", "config": {"default": "scripted:test", "providers": {"openai": {"api_key": "${env:PYH_TEST_SECRET}"}}}}])
+    patch = scripted(
+        [], extra=[{"id": "llm", "config": {"default": "scripted:test", "providers": {"openai": {"api_key": "${env:PYH_TEST_SECRET}"}}}}]
+    )
     async with Harness(profile, patch=patch) as h:
         tool = next(t for t in h.get("tools").list() if t.name == "harness_inspect")
         text = tool.invoke({"topic": "config", "name": "llm"})

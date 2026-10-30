@@ -175,10 +175,7 @@ def apply(ctx: Any, config: Config) -> None:
         if lifecycle.supervised:
             lifecycle.request_restart(reason, resume=[session_id] if session_id else [])
             result["application"] = "restart-scheduled"
-            result["next"] = (
-                "Saved. Restart after this turn; this session continues in the new generation. "
-                "Turn end: one-line status."
-            )
+            result["next"] = "Saved. Restart after this turn; this session continues in the new generation. Turn end: one-line status."
         else:
             result["application"] = "saved-restart-required"
             result["next"] = "Saved. Unsupervised harness: the change applies on the next start (`pyh run` supervises restarts)."
@@ -211,9 +208,7 @@ def apply(ctx: Any, config: Config) -> None:
         result: dict[str, Any]
         if action == "list":
             result = {
-                "entries": [
-                    {k: e.get(k) for k in ("id", "name", "state", "source", "missing", "error") if e.get(k)} for e in baseline
-                ],
+                "entries": [{k: e.get(k) for k in ("id", "name", "state", "source", "missing", "error") if e.get(k)} for e in baseline],
                 "bundles": profile.installed_bundles(),
                 "generation": ctx.lifecycle.generation,
             }

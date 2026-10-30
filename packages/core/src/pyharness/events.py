@@ -28,8 +28,9 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Literal
+from typing import Any, Literal
 
 EventMode = Literal["emit", "parallel", "serial", "series", "bail", "waterfall"]
 EVENT_MODES: tuple[str, ...] = ("emit", "parallel", "serial", "series", "bail", "waterfall")
@@ -80,9 +81,7 @@ class EventBus:
         if decl is None:
             decl = self._decls[name] = EventDecl(name=name, mode=mode, doc=doc)
         elif decl.mode != mode:
-            raise EventModeError(
-                f"event {name!r} is already declared as {decl.mode!r} by {decl.owners}; cannot redeclare as {mode!r}"
-            )
+            raise EventModeError(f"event {name!r} is already declared as {decl.mode!r} by {decl.owners}; cannot redeclare as {mode!r}")
         elif doc and not decl.doc:
             decl.doc = doc
         token = owner or "<anonymous>"
@@ -150,7 +149,7 @@ class EventBus:
         if not listeners:
             return
         results = await asyncio.gather(*(_call(listener.fn, args) for listener in listeners), return_exceptions=True)
-        for listener, result in zip(listeners, results):
+        for listener, result in zip(listeners, results, strict=True):
             if isinstance(result, BaseException):
                 log.error("listener of %s (owner %s) failed: %r", name, listener.owner, result, exc_info=result)
 

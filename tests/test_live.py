@@ -89,7 +89,13 @@ def test_agent_extends_itself_across_a_restart(home, example_bundle, tmp_path):
 
             assert wait_for(lambda: client.get("/health").json()["generation"] == 2, timeout=90)
             detail = wait_for(
-                lambda: (d := client.get(f"/sessions/{sid}").json()) and not d["busy"] and d["messages"][-1]["role"] == "ai" and "Verified" in d["messages"][-1]["content"] and d,
+                lambda: (
+                    (d := client.get(f"/sessions/{sid}").json())
+                    and not d["busy"]
+                    and d["messages"][-1]["role"] == "ai"
+                    and "Verified" in d["messages"][-1]["content"]
+                    and d
+                ),
                 timeout=60,
             )
             contents = [m["content"] for m in detail["messages"]]
