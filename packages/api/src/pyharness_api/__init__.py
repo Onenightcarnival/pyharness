@@ -26,6 +26,7 @@
 | POST   | ``/workspaces/browse``       | ``{"path"?}``                 | one directory level for the picker          |
 | GET    | ``/workspaces/files``        | ``?path=&root=``              | directory entries inside a workspace        |
 | GET    | ``/workspaces/file``         | ``?path=&root=&limit=``       | text of a file inside a workspace           |
+| GET    | ``/workspaces/file/raw``     | ``?path=&root=``              | bytes of a file inside a workspace (images) |
 | GET    | ``/models``                  |                               | selector directory: routes, models, default |
 | GET    | ``/settings/models``         |                               | routes with credential state, catalog       |
 | PUT    | ``/settings/models``         | ``{"default"}``               | default model for new sessions              |
@@ -52,6 +53,7 @@ model request without a restart.
 from __future__ import annotations
 
 import json
+import mimetypes
 import re
 from collections.abc import AsyncIterator
 from typing import Any
@@ -364,6 +366,30 @@ def build_router(ctx: Any) -> APIRouter:
         except UnicodeDecodeError:
             text, binary = "", True
         return {"path": path, "size": size, "truncated": size > limit, "binary": binary, "text": "" if binary else text}
+
+    @router.get("/workspaces/file/raw")
+    async def read_file_raw(path: str, root: str | None = None) -> Response:
+        """Bytes of a file inside a workspace (images for the preview), up to 20 MB, with a guessed content type."""
+        workspaces = ctx.get("workspace", None)
+        if workspaces is None or not hasattr(workspaces, "open"):
+            raise HTTPException(503, "workspace registry unavailable")
+        try:
+            real = workspaces.open(root).resolve(path)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        if not real.is_file():
+            raise HTTPException(404, f"{path} is not a file")
+        if real.stat().st_size > 20 * 1024 * 1024:
+            raise HTTPException(413, f"{path} is larger than 20 MB")
+        media = mimetypes.guess_type(real.name)[0] or "application/octet-stream"
+        if media.startswith("text/html") or media.endswith("svg+xml"):
+            media = "text/plain; charset=utf-8" if media.startswith("text/html") else "image/svg+xml"
+        headers = {
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'",
+        }
+        return Response(real.read_bytes(), media_type=media, headers=headers)
 
     @router.post("/workspaces/browse")
     async def browse_workspaces(body: WorkspacePath) -> dict[str, Any]:

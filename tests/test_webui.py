@@ -75,6 +75,12 @@ async def test_workspace_files_api(home, tmp_path):
             f = (await c.get("/api/workspaces/file", params={"path": "/src/a.py", "limit": 3})).json()
             assert f["text"] == "pri" and f["truncated"] is True
             assert (await c.get("/api/workspaces/file", params={"path": "/src"})).status_code == 404
+            raw = await c.get("/api/workspaces/file/raw", params={"path": "/blob.bin"})
+            assert raw.status_code == 200 and raw.content == b"\x00\x01\x02" and raw.headers["content-type"] == "application/octet-stream"
+            (ws / "pic.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            raw = await c.get("/api/workspaces/file/raw", params={"path": "/pic.png"})
+            assert raw.headers["content-type"] == "image/png" and raw.headers["cache-control"] == "no-store"
+            assert (await c.get("/api/workspaces/file/raw", params={"path": "/src"})).status_code == 404
             assert (await c.get("/api/workspaces/files", params={"path": "/../"})).status_code in (404, 422)
             # Another workspace root: the session's own directory.
             other = tmp_path / "other"

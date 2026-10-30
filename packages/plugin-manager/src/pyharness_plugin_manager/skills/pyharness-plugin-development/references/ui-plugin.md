@@ -39,6 +39,7 @@ window.__PyhModules__.load({
 | `ctx.effect(cleanup)` | register a cleanup run when the module is disposed |
 | `ctx.session()` | the current session record or `null` |
 | `ctx.locale`, `ctx.theme()` | `zh`/`en`; `light`/`dark` |
+| `ctx.rightbar.openTab(kind, {params})`, `openFile(path)`, `close(tabId)`, `isExpanded()`, `toggle()` | drive the right sidebar of the current session, for example open a file the plugin produced |
 
 `mount(el, props)` renders into `el` and returns a cleanup function; the page calls the cleanup when the seat is left. A thrown error shows inside the seat and does not affect the rest of the page.
 
@@ -51,7 +52,7 @@ window.__PyhModules__.load({
 | `main` | keyed | `{key, label?}` + mount | `{session}` | a page in the center column; `conversation` and `plugins` are built in |
 | `conversation.composer.dock` | list | `{id, order?}` + mount | `{session}` | inline beside the composer's mode chip; keep it to one small control |
 | `settings.sections` | keyed | `{key, label, icon?, order?}` + mount | `{}` | a tab of the Settings dialog |
-| `rightbar.tabs` | keyed | `{key, label, icon?, order?}` + mount | `{session, workspace}` | a right-sidebar tab, shown while a session is open; `files` and `info` are built in |
+| `rightbar.tabs` | keyed | `{key, label, icon?, guide?, multiple?, contentId?(params), title?(params)}` + mount | `{session, workspace, tab}` | a right-sidebar **tab type**. The sidebar holds a per-session list of open tabs; `guide: {title, description?, order?}` adds a card to the Start page that opens the type. `multiple: true` gives every open its own tab; otherwise `contentId(params)` (default: the key) de-duplicates. `title(params)` names the chip. `props.tab` is the open tab: `params`, `store` (survives tab switches), `setTitle`, `close`, `openTab`, `openFile(path)`, `replaceWith(kind)`. Built in: `guide`, `files`, `preview` (one per file path), `info` |
 
 A keyed slot refuses a second registration with the same key (the error names the owner). Keys and ids are namespaced by convention with the bundle name.
 

@@ -24,7 +24,8 @@ Browser module contract (plain JavaScript, no bundler)::
     });
 
 ``ctx`` in the page: ``slots.register(spec, mount?)``, ``api(path, init)``, ``host.call(method, args)``, ``on(event, fn)``
-(``session``, ``run``, ``health``), ``effect(cleanup)``, ``locale``, ``theme()``.
+(``session``, ``run``, ``health``), ``effect(cleanup)``, ``locale``, ``theme()``, ``rightbar.openTab(kind, {params})`` /
+``rightbar.openFile(path)`` / ``rightbar.close(tabId)`` / ``rightbar.isExpanded()`` / ``rightbar.toggle()``.
 """
 
 from __future__ import annotations
@@ -68,8 +69,13 @@ SLOTS: list[dict[str, Any]] = [
     {
         "name": "rightbar.tabs",
         "kind": "keyed",
-        "entry": "{key, label, icon?, order?} + mount(el, props); a right-sidebar tab; `files` and `info` are built in",
-        "props": {"session": "current session record or null", "workspace": "workspace root of the session"},
+        "entry": "a right-sidebar tab type: {key, label, icon?, guide?: {title, description?, order?}, multiple?, contentId?(params), title?(params)} + mount(el, props); "
+        "`guide` (the start page), `files`, `preview` and `info` are built in; a type with `guide` gets a card on the start page",
+        "props": {
+            "session": "current session record or null",
+            "workspace": "workspace root of the session",
+            "tab": "{id, kind, params, title, store, setTitle(t), close(), openTab(kind, {params, replaceTab}), openFile(path), replaceWith(kind, opts)}",
+        },
     },
 ]
 

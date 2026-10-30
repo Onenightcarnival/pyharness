@@ -52,5 +52,6 @@ bundle 中条目的位置（`after` / `before` / `parent`）对应 mount 路径�
 | dsh 能力 | pyharness |
 |---|---|
 | 插件的浏览器端（client slot） | 有；槽位种类对齐 dsh（list / keyed），未做 chain 类型与独立构建链 |
+| 右侧栏 | 每会话标签布局、开始页、文件树、文档预览（Markdown / 代码 / 纯文本 / 图片）、全屏形态；未做分栏、浮窗、终端与浏览器 tab |
 | 每会话 agent preset（preset + isolate realm） | 预设是 `agent-loop` 的配置（工具子集、skills、提示词片段），每会话一张图；没有 realm 级的服务隔离 |
 | 进程内热替换 | 换代重启 |

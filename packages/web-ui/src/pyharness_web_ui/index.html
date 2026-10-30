@@ -128,23 +128,65 @@ svg { display: block; }
 .frame[data-resizing] { transition: none; user-select: none; }
 .rightbar { position: relative; min-width: 0; display: flex; flex-direction: column; overflow: hidden; border-left: 0.5px solid var(--border-l3); background: var(--bg-base); }
 .rightbar[hidden] { display: none; }
+.rightbar[data-fullscreen] { position: fixed; inset: 0; z-index: 40; border-left: none; }
+.rightbar[data-fullscreen] .rbHandle { display: none; }
 .rbHandle { position: absolute; left: -3px; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 5; }
 .rbHandle:hover { background: color-mix(in srgb, var(--info) 30%, transparent); }
-.rbStrip { flex: none; display: flex; align-items: center; gap: 4px; min-height: 50px; padding: 10px 8px 10px 12px; border-bottom: 0.5px solid var(--border-l3); }
-.rbTabs { display: flex; gap: 2px; min-width: 0; overflow-x: auto; }
-.rbTab { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; border-radius: var(--r-sm); background: transparent; color: var(--label-secondary); font-size: 13px; white-space: nowrap; }
-.rbTab[aria-selected='true'] { background: var(--hover); color: var(--label-primary); }
-.rbBody { flex: 1; min-height: 0; overflow: auto; }
+.rbStrip { flex: none; display: flex; align-items: center; gap: 6px; height: 50px; padding: 0 8px 0 10px; border-bottom: 0.5px solid var(--border-l3); }
+.rbTabs { flex: 1; display: flex; align-items: center; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.rbTabs::-webkit-scrollbar { display: none; }
+.rbChip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 6px 0 10px; border-radius: var(--r-md); color: var(--label-secondary); font-size: 13px; white-space: nowrap; flex: 0 1 auto; min-width: 0; max-width: 200px; cursor: default; }
+.rbChip[data-quiet] { padding-right: 10px; }
+.rbChip .label { overflow: hidden; text-overflow: ellipsis; }
+.rbChip .ico { width: 16px; height: 16px; flex: none; }
+.rbChip[aria-selected='true'] { background: var(--hover); color: var(--label-primary); }
+.rbChip .close { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--label-tertiary); opacity: 0; }
+.rbChip:hover .close, .rbChip[aria-selected='true'] .close, .rbChip:focus-within .close { opacity: 1; }
+.rbChip .close .ico { width: 12px; height: 12px; }
+.rbAdd { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: none; border-radius: var(--r-sm); background: transparent; color: var(--label-tertiary); }
+.rbTools { flex: none; display: flex; align-items: center; gap: 2px; }
+.rbBody { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
+.rbBody > * { flex: none; }
+.rbBody > .fileTree, .rbBody > .docBody, .rbBody > .rbGuide, .rbBody > .rbScroll { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .rbEmpty { padding: 24px 16px; font-size: 13px; color: var(--label-tertiary); }
-.fileHead { display: flex; align-items: center; gap: 6px; padding: 8px 10px; font: 12px/18px var(--mono); color: var(--label-tertiary); border-bottom: 0.5px solid var(--border-l2); min-width: 0; }
-.fileHead .path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--label-secondary); }
-.fileRow { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 12px; border: none; background: transparent; color: var(--label-primary); font-size: 13px; text-align: left; }
-.fileRow .ico { color: var(--label-tertiary); }
-.fileRow[data-dir] .ico { color: var(--info); }
+.fileHead { position: relative; display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 8px 0 12px; font: 12px/18px var(--mono); border-bottom: 0.5px solid var(--border-l2); }
+.fileHead .headTools { display: flex; align-items: center; gap: 2px; flex: none; }
+.fileHead .btn.sm { height: 24px; padding: 0 6px 0 8px; font-family: var(--font); }
+.pathLabel { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; direction: rtl; text-align: left; color: var(--label-tertiary); }
+.pathLabel bdi { unicode-bidi: isolate; direction: ltr; }
+.pathLabel b { font-weight: 500; color: var(--label-primary); }
+.pathLabel[data-overflow] { mask-image: linear-gradient(to right, transparent, #000 28px); }
+.fileTree { padding: 4px 0 12px; }
+.fileRow { display: flex; align-items: center; gap: 7px; width: 100%; height: 28px; padding: 0 12px; border: none; border-radius: 0; background: transparent; color: var(--label-primary); font-size: 13px; text-align: left; }
+.fileRow .ico { width: 16px; height: 16px; flex: none; }
 .fileRow .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fileRow .size { font-size: 11px; color: var(--label-caption); }
+.fileRow .size { font-size: 11px; color: var(--label-caption); font-variant-numeric: tabular-nums; }
 .fileRow[data-hidden] { color: var(--label-tertiary); }
+.fileNote { display: flex; align-items: center; min-height: 28px; padding: 0 12px; font-size: 12px; color: var(--label-tertiary); }
+.fileNote[data-tone='error'] { color: var(--error); }
+.fileNote[data-tone='warn'] { color: var(--warn-label); padding: 8px 14px; }
+.ft-folder { color: #e3a93a; } .ft-md { color: var(--info); } .ft-code { color: #c9a227; } .ft-data { color: #d9674b; } .ft-image { color: #9b6fd3; } .ft-text, .ft-bin { color: var(--label-tertiary); }
+.docMd { padding: 14px 16px 24px; }
+.docCode { padding: 8px 10px; }
+.docCode .codeBlock { margin: 0; }
+.docCode[data-wrap] pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .filePreview { margin: 0; padding: 12px 14px; font: 12px/19px var(--mono); white-space: pre; overflow: auto; color: var(--label-primary); }
+.filePreview[data-wrap] { white-space: pre-wrap; overflow-wrap: anywhere; }
+.docImage { padding: 16px; display: flex; justify-content: center; }
+.docImage img { max-width: 100%; height: auto; border-radius: var(--r-md); }
+.docEmpty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 48px 16px; color: var(--label-tertiary); font-size: 13px; text-align: center; }
+.docEmpty .ico { width: 32px; height: 32px; }
+.docEmpty p { margin: 0; }
+.rbGuide { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 24px 16px; }
+.guideMark { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; color: var(--label-caption); box-shadow: inset 0 0 0 0.5px var(--border-l4); }
+.guideMark .ico { width: 22px; height: 22px; }
+.guideCards { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 8px; }
+.guideCard { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 16px; border: none; border-radius: 20px; background: color-mix(in srgb, var(--label-primary) 4%, transparent); color: inherit; text-align: left; }
+.guideCard .ico { width: 18px; height: 18px; flex: none; }
+.guideMain { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.guideTitle { font-size: 13px; font-weight: 500; color: var(--label-primary); }
+.guideDesc { font-size: 11px; line-height: 15px; color: var(--label-tertiary); }
+.fileHead .menu.rbMenu { top: calc(100% + 4px); bottom: auto; right: 8px; left: auto; min-width: 160px; }
 .kvTable { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; padding: 12px 14px; font-size: 13px; }
 .kvTable dt { color: var(--label-tertiary); } .kvTable dd { margin: 0; font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
 .mainSlot { flex: 1; min-height: 0; overflow: auto; }
@@ -585,7 +627,9 @@ svg { display: block; }
   .btn.reject:hover:not(:disabled), .btn.danger:hover:not(:disabled) { background: var(--hover-danger); color: var(--error); }
   .moreRow:hover, .settingsNav button:hover { background: var(--hover); }
   .fileRow:hover { background: var(--hover); }
-  .rbTab:hover { background: var(--hover); color: var(--label-primary); }
+  .rbChip:hover { color: var(--label-primary); }
+  .rbAdd:hover, .rbChip .close:hover { background: var(--hover); color: var(--label-primary); }
+  .guideCard:hover { background: var(--hover); }
   .themeCard:hover { background: var(--hover-solid); }
   .prow:hover { background: var(--hover); }
   .menuRow:hover { background: var(--hover); }
@@ -599,7 +643,7 @@ svg { display: block; }
 
 @media (max-width: 760px) {
   .frame, .frame[data-collapsed], .frame[data-rightbar], .frame[data-collapsed][data-rightbar] { grid-template-columns: minmax(0, 1fr) 0px; }
-  .rightbar { position: fixed; inset: 0 0 0 auto; width: min(420px, 100vw); z-index: 35; box-shadow: 0 0 40px rgba(0, 0, 0, 0.2); }
+  .rightbar { position: fixed; inset: 0; z-index: 40; border-left: none; }
   .rbHandle { display: none; }
   .sidebar { position: fixed; inset: 0 auto 0 0; width: min(300px, 86vw); z-index: 40; transform: translateX(-100%); visibility: hidden; transition: transform 0.25s var(--ease), visibility 0s 0.25s; }
   .frame[data-drawer] .sidebar { transform: none; visibility: visible; transition: transform 0.25s var(--ease); box-shadow: 0 0 40px rgba(0, 0, 0, 0.12); }
@@ -646,6 +690,11 @@ svg { display: block; }
     <symbol id="i-eye" viewBox="0 0 16 16"><path d="M1.75 8S4 3.75 8 3.75 14.25 8 14.25 8 12 12.25 8 12.25 1.75 8 1.75 8z"/><circle cx="8" cy="8" r="2"/></symbol>
     <symbol id="i-bulb" viewBox="0 0 16 16"><path d="M5.75 12.25h4.5M6.5 14.25h3M8 1.75a4.25 4.25 0 0 0-2.5 7.7c.5.36.75.9.75 1.5v.3h3.5v-.3c0-.6.25-1.14.75-1.5A4.25 4.25 0 0 0 8 1.75z"/></symbol>
     <symbol id="i-x" viewBox="0 0 16 16"><path d="m4.5 4.5 7 7M11.5 4.5l-7 7"/></symbol>
+    <symbol id="i-compass" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M10.6 5.4 9.2 9.2 5.4 10.6l1.4-3.8z"/></symbol>
+    <symbol id="i-maximize" viewBox="0 0 16 16"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></symbol>
+    <symbol id="i-minimize" viewBox="0 0 16 16"><path d="M6 2.5V6H2.5M10 2.5V6h3.5M2.5 10H6v3.5M13.5 10H10v3.5"/></symbol>
+    <symbol id="i-wrap" viewBox="0 0 16 16"><path d="M2.5 4h11M2.5 8h8.5a2 2 0 0 1 0 4H8.5M10 10l-1.5 2 1.5 2M2.5 12h3"/></symbol>
+    <symbol id="i-folder-open" viewBox="0 0 16 16"><path d="M1.75 12.5v-8c0-.55.45-1 1-1h3.1l1.5 1.5h5.9c.55 0 1 .45 1 1V7.5"/><path d="M1.75 12.5 3.3 8.2c.12-.42.52-.7.97-.7H15l-1.6 4.5c-.14.4-.52.67-.95.67H2.75c-.55 0-1-.45-1-1z"/></symbol>
     <symbol id="i-x-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="m6 6 4 4M10 6l-4 4"/></symbol>
     <symbol id="i-alert" viewBox="0 0 16 16"><path d="M7.13 2.6a1 1 0 0 1 1.74 0l5.26 9.4a1 1 0 0 1-.87 1.5H2.74a1 1 0 0 1-.87-1.5z"/><path d="M8 6.25v3M8 11.25v.01"/></symbol>
     <symbol id="i-sun" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.75"/><path d="M8 1.75v1.25M8 13v1.25M1.75 8H3M13 8h1.25M3.6 3.6l.9.9M11.5 11.5l.9.9M3.6 12.4l.9-.9M11.5 4.5l.9-.9"/></symbol>
@@ -737,7 +786,7 @@ svg { display: block; }
   </main>
   <aside class="rightbar" id="rightbar" hidden>
     <div class="rbHandle" id="rbHandle"></div>
-    <div class="rbStrip"><div class="rbTabs" id="rbTabs" role="tablist"></div><span class="spacer"></span><button type="button" class="iconButton" id="rbCollapse" data-i18n-title="rightbarClose"><svg class="ico" style="transform:scaleX(-1)"><use href="#i-panel"/></svg></button></div>
+    <div class="rbStrip"><div class="rbTabs" id="rbTabs" role="tablist"></div><div class="rbTools"><button type="button" class="iconButton" id="rbFull"></button><button type="button" class="iconButton" id="rbCollapse" data-i18n-title="rightbarClose"><svg class="ico" style="transform:scaleX(-1)"><use href="#i-panel"/></svg></button></div></div>
     <div class="rbBody" id="rbBody"></div>
   </aside>
 </div>
@@ -789,7 +838,7 @@ const T = zh ? {
 };
 Object.assign(T, zh ? {
   settings: '设置', settingsIntro: '保存后立即生效，无需重启；密钥写入 profile 的凭据文件，配置文件只记录引用名。',
-  rightbarOpen: '打开右侧栏', rightbarClose: '收起右侧栏', tabFiles: '文件', tabInfo: '会话', noSession: '先打开或新建一个会话', up: '上级', loadFailed: (id, m) => `插件 ${id} 加载失败：${m}`, binaryFile: '二进制文件，不预览', truncated: '已截断',
+  rightbarOpen: '打开右侧栏', rightbarClose: '收起右侧栏', tabFiles: '文件', tabInfo: '会话', start: '开始', newTab: '新标签页', closeTab: '关闭', fullscreen: '全屏', exitFullscreen: '退出全屏', reload: '重新读取', reading: '读取中…', emptyDir: '空目录', guideFiles: '工作区文件', guideFilesDesc: '浏览此会话工作区中的文件', guideInfo: '会话信息', guideInfoDesc: '工作区、预设、权限与模型', unsupported: '此文件类型不支持预览', truncatedNote: '文件过大，只显示开头部分', retry: '重试', wrap: '自动换行', renderer: { markdown: 'Markdown', code: '代码', plain: '纯文本', image: '图片' }, noTabType: (k) => `没有名为 ${k} 的右侧栏标签类型`, noSession: '先打开或新建一个会话', up: '上级', loadFailed: (id, m) => `插件 ${id} 加载失败：${m}`, binaryFile: '二进制文件，不预览', truncated: '已截断',
   workspaces: '工作区', addWorkspace: '添加工作区', more: '更多', searchSessions: '搜索会话', searchPlaceholder: '搜索会话名称', viewOptions: '视图选项', groupBy: '分组', groupWorkspace: '按工作区', groupNone: '单一列表', orderBy: '排序', orderUpdated: '最近更新', orderCreated: '创建时间', ungrouped: '未分组',
   wsActions: (n) => `工作区「${n}」的操作`, newSessionIn: (n) => `在「${n}」新建会话`, renameWorkspace: '重命名', deleteWorkspace: '删除工作区', deleteWorkspaceText: (n) => `将「${n}」从工作区列表移除。文件夹与会话记录保留，其会话将显示在「未分组」下。`, renameWorkspaceTitle: '重命名工作区', renameLabel: '重命名', cannotDeleteDefault: '默认工作区不可删除',
   sessionActions: '会话操作', renameSession: '重命名', copyId: '复制会话 ID', deleteSession: '删除会话', deleteSessionText: (t) => `删除「${t}」？会话记录将一并删除，不可恢复。`, renameSessionTitle: '重命名会话', noMatch_: '没有匹配的会话', close: '关闭', tabGeneral: '通用', tabModels: '模型', tabPresets: '预设', tabPlugins: '内置插件', appearance: '外观', appearanceHint: '跟随系统或固定明暗。', themeLight: '浅色', themeDark: '深色', themeSystem: '跟随系统', language: '语言', languageHint: '跟随浏览器语言。', builtin: '内置', presetsIntro: '选择 agent 的工具与工作方式。标准模式做日常任务，创造模式扩展 harness。', newTaskDefault: '新会话默认', pluginsTabIntro: '当前 profile 的条目与状态；安装与启停在侧边栏的插件页。', refresh: '刷新', theme: '主题',
@@ -811,7 +860,7 @@ Object.assign(T, zh ? {
   defaultTag: '默认', selectModel: '选择模型', manageModels: '管理模型…', noModels: '没有可用模型；先在设置里添加提供方。', modelSelected: (n) => `已切换到 ${n}`, modelsCount: (n) => `${n} 个模型`, readonly: '无 profile：设置只读。', showKey: '显示 / 隐藏密钥',
 } : {
   settings: 'Settings', settingsIntro: 'Changes apply at once, without a restart; keys go to the profile credential file and the configuration keeps only the reference name.',
-  rightbarOpen: 'Open right sidebar', rightbarClose: 'Collapse right sidebar', tabFiles: 'Files', tabInfo: 'Session', noSession: 'Open or start a session first', up: 'Up', loadFailed: (id, m) => `Plugin ${id} failed to load: ${m}`, binaryFile: 'Binary file; no preview', truncated: 'truncated',
+  rightbarOpen: 'Open right sidebar', rightbarClose: 'Collapse right sidebar', tabFiles: 'Files', tabInfo: 'Session', start: 'Start', newTab: 'New tab', closeTab: 'Close', fullscreen: 'Fullscreen', exitFullscreen: 'Exit fullscreen', reload: 'Read again', reading: 'Reading…', emptyDir: 'Empty directory', guideFiles: 'Workspace files', guideFilesDesc: "Browse files in this session's workspace", guideInfo: 'Session info', guideInfoDesc: 'Workspace, preset, permissions and model', unsupported: 'No preview for this file type', truncatedNote: 'Large file; only the beginning is shown', retry: 'Retry', wrap: 'Wrap lines', renderer: { markdown: 'Markdown', code: 'Code', plain: 'Plain text', image: 'Image' }, noTabType: (k) => `no right-sidebar tab type ${k}`, noSession: 'Open or start a session first', up: 'Up', loadFailed: (id, m) => `Plugin ${id} failed to load: ${m}`, binaryFile: 'Binary file; no preview', truncated: 'truncated',
   workspaces: 'Workspaces', addWorkspace: 'Add workspace', more: 'More', searchSessions: 'Search sessions', searchPlaceholder: 'Search session names', viewOptions: 'View options', groupBy: 'Group by', groupWorkspace: 'Workspace', groupNone: 'In one list', orderBy: 'Order by', orderUpdated: 'Last updated', orderCreated: 'Created', ungrouped: 'Ungrouped',
   wsActions: (n) => `Workspace actions for ${n}`, newSessionIn: (n) => `New session in ${n}`, renameWorkspace: 'Rename', deleteWorkspace: 'Delete workspace', deleteWorkspaceText: (n) => `This removes "${n}" from the workspace list. The folder and session logs will be kept. Its sessions will appear under Ungrouped.`, renameWorkspaceTitle: 'Rename workspace', renameLabel: 'Rename', cannotDeleteDefault: 'The default workspace cannot be deleted',
   sessionActions: 'Session actions', renameSession: 'Rename', copyId: 'Copy session ID', deleteSession: 'Delete session', deleteSessionText: (t) => `Delete "${t}"? Its history is deleted and cannot be restored.`, renameSessionTitle: 'Rename session', noMatch_: 'No matching sessions', close: 'Close', tabGeneral: 'General', tabModels: 'Models', tabPresets: 'Agent presets', tabPlugins: 'Built-in plugins', appearance: 'Appearance', appearanceHint: 'Follow the system or pin light or dark.', themeLight: 'Light', themeDark: 'Dark', themeSystem: 'System', language: 'Language', languageHint: 'Follows the browser language.', builtin: 'Built-in', presetsIntro: "Choose the agent's tools and how it works. Standard for everyday tasks, Creator to extend the harness.", newTaskDefault: 'New task default', pluginsTabIntro: 'Entries of the current profile with their state; install and toggle on the sidebar Plugins page.', refresh: 'Refresh', theme: 'Theme',
@@ -929,6 +978,7 @@ function pluginContext(id) {
     entry: id, locale: zh ? 'zh' : 'en', theme: () => document.documentElement.dataset.theme,
     slots: { register: (spec, mount) => keep(slotRegister(id, spec, mount)), list: slotList },
     api: json, host: { call: (method, args) => hostCall(id, method, args) },
+    rightbar: { openTab: (kind, opts) => rbOpenTab(kind, opts), openFile: (path, params) => rbOpenFile(path, params), close: (tabId) => rbCloseTab(tabId), isExpanded: () => rightbar.open, toggle: () => { rightbar.open = !rightbar.open; saveRightbar(); renderRightbar(); } },
     on: (name, fn) => keep(onPlugin(name, fn)), effect: (fn) => keep(fn),
     session: () => state.session, dispose: () => { while (disposers.length) { try { disposers.pop()(); } catch (err) { console.error(err); } } },
   };
@@ -1864,27 +1914,97 @@ for (const [id, fn] of [['heroWorkspace', openWorkspaceMenu], ['modeChip', openM
   $(id).onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn($(id)); } };
 }
 
-/* ---------- right sidebar ---------- */
-const rightbar = (() => { try { return { open: false, width: 380, tab: 'files', ...JSON.parse(localStorage.getItem('pyh-rightbar') || '{}') }; } catch { return { open: false, width: 380, tab: 'files' }; } })();
-let rbDispose = null;
-function saveRightbar() { try { localStorage.setItem('pyh-rightbar', JSON.stringify({ open: rightbar.open, width: rightbar.width, tab: rightbar.tab })); } catch { /* no storage */ } }
-function renderRightbar() {
-  const bar = $('rightbar'); const tabs = slotList('rightbar.tabs');
-  const show = rightbar.open && !!state.current && state.view === 'chat';
-  bar.hidden = !show; frame.toggleAttribute('data-rightbar', show);
-  frame.style.setProperty('--rb-width', `${Math.max(280, Math.min(rightbar.width, Math.floor(window.innerWidth * 0.7)))}px`);
-  $('rbExpand').hidden = !state.current || state.view !== 'chat' || show;
-  if (rbDispose) { rbDispose(); rbDispose = null; }
-  if (!show) return;
-  if (!tabs.some((t) => t.key === rightbar.tab)) rightbar.tab = tabs[0]?.key;
-  $('rbTabs').innerHTML = tabs.map((t) => `<button type="button" class="rbTab" role="tab" data-tab="${esc(t.key)}" aria-selected="${t.key === rightbar.tab}">${t.icon ? icon(t.icon) : ''}<span>${esc(t.label || t.key)}</span></button>`).join('');
-  const entry = slotGet('rightbar.tabs', rightbar.tab);
-  if (entry) rbDispose = mountEntry(entry, $('rbBody'), { session: state.session, workspace: currentWorkspace() });
-  else $('rbBody').innerHTML = `<div class="rbEmpty">${esc(T.noSession)}</div>`;
+/* ---------- right sidebar: per-session tab layout, guide page, files tree, preview ---------- */
+const rightbar = (() => { try { return { open: false, width: 380, ...JSON.parse(localStorage.getItem('pyh-rightbar') || '{}') }; } catch { return { open: false, width: 380 }; } })();
+function saveRightbar() { try { localStorage.setItem('pyh-rightbar', JSON.stringify({ open: rightbar.open, width: rightbar.width })); } catch { /* no storage */ } }
+const rbLayouts = {}; const rbStores = new Map(); let rbMounted = null;
+function rbLayout() {
+  const sid = state.current; if (!sid) return null;
+  if (!rbLayouts[sid]) {
+    let saved = null; try { saved = JSON.parse(localStorage.getItem(`pyh.rightbar.v1.${sid}`) || 'null'); } catch { /* ignore */ }
+    const tabs = Array.isArray(saved?.tabs) ? saved.tabs.filter((t) => t && typeof t.id === 'string' && typeof t.kind === 'string').map((t) => ({ ...t, params: t.params || {}, title: String(t.title || t.kind) })) : [];
+    rbLayouts[sid] = { tabs, active: typeof saved?.active === 'string' ? saved.active : null, fullscreen: !!saved?.fullscreen, seq: Math.max(Number(saved?.seq) || 0, tabs.length) };
+  }
+  return rbLayouts[sid];
 }
-$('rbTabs').onclick = (e) => { const b = e.target.closest('[data-tab]'); if (b) { rightbar.tab = b.dataset.tab; saveRightbar(); renderRightbar(); } };
+function rbSave() { const sid = state.current; if (!sid || !rbLayouts[sid]) return; try { localStorage.setItem(`pyh.rightbar.v1.${sid}`, JSON.stringify(rbLayouts[sid])); } catch { /* no storage */ } }
+const rbType = (kind) => slotGet('rightbar.tabs', kind);
+const rbGuideEntries = () => slotList('rightbar.tabs').filter((t) => t.guide).sort((a, b) => (a.guide.order ?? 100) - (b.guide.order ?? 100));
+const rbDefaultKind = () => { const e = rbGuideEntries(); return e.length === 1 ? e[0].key : 'guide'; };
+const rbContentId = (type, params) => (type.multiple ? null : typeof type.contentId === 'function' ? type.contentId(params) : type.key);
+function rbMakeTab(L, kind, params = {}) {
+  const type = rbType(kind) || { key: kind };
+  return { id: `t${++L.seq}`, kind, contentId: rbContentId(type, params), params, title: typeof type.title === 'function' ? type.title(params) : (type.label || kind) };
+}
+function rbOpenTab(kind, opts = {}) {
+  const L = rbLayout(); if (!L) return null;
+  const type = rbType(kind); if (!type) { toast(T.noTabType(kind)); return null; }
+  const params = opts.params || {}; const contentId = rbContentId(type, params);
+  let tab = contentId ? L.tabs.find((t) => t.kind === kind && t.contentId === contentId) : null;
+  if (!tab) {
+    tab = rbMakeTab(L, kind, params);
+    const at = opts.replaceTab ? L.tabs.findIndex((t) => t.id === opts.replaceTab) : -1;
+    if (at >= 0) { rbForget(L.tabs[at].id); L.tabs.splice(at, 1, tab); } else L.tabs.push(tab);
+  } else if (opts.params) { tab.params = params; if (rbMounted?.id === tab.id) rbUnmount(); }
+  L.active = tab.id; rightbar.open = true; saveRightbar(); rbSave(); renderRightbar();
+  return tab.id;
+}
+const rbOpenFile = (path, params) => rbOpenTab('preview', { params: { ...(params || {}), path } });
+function rbForget(id) { if (rbMounted?.id === id) rbUnmount(); rbStores.delete(id); }
+function rbUnmount() { if (!rbMounted) return; try { rbMounted.dispose(); } catch (err) { console.error(err); } rbMounted = null; $('rbBody').innerHTML = ''; rbMenuClose(); }
+function rbCloseTab(id) {
+  const L = rbLayout(); if (!L) return;
+  const i = L.tabs.findIndex((t) => t.id === id); if (i < 0) return;
+  if (L.tabs[i].kind === 'guide' && L.tabs.length === 1) return;
+  rbForget(id); L.tabs.splice(i, 1);
+  if (!L.tabs.length) { rightbar.open = false; saveRightbar(); }
+  else if (L.active === id) L.active = L.tabs[Math.min(i, L.tabs.length - 1)].id;
+  rbSave(); renderRightbar();
+}
+function rbTabApi(tab) {
+  if (!rbStores.has(tab.id)) rbStores.set(tab.id, {});
+  return {
+    id: tab.id, kind: tab.kind, params: tab.params, title: tab.title, store: rbStores.get(tab.id),
+    setTitle(t) { tab.title = String(t); rbSave(); const chip = $('rbTabs').querySelector(`[data-tab="${tab.id}"] .label`); if (chip) chip.textContent = tab.title; },
+    close: () => rbCloseTab(tab.id), openTab: rbOpenTab, openFile: rbOpenFile, replaceWith: (kind, opts) => rbOpenTab(kind, { ...(opts || {}), replaceTab: tab.id }),
+  };
+}
+function renderRightbar() {
+  const bar = $('rightbar'); const L = rbLayout();
+  const show = rightbar.open && !!L && state.view === 'chat';
+  if (rbMounted && (!show || rbMounted.sid !== state.current)) rbUnmount();
+  if (show && !L.tabs.length) { const t = rbMakeTab(L, rbDefaultKind()); L.tabs.push(t); L.active = t.id; rbSave(); }
+  const full = show && (L.fullscreen || mobile());
+  bar.hidden = !show; bar.toggleAttribute('data-fullscreen', full);
+  frame.toggleAttribute('data-rightbar', show && !mobile());
+  frame.style.setProperty('--rb-width', `${Math.max(280, Math.min(rightbar.width, Math.floor(window.innerWidth * 0.7)))}px`);
+  $('rbExpand').hidden = !L || state.view !== 'chat' || show;
+  if (!show) return;
+  if (!L.tabs.some((t) => t.id === L.active)) L.active = L.tabs[0].id;
+  const soleGuide = L.tabs.length === 1 && L.tabs[0].kind === 'guide';
+  $('rbTabs').innerHTML = L.tabs.map((t) => {
+    const type = rbType(t.kind); const quiet = t.kind === 'guide' && soleGuide;
+    return `<div class="rbChip" role="tab" tabindex="0" data-tab="${esc(t.id)}" aria-selected="${t.id === L.active}" ${quiet ? 'data-quiet' : ''} title="${esc(t.title)}">${type?.icon ? icon(type.icon, `ico ${type.iconClass || ''}`) : ''}<span class="label">${esc(t.title)}</span>${quiet ? '' : `<button type="button" class="close" data-close="${esc(t.id)}" title="${esc(T.closeTab)}">${icon('x')}</button>`}</div>`;
+  }).join('') + (L.tabs.some((t) => t.kind === 'guide') ? '' : `<button type="button" class="rbAdd" data-add title="${esc(T.newTab)}">${icon('plus')}</button>`);
+  const fullBtn = $('rbFull'); fullBtn.hidden = mobile(); fullBtn.innerHTML = icon(L.fullscreen ? 'minimize' : 'maximize'); fullBtn.title = L.fullscreen ? T.exitFullscreen : T.fullscreen;
+  const tab = L.tabs.find((t) => t.id === L.active);
+  if (rbMounted && rbMounted.id !== tab.id) rbUnmount();
+  if (!rbMounted) {
+    const type = rbType(tab.kind); const body = $('rbBody');
+    if (!type) { body.innerHTML = `<div class="rbEmpty">${esc(T.noTabType(tab.kind))}</div>`; rbMounted = { id: tab.id, sid: state.current, dispose() {} }; }
+    else rbMounted = { id: tab.id, sid: state.current, dispose: mountEntry(type, body, { session: state.session, workspace: currentWorkspace(), tab: rbTabApi(tab) }) };
+  }
+}
+$('rbTabs').onclick = (e) => {
+  const close = e.target.closest('[data-close]'); if (close) { rbCloseTab(close.dataset.close); return; }
+  if (e.target.closest('[data-add]')) { rbOpenTab('guide'); return; }
+  const chip = e.target.closest('[data-tab]'); if (chip) { const L = rbLayout(); L.active = chip.dataset.tab; rbSave(); renderRightbar(); }
+};
+$('rbTabs').onauxclick = (e) => { const chip = e.target.closest('[data-tab]'); if (chip && e.button === 1) { e.preventDefault(); rbCloseTab(chip.dataset.tab); } };
+$('rbTabs').onkeydown = (e) => { const chip = e.target.closest('[data-tab]'); if (!chip) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); chip.click(); } if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); rbCloseTab(chip.dataset.tab); } };
 $('rbExpand').onclick = () => { rightbar.open = true; saveRightbar(); if (!mobile()) delete frame.dataset.collapsed; renderRightbar(); };
 $('rbCollapse').onclick = () => { rightbar.open = false; saveRightbar(); renderRightbar(); };
+$('rbFull').onclick = () => { const L = rbLayout(); if (L) { L.fullscreen = !L.fullscreen; rbSave(); renderRightbar(); } };
 $('rbHandle').onmousedown = (e) => {
   e.preventDefault(); frame.dataset.resizing = '';
   const move = (ev) => { rightbar.width = Math.max(280, Math.min(window.innerWidth - ev.clientX, Math.floor(window.innerWidth * 0.7))); frame.style.setProperty('--rb-width', `${rightbar.width}px`); };
@@ -1893,42 +2013,122 @@ $('rbHandle').onmousedown = (e) => {
 };
 onSlot('rightbar.tabs', renderRightbar);
 window.addEventListener('resize', () => { if (rightbar.open) renderRightbar(); });
+let rbMenuEl = null;
+function rbMenuClose() { if (rbMenuEl) { rbMenuEl.remove(); rbMenuEl = null; document.removeEventListener('mousedown', rbMenuOutside, true); } }
+function rbMenuOutside(e) { if (rbMenuEl && !rbMenuEl.contains(e.target)) rbMenuClose(); }
+function rbMenu(anchor, items, onPick) {
+  rbMenuClose();
+  rbMenuEl = document.createElement('div'); rbMenuEl.className = 'menu rbMenu'; rbMenuEl.setAttribute('role', 'menu');
+  rbMenuEl.innerHTML = items.map(([id, label, checked]) => rowHtml(id, label, '', !!checked)).join('');
+  (anchor.closest('.fileHead') || anchor.parentElement).appendChild(rbMenuEl);
+  rbMenuEl.onclick = (e) => { const r = e.target.closest('[data-pick]'); if (r) { rbMenuClose(); onPick(r.dataset.pick); } };
+  document.addEventListener('mousedown', rbMenuOutside, true);
+}
 function fmtSize(n) { if (n == null) return ''; if (n < 1024) return `${n} B`; if (n < 1048576) return `${(n / 1024).toFixed(1)} KB`; return `${(n / 1048576).toFixed(1)} MB`; }
+const FILE_KIND = { md: 'md', markdown: 'md', mdx: 'md', txt: 'text', log: 'text', py: 'code', js: 'code', mjs: 'code', cjs: 'code', ts: 'code', jsx: 'code', tsx: 'code', html: 'code', css: 'code', scss: 'code', sh: 'code', zsh: 'code', bash: 'code', rs: 'code', go: 'code', java: 'code', kt: 'code', c: 'code', h: 'code', cpp: 'code', hpp: 'code', rb: 'code', php: 'code', swift: 'code', sql: 'code', json: 'data', yaml: 'data', yml: 'data', toml: 'data', ini: 'data', cfg: 'data', csv: 'data', xml: 'data', lock: 'data', env: 'data', png: 'image', jpg: 'image', jpeg: 'image', gif: 'image', webp: 'image', svg: 'image', bmp: 'image', ico: 'image', avif: 'image', pdf: 'bin', zip: 'bin', gz: 'bin', tar: 'bin', whl: 'bin', sqlite3: 'bin', db: 'bin' };
+const fileExt = (name) => (name.includes('.') ? name.slice(name.lastIndexOf('.') + 1).toLowerCase() : '');
+const fileKind = (name) => FILE_KIND[fileExt(name)] || 'text';
+const CODE_LANG = { py: 'python', js: 'javascript', mjs: 'javascript', cjs: 'javascript', ts: 'typescript', sh: 'bash', zsh: 'bash', yml: 'yaml', md: 'markdown', rs: 'rust', kt: 'kotlin', rb: 'ruby' };
+const codeLang = (name) => CODE_LANG[fileExt(name)] || fileExt(name) || 'text';
+const fileIcon = (name) => icon('file', `ico ft-${fileKind(name)}`);
+function pathLabel(full) { const parts = String(full || '/').split('/'); const last = parts.pop(); return `<span class="pathLabel" title="${esc(full)}"><bdi dir="ltr">${esc(parts.length ? parts.join('/') + '/' : '')}<b>${esc(last || '/')}</b></bdi></span>`; }
+function fitPathLabels(el) { el.querySelectorAll('.pathLabel').forEach((p) => p.toggleAttribute('data-overflow', p.scrollWidth > p.clientWidth + 1)); }
+function guideTab(el, props) {
+  const entries = rbGuideEntries(); const showDesc = entries.length <= 4;
+  el.innerHTML = `<div class="rbGuide"><div class="guideMark">${icon('compass')}</div><div class="guideCards">${entries.map((t) => `<button type="button" class="guideCard" data-kind="${esc(t.key)}">${icon(t.icon || 'box', `ico ${t.iconClass || ''}`)}<span class="guideMain"><span class="guideTitle">${esc(t.guide.title || t.label || t.key)}</span>${showDesc && t.guide.description ? `<span class="guideDesc">${esc(t.guide.description)}</span>` : ''}</span></button>`).join('') || `<div class="rbEmpty">${esc(T.noSession)}</div>`}</div></div>`;
+  el.querySelectorAll('[data-kind]').forEach((b) => { b.onclick = () => props.tab.replaceWith(b.dataset.kind); });
+  return () => {};
+}
 function filesTab(el, props) {
-  const root = props.workspace || null; let path = '/'; let alive = true;
+  const root = props.workspace || ''; const st = props.tab.store; st.expanded ||= {}; st.cache ||= {}; st.loading ||= {};
+  let alive = true;
   const q = (p) => `?path=${encodeURIComponent(p)}${root ? '&root=' + encodeURIComponent(root) : ''}`;
-  async function list(next) {
-    let d;
-    try { d = await json('/workspaces/files' + q(next)); } catch (err) { el.innerHTML = `<div class="rbEmpty">${esc(err.message)}</div>`; return; }
-    if (!alive) return; path = d.path;
-    const parent = path === '/' ? null : path.replace(/\/[^/]*$/, '') || '/';
-    el.innerHTML = `<div class="fileHead">${parent !== null ? `<button type="button" class="iconButton sm" data-up title="${esc(T.up)}">${icon('arrow-up')}</button>` : icon('folder')}<span class="path" title="${esc(d.root + path)}">${esc(path)}</span></div>
-      <div>${d.entries.map((x) => `<button type="button" class="fileRow" data-path="${esc(x.path)}" ${x.dir ? 'data-dir' : ''} ${x.hidden ? 'data-hidden' : ''}>${icon(x.dir ? 'folder' : 'file')}<span class="name">${esc(x.name)}</span><span class="size">${esc(fmtSize(x.size))}</span></button>`).join('') || `<div class="rbEmpty">—</div>`}</div>`;
-    el.querySelector('[data-up]')?.addEventListener('click', () => list(parent));
-    el.querySelectorAll('[data-path]').forEach((b) => { b.onclick = () => (b.hasAttribute('data-dir') ? list(b.dataset.path) : preview(b.dataset.path)); });
+  el.innerHTML = `<div class="fileHead">${pathLabel(root || '/')}<span class="headTools"><button type="button" class="iconButton sm" data-reload title="${esc(T.reload)}">${icon('refresh')}</button></span></div><div class="fileTree" role="tree"></div>`;
+  const tree = el.querySelector('.fileTree');
+  fitPathLabels(el);
+  async function load(path) {
+    st.loading[path] = true; draw();
+    try { const d = await json('/workspaces/files' + q(path)); st.cache[path] = { entries: d.entries }; } catch (err) { st.cache[path] = { error: err.message }; }
+    delete st.loading[path]; if (alive) draw();
   }
-  async function preview(file) {
-    let d;
-    try { d = await json('/workspaces/file' + q(file)); } catch (err) { toast(err.message); return; }
-    if (!alive) return;
-    const back = file.replace(/\/[^/]*$/, '') || '/';
-    el.innerHTML = `<div class="fileHead"><button type="button" class="iconButton sm" data-back title="${esc(T.up)}">${icon('arrow-up')}</button><span class="path" title="${esc(file)}">${esc(file)}</span><span>${esc(fmtSize(d.size))}${d.truncated ? ' · ' + esc(T.truncated) : ''}</span></div>${d.binary ? `<div class="rbEmpty">${esc(T.binaryFile)}</div>` : `<pre class="filePreview"></pre>`}`;
-    if (!d.binary) el.querySelector('.filePreview').textContent = d.text;
-    el.querySelector('[data-back]').onclick = () => list(back);
+  function rows(path, depth) {
+    const c = st.cache[path]; const pad = 12 + depth * 14;
+    if (!c) return st.loading[path] ? `<div class="fileNote" style="padding-left:${pad + 23}px">${esc(T.reading)}</div>` : '';
+    if (c.error) return `<div class="fileNote" data-tone="error" style="padding-left:${pad + 23}px">${esc(c.error)}</div>`;
+    if (!c.entries.length) return `<div class="fileNote" style="padding-left:${pad + 23}px">${esc(T.emptyDir)}</div>`;
+    return c.entries.map((x) => {
+      const open = x.dir && !!st.expanded[x.path];
+      return `<button type="button" class="fileRow" role="treeitem" data-path="${esc(x.path)}" ${x.dir ? `data-dir aria-expanded="${open}"` : ''} ${x.hidden ? 'data-hidden' : ''} style="padding-left:${pad}px" title="${esc(x.name)}">${x.dir ? icon(open ? 'folder-open' : 'folder', 'ico ft-folder') : fileIcon(x.name)}<span class="name">${esc(x.name)}</span>${x.dir ? '' : `<span class="size">${esc(fmtSize(x.size))}</span>`}</button>${open ? rows(x.path, depth + 1) : ''}`;
+    }).join('');
   }
-  list('/');
-  return () => { alive = false; };
+  function draw() { const top = tree.scrollTop; tree.innerHTML = rows('/', 0); tree.scrollTop = top; }
+  tree.onclick = (e) => {
+    const row = e.target.closest('[data-path]'); if (!row) return;
+    const path = row.dataset.path;
+    if (!row.hasAttribute('data-dir')) { props.tab.openFile(path); return; }
+    if (st.expanded[path]) delete st.expanded[path]; else { st.expanded[path] = true; if (!st.cache[path]) { load(path); return; } }
+    draw();
+  };
+  const refresh = () => { load('/'); for (const p of Object.keys(st.expanded)) load(p); };
+  el.querySelector('[data-reload]').onclick = refresh;
+  const offRun = onPlugin('run', (ev) => { if (ev.type === 'done') refresh(); });
+  if (st.cache['/']) draw(); else load('/');
+  return () => { alive = false; offRun(); };
+}
+function previewTab(el, props) {
+  const path = props.tab.params.path || '/'; const root = props.workspace || ''; const st = props.tab.store; const name = path.split('/').pop() || path;
+  const kind = fileKind(name);
+  const renderers = kind === 'md' ? ['markdown', 'plain'] : kind === 'image' ? ['image'] : ['code', 'plain'];
+  st.renderer = renderers.includes(st.renderer) ? st.renderer : renderers[0]; st.wrap ??= true;
+  let alive = true; let data = null;
+  const q = `?path=${encodeURIComponent(path)}${root ? '&root=' + encodeURIComponent(root) : ''}`;
+  el.innerHTML = `<div class="fileHead">${pathLabel(path)}<span class="headTools" data-tools></span></div><div class="docBody" data-doc></div>`;
+  const tools = el.querySelector('[data-tools]'); const doc = el.querySelector('[data-doc]');
+  fitPathLabels(el);
+  function drawTools() {
+    tools.innerHTML = `${renderers.length > 1 ? `<button type="button" class="btn outline sm" data-renderer><span>${esc(T.renderer[st.renderer])}</span>${icon('chev-down')}</button>` : ''}${st.renderer === 'code' || st.renderer === 'plain' ? `<button type="button" class="iconButton sm" data-wrap aria-pressed="${st.wrap}" title="${esc(T.wrap)}">${icon('wrap')}</button>` : ''}<button type="button" class="iconButton sm" data-reload title="${esc(T.reload)}">${icon('refresh')}</button>`;
+    tools.querySelector('[data-renderer]')?.addEventListener('click', (e) => rbMenu(e.currentTarget, renderers.map((r) => [r, T.renderer[r], r === st.renderer]), (r) => { st.renderer = r; drawTools(); drawDoc(); }));
+    tools.querySelector('[data-wrap]')?.addEventListener('click', () => { st.wrap = !st.wrap; drawTools(); drawDoc(); });
+    tools.querySelector('[data-reload]').onclick = load;
+  }
+  function drawDoc() {
+    if (!data) return;
+    if (st.renderer === 'image') { doc.innerHTML = `<div class="docImage"><img src="/api/workspaces/file/raw${q}&t=${Date.now()}" alt="${esc(name)}"></div>`; return; }
+    if (data.binary) { doc.innerHTML = `<div class="docEmpty">${fileIcon(name)}<p>${esc(T.unsupported)}</p></div>`; return; }
+    const note = data.truncated ? `<div class="fileNote" data-tone="warn">${esc(T.truncatedNote)}</div>` : '';
+    if (st.renderer === 'markdown') doc.innerHTML = `<div class="md docMd">${markdown(data.text)}</div>${note}`;
+    else if (st.renderer === 'code') {
+      doc.innerHTML = `<div class="docCode" ${st.wrap ? 'data-wrap' : ''}><div class="codeBlock"><div class="codeBanner"><span class="lang">${esc(codeLang(name))}</span><button type="button" data-copy>${icon('copy')}<span>${esc(T.copy)}</span></button></div><pre><code></code></pre></div></div>${note}`;
+      doc.querySelector('code').textContent = data.text;
+      doc.querySelector('[data-copy]').onclick = (e) => copyText(data.text, e.currentTarget);
+    } else { doc.innerHTML = `<pre class="filePreview" ${st.wrap ? 'data-wrap' : ''}></pre>${note}`; doc.querySelector('pre').textContent = data.text; }
+  }
+  async function load() {
+    if (st.renderer === 'image') { data = { binary: true }; drawDoc(); return; }
+    doc.innerHTML = `<div class="fileNote">${esc(T.reading)}</div>`;
+    try { data = await json('/workspaces/file' + q); } catch (err) {
+      if (!alive) return;
+      doc.innerHTML = `<div class="docEmpty">${fileIcon(name)}<p>${esc(err.message)}</p><button type="button" class="btn outline sm" data-retry>${esc(T.retry)}</button></div>`;
+      doc.querySelector('[data-retry]').onclick = load; return;
+    }
+    if (alive) drawDoc();
+  }
+  drawTools(); load();
+  const offRun = onPlugin('run', (ev) => { if (ev.type === 'done') load(); });
+  return () => { alive = false; offRun(); };
 }
 function infoTab(el, props) {
   const s = props.session;
   if (!s) { el.innerHTML = `<div class="rbEmpty">${esc(T.noSession)}</div>`; return () => {}; }
   const rows = [['ID', s.id], [T.workspace_, s.workspace || props.workspace], [T.preset_, presetLabel(s.preset || state.agent?.default_preset)], [T.mode_, modeLabel(s.mode || state.agent?.default_mode)], [T.model, s.model || state.directory?.default || ''], ['Created', new Date((s.created_at || 0) * 1000).toLocaleString()], ['Updated', new Date((s.updated_at || 0) * 1000).toLocaleString()]];
-  el.innerHTML = `<dl class="kvTable">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v || '')}</dd>`).join('')}</dl><div class="actionsRow" style="padding:0 14px"><button type="button" class="btn outline sm" data-copy-id>${icon('copy')}<span>${esc(T.copyId)}</span></button></div>`;
+  el.innerHTML = `<div class="rbScroll"><dl class="kvTable">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v || '')}</dd>`).join('')}</dl><div class="actionsRow" style="padding:0 14px"><button type="button" class="btn outline sm" data-copy-id>${icon('copy')}<span>${esc(T.copyId)}</span></button></div></div>`;
   el.querySelector('[data-copy-id]').onclick = (e) => copyText(s.id, e.currentTarget);
   return () => {};
 }
-slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'files', label: T.tabFiles, icon: 'folder', order: 1 }, filesTab);
-slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'info', label: T.tabInfo, icon: 'eye', order: 2 }, infoTab);
+slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'guide', label: T.start, icon: 'compass' }, guideTab);
+slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'files', label: T.tabFiles, icon: 'folder', iconClass: 'ft-folder', guide: { title: T.guideFiles, description: T.guideFilesDesc, order: 10 } }, filesTab);
+slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'preview', label: T.tabFiles, icon: 'file', contentId: (p) => p.path, title: (p) => String(p.path || '').split('/').pop() || '/' }, previewTab);
+slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'info', label: T.tabInfo, icon: 'eye', guide: { title: T.guideInfo, description: T.guideInfoDesc, order: 20 } }, infoTab);
 
 /* ---------- settings: models ---------- */
 const models = { data: null, open: null, draft: null, busy: false };
