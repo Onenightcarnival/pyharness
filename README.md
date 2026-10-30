@@ -41,7 +41,11 @@ uv run pyh run         # supervisor + worker: http://127.0.0.1:8765
 默认模型：`echo:echo`，无需凭据。真实模型：
 
 ```bash
-uv sync --extra deepseek            # 或 openai / anthropic
+export OPENAI_API_KEY=...           # OpenAI 及兼容服务：langchain-openai 随 pyharness-llm 安装
+export PYH_MODEL=openai:gpt-4o
+uv run pyh run
+
+uv sync --extra deepseek            # 或 anthropic：其他提供方按需安装
 export DEEPSEEK_API_KEY=...
 export PYH_MODEL=deepseek:deepseek-chat
 uv run pyh run
@@ -55,7 +59,7 @@ uv run pyh run
 
 | 命令 | 效果 |
 |---|---|
-| `pyh init [--template web\|empty]` | 创建 profile |
+| `pyh init [--template web\|creator\|empty]` | 创建 profile；`creator`：`base` + `creator` bundle，agent 获得插件编写 skills |
 | `pyh run [--patch FILE] [--no-supervisor]` | 运行 profile |
 | `pyh dump-config` | 组合后的配置树；每个条目标注来源层 |
 | `pyh preflight [-v]` | 独立进程启动当前配置，输出报告 |

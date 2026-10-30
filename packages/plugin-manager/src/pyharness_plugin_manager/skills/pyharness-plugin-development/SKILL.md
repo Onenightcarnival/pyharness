@@ -1,0 +1,50 @@
+---
+name: pyharness-plugin-development
+description: "Use when designing, reviewing, writing, installing, enabling, disabling, configuring, or debugging a plugin, bundle, tool, event listener, prompt section, or HTTP route of this harness profile, and when a request needs a capability the current tools do not have."
+---
+
+# Persistent harness plugins
+
+A plugin is a Python distribution installed into the current profile with `plugin_manager action=install_bundle`. The change affects every session of the profile and survives restarts. Profile files (`profile.yaml`, `harness.patch.yaml`, `site/`) change only through `plugin_manager`; a hand-made write there is denied by the file tools.
+
+Every mutating `plugin_manager` action waits for the user's approval; `list` and `template` do not. Call mutating actions only when their result decides the next step.
+
+## Design or review
+
+Read the references below and inspect the proposed or existing plugin against the live API with `harness_inspect`. Report findings. Do not write files or install anything unless the user asks for implementation.
+
+## Deliver a working plugin first
+
+1. Resolve the requested result: a tool, a listener on an event, a prompt section, an HTTP route, a service, or a combination. Choose a small first version; install it before refinement.
+2. Discover only the APIs that version needs: `harness_inspect topic=services name=<key>` for methods and signatures, `topic=events` for event names and dispatch modes, `topic=config name=<entry id>` for a config schema and the package directory, `topic=tools` and `topic=routes` for what exists. Read `references/practices.md` before choosing an extension point for anything beyond a plain tool.
+3. `plugin_manager action=template target=<name>` returns starter files (`variant=tool-and-route` adds a listener and a route). Write them under `/plugins/<name>/` with the file tools, then edit. The same files are in this skill's `templates/` directory with `__DIST__`, `__MODULE__`, `__BUNDLE__`, `__TITLE__` tokens. Check the module imports (`python -c "import ..."` through the shell when available) before installing.
+4. `plugin_manager action=install_bundle target=/plugins/<name>`. Read the result's `application`:
+   - `rejected`: `stage` and `errors` say why; the profile is unchanged. Fix and install again.
+   - `restart-scheduled`: saved; the harness restarts after this turn and this session continues in the next generation. End the turn with a one-line status.
+   - `saved-restart-required`: saved; unsupervised harness, applies on the next start.
+5. In the new generation: `harness_inspect topic=plugins name=<entry id>` shows the entry `active`; exercise the capability (call the tool, request the route through the shell or ask the user); fix defects in the same plugin. A rollback marker in the continuation message means the generation failed to boot and the previous configuration runs: read `boot-error.json` in the profile's `runtime/` directory through `harness_inspect topic=overview` paths, fix, reinstall.
+6. Finish with the entry id, what was verified, and what was not. Do not add speculative features.
+
+## Enable, disable, configure a shipped plugin
+
+`plugin_manager action=set_plugin_enabled target=<entry id> enabled=<bool>` toggles an entry; `set_bundle_enabled` toggles a bundle. Configuration of an existing entry changes through a bundle whose patch overrides that entry (`editing-pyharness-compositions` skill): `id`, `config`, `merge: true`.
+
+## Knowledge sources, in order
+
+1. Inspection: `harness_inspect` answers from the running process: services and their methods, events with modes and listeners, config JSON Schemas and effective values, registered tools and approval gates, HTTP routes, prompt sections.
+2. Package documentation: `harness_inspect topic=config name=<entry id>` returns `package_dir`; the module docstring and `doc` describe the contract. Read `<package_dir>/__init__.py` with the file tools when the inspection leaves a question open; it is outside the workspace, so use the absolute path.
+3. Reference files of this skill (table below).
+
+## Read next
+
+Paths are relative to this skill's directory, which the skill catalog shows. Read with the file tools; the directory is read-only.
+
+| Task | File |
+|---|---|
+| Bundle layout, entry points, plugin forms, `inject`, `Config`, ownership of registrations | `references/host-plugin.md` |
+| Choosing extension points: tool pipeline, events, prompt, services, stability rules | `references/practices.md` |
+| HTTP routes and pages on `ctx.http` | `references/http.md` |
+| What can be verified after the restart, and what cannot | `references/verification.md` |
+| Starter files | `templates/basic/`, `templates/tool-and-route/` |
+| Patch dialect: ids, merge, remove, position, interpolation, isolate | the `editing-pyharness-compositions` skill |
+| Installed plugin packages and bundles | the `pyharness-composition-reference` skill |

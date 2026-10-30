@@ -11,7 +11,9 @@
 | profile + bundle + `cordis.patch.yml` | profile + bundle（entry point）+ `harness.patch.yaml`；按 id 寻址的分层 patch |
 | `isolate` | 组条目的 `isolate: [key]` |
 | HMR：进程内热替换 | 换代：supervisor + worker generation |
-| Plugin Manager + 创造模式 | `plugin_manager` + `harness_inspect` + 插件编写提示词片段 |
+| Plugin Manager + 创造模式（`cordis` preset：`dsh-tool-cordis` + skills） | `plugin_manager` + `harness_inspect` + `creator` bundle：skills 挂载到 `/skills/pyharness/`，deepagents skills 中间件按需加载 |
+| `dsh-harness-dev-context` | `pyharness-dev-context` 提示词段 |
+| `dsh-skill` + `dsh-skill-filesystem` + `dsh-tool-skill` | deepagents `SkillsMiddleware`；`ctx.agentLoop.add_skills` |
 | 插件的浏览器端（client slot） | 无；Web 界面是挂路由的插件 |
 
 ## 生效方式
@@ -48,5 +50,5 @@ bundle 中条目的位置（`after` / `before` / `parent`）对应 mount 路径�
 | dsh 能力 | pyharness |
 |---|---|
 | 插件的浏览器端（client slot） | 无；界面扩展仅限 HTTP 路由 |
-| 每会话 agent preset（preset + isolate realm） | 无；全部会话共享一套组合 |
+| 每会话 agent preset（preset + isolate realm） | 无；全部会话共享一套组合。创造模式按 profile 启用（`creator` bundle），不按会话 |
 | 进程内热替换 | 换代重启 |

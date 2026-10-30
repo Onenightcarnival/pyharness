@@ -1,0 +1,9 @@
+title: __TITLE__
+description: __TITLE__
+patch:
+  - id: __BUNDLE__
+    name: __DIST__
+    after: tools
+    config:
+      prefix: /__BUNDLE__
+      max_note_chars: 2000

@@ -161,7 +161,7 @@ def build_parser() -> argparse.ArgumentParser:
         return p
 
     p = with_profile(sub.add_parser("init", help="create a profile from a template"))
-    p.add_argument("--template", default=None, help="web (default) or empty")
+    p.add_argument("--template", default=None, help="web (default), creator or empty")
     p.add_argument("--force", action="store_true")
     p.set_defaults(func=cmd_init)
 

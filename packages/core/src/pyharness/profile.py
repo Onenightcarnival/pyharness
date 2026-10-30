@@ -31,6 +31,7 @@ PATCH_HEADER = "# Patch operations addressed by entry id. Managed by pyharness; 
 
 TEMPLATES: dict[str, dict[str, Any]] = {
     "web": {"title": "Web", "bundles": ["base"]},
+    "creator": {"title": "Creator", "bundles": ["base", "creator"]},
     "empty": {"title": "Empty", "bundles": []},
 }
 

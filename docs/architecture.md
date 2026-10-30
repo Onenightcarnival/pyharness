@@ -44,7 +44,7 @@ class Cache(Service):
     async def start(self): ...
 
     def put(self, k, v):
-        self.caller.on_dispose(...)   # caller: context of the calling plugin
+        self.caller.on_dispose(...)  # caller: context of the calling plugin
 ```
 
 ## Context

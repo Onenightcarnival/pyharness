@@ -9,6 +9,7 @@ uv sync                         # workspace 与 dev 依赖组
 uv run pytest -q                # 全部测试
 uv run ruff format .            # 格式化
 uv run ruff check --fix .       # lint；规则见 pyproject.toml [tool.ruff]
+uv run python scripts/gen_packages.py   # 新增或改动插件包后：重新生成 skills 的包清单
 ```
 
 | 测试 | 条件 |
@@ -27,6 +28,9 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 | `packages/core` | 内核：服务容器、事件、组合、Loader、生命周期、CLI |
 | `packages/*` | 内核插件；每个包一个 entry point |
 | `packages/bundle-base` | `base` bundle |
+| `packages/bundle-creator` | `creator` bundle：插件编写 skills |
+| `packages/plugin-manager/src/pyharness_plugin_manager/skills` | agent 可读的 skills；`references/packages.md` 由 `scripts/gen_packages.py` 生成 |
+| `scripts/` | 维护脚本 |
 | `examples/pyharness-audit` | 第三方 bundle 示例；不属于 workspace |
 | `examples/patches` | patch 示例：Postgres、shell |
 | `tests/` | 测试 |

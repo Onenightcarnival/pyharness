@@ -14,6 +14,7 @@ Contract with ``ctx.agents``: ``build()`` returns a LangGraph graph with ``astre
 | files, shell  | ``ctx.backend`` and ``ctx.workspace`` permissions, when present |
 | approvals     | ``ctx.tools.interrupt_on()`` and ``config.interrupt_on``        |
 | subagents     | ``config.subagents`` and :meth:`DeepAgentsLoop.add_subagent`    |
+| skills        | ``config.skills`` and :meth:`DeepAgentsLoop.add_skills`         |
 
 :class:`HarnessMiddleware` runs in the main agent and in every declarative subagent:
 
@@ -23,11 +24,17 @@ Contract with ``ctx.agents``: ``build()`` returns a LangGraph graph with ``astre
 | tool call  | ``ctx.tools.execute``               |
 
 ``agent-loop/build`` (waterfall) receives the ``create_deep_agent`` keyword arguments.
+
+Skills directories added by plugins are mounted read-only for the model at ``/skills/<label>/``
+(``CompositeBackend`` route over ``ctx.backend``); deepagents lists them in the system prompt and
+the model reads a skill with ``read_file``.
 """
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from langchain.agents.middleware import AgentMiddleware
@@ -35,6 +42,8 @@ from pydantic import BaseModel, Field
 from pyharness_tools import ToolCall
 
 from pyharness import Service
+
+SKILLS_MOUNT = "/skills"
 
 DEFAULT_SYSTEM_PROMPT = (
     "Role: agent inside pyharness, a plugin-based agent harness.\nStyle: direct answers; tools where they help; failures reported plainly."
@@ -49,7 +58,7 @@ class LoopConfig(BaseModel):
         default_factory=list,
         description="Declarative deepagents SubAgent specs; `tools` entries are registered tool names or tools.",
     )
-    skills: list[str] | None = Field(None, description="Skill source paths, relative to the backend root.")
+    skills: list[str] | None = Field(None, description="Skill source paths in the backend (workspace paths such as /skills/mine/).")
     memory: list[str] | None = Field(None, description="AGENTS.md-style memory files, relative to the backend root.")
     recursion_limit: int = 200
 
@@ -111,6 +120,7 @@ class DeepAgentsLoop(Service):
         super().__init__(ctx, config)
         self._subagents: list[tuple[dict[str, Any], str]] = []
         self._middleware: list[tuple[AgentMiddleware, str]] = []
+        self._skills: list[tuple[str, Path, str]] = []  # (label, directory, owner)
 
     async def start(self) -> None:
         self.ctx.define_event(
@@ -144,6 +154,40 @@ class DeepAgentsLoop(Service):
 
     def subagents(self) -> list[dict[str, Any]]:
         return [{"name": s.get("name"), "owner": owner} for s, owner in self._subagents]
+
+    def add_skills(self, directory: str | Path, label: str | None = None) -> Any:
+        """Mount ``directory`` (``<skill>/SKILL.md`` layout) read-only at ``/skills/<label>/``; returns the disposer."""
+        path = Path(directory).expanduser().resolve()
+        if not path.is_dir():
+            raise ValueError(f"skills directory {path} does not exist")
+        slug = re.sub(r"[^a-z0-9]+", "-", (label or path.name).lower()).strip("-") or "skills"
+        if any(existing == slug for existing, _, _ in self._skills):
+            raise ValueError(f"skills label {slug!r} is already mounted")
+        item = (slug, path, self.caller.entry_id)
+        self._skills.append(item)
+        return self.caller.on_dispose(lambda: self._skills.remove(item) if item in self._skills else None)
+
+    def skills(self) -> list[dict[str, Any]]:
+        """Mounted skills directories: ``label``, ``path``, ``mount``, ``owner``."""
+        return [{"label": s, "path": str(p), "mount": f"{SKILLS_MOUNT}/{s}/", "owner": o} for s, p, o in self._skills]
+
+    def _backend_and_skills(self) -> tuple[Any, list[str], list[Any]]:
+        """``ctx.backend`` with skills routes, the skill source paths, and the write-deny rule for the mounts."""
+        backend = self.ctx.get("backend", None)
+        sources = list(self.config.skills or [])
+        if not self._skills:
+            return backend, sources, []
+        from deepagents import FilesystemPermission
+        from deepagents.backends import CompositeBackend, FilesystemBackend, StateBackend
+
+        routes: dict[str, Any] = {}
+        for slug, path, _ in self._skills:
+            mount = f"{SKILLS_MOUNT}/{slug}/"
+            routes[mount] = FilesystemBackend(root_dir=path, virtual_mode=True)
+            sources.append(mount)
+        composite = CompositeBackend(default=backend if backend is not None else StateBackend(), routes=routes)
+        deny = FilesystemPermission(operations=["write"], paths=[SKILLS_MOUNT, f"{SKILLS_MOUNT}/**"], mode="deny")
+        return composite, sources, [deny]
 
     # ------------------------------------------------------------------ build
     def _resolve_subagent(self, spec: dict[str, Any], registry: dict[str, Any]) -> dict[str, Any]:
@@ -181,6 +225,8 @@ class DeepAgentsLoop(Service):
             spec["middleware"] = [HarnessMiddleware(ctx), *spec.get("middleware", [])]
         workspace = ctx.get("workspace", None)
         permissions = workspace.permissions() if workspace is not None and hasattr(workspace, "permissions") else []
+        backend, skills, skill_rules = self._backend_and_skills()
+        permissions = [*permissions, *skill_rules]
         interrupt_on = {**ctx.tools.interrupt_on(), **self.config.interrupt_on}
         kwargs: dict[str, Any] = {
             "model": ctx.llm.resolve(self.config.model),
@@ -189,11 +235,11 @@ class DeepAgentsLoop(Service):
             "middleware": [HarnessMiddleware(ctx), *(m for m, _ in self._middleware)],
             "checkpointer": ctx.get("checkpointer"),
             "store": ctx.get("store", None),
-            "backend": ctx.get("backend", None),
+            "backend": backend,
             "interrupt_on": interrupt_on or None,
             "subagents": subagents or None,
             "permissions": permissions or None,
-            "skills": self.config.skills,
+            "skills": skills or None,
             "memory": self.config.memory,
             "name": "pyharness",
         }
@@ -201,4 +247,4 @@ class DeepAgentsLoop(Service):
         return create_deep_agent(**{k: v for k, v in kwargs.items() if v is not None})
 
 
-__all__ = ["DeepAgentsLoop", "HarnessMiddleware", "LoopConfig", "ModelCall"]
+__all__ = ["SKILLS_MOUNT", "DeepAgentsLoop", "HarnessMiddleware", "LoopConfig", "ModelCall"]

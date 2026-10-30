@@ -31,11 +31,13 @@ patch:
   - id: agents
     name: pyharness-agent
 
-  # Self-extension: introspection, plugin management.
+  # Self-extension: introspection, plugin management, where-am-I prompt section.
   - id: inspect
     name: pyharness-inspect
   - id: plugin-manager
     name: pyharness-plugin-manager
+  - id: dev-context
+    name: pyharness-dev-context
 
   # HTTP: server, REST + SSE, Web UI.
   - id: http

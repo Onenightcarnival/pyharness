@@ -4,11 +4,10 @@ version = "0.1.0"
 description = "pyharness workspace: kernel and kernel plugins"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-agent", "pyharness-agent-loop-deepagents", "pyharness-api", "pyharness-bundle-base", "pyharness-checkpoint-postgres", "pyharness-checkpoint-sqlite", "pyharness-core", "pyharness-http", "pyharness-inspect", "pyharness-llm", "pyharness-plugin-manager", "pyharness-prompt", "pyharness-tools", "pyharness-web-ui", "pyharness-workspace"]
+dependencies = ["pyharness-agent", "pyharness-agent-loop-deepagents", "pyharness-api", "pyharness-bundle-base", "pyharness-bundle-creator", "pyharness-checkpoint-postgres", "pyharness-checkpoint-sqlite", "pyharness-core", "pyharness-http", "pyharness-inspect", "pyharness-llm", "pyharness-plugin-manager", "pyharness-prompt", "pyharness-tools", "pyharness-web-ui", "pyharness-workspace"]
 
 [project.optional-dependencies]
 deepseek = ["langchain-deepseek"]
-openai = ["langchain-openai"]
 anthropic = ["langchain-anthropic"]
 
 [dependency-groups]
@@ -25,6 +24,7 @@ pyharness-agent = { workspace = true }
 pyharness-agent-loop-deepagents = { workspace = true }
 pyharness-api = { workspace = true }
 pyharness-bundle-base = { workspace = true }
+pyharness-bundle-creator = { workspace = true }
 pyharness-checkpoint-postgres = { workspace = true }
 pyharness-checkpoint-sqlite = { workspace = true }
 pyharness-core = { workspace = true }

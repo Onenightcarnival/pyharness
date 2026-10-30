@@ -1,0 +1,17 @@
+[project]
+name = "pyharness-bundle-creator"
+version = "0.1.0"
+description = "pyharness bundle: creator mode (plugin-authoring skills for the agent)"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = ["pyharness-core", "pyharness-plugin-manager"]
+
+[project.entry-points."pyharness.bundles"]
+creator = "pyharness_bundle_creator:BUNDLE"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyharness_bundle_creator"]

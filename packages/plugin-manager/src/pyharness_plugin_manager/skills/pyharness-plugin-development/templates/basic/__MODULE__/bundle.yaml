@@ -1,0 +1,7 @@
+title: __TITLE__
+description: __TITLE__
+patch:
+  - id: __BUNDLE__
+    name: __DIST__
+    config:
+      greeting: hello

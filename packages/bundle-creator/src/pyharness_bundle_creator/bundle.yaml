@@ -1,0 +1,8 @@
+title: Creator
+description: Plugin-authoring skills mounted at /skills/pyharness/; the base prompt guidance is replaced by the skill catalog.
+patch:
+  - id: plugin-manager
+    merge: true
+    config:
+      skills: true
+      guidance: false

@@ -2,6 +2,13 @@
 
 agent 编写插件、安装进自己的 profile，在下一代中使用。
 
+| 模式 | profile 模板 | agent 看到的 |
+|---|---|---|
+| 基础 | `web`（`base`） | 系统提示词中三行「Extending this harness」：`harness_inspect`、`plugin_manager`、`creator` bundle |
+| 创造 | `creator`（`base` + `creator`） | 提示词中只有 skill 目录；完整流程按需由 `read_file` 加载 |
+
+对照 dsh 创造模式（`cordis` preset）：pyharness 没有每会话 preset，创造模式是一个 bundle，按 profile 启用。
+
 ## 流程
 
 ```
@@ -13,6 +20,21 @@ agent ──harness_inspect──────────────▶ 服务�
                                             └ 保存：本轮结束后重启
 supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证新能力
 ```
+
+## skills
+
+`creator` bundle 给 `plugin-manager` 条目设置 `skills: true`、`guidance: false`。`pyharness-plugin-manager` 包内的 `skills/` 目录经 `ctx.agentLoop.add_skills(dir, "pyharness")` 只读挂载到 agent 文件区的 `/skills/pyharness/`（deepagents `CompositeBackend` 路由；写入被拒绝）。deepagents 的 skills 中间件在系统提示词里列出 skill 名称与描述；正文由 agent 用 `read_file` 按需读取。
+
+| skill | 内容 |
+|---|---|
+| `pyharness-plugin-development` | 流程：inspect → template → 写入 `/plugins/<name>/` → `install_bundle` → 读结果 → 新一代验证；`references/`：bundle 与插件形式、扩展点与实践、HTTP 路由、验证；`templates/basic`、`templates/tool-and-route` |
+| `editing-pyharness-compositions` | patch 方言：按 id 寻址、`merge`、`remove`、`parent` / `before` / `after`、`disabled`、`isolate`、插值；分层 |
+| `pyharness-composition-reference` | `references/packages.md`：环境中全部 `pyharness.plugins` / `pyharness.bundles` entry point；`scripts/gen_packages.py` 生成，测试校验未过期 |
+| `agent-experience` | 工具定义、提示词片段、skill、子 agent、状态消息的写法 |
+
+知识来源顺序：运行时检查（`harness_inspect`）→ 包目录中的模块文档（`topic=config` 的 `package_dir`）→ skill 的参考文件。
+
+每个 `SKILL.md` 小于 8000 字符。其他插件：`ctx.agentLoop.add_skills(directory, label)` 挂载自己的 skills 目录，随插件停止卸载。
 
 ## 工具
 
@@ -38,7 +60,7 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 | action | 参数 | 审批 | 效果 |
 |---|---|---|---|
 | `list` | — | 否 | 条目与状态；已安装 bundle |
-| `template` | `target=<name>` | 否 | bundle 模板文件 |
+| `template` | `target=<name>`、`variant=basic\|tool-and-route` | 否 | bundle 模板文件；来自 skill 的 `templates/` |
 | `install_bundle` | `target=<dir>` | 是 | 从工作区目录安装 bundle |
 | `uninstall_bundle` | `target=<bundle>` | 是 | 移除已安装的 bundle |
 | `set_bundle_enabled` | `target=<bundle> enabled=<bool>` | 是 | 启用 / 停用 bundle |
@@ -55,7 +77,12 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 | 配置 | 默认 | 效果 |
 |---|---|---|
 | `require_approval` | `true` | 变更动作需人工批准 |
-| `guidance` | `true` | 系统提示词中的插件编写片段 |
+| `guidance` | `true` | 系统提示词中的三行插件编写片段 |
+| `skills` | `false` | 挂载插件编写 skills 到 `/skills/pyharness/`；`creator` bundle 置为 `true` |
+
+### `dev-context` 提示词段
+
+`pyharness-dev-context`（base bundle 的 `dev-context` 条目）：告诉 agent harness 实现在工作区之外、「这个页面」指本进程的 Web 界面、profile 文件只经 `plugin_manager` 修改；随后列出安装目录、profile 目录、工作区、Web 界面地址。
 
 ## 边界
 

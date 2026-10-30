@@ -1,4 +1,12 @@
-"""``plugin_manager`` tool and the plugin-authoring prompt section.
+"""``plugin_manager`` tool, the plugin-authoring skills, and the short prompt section.
+
+| config       | effect                                                                       |
+|--------------|------------------------------------------------------------------------------|
+| ``guidance`` | three-line section in the system prompt (profiles without the skills)        |
+| ``skills``   | ``skills/`` of this package mounted at ``/skills/pyharness/`` (``creator``)  |
+
+Skills (``skills/<name>/SKILL.md``): ``pyharness-plugin-development``, ``editing-pyharness-compositions``,
+``pyharness-composition-reference``, ``agent-experience``. Templates: ``skills/pyharness-plugin-development/templates/``.
 
 | step                | effect                                                                    |
 |---------------------|---------------------------------------------------------------------------|
@@ -14,6 +22,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, Literal
 
@@ -24,7 +33,11 @@ from pydantic import BaseModel, Field
 from pyharness import manage
 
 name = "pyharness-plugin-manager"
-inject = ["tools", "prompt"]
+inject = ["tools", "prompt", "agentLoop"]
+
+SKILLS_DIR = Path(__file__).with_name("skills")
+TEMPLATES_DIR = SKILLS_DIR / "pyharness-plugin-development" / "templates"
+TOKENS = ("__DIST__", "__MODULE__", "__BUNDLE__", "__TITLE__")
 
 Action = Literal[
     "list",
@@ -40,114 +53,40 @@ MUTATING = {"install_bundle", "uninstall_bundle", "set_bundle_enabled", "set_plu
 
 class Config(BaseModel):
     require_approval: bool = Field(True, description="Human approval for each mutating action.")
-    guidance: bool = Field(True, description="Plugin-authoring section in the system prompt.")
+    guidance: bool = Field(True, description="Short plugin-authoring section in the system prompt.")
+    skills: bool = Field(False, description="Mount the plugin-authoring skills at /skills/pyharness/ (the creator bundle sets it).")
 
 
 GUIDANCE = """\
 ## Extending this harness
-Plugins are Python distributions with two entry points: `pyharness.plugins` (code) and
-`pyharness.bundles` (mount position in the configuration tree).
-
-Workflow:
-1. `harness_inspect`: live API; services and methods, events and dispatch modes, config schemas, tools, routes.
-2. `plugin_manager action=template target=<name>`: starter files, written to the workspace under `/plugins/<name>/`.
-3. `plugin_manager action=install_bundle target=/plugins/<name>`: install into this profile; preflighted in a separate process.
-   - rejected: errors returned; the profile is unchanged.
-   - saved: the harness restarts after this turn; this session continues in the new generation.
-4. New generation: the new capability is verified.
-
-Rules:
-- Profile files change only through plugin_manager.
-- Mutating plugin_manager actions require the user's approval.
-- A turn with a saved change ends with a one-line status."""
+Plugins are Python distributions mounted in this profile's configuration tree. `harness_inspect` shows the live API; \
+`plugin_manager` writes starter files, installs bundles (approval, preflight in a separate process, restart after the turn) \
+and toggles entries; profile files change only through it. The `creator` bundle adds skills with the full procedure."""
 
 
-TEMPLATE_FILES: dict[str, str] = {
-    "pyproject.toml": """\
-[project]
-name = "__DIST__"
-version = "0.1.0"
-description = "__TITLE__"
-requires-python = ">=3.12"
-# Provided by the harness: pyharness-core, pydantic, langchain-core, fastapi.
-dependencies = []
-
-[project.entry-points."pyharness.plugins"]
-__DIST__ = "__MODULE__"
-
-[project.entry-points."pyharness.bundles"]
-__BUNDLE__ = "__MODULE__:BUNDLE"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["__MODULE__"]
-""",
-    "__MODULE__/__init__.py": '''\
-"""__TITLE__."""
-
-from __future__ import annotations
-
-from pathlib import Path
-from typing import Any
-
-from pydantic import BaseModel
-
-name = "__DIST__"
-# Required services; the plugin starts once all exist.
-inject = ["tools"]
-
-# Mount position in the configuration tree.
-BUNDLE = Path(__file__).with_name("bundle.yaml")
+def template_variants() -> list[str]:
+    return sorted(p.name for p in TEMPLATES_DIR.iterdir() if p.is_dir())
 
 
-class Config(BaseModel):
-    greeting: str = "hello"
+def _template_files(variant: str) -> Iterator[tuple[str, str]]:
+    root = TEMPLATES_DIR / variant
+    if not root.is_dir():
+        raise ValueError(f"unknown template {variant!r}; variants: {', '.join(template_variants())}")
+    for path in sorted(root.rglob("*")):
+        if path.is_file():
+            yield path.relative_to(root).as_posix(), path.read_text(encoding="utf-8")
 
 
-def apply(ctx: Any, config: Config) -> None:
-    def greet(person: str) -> str:
-        """Greeting for a person."""
-        return f"{config.greeting}, {person}!"
-
-    # Registrations through ctx are undone when the plugin stops.
-    ctx.tools.register(greet)
-
-    # tools/result (parallel): each finished tool call.
-    # @ctx.on("tools/result")
-    # async def audit(call, result):
-    #     ctx.logger.info("tool %s finished", call.name)
-
-    # HTTP routes, with "http" in `inject`:
-    # from fastapi import APIRouter
-    # router = APIRouter()
-    # @router.get("/status")
-    # async def status() -> dict:
-    #     return {"ok": True}
-    # ctx.http.include_router(router, prefix="/__BUNDLE__")
-''',
-    "__MODULE__/bundle.yaml": """\
-title: __TITLE__
-description: __TITLE__
-patch:
-  - id: __BUNDLE__
-    name: __DIST__
-    config:
-      greeting: hello
-""",
-}
-
-
-def render_template(short: str) -> dict[str, str]:
+def render_template(short: str, variant: str = "basic") -> dict[str, str]:
+    """Template files for a bundle named after ``short``; ``__DIST__``-style tokens substituted in paths and contents."""
     slug = re.sub(r"[^a-z0-9]+", "-", short.lower()).strip("-") or "my-plugin"
     module = "pyh_" + slug.replace("-", "_")
     dist = f"pyh-{slug}"
     title = slug.replace("-", " ").title() + " plugin"
+    values = dict(zip(TOKENS, (dist, module, slug, title), strict=True))
     out = {}
-    for path, text in TEMPLATE_FILES.items():
-        for token, value in (("__DIST__", dist), ("__MODULE__", module), ("__BUNDLE__", slug), ("__TITLE__", title)):
+    for path, text in _template_files(variant):
+        for token, value in values.items():
             text = text.replace(token, value)
             path = path.replace(token, value)
         out[path] = text
@@ -157,6 +96,8 @@ def render_template(short: str) -> dict[str, str]:
 def apply(ctx: Any, config: Config) -> None:
     if config.guidance:
         ctx.prompt.add("plugin-authoring", GUIDANCE, order=50)
+    if config.skills:
+        ctx.agentLoop.add_skills(SKILLS_DIR, "pyharness")
 
     def session_of(runtime: Any) -> str | None:
         try:
@@ -186,12 +127,13 @@ def apply(ctx: Any, config: Config) -> None:
         action: Action,
         target: str | None = None,
         enabled: bool | None = None,
+        variant: str | None = None,
     ) -> str:
         """Plugins and bundles of this harness profile.
 
         action                                              effect
         list                                                entries with state; installed bundles
-        template target=<name>                              starter bundle files
+        template target=<name> [variant=basic|tool-and-route] starter bundle files; variant default basic
         install_bundle target=<dir>                         install a bundle from a workspace directory
         uninstall_bundle target=<bundle>                    remove an installed bundle
         set_bundle_enabled target=<bundle> enabled=<bool>   enable or disable a bundle
@@ -213,7 +155,10 @@ def apply(ctx: Any, config: Config) -> None:
                 "generation": ctx.lifecycle.generation,
             }
         elif action == "template":
-            files = render_template(target or "my-plugin")
+            try:
+                files = render_template(target or "my-plugin", variant or "basic")
+            except ValueError as exc:
+                return json.dumps({"error": str(exc)})
             root = f"/plugins/{(target or 'my-plugin').strip('/')}"
             result = {
                 "write_under": root,

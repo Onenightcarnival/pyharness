@@ -17,8 +17,10 @@
 | `pyharness-api` | `api` | — | `/api`：REST + SSE |
 | `pyharness-web-ui` | `web-ui` | — | `/`：Web 界面 |
 | `pyharness-inspect` | `inspect` | — | `harness_inspect` 工具 |
-| `pyharness-plugin-manager` | `plugin-manager` | — | `plugin_manager` 工具；插件编写提示词片段 |
+| `pyharness-plugin-manager` | `plugin-manager` | — | `plugin_manager` 工具；插件编写 skills（`skills: true`）；三行提示词片段（`guidance`） |
+| `pyharness-plugin-manager` | `dev-context` | — | `pyharness-dev-context`：harness 位置提示词段 |
 | `pyharness-bundle-base` | — | — | `base` bundle：以上条目的组合 |
+| `pyharness-bundle-creator` | — | — | `creator` bundle：`plugin-manager` 的 `skills: true`、`guidance: false` |
 
 条目 id 与配置：`packages/bundle-base/src/pyharness_bundle_base/bundle.yaml`。
 
