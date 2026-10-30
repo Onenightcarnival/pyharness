@@ -10,8 +10,11 @@
 | resume     | ``app/started`` of a supervised generation: continuation message per listed session |
 | model      | ``session.model`` (``route:model``) reaches the loop as ``configurable.model_spec``    |
 
-Run events: ``reasoning``, ``token``, ``tool_call``, ``tool_result``, ``interrupt``, ``error``,
+Run events: ``reasoning``, ``token``, ``image``, ``tool_call``, ``tool_result``, ``interrupt``, ``error``,
 ``done``.
+
+Images: a user message carries ``image_url`` content blocks (data URLs) beside its text; serialized messages
+list them under ``images``; an AI message with image blocks emits ``image`` events and lists them likewise.
 
 | event                | mode     | listener                               |
 |----------------------|----------|----------------------------------------|
@@ -126,6 +129,39 @@ def _text(content: Any) -> str:
     return "" if content is None else str(content)
 
 
+def _images(content: Any) -> list[str]:
+    """Image URLs (data URLs included) of ``image_url`` / ``image`` content blocks."""
+    if not isinstance(content, list):
+        return []
+    out: list[str] = []
+    for block in content:
+        if not isinstance(block, dict):
+            continue
+        kind = block.get("type")
+        if kind == "image_url":
+            url = block.get("image_url")
+            url = url.get("url") if isinstance(url, dict) else url
+            if isinstance(url, str) and url:
+                out.append(url)
+        elif kind == "image":
+            data = block.get("base64") or block.get("data")
+            mime = block.get("mime_type") or block.get("mimeType") or "image/png"
+            if isinstance(data, str) and data:
+                out.append(f"data:{mime};base64,{data}")
+            elif isinstance(block.get("url"), str):
+                out.append(block["url"])
+    return out
+
+
+def user_content(text: str, images: list[str] | None = None) -> Any:
+    """Content of a user message: plain text, or text and ``image_url`` blocks."""
+    if not images:
+        return text
+    blocks: list[dict[str, Any]] = [{"type": "text", "text": text}] if text else []
+    blocks += [{"type": "image_url", "image_url": {"url": url}} for url in images]
+    return blocks
+
+
 def _reasoning(message: BaseMessage) -> str:
     """Reasoning text of an AI message: ``reasoning_content`` (DeepSeek) or reasoning/thinking blocks."""
     extra = getattr(message, "additional_kwargs", None) or {}
@@ -159,6 +195,8 @@ def _iter_messages(update: Any) -> list[BaseMessage]:
 
 def serialize_message(message: BaseMessage) -> dict[str, Any]:
     data: dict[str, Any] = {"id": message.id, "role": message.type, "content": _text(message.content)}
+    if images := _images(message.content):
+        data["images"] = images
     if isinstance(message, AIMessage) and (reasoning := _reasoning(message)):
         data["reasoning"] = reasoning
     marker = (getattr(message, "additional_kwargs", None) or {}).get("pyharness")
@@ -314,8 +352,10 @@ class AgentService(Service):
         kind: str | None = None,
         marker: dict[str, Any] | None = None,
         model: str | None = None,
+        images: list[str] | None = None,
     ) -> RunHandle:
-        """Start a run and return its handle. ``model`` overrides the session's selection for this run.
+        """Start a run and return its handle. ``model`` overrides the session's selection for this run;
+        ``images`` are data URLs attached to the user message.
 
         | arguments                | input to the graph                                          |
         |--------------------------|-------------------------------------------------------------|
@@ -337,7 +377,7 @@ class AgentService(Service):
             payload = {"messages": [HumanMessage(content=content or "", additional_kwargs={"pyharness": marker})]}
             kind = kind or "message"
         else:
-            payload = {"messages": [{"role": "user", "content": content or ""}]}
+            payload = {"messages": [HumanMessage(content=user_content(content or "", images))]}
             kind = kind or "message"
         handle = RunHandle(session_id, kind, content)
         self._runs[session_id] = handle
@@ -401,6 +441,9 @@ class AgentService(Service):
             if node == "__interrupt__":
                 continue
             for message in _iter_messages(update):
+                if isinstance(message, AIMessage):
+                    for url in _images(message.content):
+                        out.append({"type": "image", "url": url})
                 if isinstance(message, AIMessage) and message.tool_calls:
                     for tc in message.tool_calls:
                         out.append({"type": "tool_call", "id": tc.get("id"), "name": tc["name"], "args": _jsonable(tc.get("args", {}))})

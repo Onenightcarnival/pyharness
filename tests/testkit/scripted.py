@@ -30,13 +30,27 @@ class ScriptedModel(BaseChatModel):
         return "scripted"
 
     def _generate(self, messages: Any, stop: Any = None, run_manager: Any = None, **kwargs: Any) -> ChatResult:
-        CALLS.append({"messages": [(m.type, m.text) for m in messages]})
+        CALLS.append(
+            {
+                "messages": [(m.type, m.text) for m in messages],
+                "images": sum(
+                    1
+                    for m in messages
+                    if isinstance(m.content, list)
+                    for b in m.content
+                    if isinstance(b, dict) and b.get("type") == "image_url"
+                ),
+            }
+        )
         index = self.cursor[0]
         self.cursor[0] += 1
         if index < len(self.replies):
             reply = self.replies[index]
             extra = {"reasoning_content": reply["reasoning"]} if reply.get("reasoning") else {}
-            message = AIMessage(content=reply.get("content", ""), tool_calls=reply.get("tool_calls", []), additional_kwargs=extra)
+            content: Any = reply.get("content", "")
+            if reply.get("images"):
+                content = [{"type": "text", "text": content}] + [{"type": "image_url", "image_url": {"url": u}} for u in reply["images"]]
+            message = AIMessage(content=content, tool_calls=reply.get("tool_calls", []), additional_kwargs=extra)
         else:
             message = AIMessage(content="(script exhausted)")
         return ChatResult(generations=[ChatGeneration(message=message)])

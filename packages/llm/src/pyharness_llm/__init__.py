@@ -370,6 +370,15 @@ class LLMService(Service):
                 return os.environ[ref], {"reference": ref, "configured": True, "source": "env"}
         return None, {"reference": refs[0] if refs else None, "configured": False, "source": None, "tried": refs}
 
+    def accepts_images(self, spec: str | None) -> bool | None:
+        """Whether the model of ``spec`` declares image input; ``None`` when the model is not in a catalog."""
+        route, model = split_spec(spec or self.config.default)
+        cfg = self.config.providers.get(route)
+        if cfg is None:
+            return None
+        entry = next((m for m in cfg.models if m.id == model), None)
+        return "image" in entry.input if entry is not None else None
+
     def options_for(self, route: str, model: str | None = None, **overrides: Any) -> dict[str, Any]:
         """Keyword arguments for ``route``: global, route, model, then ``overrides``; credential resolved."""
         cfg = self.route(route)

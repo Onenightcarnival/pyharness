@@ -7,7 +7,7 @@
 | GET    | ``/sessions``                |                               | sessions                                    |
 | POST   | ``/sessions``                | ``{"title"?}``                | session                                     |
 | GET    | ``/sessions/{id}``           |                               | session, busy, messages, pending approvals  |
-| POST   | ``/sessions/{id}/messages``  | ``{"content"}``               | SSE run events                              |
+| POST   | ``/sessions/{id}/messages``  | ``{"content", "images"?}``    | SSE run events; images: data URLs           |
 | POST   | ``/sessions/{id}/approvals`` | ``{"decisions": [decision]}`` | SSE run events                              |
 | POST   | ``/sessions/{id}/cancel``    |                               | ``{"cancelled"}``                           |
 | DELETE | ``/sessions/{id}``           |                               | ``{"deleted"}``                             |
@@ -25,6 +25,7 @@
 |--------|-------------------------------------------|
 | 404    | unknown session                           |
 | 409    | running turn, or approvals pending/absent |
+| 422    | images sent to a model without image input |
 | 503    | restart pending (``Retry-After: 2``)      |
 
 ``decision``: ``{"type": "approve"}`` or ``{"type": "reject"}``.
@@ -38,12 +39,13 @@ model request without a restart.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import AsyncIterator
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 name = "pyharness-api"
 inject = ["http", "agents", "llm"]
@@ -59,8 +61,33 @@ class NewSession(BaseModel):
     model: str | None = Field(None, description="route:model for this session; null: the default.")
 
 
+IMAGE_DATA_URL = re.compile(r"^data:image/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$")
+MAX_IMAGES = 8
+MAX_IMAGE_BYTES = 8 * 1024 * 1024
+
+
 class NewMessage(BaseModel):
-    content: str = Field(..., min_length=1)
+    content: str = Field("", description="Text; may be empty when images are attached.")
+    images: list[str] = Field(default_factory=list, description="Image data URLs (png, jpeg, gif, webp); at most 8, 8 MB each.")
+
+    @field_validator("images")
+    @classmethod
+    def _images(cls, value: list[str]) -> list[str]:
+        if len(value) > MAX_IMAGES:
+            raise ValueError(f"at most {MAX_IMAGES} images per message")
+        for url in value:
+            match = IMAGE_DATA_URL.match(url)
+            if not match:
+                raise ValueError("images must be data URLs of type image/png, image/jpeg, image/gif or image/webp")
+            if len(match.group(2)) * 3 // 4 > MAX_IMAGE_BYTES:
+                raise ValueError(f"an image is larger than {MAX_IMAGE_BYTES // (1024 * 1024)} MB")
+        return value
+
+    @model_validator(mode="after")
+    def _not_empty(self) -> NewMessage:
+        if not self.content.strip() and not self.images:
+            raise ValueError("a message needs text or images")
+        return self
 
 
 class Approvals(BaseModel):
@@ -161,11 +188,18 @@ def build_router(ctx: Any) -> APIRouter:
 
     @router.post("/sessions/{session_id}/messages")
     async def post_message(session_id: str, body: NewMessage) -> StreamingResponse:
-        await require(session_id)
+        session = await require(session_id)
         if await agents.pending(session_id):
             raise HTTPException(409, "the session is waiting for approval decisions")
+        if body.images:
+            llm = ctx.get("llm", None)
+            spec = session.get("model") or (llm.default if llm is not None else None)
+            if llm is not None and llm.accepts_images(spec) is False:
+                raise HTTPException(
+                    422, f"model {spec} does not accept image input; choose a model with image input or edit its input types in Settings"
+                )
         try:
-            handle = agents.start_run(session_id, body.content)
+            handle = agents.start_run(session_id, body.content, images=body.images or None)
         except SessionBusy as exc:
             raise HTTPException(409, str(exc)) from None
         except RestartPending as exc:

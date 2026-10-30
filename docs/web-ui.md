@@ -22,7 +22,8 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 区域 | 内容 |
 |---|---|
 | 侧边栏 | 品牌行与当前代；新会话；插件页入口；按工作区分组的会话列表：相对时间、运行中圆点、悬停删除；profile 状态；设置入口；明暗主题切换 |
-| 对话 | 空会话：居中欢迎区与输入框。用户消息：浅蓝气泡。回复：Markdown（代码块带语言与复制、表格、引用） |
+| 对话 | 空会话：居中欢迎区与输入框。用户消息：浅蓝气泡，附图显示在气泡上方。回复：Markdown（代码块带语言与复制、表格、引用、图片），模型返回的图片块作为图片渲染；点击图片放大 |
+| 图片输入 | 输入框的「+」按钮、粘贴、拖入：PNG / JPEG / GIF / WebP，最多 8 张，超过 2048px 的边在浏览器内缩放，压缩后 8 MB 以内；缩略图可移除；当前模型未勾选「图像」输入时拒绝并提示 |
 | 折叠行 | 推理内容、工具调用；展开为输入 / 输出卡片 |
 | 运行中 | 「思考中」闪光；停止按钮取消当前轮 |
 | 审批 | 黄色审批卡片停靠在输入框上方；对应工具行标记待批准 |
@@ -48,7 +49,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | GET | `/sessions` | | 会话列表 |
 | POST | `/sessions` | `{"title"?}` | 会话 |
 | GET | `/sessions/{id}` | | 会话、运行状态、消息、待批准项 |
-| POST | `/sessions/{id}/messages` | `{"content"}` | SSE 运行事件 |
+| POST | `/sessions/{id}/messages` | `{"content", "images"?}` | SSE 运行事件；`images` 为 data URL，模型未声明图像输入时 422 |
 | POST | `/sessions/{id}/approvals` | `{"decisions": [{"type": "approve" \| "reject"}]}` | SSE 运行事件 |
 | POST | `/sessions/{id}/cancel` | | `{"cancelled"}` |
 | DELETE | `/sessions/{id}` | | `{"deleted"}` |
@@ -65,6 +66,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 状态码 | 条件 |
 |---|---|
 | 404 | 会话不存在 |
+| 422 | 图片发给未声明图像输入的模型；非法的图片数据 |
 | 409 | 轮次运行中；或待批准项存在 / 缺失 |
 | 503 | 重启挂起；`Retry-After: 2` |
 
@@ -76,6 +78,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 |---|---|
 | `reasoning` | 推理文本：DeepSeek `reasoning_content`、Anthropic / OpenAI reasoning 块 |
 | `token` | 回复文本 |
+| `image` | 回复中的图片（data URL 或 URL） |
 | `tool_call` | 工具名、参数 |
 | `tool_result` | 工具结果 |
 | `interrupt` | 待批准的工具调用 |

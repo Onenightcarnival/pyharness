@@ -192,6 +192,21 @@ svg { display: block; }
 
 .userRow { display: flex; flex-direction: column; align-items: flex-end; margin: 12px 0 8px; }
 .bubble { max-width: min(calc(var(--chat-width) * 0.702), 82%); padding: 10px 16px; border-radius: var(--r-xl); background: var(--bubble); font-size: 14px; line-height: 22px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble:empty { display: none; }
+.bubbleImages { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: min(calc(var(--chat-width) * 0.702), 82%); margin-bottom: 6px; }
+.bubbleImages img { max-width: 240px; max-height: 240px; border-radius: var(--r-md); cursor: zoom-in; display: block; }
+.aiImages { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.aiImages img, .md img { max-width: min(100%, 560px); max-height: 420px; border-radius: var(--r-md); cursor: zoom-in; display: block; }
+.md img { margin: 12px 0; }
+.attachStrip { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 14px 0; }
+.attachStrip:empty { display: none; }
+.attachThumb { position: relative; width: 64px; height: 64px; border-radius: var(--r-md); overflow: hidden; box-shadow: 0 0 0 0.5px var(--border-l3); }
+.attachThumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.attachThumb button { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border: none; border-radius: 50%; corner-shape: round; background: rgba(0, 0, 0, 0.6); color: #fff; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.attachThumb button .ico { width: 12px; height: 12px; stroke-width: 2; }
+.card[data-dragover] { outline: 2px dashed var(--info); outline-offset: -2px; }
+.viewer { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(0, 0, 0, 0.7); cursor: zoom-out; }
+.viewer img { max-width: 100%; max-height: 100%; border-radius: var(--r-md); box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4); }
 .aiBlock { min-width: 0; }
 .actions { display: flex; align-items: center; gap: 8px; height: 28px; margin-top: 2px; color: var(--label-tertiary); opacity: 0; transition: opacity 0.1s; }
 .aiBlock:hover .actions, .aiBlock:focus-within .actions, .aiBlock[data-last] .actions { opacity: 1; }
@@ -563,10 +578,12 @@ svg { display: block; }
           <div class="notice" id="notice" hidden></div>
           <div id="approval"></div>
           <form class="card elev-soft" id="composer">
+            <div class="attachStrip" id="attachStrip"></div>
             <textarea id="input" rows="1"></textarea>
+            <input type="file" id="fileInput" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden>
             <div class="cardRow">
               <div class="left">
-                <button type="button" class="add" disabled data-i18n-title="attach"><svg class="ico"><use href="#i-plus"/></svg></button>
+                <button type="button" class="add" id="attachButton" data-i18n-title="attach"><svg class="ico"><use href="#i-plus"/></svg></button>
                 <span class="selectChip" id="workspaceChip"><svg class="ico"><use href="#i-folder"/></svg><span class="label">workspace</span></span>
               </div>
               <div class="right">
@@ -589,7 +606,7 @@ const $ = (id) => document.getElementById(id);
 const zh = (navigator.language || 'zh').toLowerCase().startsWith('zh');
 const T = zh ? {
   newSession: '新会话', plugins: '插件', workspace: '会话', headline: '要做什么？', placeholder: '给 agent 发送消息',
-  placeholderBusy: 'agent 工作中…', collapse: '收起侧边栏', expand: '展开侧边栏', theme: '切换主题', attach: '附件：不可用', send: '发送', stop: '停止',
+  placeholderBusy: 'agent 工作中…', collapse: '收起侧边栏', expand: '展开侧边栏', theme: '切换主题', attach: '添加图片（也可粘贴或拖入）', send: '发送', stop: '停止',
   thinking: '思考中', thought: '思考过程', toolRunning: '运行中', copy: '复制', copied: '已复制', del: '删除会话', deleted: '会话已删除',
   approvalStrip: '待批准', approve: '批准', reject: '拒绝', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
   restarting: '重启中：应用插件变更…', restarted: (g) => `第 ${g} 代已启动`, rolledBack: (g) => `变更启动失败；第 ${g} 代运行上一份配置`, offline: '离线', online: '在线', gen: (g) => `第 ${g} 代`,
@@ -601,7 +618,7 @@ const T = zh ? {
   restartFailed: '重启后 harness 无响应。日志：运行 pyh run 的终端。', busy: '会话运行中', approvalPending: '有待批准的工具调用',
 } : {
   newSession: 'New session', plugins: 'Plugins', workspace: 'Sessions', headline: 'What needs doing?', placeholder: 'Message the agent',
-  placeholderBusy: 'The agent is working…', collapse: 'Collapse sidebar', expand: 'Expand sidebar', theme: 'Toggle theme', attach: 'Attachments: unavailable', send: 'Send', stop: 'Stop',
+  placeholderBusy: 'The agent is working…', collapse: 'Collapse sidebar', expand: 'Expand sidebar', theme: 'Toggle theme', attach: 'Add images (paste or drop works too)', send: 'Send', stop: 'Stop',
   thinking: 'Thinking', thought: 'Thoughts', toolRunning: 'Running', copy: 'Copy', copied: 'Copied', del: 'Delete session', deleted: 'Session deleted',
   approvalStrip: 'Awaiting approval', approve: 'Approve', reject: 'Reject', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
   restarting: 'Restarting: applying plugin changes…', restarted: (g) => `Generation ${g} started`, rolledBack: (g) => `Change failed to boot; generation ${g} runs the previous configuration`, offline: 'Offline', online: 'Online', gen: (g) => `generation ${g}`,
@@ -624,6 +641,7 @@ Object.assign(T, zh ? {
   pickTitle: '可用模型', pickSearch: '搜索模型', selectAll: '全选', deselectAll: '取消全选', addSelected: '添加所选', selected: (n) => `已选 ${n}`, noMatch: '没有匹配的模型',
   test: '测试连接', testing: '测试中…', testOk: (ms) => `连接成功 · ${ms} ms`, apply: '应用', applying: '保存中…', applied: '已应用；下次请求起生效。', cancel: '取消', remove: '删除', removeConfirm: (t) => `删除提供方「${t}」？其模型与已保存的密钥一并移除。`, removed: '已删除',
   fetching: '获取中…', modelsFound: (n) => `找到 ${n} 个模型`, modelsNone: '该提供方不支持列出模型。', needModel: '至少添加一个模型。', needId: '请填写提供方 ID。', needUrl: '请填写 Base URL。', dupId: '提供方 ID 已存在。', noneLeft: '预置提供方均已添加。',
+  removeImage: '移除图片', tooManyImages: (n) => `最多 ${n} 张图片`, imageTooLarge: '图片过大（压缩后仍超过 8 MB）', modelNoImages: (m) => `${m} 不接受图像输入；在设置里勾选该模型的「图像」或换一个模型`, notAnImage: '只支持 PNG、JPEG、GIF、WebP 图片',
   defaultTag: '默认', selectModel: '选择模型', manageModels: '管理模型…', noModels: '没有可用模型；先在设置里添加提供方。', modelSelected: (n) => `已切换到 ${n}`, modelsCount: (n) => `${n} 个模型`, readonly: '无 profile：设置只读。', showKey: '显示 / 隐藏密钥',
 } : {
   settings: 'Settings', settingsIntro: 'Runtime settings of the current profile. Model settings apply at once, without a restart; keys go to the profile credential file and the configuration keeps only the reference name.',
@@ -637,6 +655,7 @@ Object.assign(T, zh ? {
   pickTitle: 'Available models', pickSearch: 'Search models', selectAll: 'Select all', deselectAll: 'Deselect all', addSelected: 'Add selected', selected: (n) => `${n} selected`, noMatch: 'No matching models',
   test: 'Test connection', testing: 'Testing…', testOk: (ms) => `Connected · ${ms} ms`, apply: 'Apply', applying: 'Saving…', applied: 'Applied; in effect from the next request.', cancel: 'Cancel', remove: 'Remove', removeConfirm: (t) => `Remove provider "${t}"? Its models and stored key are removed.`, removed: 'Removed',
   fetching: 'Fetching…', modelsFound: (n) => `${n} models found`, modelsNone: 'This provider cannot list models.', needModel: 'Add at least one model.', needId: 'A provider ID is required.', needUrl: 'A base URL is required.', dupId: 'That provider ID already exists.', noneLeft: 'Every preset provider is already added.',
+  removeImage: 'Remove image', tooManyImages: (n) => `At most ${n} images`, imageTooLarge: 'Image too large (over 8 MB after compression)', modelNoImages: (m) => `${m} does not accept image input; tick Image for the model in Settings or pick another model`, notAnImage: 'Only PNG, JPEG, GIF and WebP images',
   defaultTag: 'default', selectModel: 'Select model', manageModels: 'Manage models…', noModels: 'No models available; add a provider in Settings.', modelSelected: (n) => `Switched to ${n}`, modelsCount: (n) => `${n} models`, readonly: 'No profile: settings are read-only.', showKey: 'Show / hide key',
 });
 document.documentElement.lang = zh ? 'zh-CN' : 'en';
@@ -689,6 +708,7 @@ function inline(text) {
   s = esc(s)
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+    .replace(/!\[([^\]]*)\]\(((?:https?:\/\/|data:image\/)[^\s)]+)\)/g, (_, t, u) => `<img src="${u.replace(/"/g, '%22')}" alt="${t}" loading="lazy">`)
     .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, t, u) => `<a href="${u.replace(/"/g, '%22')}" target="_blank" rel="noopener noreferrer">${t}</a>`)
     .replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, (_, p, u) => `${p}<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
   return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(codes[+i])}</code>`);
@@ -874,11 +894,31 @@ function scrollToEnd(force) {
   const el = $('scroll');
   if (force || el.scrollHeight - el.scrollTop - el.clientHeight < 160) el.scrollTop = el.scrollHeight;
 }
-function addUser(text) {
+function addUser(text, images) {
   const row = document.createElement('div'); row.className = 'userRow';
-  const b = document.createElement('div'); b.className = 'bubble'; b.textContent = text; row.appendChild(b);
+  if (images && images.length) {
+    const grid = document.createElement('div'); grid.className = 'bubbleImages';
+    for (const url of images) { const img = document.createElement('img'); img.src = url; img.alt = ''; grid.appendChild(img); }
+    row.appendChild(grid);
+  }
+  const b = document.createElement('div'); b.className = 'bubble'; b.textContent = text || ''; row.appendChild(b);
   log().appendChild(row); return row;
 }
+function addImages(el, urls) {
+  if (!urls || !urls.length) return;
+  let box = el.querySelector('.aiImages');
+  if (!box) { box = document.createElement('div'); box.className = 'aiImages'; el.insertBefore(box, el.querySelector('.actions')); }
+  for (const url of urls) { const img = document.createElement('img'); img.src = url; img.alt = ''; box.appendChild(img); }
+}
+document.addEventListener('click', (e) => {
+  const img = e.target.closest('.bubbleImages img, .aiImages img, .md img'); if (!img) return;
+  const viewer = document.createElement('div'); viewer.className = 'viewer';
+  const big = document.createElement('img'); big.src = img.src; big.alt = img.alt || ''; viewer.appendChild(big);
+  const close = () => { viewer.remove(); document.removeEventListener('keydown', onKey, true); };
+  const onKey = (ev) => { if (ev.key === 'Escape') close(); };
+  viewer.onclick = close; document.addEventListener('keydown', onKey, true);
+  document.body.appendChild(viewer);
+});
 function toolGlyph(name) {
   if (/^(read_file|write_file|edit_file|delete)$/.test(name)) return 'file';
   if (/^(ls|glob)$/.test(name)) return 'list';
@@ -960,10 +1000,10 @@ function renderHistory(messages) {
   log().innerHTML = '';
   for (const m of messages) {
     if (m.role === 'human' && m.harness) addSystem(m.harness);
-    else if (m.role === 'human') addUser(m.content);
+    else if (m.role === 'human') addUser(m.content, m.images);
     else if (m.role === 'ai') {
       if (m.reasoning) addReasoning(m.reasoning);
-      if (m.content) addAI(m.content);
+      if (m.content || (m.images && m.images.length)) addImages(addAI(m.content), m.images);
       for (const tc of m.tool_calls || []) addTool(tc);
     } else if (m.role === 'tool') {
       const el = findTool(m.tool_call_id) || addTool({ id: m.tool_call_id, name: m.name || 'tool', args: {} });
@@ -1014,6 +1054,9 @@ async function consume(res) {
           case 'token':
             if (!ai) ai = addAI('');
             ai._raw += ev.text; repaint(); break;
+          case 'image':
+            if (!ai) ai = addAI('');
+            addImages(ai, [ev.url]); scrollToEnd(); break;
           case 'tool_call': {
             ai = null; reasoning = null;
             if (!findTool(ev.id)) addTool(ev);
@@ -1106,6 +1149,56 @@ async function waitForRestart() {
 
 /* ---------- composer ---------- */
 const input = $('input');
+const MAX_IMAGES = 8, MAX_IMAGE_BYTES = 8 * 1024 * 1024, MAX_IMAGE_SIDE = 2048;
+const attachments = [];
+function renderAttachments() {
+  const strip = $('attachStrip');
+  strip.innerHTML = attachments.map((a, i) => `<span class="attachThumb"><img src="${a.url}" alt=""><button type="button" data-remove="${i}" title="${esc(T.removeImage)}" aria-label="${esc(T.removeImage)}">${icon('x')}</button></span>`).join('');
+  updateComposer();
+}
+$('attachStrip').onclick = (e) => { const b = e.target.closest('[data-remove]'); if (b) { attachments.splice(+b.dataset.remove, 1); renderAttachments(); input.focus(); } };
+function modelAcceptsImages() {
+  const spec = currentSpec();
+  for (const g of state.directory?.groups || []) for (const m of g.models) if (m.spec === spec) return !m.input || m.input.includes('image');
+  return true;  // unknown catalog: the server decides
+}
+async function addImageFile(file) {
+  if (!/^image\/(png|jpeg|gif|webp)$/.test(file.type)) { toast(T.notAnImage); return; }
+  if (attachments.length >= MAX_IMAGES) { toast(T.tooManyImages(MAX_IMAGES)); return; }
+  if (!modelAcceptsImages()) { toast(T.modelNoImages(specLabel(currentSpec()).name)); return; }
+  let url;
+  try { url = await encodeImage(file); } catch { toast(T.notAnImage); return; }
+  if (url.length * 3 / 4 > MAX_IMAGE_BYTES) { toast(T.imageTooLarge); return; }
+  attachments.push({ url, name: file.name || 'image' }); renderAttachments();
+}
+function encodeImage(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(); const src = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(src);
+      const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+      if (scale === 1 && file.type !== 'image/webp' && file.size <= MAX_IMAGE_BYTES) {
+        const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); return;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.naturalWidth * scale); canvas.height = Math.round(img.naturalHeight * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.9));
+    };
+    img.onerror = () => { URL.revokeObjectURL(src); reject(new Error('decode')); };
+    img.src = src;
+  });
+}
+async function addImageFiles(files) { for (const f of files) await addImageFile(f); }
+$('attachButton').onclick = () => $('fileInput').click();
+$('fileInput').onchange = async (e) => { await addImageFiles([...e.target.files]); e.target.value = ''; input.focus(); };
+input.addEventListener('paste', (e) => {
+  const files = [...(e.clipboardData?.items || [])].filter((it) => it.kind === 'file' && it.type.startsWith('image/')).map((it) => it.getAsFile()).filter(Boolean);
+  if (!files.length) return;
+  e.preventDefault(); addImageFiles(files);
+});
+for (const ev of ['dragenter', 'dragover']) $('composer').addEventListener(ev, (e) => { if ([...(e.dataTransfer?.types || [])].includes('Files')) { e.preventDefault(); $('composer').dataset.dragover = ''; } });
+for (const ev of ['dragleave', 'drop']) $('composer').addEventListener(ev, (e) => { delete $('composer').dataset.dragover; if (ev === 'drop') { e.preventDefault(); addImageFiles([...(e.dataTransfer?.files || [])].filter((f) => f.type.startsWith('image/'))); } });
 function updateComposer() {
   const send = $('send');
   if (state.streaming) {
@@ -1113,7 +1206,7 @@ function updateComposer() {
     input.placeholder = T.placeholderBusy;
   } else {
     delete send.dataset.mode; send.innerHTML = icon('arrow-up'); send.title = T.send;
-    send.disabled = !input.value.trim() || state.pending;
+    send.disabled = (!input.value.trim() && !attachments.length) || state.pending;
     input.placeholder = T.placeholder;
   }
 }
@@ -1125,18 +1218,19 @@ input.addEventListener('keydown', (e) => {
 $('composer').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (state.streaming) { if (state.current) api(`/sessions/${state.current}/cancel`, { method: 'POST' }).catch(() => {}); return; }
-  const text = input.value.trim(); if (!text) return;
+  const text = input.value.trim(); const images = attachments.map((a) => a.url);
+  if (!text && !images.length) return;
   if (state.pending) { toast(T.approvalPending); return; }
   if (!state.current) {
     let s;
-    try { s = await json('/sessions', { method: 'POST', body: JSON.stringify({ title: text.slice(0, 60), model: state.sessionModel }) }); } catch (err) { toast(err.message); return; }
+    try { s = await json('/sessions', { method: 'POST', body: JSON.stringify({ title: (text || attachments[0].name).slice(0, 60), model: state.sessionModel }) }); } catch (err) { toast(err.message); return; }
     state.current = s.id; log().innerHTML = '';
     $('crumb').textContent = s.title || T.untitled;
     setPhase('active'); refreshSessions();
   }
-  input.value = ''; autosize();
-  addUser(text); scrollToEnd(true);
-  try { await consume(await api(`/sessions/${state.current}/messages`, { method: 'POST', body: JSON.stringify({ content: text }) })); }
+  input.value = ''; autosize(); attachments.length = 0; renderAttachments();
+  addUser(text, images); scrollToEnd(true);
+  try { await consume(await api(`/sessions/${state.current}/messages`, { method: 'POST', body: JSON.stringify({ content: text, images }) })); }
   catch (err) { addLine(err.status === 409 ? T.busy : err.message, 'error'); state.streaming = false; updateComposer(); }
 });
 

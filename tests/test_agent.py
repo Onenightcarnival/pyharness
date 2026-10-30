@@ -188,3 +188,46 @@ async def test_reasoning_cancel_and_delete(profile):
             assert (await client.get(f"/api/sessions/{sid}")).status_code == 404
             assert (await client.get("/api/sessions")).json() == []
             assert (await client.delete(f"/api/sessions/{sid}")).status_code == 404
+
+
+PNG_1PX = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+
+
+async def test_images_travel_with_messages_and_replies(profile):
+    """Image data URLs reach the model as image_url blocks, are listed in history, and AI images stream as events."""
+    scripted.CALLS.clear()
+    replies = [{"content": "I see it.", "images": [PNG_1PX]}]
+    llm = {
+        "id": "llm",
+        "config": {
+            "default": "vision:v1",
+            "providers": {"vision": {"type": "scripted", "models": [{"id": "v1", "input": ["text", "image"]}, {"id": "t1"}]}},
+        },
+    }
+    patch = [op for op in scripted_patch(replies) if op["id"] != "llm"] + [llm]
+    async with Harness(profile, patch=patch) as h:
+        http = h.get("http")
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=http.app), base_url="http://t") as client:
+            sid = (await client.post("/api/sessions", json={})).json()["id"]
+            events = sse_events(
+                (await client.post(f"/api/sessions/{sid}/messages", json={"content": "what is this?", "images": [PNG_1PX]})).text
+            )
+            assert [e["type"] for e in events] == ["token", "image", "done"], events
+            assert events[1]["url"] == PNG_1PX
+            call = next(c for c in scripted.CALLS if "messages" in c)
+            assert call["images"] == 1 and call["messages"][-1] == ("human", "what is this?")
+            history = (await client.get(f"/api/sessions/{sid}")).json()["messages"]
+            assert history[0]["role"] == "human" and history[0]["images"] == [PNG_1PX] and history[0]["content"] == "what is this?"
+            assert history[1]["role"] == "ai" and history[1]["images"] == [PNG_1PX] and history[1]["content"] == "I see it."
+
+            # Images only, no text.
+            res = await client.post(f"/api/sessions/{sid}/messages", json={"content": "", "images": [PNG_1PX]})
+            assert res.status_code == 200
+            # Validation: not a data URL; empty message; a model without image input.
+            assert (
+                await client.post(f"/api/sessions/{sid}/messages", json={"content": "x", "images": ["http://x/y.png"]})
+            ).status_code == 422
+            assert (await client.post(f"/api/sessions/{sid}/messages", json={"content": "  "})).status_code == 422
+            await client.put(f"/api/sessions/{sid}/model", json={"model": "vision:t1"})
+            res = await client.post(f"/api/sessions/{sid}/messages", json={"content": "x", "images": [PNG_1PX]})
+            assert res.status_code == 422 and "image input" in res.json()["detail"]
