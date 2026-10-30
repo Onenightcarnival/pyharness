@@ -53,7 +53,7 @@ uv run pyh run
 
 `PYH_MODEL`：`init_chat_model` 可识别的任意 `provider:model`。
 
-也可在 Web 界面左下角「设置 → 模型服务」里填写服务类型、Base URL、API Key 与模型名：测试连接、保存后预检并重启生效。保存的值写入 profile 补丁（`~/.pyharness/profiles/web/harness.patch.yaml`，`llm` 条目），优先于 `PYH_MODEL`；API Key 为明文。
+也可在 Web 界面左下角「设置 → 模型」里添加提供方：预置 LangChain 提供方（OpenAI、Anthropic、DeepSeek、Gemini、Groq、Ollama……）或自定义 OpenAI / Anthropic 兼容端点；获取模型列表、测试连接、应用即生效，无需重启。每个会话可在输入框的模型菜单里切换模型。路由配置写入 profile 补丁的 `llm` 条目（`providers.<route>`，模型规格为 `route:model`），优先于 `PYH_MODEL`；API Key 存入 `~/.pyharness/profiles/web/credentials.yaml`，配置只记录引用名（环境变量同名时优先）。
 
 ## 命令
 

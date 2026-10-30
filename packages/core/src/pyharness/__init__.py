@@ -9,6 +9,7 @@
 | ``loader``                 | dependency-driven start, teardown                |
 | ``lifecycle``              | holds, restarts, hand-off between generations    |
 | ``profile``                | profiles in the harness home                     |
+| ``credentials``            | credential store referenced by name              |
 | ``manage``                 | transactional profile mutations                  |
 | ``preflight``              | dry boot in a separate process                   |
 | ``worker``, ``supervisor`` | process model                                    |
@@ -19,6 +20,7 @@ Model adapters, tools, the agent loop, persistence and the HTTP API are plugins.
 
 from .config import ConfigError, Entry, PatchOp
 from .context import Context, Scope, Service, ServiceConflict, ServiceNotFound, unwrap
+from .credentials import CredentialStore
 from .events import EventModeError, UndeclaredEventError
 from .harness import Harness
 from .lifecycle import BOOT_FAILURE_EXIT_CODE, RESTART_EXIT_CODE, Lifecycle
@@ -33,6 +35,7 @@ __all__ = [
     "BUNDLE_GROUP",
     "ConfigError",
     "Context",
+    "CredentialStore",
     "Entry",
     "EntryState",
     "EventModeError",

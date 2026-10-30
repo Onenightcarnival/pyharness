@@ -8,6 +8,7 @@
 | hold       | each run holds the lifecycle; a pending restart waits for it                        |
 | refusal    | restart pending → :meth:`AgentService.start_run` raises ``RestartPending``          |
 | resume     | ``app/started`` of a supervised generation: continuation message per listed session |
+| model      | ``session.model`` (``route:model``) reaches the loop as ``configurable.model_spec``    |
 
 Run events: ``reasoning``, ``token``, ``tool_call``, ``tool_result``, ``interrupt``, ``error``,
 ``done``.
@@ -64,6 +65,7 @@ class Turn:
     kind: str  # message | approval | continuation
     input: str | None
     outcome: str | None = None
+    model: str | None = None  # route:model selected for the session; None: the default
     started_at: float = field(default_factory=time.time)
 
 
@@ -215,12 +217,17 @@ class AgentService(Service):
             raise RuntimeError("agent graph unavailable before app/ready")
         return self.graph
 
-    def _config(self, session_id: str) -> dict[str, Any]:
+    def _config(self, session_id: str, model: str | None = None) -> dict[str, Any]:
         limit = getattr(self.ctx.get("agentLoop"), "recursion_limit", 200)
-        return {"configurable": {"thread_id": session_id}, "recursion_limit": limit}
+        configurable: dict[str, Any] = {"thread_id": session_id}
+        if model:
+            configurable["model_spec"] = model
+        return {"configurable": configurable, "recursion_limit": limit}
 
     # ------------------------------------------------------------------ sessions
-    async def create_session(self, title: str | None = None, meta: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def create_session(
+        self, title: str | None = None, meta: dict[str, Any] | None = None, model: str | None = None
+    ) -> dict[str, Any]:
         now = time.time()
         record = {
             "id": uuid.uuid4().hex,
@@ -228,6 +235,7 @@ class AgentService(Service):
             "created_at": now,
             "updated_at": now,
             "meta": meta or {},
+            "model": model or None,
         }
         await self.ctx.store.aput(NAMESPACE, record["id"], record)
         return record
@@ -240,6 +248,15 @@ class AgentService(Service):
         items = await self.ctx.store.asearch(NAMESPACE, limit=limit)
         rows = [dict(item.value) | {"busy": self.busy(item.key)} for item in items]
         return sorted(rows, key=lambda r: r.get("updated_at") or 0, reverse=True)
+
+    async def set_model(self, session_id: str, model: str | None) -> dict[str, Any] | None:
+        """Select ``model`` (``route:model``; ``None`` = the default) for the session's next requests."""
+        record = await self.get_session(session_id)
+        if record is None:
+            return None
+        record["model"] = model or None
+        await self.ctx.store.aput(NAMESPACE, session_id, record)
+        return record
 
     async def _touch(self, session_id: str, title_hint: str | None = None) -> None:
         record = await self.get_session(session_id)
@@ -296,8 +313,9 @@ class AgentService(Service):
         decisions: list[dict[str, Any]] | None = None,
         kind: str | None = None,
         marker: dict[str, Any] | None = None,
+        model: str | None = None,
     ) -> RunHandle:
-        """Start a run and return its handle.
+        """Start a run and return its handle. ``model`` overrides the session's selection for this run.
 
         | arguments                | input to the graph                                          |
         |--------------------------|-------------------------------------------------------------|
@@ -323,21 +341,25 @@ class AgentService(Service):
             kind = kind or "message"
         handle = RunHandle(session_id, kind, content)
         self._runs[session_id] = handle
-        task = asyncio.get_running_loop().create_task(self._drive(graph, handle, payload))
+        task = asyncio.get_running_loop().create_task(self._drive(graph, handle, payload, model))
         handle.task = task
         self._tasks.add(task)
         task.add_done_callback(self._tasks.discard)
         return handle
 
-    async def _drive(self, graph: Any, handle: RunHandle, payload: Any) -> None:
+    async def _drive(self, graph: Any, handle: RunHandle, payload: Any, model: str | None = None) -> None:
         session_id = handle.session_id
         lifecycle = self.ctx.lifecycle
         turn = Turn(session_id=session_id, run_id=handle.id, kind=handle.kind, input=handle.input)
         outcome = "completed"
         async with lifecycle.hold(f"run:{session_id}", session=session_id):
             try:
+                if model is None:
+                    record = await self.get_session(session_id)
+                    model = (record or {}).get("model") or None
+                turn.model = model
                 await self.ctx.parallel("agent/turn-start", turn)
-                async for mode, chunk in graph.astream(payload, self._config(session_id), stream_mode=["messages", "updates"]):
+                async for mode, chunk in graph.astream(payload, self._config(session_id, model), stream_mode=["messages", "updates"]):
                     for event in self._translate(mode, chunk):
                         await handle.publish(event)
                 interrupts = await self.pending(session_id)

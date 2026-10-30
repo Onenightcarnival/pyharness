@@ -47,4 +47,9 @@ class ScriptedModel(BaseChatModel):
 
 def apply(ctx: Any, config: Config) -> None:
     replies = config.by_generation.get(ctx.lifecycle.generation, config.replies)
-    ctx.llm.register("scripted", lambda model, **_: ScriptedModel(replies=replies))
+
+    def factory(model: str, **_: Any) -> ScriptedModel:
+        CALLS.append({"model": model})
+        return ScriptedModel(replies=replies)
+
+    ctx.llm.register("scripted", factory)

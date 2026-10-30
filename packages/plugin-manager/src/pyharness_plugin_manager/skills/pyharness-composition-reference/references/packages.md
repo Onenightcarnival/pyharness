@@ -18,7 +18,7 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 | `pyharness-dev-context` | function |  | prompt | yes | Prompt section ``dev-context``: where this harness runs. |
 | `pyharness-http` | service | http |  | yes | FastAPI root application and uvicorn server. |
 | `pyharness-inspect` | function |  | tools | yes | ``harness_inspect`` tool: read-only view of the running harness. |
-| `pyharness-llm` | service | llm |  | yes | Chat-model provider registry; resolves ``provider:model`` specs. |
+| `pyharness-llm` | service | llm |  | yes | Chat-model routes; resolves ``route:model`` specs. |
 | `pyharness-plugin-manager` | function |  | tools, prompt, agentLoop | yes | ``plugin_manager`` tool, the plugin-authoring skills, and the short prompt section. |
 | `pyharness-prompt` | service | prompt |  | no | Ordered system-prompt sections. |
 | `pyharness-tools` | service | tools |  | no | Tool registry and the ``tools/execute`` → ``tools/result`` pipeline. |

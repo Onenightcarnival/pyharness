@@ -1,17 +1,19 @@
-"""Model service settings: profile patch mutation, settings API, probe; live OpenAI-compatible endpoint when configured."""
+"""Model routes: configuration model, credential store, settings API, per-session selection; live endpoint when configured."""
 
 from __future__ import annotations
 
-import asyncio
 import json
 import os
+import stat
 
 import httpx
 import pytest
-from pyharness_llm import mask_secret, split_spec, translate_options
+import yaml
+from pyharness_llm import LLMConfig, LLMConfigError, ProviderConfig, mask_secret, split_spec, translate_options, type_info
 
-from pyharness import Harness, Profile
-from pyharness.config import iter_entries
+from pyharness import CredentialStore, Harness, Profile
+from pyharness.credentials import reference_for
+from testkit import scripted
 
 
 @pytest.fixture
@@ -19,21 +21,27 @@ def profile(home):
     return Profile.init("web", home=str(home))
 
 
-def base_patch(extra=None):
+def base_patch(llm: dict | None = None, replies=None):
     return [
-        {"id": "scripted", "name": "testkit.scripted", "after": "llm", "config": {"replies": [{"content": "hi"}]}},
-        {"id": "llm", "config": {"default": "scripted:test"}},
+        {"id": "scripted", "name": "testkit.scripted", "after": "llm", "config": {"replies": replies or [{"content": "hi"}]}},
+        {"id": "llm", "config": {"default": "scripted:test", **(llm or {})}},
         {"id": "http", "config": {"serve": False}},
-        *(extra or []),
     ]
 
 
+def client(h):
+    return httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=120)
+
+
+def sse(text):
+    return [json.loads(line[6:]) for line in text.splitlines() if line.startswith("data: ")]
+
+
+# ---------------------------------------------------------------------- units
 def test_helpers():
-    assert split_spec("openai:openai-codex:gpt-6.1-sol") == ("openai", "openai-codex:gpt-6.1-sol")
+    assert split_spec("local:openai-codex:gpt-6.1-sol") == ("local", "openai-codex:gpt-6.1-sol")
     assert split_spec("gpt-4o") == ("", "gpt-4o")
-    assert split_spec(None) == ("", "")
     assert mask_secret("cs-sk-3078205a-1234") == "••••••••1234"
-    assert mask_secret("short") == "••••••••"
     assert mask_secret(None) is None
     assert translate_options("deepseek", {"base_url": "u", "api_key": None, "temperature": 0}) == {"api_base": "u", "temperature": 0}
     assert translate_options("google_genai", {"api_key": "k"}) == {"google_api_key": "k"}
@@ -41,136 +49,199 @@ def test_helpers():
         "base_url": "http://127.0.0.1:1/v1",
         "use_responses_api": False,
     }
-    assert translate_options("openai", {"base_url": "http://x/v1", "use_responses_api": True})["use_responses_api"] is True
     assert "use_responses_api" not in translate_options("openai", {"api_key": "k"})
+    assert reference_for("openai-codex") == "OPENAI_CODEX_API_KEY"
+    assert reference_for("1x") == "P_1X_API_KEY"
+    openai = type_info("openai")
+    assert openai["installed"] and openai["env"] == "OPENAI_API_KEY" and openai["models_api"] == "openai"
+    assert type_info("deepseek")["extra"] == "deepseek" and type_info("ollama")["credentials"] is False
+    assert type_info("nonexistent")["package"] is None
 
 
-def test_set_entry_config_merges_into_the_profile_patch(profile):
-    profile.set_entry_config("llm", {"default": "openai:a", "providers": {"openai": {"base_url": "http://x/v1"}}})
-    profile.set_entry_config("llm", {"providers": {"openai": {"api_key": "k1"}}})
-    ops = profile.patch_ops_raw()
-    assert [op["id"] for op in ops] == ["llm"]
-    assert ops[0]["merge"] is True
-    assert ops[0]["config"] == {"default": "openai:a", "providers": {"openai": {"base_url": "http://x/v1", "api_key": "k1"}}}
-    # Composed over the base bundle: default replaced, provider options kept.
-    entry = next(e for e, _ in iter_entries(profile.compose().tree) if e.id == "llm")
-    assert entry.config["default"] == "openai:a"
-    assert entry.config["providers"]["openai"]["api_key"] == "k1"
-    # A later disabled op on the same id is reused rather than duplicated.
-    profile.set_entry_disabled("llm", False)
-    profile.set_entry_config("llm", {"default": "echo:echo"})
-    ops = profile.patch_ops_raw()
-    assert len(ops) == 1 and ops[0]["config"]["default"] == "echo:echo" and ops[0]["disabled"] is False
-
-
-async def test_settings_api_describes_masks_and_saves(profile):
-    patch = base_patch(
-        [{"id": "llm", "config": {"providers": {"echo": {"api_key": "secret-value-9876", "base_url": "http://echo"}}}, "merge": True}]
+def test_config_model():
+    cfg = LLMConfig.model_validate({"default": "a:b", "providers": {"openai": {"base_url": "u", "api_key": "k", "temperature": 0}}})
+    assert cfg.providers["openai"].kwargs() == {"temperature": 0}  # legacy extra keys are keyword arguments
+    with pytest.raises(ValueError):
+        LLMConfig.model_validate({"providers": {"Bad Id": {}}})
+    with pytest.raises(ValueError):
+        ProviderConfig.model_validate({"protocol": "grpc"})
+    custom = ProviderConfig.model_validate(
+        {"protocol": "openai-responses", "base_url": "http://x/v1", "models": [{"id": "m", "max_tokens": 10}]}
     )
-    async with Harness(profile, patch=patch) as h:
-        http = h.get("http")
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=http.app), base_url="http://t", timeout=120) as client:
-            d = (await client.get("/api/settings/model")).json()
-            assert (d["provider"], d["model"]) == ("scripted", "test")
-            assert d["providers"]["echo"] == {"base_url": "http://echo", "api_key": "••••••••9876", "has_api_key": True, "other": []}
-            assert "secret-value" not in json.dumps(d)
-            ids = {c["id"] for c in d["catalog"]}
-            assert {"openai", "deepseek", "anthropic", "echo", "scripted"} <= ids
-            assert d["registered"]["scripted"] == "scripted"
-            assert d["editable"] is True and d["supervised"] is False
+    assert custom.models[0].max_tokens == 10
 
-            # Probe: the built-in echo provider answers without credentials.
-            r = (await client.post("/api/settings/model/test", json={"provider": "echo", "model": "echo"})).json()
-            assert r["ok"] is True and r["reply"].startswith("echo: Reply with the single word OK.")
-            # Probe: a provider whose package is missing reports the install hint instead of raising.
-            r = (await client.post("/api/settings/model/test", json={"provider": "nonexistent_provider", "model": "m"})).json()
-            assert r["ok"] is False and "nonexistent_provider" in r["error"]
-            # Listing models: unsupported provider → supported false; unreachable endpoint → error, no exception.
-            r = (await client.post("/api/settings/model/models", json={"provider": "echo", "model": "echo"})).json()
+
+def test_credential_store(tmp_path, monkeypatch):
+    store = CredentialStore(tmp_path / "credentials.yaml")
+    assert store.get("X_API_KEY") is None and store.describe("X_API_KEY") == {"reference": "X_API_KEY", "configured": False, "source": None}
+    store.set("X_API_KEY", "secret-1")
+    assert store.get("X_API_KEY") == "secret-1" and store.describe("X_API_KEY")["source"] == "store"
+    assert stat.S_IMODE(os.stat(tmp_path / "credentials.yaml").st_mode) == 0o600
+    monkeypatch.setenv("X_API_KEY", "from-env")
+    assert store.get("X_API_KEY") == "from-env" and store.describe("X_API_KEY")["source"] == "env"
+    monkeypatch.delenv("X_API_KEY")
+    assert store.delete("X_API_KEY") is True and store.delete("X_API_KEY") is False
+    with pytest.raises(ValueError):
+        store.set("lower", "x")
+    with pytest.raises(ValueError):
+        store.set("Y_API_KEY", "has space")
+
+
+# ---------------------------------------------------------------------- API
+async def test_route_lifecycle_through_the_api(profile):
+    replies = [{"content": "one"}, {"content": "two"}]
+    scripted.CALLS.clear()
+    async with Harness(profile, patch=base_patch(replies=replies)) as h:
+        async with client(h) as c:
+            d = (await c.get("/api/settings/models")).json()
+            assert d["default"] == "scripted:test" and d["routes"] == [] and d["editable"] is True
+            assert {c_["id"] for c_ in d["catalog"]} >= {"openai", "anthropic", "deepseek", "ollama", "echo", "scripted"}
+            assert [p["id"] for p in d["protocols"]] == ["openai-chat", "openai-responses", "anthropic-messages"]
+
+            # Create a route on the registered test provider; the key goes to the store, not the configuration.
+            r = await c.put(
+                "/api/settings/models/alt",
+                json={
+                    "type": "scripted",
+                    "title": "Alt",
+                    "api_key": "sk-alt-0001",
+                    "models": [{"id": "m1", "name": "Model one"}, {"id": "m2"}],
+                },
+            )
+            assert r.status_code == 200, r.text
+            route = r.json()["route"]
+            assert route["api_key"] == {
+                "reference": "ALT_API_KEY",
+                "configured": True,
+                "source": "store",
+                "masked": "••••••••0001",
+                "required": True,
+            }
+            assert "sk-alt" not in r.text
+            assert yaml.safe_load(profile.credentials_path.read_text())["ALT_API_KEY"] == "sk-alt-0001"
+            patch = yaml.safe_load(profile.patch_path.read_text())
+            llm_op = next(op for op in patch if op["id"] == "llm")
+            assert llm_op["merge"] is False
+            assert llm_op["config"]["providers"]["alt"] == {
+                "type": "scripted",
+                "title": "Alt",
+                "api_key_env": "ALT_API_KEY",
+                "models": [{"id": "m1", "name": "Model one"}, {"id": "m2"}],
+            }
+            assert '"api_key":' not in json.dumps(llm_op)
+
+            # Default model and the selector directory.
+            d = (await c.put("/api/settings/models", json={"default": "alt:m1"})).json()
+            assert d["default"] == "alt:m1"
+            directory = (await c.get("/api/models")).json()
+            assert directory == {
+                "default": "alt:m1",
+                "groups": [
+                    {
+                        "id": "alt",
+                        "title": "Alt",
+                        "type": "scripted",
+                        "models": [{"id": "m1", "name": "Model one", "spec": "alt:m1"}, {"id": "m2", "name": "m2", "spec": "alt:m2"}],
+                    }
+                ],
+            }
+
+            # Per-session selection reaches the model factory; changing it applies to the next request.
+            s = (await c.post("/api/sessions", json={"model": "alt:m2"})).json()
+            assert s["model"] == "alt:m2"
+            events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
+            assert events[-1]["outcome"] == "completed"
+            assert [x["model"] for x in scripted.CALLS if "model" in x][-1] == "m2"
+            assert (await c.put(f"/api/sessions/{s['id']}/model", json={"model": "alt:m1"})).json()["model"] == "alt:m1"
+            await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "again"})
+            assert [x["model"] for x in scripted.CALLS if "model" in x][-1] == "m1"
+            assert (await c.get(f"/api/sessions/{s['id']}")).json()["model"] == "alt:m1"
+
+            # Edit keeps the stored key; '' removes it; delete removes the route, its key, and moves the default.
+            r = (await c.put("/api/settings/models/alt", json={"base_url": "http://alt.local"})).json()["route"]
+            assert r["api_key"]["configured"] is True and r["base_url"] == "http://alt.local"
+            r = (await c.put("/api/settings/models/alt", json={"api_key": ""})).json()["route"]
+            assert r["api_key"]["configured"] is False
+            assert (await c.put("/api/settings/models/Bad", json={"type": "scripted"})).status_code == 422
+            assert (await c.put("/api/settings/models/nope", json={"type": "no_such_type"})).status_code == 422
+            d = (await c.delete("/api/settings/models/alt")).json()
+            assert d["routes"] == [] and d["default"] == "echo:echo"
+            assert (await c.delete("/api/settings/models/alt")).status_code == 404
+            r = (await c.post("/api/settings/models/echo/discover", json={})).json()
             assert r == {"ok": True, "supported": False, "models": []}
-            r = (
-                await client.post(
-                    "/api/settings/model/models",
-                    json={"provider": "openai", "model": "m", "base_url": "http://127.0.0.1:9", "api_key": "k"},
-                )
-            ).json()
-            assert r["ok"] is False and r["models"] == []
+            r = (await c.post("/api/settings/models/echo/test", json={"model": "echo"})).json()
+            assert r["ok"] is True and r["reply"].startswith("echo: Reply")
 
-            # Save: preflighted in a separate process; unsupervised → applies on the next start.
-            r = (await client.put("/api/settings/model", json={"provider": "echo", "model": "echo", "api_key": "new-key-0001"})).json()
-            assert r["application"] == "saved-restart-required", r
-            assert r["preflight"]["ok"] is True
-            assert r["default"] == "echo:echo"
-            assert h.lifecycle.restart_pending is None
-    ops = profile.patch_ops_raw()
-    llm_op = next(op for op in ops if op["id"] == "llm")
-    assert llm_op["config"]["default"] == "echo:echo"
-    assert llm_op["config"]["providers"]["echo"] == {"base_url": None, "api_key": "new-key-0001"}
-
-    # Next generation: the saved default is live; the inline patch no longer overrides it.
+    # The saved configuration is what the next generation boots with.
     async with Harness(profile, patch=[{"id": "http", "config": {"serve": False}}], generation=2) as h2:
-        assert h2.get("llm").default == "echo:echo"
-        d = h2.get("llm").describe()
-        assert d["providers"]["echo"]["api_key"] == "••••••••0001"
+        assert h2.get("llm").default == "echo:echo" and h2.get("llm").config.providers == {}
 
 
-async def test_settings_api_rejects_a_configuration_that_fails_preflight(profile):
-    before = profile.read_state()
-    async with Harness(profile, patch=base_patch()) as h:
-        http = h.get("http")
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=http.app), base_url="http://t", timeout=120) as client:
-            r = (await client.put("/api/settings/model", json={"provider": "no_such_provider", "model": "m"})).json()
-            assert r["application"] == "rejected", r
-            assert r["stage"] == "preflight"
-            assert any("no_such_provider" in str(e.get("error")) for e in r["errors"])
-    assert profile.read_state() == before
+async def test_plain_key_in_the_configuration_moves_to_the_store_on_save(profile, monkeypatch):
+    monkeypatch.delenv("ALT_API_KEY", raising=False)
+    patch = base_patch({"providers": {"alt": {"type": "scripted", "api_key": "plain-9999", "models": [{"id": "m1"}]}}})
+    async with Harness(profile, patch=patch) as h:
+        async with client(h) as c:
+            route = next(r for r in (await c.get("/api/settings/models")).json()["routes"] if r["id"] == "alt")
+            assert route["api_key"]["source"] == "config" and route["api_key"]["masked"] == "••••••••9999"
+            r = (await c.put("/api/settings/models/alt", json={"title": "Alt"})).json()["route"]
+            assert r["api_key"] == {
+                "reference": "ALT_API_KEY",
+                "configured": True,
+                "source": "store",
+                "masked": "••••••••9999",
+                "required": True,
+            }
+            assert h.get("llm").options_for("alt")["api_key"] == "plain-9999"
+    assert "plain-9999" not in profile.patch_path.read_text()
+    assert yaml.safe_load(profile.credentials_path.read_text()) == {"ALT_API_KEY": "plain-9999"}
 
 
-async def test_supervised_save_schedules_a_restart(profile):
-    async with Harness(profile, patch=base_patch(), supervised=True) as h:
-        http = h.get("http")
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=http.app), base_url="http://t", timeout=120) as client:
-            r = (await client.put("/api/settings/model", json={"provider": "echo", "model": "echo"})).json()
-            assert r["application"] == "restart-scheduled", r
-        for _ in range(20):
-            if h.lifecycle.restart_pending is not None:
-                break
-            await asyncio.sleep(0.1)
-        assert h.lifecycle.restart_pending is not None
-        assert h.lifecycle.restart_pending["reasons"] == ["model settings: echo:echo"]
-        assert h.lifecycle.exit_code == 75
+async def test_unusable_default_model_boots_and_reports_in_the_session(profile, monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    patch = base_patch({"default": "openai:gpt-test"})
+    async with Harness(profile, patch=patch) as h:
+        agents = h.get("agents")
+        session = await agents.create_session()
+        events = await agents.start_run(session["id"], "hello").wait()
+        error = next(e for e in events if e["type"] == "error")
+        assert "LLMConfigError" in error["message"] and "openai:gpt-test" in error["message"]
+        async with client(h) as c:
+            assert (await c.get("/api/settings/models")).status_code == 200
+            # A session can still run on another route.
+            s = (await c.post("/api/sessions", json={"model": "scripted:test"})).json()
+            events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
+            assert events[-1]["outcome"] == "completed"
+    # Preflight stays strict: the configuration is rejected before a restart.
+    harness = Harness(profile, patch=patch, preflight=True)
+    await harness.start()
+    with pytest.raises(LLMConfigError):
+        await harness.ready(serve=False)
+    await harness.stop()
 
 
 LIVE = {k: os.environ.get(f"PYH_TEST_OPENAI_{k}") for k in ("BASE_URL", "MODEL", "API_KEY")}
 
 
 @pytest.mark.skipif(not all(LIVE.values()), reason="PYH_TEST_OPENAI_BASE_URL / _MODEL / _API_KEY unset")
-async def test_live_openai_compatible_service(profile):
-    """Settings page flow against a real OpenAI-compatible endpoint, then a real agent turn with it."""
-    pytest.importorskip("langchain_openai")
-    body = {"provider": "openai", "model": LIVE["MODEL"], "base_url": LIVE["BASE_URL"], "api_key": LIVE["API_KEY"]}
+async def test_live_openai_compatible_service(profile, monkeypatch):
+    """Settings flow against a real OpenAI-compatible endpoint: discover, test, save, run with the model selected per session."""
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    body = {"type": "openai", "base_url": LIVE["BASE_URL"], "api_key": LIVE["API_KEY"]}
     async with Harness(profile, patch=base_patch()) as h:
-        http = h.get("http")
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=http.app), base_url="http://t", timeout=180) as client:
-            models = (await client.post("/api/settings/model/models", json=body)).json()
-            assert models["ok"] is True and LIVE["MODEL"] in models["models"], models
-            probe = (await client.post("/api/settings/model/test", json=body)).json()
+        async with client(h) as c:
+            found = (await c.post("/api/settings/models/local/discover", json=body)).json()
+            assert found["ok"] is True and any(m["id"] == LIVE["MODEL"] for m in found["models"]), found
+            probe = (await c.post("/api/settings/models/local/test", json={**body, "model": LIVE["MODEL"]})).json()
             assert probe["ok"] is True and probe["reply"], probe
-            bad = (await client.post("/api/settings/model/test", json={**body, "api_key": "wrong-key"})).json()
+            bad = (await c.post("/api/settings/models/local/test", json={**body, "api_key": "wrong-key", "model": LIVE["MODEL"]})).json()
             assert bad["ok"] is False
-            saved = (await client.put("/api/settings/model", json=body)).json()
-            assert saved["application"] == "saved-restart-required", saved
-    # Generation 2 runs the saved model: the key is not in the request body any more, it comes from the profile.
-    async with Harness(profile, patch=[{"id": "http", "config": {"serve": False}}], generation=2) as h2:
-        http = h2.get("http")
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=http.app), base_url="http://t", timeout=180) as client:
-            health = (await client.get("/api/health")).json()
-            assert health["model"] == f"openai:{LIVE['MODEL']}"
-            session = (await client.post("/api/sessions", json={})).json()
-            res = await client.post(
-                f"/api/sessions/{session['id']}/messages", json={"content": "Reply with exactly the word PONG and nothing else."}
-            )
-            events = [json.loads(line[6:]) for line in res.text.splitlines() if line.startswith("data: ")]
+            saved = (await c.put("/api/settings/models/local", json={**body, "title": "Local", "models": [{"id": LIVE["MODEL"]}]})).json()
+            assert saved["route"]["api_key"]["source"] == "store" and saved["default"] == f"local:{LIVE['MODEL']}"
+            # No restart: a session on the new route answers at once.
+            s = (await c.post("/api/sessions", json={"model": f"local:{LIVE['MODEL']}"})).json()
+            res = await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "Reply with exactly the word PONG and nothing else."})
+            events = sse(res.text)
             assert events[-1]["outcome"] == "completed", events
-            text = "".join(e["text"] for e in events if e["type"] == "token")
-            assert "PONG" in text.upper(), text
+            assert "PONG" in "".join(e["text"] for e in events if e["type"] == "token").upper()
+    assert LIVE["API_KEY"] not in profile.patch_path.read_text()

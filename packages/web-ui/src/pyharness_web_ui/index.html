@@ -335,37 +335,88 @@ svg { display: block; }
 .tip { margin-top: 32px; padding: 12px 16px; border-radius: var(--r-xl); background: var(--hover); color: var(--label-secondary); font-size: 13px; line-height: 20px; }
 .tip code { font-family: var(--mono); font-size: 12px; }
 
-/* settings page */
-.statusCard { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border: 0.5px solid var(--border-l3); border-radius: var(--r-xl); background: var(--input-major); }
-.form { display: flex; flex-direction: column; gap: 18px; margin-top: 12px; padding: 20px 20px 16px; border: 0.5px solid var(--border-l3); border-radius: var(--r-panel); background: var(--input-major); }
+/* settings: model routes */
+.statusCard { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border: 0.5px solid var(--border-l3); border-radius: var(--r-xl); background: var(--input-major); flex-wrap: wrap; }
+.statusCard .pcardMain { flex: 1 1 260px; }
+.statusCard .selectWrap { flex: 1 1 240px; }
+.form { display: flex; flex-direction: column; gap: 16px; padding: 18px 20px 14px; border: 0.5px solid var(--border-l3); border-radius: var(--r-xl); background: var(--input-major); }
+.editor { margin: 2px 0 10px; }
+.editorHead { display: flex; align-items: center; gap: 10px; min-height: 28px; }
+.editorHead .pcardTitle { font-size: 15px; }
 .field { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 6px 20px; align-items: start; }
 .fieldLabel { font-size: 13px; line-height: 36px; font-weight: 500; }
 .fieldMain { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .fieldHint { font-size: 12px; line-height: 18px; color: var(--label-tertiary); overflow-wrap: anywhere; }
 .fieldHint[data-tone='error'] { color: var(--error); }
+.fieldHint[data-tone='ok'] { color: var(--success); }
+.fieldHint[data-tone='warn'] { color: var(--warn-label); }
 .inputRow { display: flex; gap: 8px; align-items: center; min-width: 0; }
-.inputRow .input { flex: 1; }
+.inputRow .input, .inputRow .selectWrap { flex: 1; }
 .input, .select { width: 100%; height: 36px; padding: 0 12px; border: 0.5px solid var(--border-l3); border-radius: var(--r-md); background: var(--bg-base); color: var(--label-primary); font: 14px/22px var(--font); outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
 .input::placeholder { color: var(--label-caption); }
 .input:focus, .select:focus { border-color: var(--info); box-shadow: 0 0 0 2px color-mix(in srgb, var(--info) 18%, transparent); }
 .input:disabled, .select:disabled { opacity: 0.5; }
 .input.mono { font-family: var(--mono); font-size: 13px; }
+.input[aria-invalid='true'] { border-color: var(--error); }
 .selectWrap { position: relative; }
 .select { appearance: none; padding-right: 32px; cursor: pointer; }
 .selectWrap .chev { position: absolute; right: 10px; top: 10px; pointer-events: none; color: var(--label-tertiary); }
-.modelChips { display: flex; flex-wrap: wrap; gap: 6px; }
-.modelChips:empty { display: none; }
-.chipBtn { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border: 0.5px solid var(--border-l3); border-radius: 999px; corner-shape: round; background: transparent; color: var(--label-secondary); font: 12px/18px var(--mono); }
-.chipBtn[aria-pressed='true'] { background: var(--business-tertiary); color: var(--label-bluish); border-color: transparent; }
 .result { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: var(--r-md); background: var(--hover); color: var(--label-secondary); font-size: 13px; line-height: 20px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .result .ico { margin-top: 2px; }
 .result[data-tone='ok'] { background: color-mix(in srgb, var(--success) 10%, transparent); color: var(--success); }
 .result[data-tone='error'] { background: color-mix(in srgb, var(--error) 8%, transparent); color: var(--error); }
 .result[data-tone='warn'] { background: var(--warn-tertiary); color: var(--warn-label); }
-.formFoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding-top: 14px; border-top: 0.5px solid var(--border-l2); }
-.formFoot .fieldHint { flex: 1 1 220px; }
-.formFoot .spacer { display: none; }
+.formFoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding-top: 12px; border-top: 0.5px solid var(--border-l2); }
+.formFoot .spacer { flex: 1; }
+.btn.danger { color: var(--error); }
+.prow { display: flex; align-items: center; gap: 14px; width: calc(100% + 16px); margin: 0 -8px; padding: 8px; border: none; border-radius: var(--r-xl); background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.prow[aria-expanded='true'] { background: var(--hover); }
+.prow .pcardDesc { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.kdot { width: 7px; height: 7px; border-radius: 50%; corner-shape: round; background: var(--label-caption); flex: none; display: inline-block; }
+.kdot[data-state='on'] { background: var(--success); }
+.kdot[data-state='off'] { background: var(--error); }
+.segmented { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--r-md); background: var(--selector); }
+.segmented button { border: none; background: transparent; padding: 5px 12px; border-radius: var(--r-sm); font-size: 13px; line-height: 20px; color: var(--label-secondary); }
+.segmented button[aria-pressed='true'] { background: var(--elevated-fill); color: var(--label-primary); box-shadow: 0 0 0 0.5px var(--border-l2); }
+.fold > summary { display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; font-size: 13px; font-weight: 500; color: var(--label-secondary); }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary .chevron { transition: transform 0.15s var(--ease); }
+.fold[open] > summary .chevron { transform: rotate(90deg); }
+.fold .foldBody { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
+.mtable { width: 100%; border-collapse: collapse; }
+.mtable th { padding: 2px 6px; text-align: left; font-size: 11px; font-weight: 500; color: var(--label-tertiary); white-space: nowrap; }
+.mtable td { padding: 3px 4px; vertical-align: middle; }
+.mtable .input { height: 30px; font-size: 13px; padding: 0 8px; }
+.mtable .input.mono { font-size: 12px; }
+.mtable .num { width: 96px; }
+.mtable .rowDel { width: 28px; }
+.mtable:empty { display: none; }
+.actionsRow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.emptyNote { font-size: 13px; color: var(--label-tertiary); padding: 2px 0; }
+.modal { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, 0.3); }
+.modalCard { width: min(560px, 100%); max-height: min(80vh, 640px); display: flex; flex-direction: column; overflow: hidden; border-radius: var(--r-xl); background: var(--elevated-fill); box-shadow: var(--shadow-lv2), 0 0 0 0.5px var(--border-l3); }
+.modalHead { padding: 14px 16px 6px; font-size: 15px; font-weight: 500; }
+.modalBody { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 12px; }
+.modalBody p { margin: 6px 4px 10px; font-size: 13px; line-height: 20px; color: var(--label-secondary); }
+.modalFoot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 16px; border-top: 0.5px solid var(--border-l2); }
+.modalFoot .spacer { flex: 1; }
+.modalFoot .count { font-size: 12px; color: var(--label-tertiary); }
+.pickSearch { margin: 4px 4px 8px; }
+.pickRow { display: flex; align-items: center; gap: 10px; padding: 6px 6px; border-radius: var(--r-sm); font-size: 13px; cursor: pointer; }
+.pickRow .mono { font-family: var(--mono); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pickRow .sub { margin-left: auto; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--label-tertiary); }
+.pickRow input { accent-color: var(--info); }
+.menu { position: absolute; right: 8px; bottom: calc(100% + 8px); z-index: 45; min-width: 260px; max-width: min(380px, 100%); max-height: 360px; overflow-y: auto; padding: 6px; border-radius: var(--r-lg); background: var(--elevated-fill); box-shadow: var(--shadow-lv2), 0 0 0 0.5px var(--border-l3); }
+.menuGroup { padding: 8px 8px 2px; font-size: 11px; color: var(--label-tertiary); }
+.menuRow { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 8px; border: none; border-radius: var(--r-sm); background: transparent; color: var(--label-primary); font-size: 13px; line-height: 20px; text-align: left; }
+.menuRow .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menuRow .check { width: 14px; height: 14px; flex: none; color: var(--info); visibility: hidden; }
+.menuRow[aria-checked='true'] .check { visibility: visible; }
+.menuRow .sub { margin-left: auto; flex: none; font-size: 11px; color: var(--label-tertiary); }
+.menuFoot { margin-top: 4px; padding-top: 4px; border-top: 0.5px solid var(--border-l2); }
+.menuEmpty { padding: 10px; font-size: 13px; color: var(--label-tertiary); }
 #modelChip { cursor: pointer; }
+#modelChip .chev { color: var(--label-caption); }
 
 /* toast */
 .toast { position: fixed; left: 50%; bottom: 96px; transform: translate(-50%, 8px); padding: 8px 14px; border-radius: var(--r-md); background: var(--toast); color: #fff; font-size: 13px; line-height: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 50; max-width: calc(100vw - 32px); }
@@ -391,7 +442,9 @@ svg { display: block; }
   .btn:hover:not(:disabled) { background: var(--hover); }
   .btn.primary:hover:not(:disabled) { background: var(--primary-hover); }
   .btn.reject:hover:not(:disabled) { background: var(--hover-danger); color: var(--error); }
-  .chipBtn:hover { background: var(--hover); color: var(--label-primary); }
+  .prow:hover { background: var(--hover); }
+  .menuRow:hover { background: var(--hover); }
+  .pickRow:hover { background: var(--hover); }
   .codeBanner button:hover { color: var(--label-primary); }
 }
 .disclosure[data-open] .drow .lead .leadIcon { opacity: 0; }
@@ -413,7 +466,8 @@ svg { display: block; }
   .bubble { max-width: 88%; }
   .field { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .fieldLabel { line-height: 20px; }
-  .form { padding: 16px; border-radius: var(--r-xl); }
+  .form { padding: 14px; }
+  .menu { right: 0; left: 0; max-width: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
@@ -554,31 +608,37 @@ const T = zh ? {
   restartFailed: 'No response after restart. Log: the terminal running pyh run.', busy: 'Session running', approvalPending: 'Tool call awaiting approval',
 };
 Object.assign(T, zh ? {
-  settings: '设置', settingsIntro: '当前 profile 的运行设置。保存后在独立进程预检新配置，通过则重启生效，失败则回滚。',
-  modelService: '模型服务', modelChip: '模型设置', provider: '服务类型', baseUrl: 'Base URL', apiKey: 'API Key', model: '模型',
-  baseUrlHint: '留空使用该服务的默认地址。', modelHint: '模型名可含冒号，如 openai-codex:gpt-6.1-sol。', keyKept: '已保存密钥；留空则沿用。', keyNone: '未保存密钥。',
-  envKey: (e) => `未保存密钥；环境变量 ${e} 已设置。`, keyPlain: 'API Key 以明文写入 profile 补丁文件。',
-  installed: '已安装', builtin: '内置，无需凭据。', pluginProvider: '由插件提供。', notInstalled: (pkg, extra) => `未安装 ${pkg}${extra ? `：uv sync --extra ${extra}` : ''}`, notInstalledShort: '未安装',
-  fetchModels: '获取模型列表', fetching: '获取中…', modelsFound: (n) => `${n} 个模型`, modelsNone: '该服务类型不支持列出模型。',
-  test: '测试连接', testing: '测试中…', testOk: (ms) => `连接成功 · ${ms} ms`, save: '保存并重启', saving: '预检中…', noModel: '请填写模型名。',
-  rejected: '预检未通过，已回滚。', restartScheduled: '已保存。重启中…', savedUnsupervised: '已保存。未托管运行：下次启动生效。', restartPendingNote: '重启挂起',
-  current: '当前', readonly: '无 profile：设置只读。', showKey: '显示 / 隐藏密钥',
+  settings: '设置', settingsIntro: '当前 profile 的运行设置。模型设置保存后立即生效，无需重启；密钥写入 profile 的凭据文件，配置文件只记录引用名。',
+  modelsTitle: '模型', modelChip: '选择模型', defaultModel: '新会话默认模型', defaultModelHint: '新建会话使用的模型；每个会话可在输入框的模型菜单里单独切换。', noDefault: '未设置',
+  addProvider: '添加模型提供方', thirdParty: '第三方模型提供方', customApi: '自定义模型 API', thirdPartyHint: '预置的 LangChain 提供方；填写密钥与模型列表即可。', customApiHint: '自建服务、中转网关或其他 OpenAI / Anthropic 兼容端点。',
+  providerType: '提供方类型', providerId: '提供方 ID', providerIdHint: '小写字母、数字、- 与 _；用作配置键与凭据引用名，保存后不可改。', displayName: '显示名称', protocol: 'API 协议',
+  apiKey: 'API Key', baseUrl: 'Base URL', baseUrlHint: '留空使用默认地址。', customBaseUrlHint: (p) => p === 'anthropic-messages' ? '例如 https://gateway.example；SDK 自行追加 /v1/messages。' : '例如 https://gateway.example/v1。',
+  keySaved: '已保存密钥；留空则沿用。', keyEnv: (e) => `使用环境变量 ${e}。`, keyMissing: (e) => `未配置；可设置环境变量 ${e} 或在此填写。`, keyNone: '该提供方不使用 API Key。', keyConfig: '密钥写在配置文件中（明文）；在此填写会迁移到凭据文件。',
+  installed: '已安装', notInstalled: (pkg, extra) => `未安装 ${pkg}${extra ? `：uv sync --extra ${extra}` : `：uv pip install ${pkg.replace(/_/g, '-')}`}`, notInstalledShort: '未安装',
+  modelsSection: '模型列表', modelId: '模型 ID', modelName: '显示名', contextWindow: '上下文', maxTokens: '最大输出', fetchModels: '获取可用模型', addModel: '添加模型', restoreModels: '恢复默认模型', noModelsYet: '还没有模型；获取或手动添加。',
+  pickTitle: '可用模型', pickSearch: '搜索模型', selectAll: '全选', deselectAll: '取消全选', addSelected: '添加所选', selected: (n) => `已选 ${n}`, noMatch: '没有匹配的模型',
+  test: '测试连接', testing: '测试中…', testOk: (ms) => `连接成功 · ${ms} ms`, apply: '应用', applying: '保存中…', applied: '已应用；下次请求起生效。', cancel: '取消', remove: '删除', removeConfirm: (t) => `删除提供方「${t}」？其模型与已保存的密钥一并移除。`, removed: '已删除',
+  fetching: '获取中…', modelsFound: (n) => `找到 ${n} 个模型`, modelsNone: '该提供方不支持列出模型。', needModel: '至少添加一个模型。', needId: '请填写提供方 ID。', needUrl: '请填写 Base URL。', dupId: '提供方 ID 已存在。', noneLeft: '预置提供方均已添加。',
+  defaultTag: '默认', selectModel: '选择模型', manageModels: '管理模型…', noModels: '没有可用模型；先在设置里添加提供方。', modelSelected: (n) => `已切换到 ${n}`, modelsCount: (n) => `${n} 个模型`, readonly: '无 profile：设置只读。', showKey: '显示 / 隐藏密钥',
 } : {
-  settings: 'Settings', settingsIntro: 'Runtime settings of the current profile. A saved change is preflighted in a separate process; it goes live with a restart, or is rolled back.',
-  modelService: 'Model service', modelChip: 'Model settings', provider: 'Provider', baseUrl: 'Base URL', apiKey: 'API key', model: 'Model',
-  baseUrlHint: "Empty: the provider's default endpoint.", modelHint: 'Model names may contain colons, e.g. openai-codex:gpt-6.1-sol.', keyKept: 'A key is saved; leave empty to keep it.', keyNone: 'No key saved.',
-  envKey: (e) => `No key saved; environment variable ${e} is set.`, keyPlain: 'The API key is written in plain text to the profile patch file.',
-  installed: 'installed', builtin: 'Built in; no credentials.', pluginProvider: 'Provided by a plugin.', notInstalled: (pkg, extra) => `${pkg} is not installed${extra ? `: uv sync --extra ${extra}` : ''}`, notInstalledShort: 'not installed',
-  fetchModels: 'List models', fetching: 'Listing…', modelsFound: (n) => `${n} models`, modelsNone: 'This provider cannot list models.',
-  test: 'Test connection', testing: 'Testing…', testOk: (ms) => `Connected · ${ms} ms`, save: 'Save and restart', saving: 'Preflighting…', noModel: 'A model name is required.',
-  rejected: 'Preflight failed; rolled back.', restartScheduled: 'Saved. Restarting…', savedUnsupervised: 'Saved. Unsupervised: applies on the next start.', restartPendingNote: 'restart pending',
-  current: 'Current', readonly: 'No profile: settings are read-only.', showKey: 'Show / hide key',
+  settings: 'Settings', settingsIntro: 'Runtime settings of the current profile. Model settings apply at once, without a restart; keys go to the profile credential file and the configuration keeps only the reference name.',
+  modelsTitle: 'Models', modelChip: 'Select model', defaultModel: 'Default model for new sessions', defaultModelHint: 'Used by new sessions; each session can switch in the composer model menu.', noDefault: 'Not set',
+  addProvider: 'Add model provider', thirdParty: 'Third-party model provider', customApi: 'Custom model API', thirdPartyHint: 'LangChain providers; enter a key and the model list.', customApiHint: 'A self-hosted server, relay, or any other OpenAI- or Anthropic-compatible endpoint.',
+  providerType: 'Provider', providerId: 'Provider ID', providerIdHint: 'Lowercase letters, digits, - and _; the configuration key and credential reference stem; fixed after saving.', displayName: 'Display name', protocol: 'API protocol',
+  apiKey: 'API key', baseUrl: 'Base URL', baseUrlHint: "Empty: the provider's default endpoint.", customBaseUrlHint: (p) => p === 'anthropic-messages' ? 'e.g. https://gateway.example; the SDK appends /v1/messages.' : 'e.g. https://gateway.example/v1.',
+  keySaved: 'A key is saved; leave empty to keep it.', keyEnv: (e) => `Using environment variable ${e}.`, keyMissing: (e) => `Not configured; set ${e} or enter a key here.`, keyNone: 'This provider does not use an API key.', keyConfig: 'The key is written in the configuration file (plain); entering one here moves it to the credential file.',
+  installed: 'installed', notInstalled: (pkg, extra) => `${pkg} is not installed${extra ? `: uv sync --extra ${extra}` : `: uv pip install ${pkg.replace(/_/g, '-')}`}`, notInstalledShort: 'not installed',
+  modelsSection: 'Models', modelId: 'Model ID', modelName: 'Display name', contextWindow: 'Context', maxTokens: 'Max output', fetchModels: 'Fetch available models', addModel: 'Add model', restoreModels: 'Restore default models', noModelsYet: 'No models yet; fetch or add them.',
+  pickTitle: 'Available models', pickSearch: 'Search models', selectAll: 'Select all', deselectAll: 'Deselect all', addSelected: 'Add selected', selected: (n) => `${n} selected`, noMatch: 'No matching models',
+  test: 'Test connection', testing: 'Testing…', testOk: (ms) => `Connected · ${ms} ms`, apply: 'Apply', applying: 'Saving…', applied: 'Applied; in effect from the next request.', cancel: 'Cancel', remove: 'Remove', removeConfirm: (t) => `Remove provider "${t}"? Its models and stored key are removed.`, removed: 'Removed',
+  fetching: 'Fetching…', modelsFound: (n) => `${n} models found`, modelsNone: 'This provider cannot list models.', needModel: 'Add at least one model.', needId: 'A provider ID is required.', needUrl: 'A base URL is required.', dupId: 'That provider ID already exists.', noneLeft: 'Every preset provider is already added.',
+  defaultTag: 'default', selectModel: 'Select model', manageModels: 'Manage models…', noModels: 'No models available; add a provider in Settings.', modelSelected: (n) => `Switched to ${n}`, modelsCount: (n) => `${n} models`, readonly: 'No profile: settings are read-only.', showKey: 'Show / hide key',
 });
 document.documentElement.lang = zh ? 'zh-CN' : 'en';
 document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = T[el.dataset.i18n]; });
 document.querySelectorAll('[data-i18n-title]').forEach((el) => { el.title = T[el.dataset.i18nTitle]; el.setAttribute('aria-label', T[el.dataset.i18nTitle]); });
 
-const state = { sessions: [], current: null, view: 'chat', streaming: false, generation: null, health: null, run: null, pending: false };
+const state = { sessions: [], current: null, view: 'chat', streaming: false, generation: null, health: null, run: null, pending: false, directory: null, sessionModel: null };
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const icon = (name, cls = 'ico') => `<svg class="${cls}"><use href="#i-${name}"/></svg>`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -718,10 +778,7 @@ async function refreshHealth() {
     $('profileMeta').innerHTML = `<span class="dot" data-state="${h.restart_pending ? 'warn' : 'on'}"></span><span>${esc(T.online)} · ${esc(T.gen(h.generation))}${h.supervised ? '' : ' · ' + esc(T.unsupervised)}</span>`;
     const ws = h.workspace?.name || '';
     for (const el of [$('heroWorkspace'), $('workspaceChip')]) { el.querySelector('.label').textContent = ws; el.title = h.workspace?.path || ''; el.hidden = !ws; }
-    const model = h.model || '';
-    const [provider, ...rest] = model.split(':');
-    $('modelChip').innerHTML = model ? `<span class="label">${esc(rest.join(':') || provider)}</span>${rest.length ? `<span class="sub">${esc(provider)}</span>` : ''}` : '';
-    $('modelChip').title = model;
+    renderModelChip();
     return h;
   } catch {
     $('profileMeta').innerHTML = `<span class="dot" data-state="off"></span><span>${esc(T.offline)}</span>`;
@@ -765,8 +822,8 @@ function closeDrawer() { delete frame.dataset.drawer; }
 $('newSession').onclick = () => { newSession(); closeDrawer(); };
 $('navPlugins').onclick = () => { showPlugins(); closeDrawer(); };
 $('navSettings').onclick = () => { showSettings(); closeDrawer(); };
-$('modelChip').onclick = () => showSettings();
-$('modelChip').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showSettings(); } };
+$('modelChip').onclick = () => toggleModelMenu();
+$('modelChip').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleModelMenu(); } };
 
 /* ---------- views ---------- */
 function setPhase(phase) {
@@ -786,7 +843,7 @@ function setView(view) {
   $('topBar').toggleAttribute('data-bordered', view !== 'chat' || $('chatView').dataset.phase !== 'hero');
 }
 function newSession() {
-  state.current = null; state.run = null;
+  state.current = null; state.run = null; state.sessionModel = null; closeModelMenu(); renderModelChip();
   setView('chat'); $('log').innerHTML = ''; $('approval').innerHTML = '';
   $('crumb').textContent = '';
   setPhase('hero'); refreshSessions(); updateComposer(); $('input').focus();
@@ -797,6 +854,7 @@ async function openSession(id) {
   try { s = await json('/sessions/' + id); } catch (err) { toast(err.message); return; }
   if (state.current !== id) return;
   $('crumb').textContent = s.title || T.untitled;
+  state.sessionModel = s.model || null; renderModelChip();
   setPhase('active');
   renderHistory(s.messages);
   renderApproval(s.pending || []);
@@ -1066,7 +1124,7 @@ $('composer').addEventListener('submit', async (e) => {
   if (state.pending) { toast(T.approvalPending); return; }
   if (!state.current) {
     let s;
-    try { s = await json('/sessions', { method: 'POST', body: JSON.stringify({ title: text.slice(0, 60) }) }); } catch (err) { toast(err.message); return; }
+    try { s = await json('/sessions', { method: 'POST', body: JSON.stringify({ title: text.slice(0, 60), model: state.sessionModel }) }); } catch (err) { toast(err.message); return; }
     state.current = s.id; log().innerHTML = '';
     $('crumb').textContent = s.title || T.untitled;
     setPhase('active'); refreshSessions();
@@ -1111,171 +1169,332 @@ async function showPlugins() {
     <div class="tip">${T.tip}</div>`;
 }
 
-/* ---------- settings page ---------- */
-const settings = { data: null, busy: false };
-const sf = (name) => $('settingsView').querySelector(`[data-field="${name}"]`);
-function settingsMarkup() {
-  return `
+/* ---------- model directory, composer menu ---------- */
+async function loadDirectory() {
+  try { state.directory = await json('/models'); } catch { state.directory = null; }
+  renderModelChip();
+}
+function currentSpec() { return state.sessionModel || state.directory?.default || state.health?.model || ''; }
+function specLabel(spec) {
+  for (const g of state.directory?.groups || []) for (const m of g.models) if (m.spec === spec) return { name: m.name, group: g.title };
+  const [route, ...rest] = String(spec || '').split(':');
+  return { name: rest.join(':') || route, group: route };
+}
+function renderModelChip() {
+  const chip = $('modelChip'); const spec = currentSpec();
+  if (!spec) { chip.innerHTML = `<span class="label">${esc(T.selectModel)}</span>${icon('chev-down', 'ico chev')}`; chip.title = ''; return; }
+  const l = specLabel(spec);
+  chip.innerHTML = `<span class="label">${esc(l.name)}</span><span class="sub">${esc(l.group)}</span>${icon('chev-down', 'ico chev')}`;
+  chip.title = spec + (state.sessionModel ? '' : ` · ${T.defaultTag}`);
+}
+let menuEl = null;
+function closeModelMenu() {
+  if (!menuEl) return;
+  menuEl.remove(); menuEl = null;
+  document.removeEventListener('mousedown', onMenuOutside, true);
+  document.removeEventListener('keydown', onMenuKey, true);
+}
+function onMenuOutside(e) { if (menuEl && !menuEl.contains(e.target) && !$('modelChip').contains(e.target)) closeModelMenu(); }
+function onMenuKey(e) {
+  if (!menuEl) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeModelMenu(); $('modelChip').focus(); return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    const rows = [...menuEl.querySelectorAll('.menuRow')]; const i = rows.indexOf(document.activeElement);
+    const next = rows[(i + (e.key === 'ArrowDown' ? 1 : -1) + rows.length) % rows.length]; if (next) { e.preventDefault(); next.focus(); }
+  }
+}
+async function toggleModelMenu() {
+  if (menuEl) { closeModelMenu(); return; }
+  if (!state.directory) await loadDirectory();
+  const d = state.directory || { groups: [], default: null }; const spec = currentSpec();
+  menuEl = document.createElement('div'); menuEl.className = 'menu'; menuEl.setAttribute('role', 'menu');
+  const groups = d.groups.map((g) => `<div class="menuGroup">${esc(g.title)}</div>${g.models.map((m) => `<button type="button" class="menuRow" role="menuitemradio" aria-checked="${m.spec === spec}" data-spec="${esc(m.spec)}">${icon('check', 'ico check')}<span class="label" title="${esc(m.id)}">${esc(m.name)}</span>${m.spec === d.default ? `<span class="sub">${esc(T.defaultTag)}</span>` : ''}</button>`).join('')}`).join('');
+  menuEl.innerHTML = (groups || `<div class="menuEmpty">${esc(T.noModels)}</div>`) + `<div class="menuFoot"><button type="button" class="menuRow" data-manage>${icon('gear')}<span class="label">${esc(T.manageModels)}</span></button></div>`;
+  $('composer').appendChild(menuEl);
+  menuEl.onclick = async (e) => {
+    if (e.target.closest('[data-manage]')) { closeModelMenu(); showSettings(); return; }
+    const row = e.target.closest('[data-spec]'); if (!row) return;
+    await selectModel(row.dataset.spec); closeModelMenu();
+  };
+  document.addEventListener('mousedown', onMenuOutside, true);
+  document.addEventListener('keydown', onMenuKey, true);
+  (menuEl.querySelector('[aria-checked="true"]') || menuEl.querySelector('.menuRow'))?.focus();
+}
+async function selectModel(spec) {
+  if (state.current) {
+    try { const s = await json(`/sessions/${state.current}/model`, { method: 'PUT', body: JSON.stringify({ model: spec }) }); state.sessionModel = s.model || null; }
+    catch (err) { toast(err.message); return; }
+  } else state.sessionModel = spec;
+  renderModelChip(); toast(T.modelSelected(specLabel(spec).name));
+}
+
+/* ---------- settings: models ---------- */
+const models = { data: null, open: null, draft: null, busy: false };
+const sf = (name, root) => (root || $('settingsView')).querySelector(`[data-field="${name}"]`);
+const ROUTE_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+async function showSettings() {
+  setView('settings'); $('crumb').textContent = T.settings; closeModelMenu();
+  await loadModels();
+}
+async function loadModels() {
+  try { models.data = await json('/settings/models'); }
+  catch (err) { $('settingsView').innerHTML = `<div class="pageHead"><h1 class="pageTitle">${esc(T.settings)}</h1></div><div class="result" data-tone="error">${icon('x-circle')}<span>${esc(err.message)}</span></div>`; return; }
+  renderModels();
+}
+const routeById = (id) => models.data.routes.find((r) => r.id === id);
+const typeById = (id) => models.data.catalog.find((c) => c.id === id);
+function keyState(r) { return !r.api_key.required ? 'none' : r.api_key.configured ? 'on' : 'off'; }
+function routeRow(r) {
+  const open = models.open === r.id;
+  const isDefault = (models.data.default || '').split(':')[0] === r.id;
+  const meta = [r.effective_base_url || '', T.modelsCount(r.models.length)].filter(Boolean).map(esc).join(' · ');
+  return `<button type="button" class="prow" data-route="${esc(r.id)}" aria-expanded="${open}">
+    <span class="pcardIcon">${icon('bulb')}</span>
+    <span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(r.title)}</span><span class="tag" data-tone="outline">${esc(r.type)}</span>${r.id !== r.type ? `<span class="tag" data-tone="quiet"><code>${esc(r.id)}</code></span>` : ''}${isDefault ? `<span class="tag" data-tone="info">${esc(T.defaultTag)}</span>` : ''}${!r.type_info.installed ? `<span class="tag" data-tone="danger">${esc(T.notInstalledShort)}</span>` : ''}</span>
+    <span class="pcardDesc"><span class="kdot" data-state="${keyState(r)}"></span>${meta}</span></span>
+    ${icon(open ? 'chev-down' : 'chev-right', 'ico chevron')}
+  </button>${open ? `<div data-field="editorSlot"></div>` : ''}`;
+}
+function renderModels() {
+  const d = models.data; const view = $('settingsView');
+  const opts = [`<option value="">${esc(T.noDefault)}</option>`];
+  for (const r of d.routes) if (r.models.length) opts.push(`<optgroup label="${esc(r.title)}">${r.models.map((m) => `<option value="${esc(r.id + ':' + m.id)}" ${r.id + ':' + m.id === d.default ? 'selected' : ''}>${esc(m.name || m.id)}</option>`).join('')}</optgroup>`);
+  if (d.default && !opts.join('').includes(`value="${esc(d.default)}" selected`)) opts.push(`<option value="${esc(d.default)}" selected>${esc(d.default)}</option>`);
+  view.innerHTML = `
     <div class="pageHead"><div><h1 class="pageTitle">${esc(T.settings)}</h1><p class="pageIntro">${esc(T.settingsIntro)}</p></div></div>
     <div class="group">
-      <div class="groupHead"><h2 class="groupTitle">${esc(T.modelService)}</h2><span class="groupMeta" data-field="currentMeta"></span></div>
-      <div class="statusCard"><span class="pcardIcon">${icon('bulb')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle" data-field="currentModel">–</span><span class="tag" data-tone="outline" data-field="currentProvider"></span><span class="tag" data-tone="warning" data-field="currentPending" hidden>${esc(T.restartPendingNote)}</span></span><span class="pcardDesc" data-field="currentDesc"></span></span></div>
-      <form class="form" data-field="form" autocomplete="off">
-        <div class="field"><label class="fieldLabel" for="sProvider">${esc(T.provider)}</label><div class="fieldMain"><div class="selectWrap"><select class="select" id="sProvider" data-field="provider"></select>${icon('chev-down', 'ico chev')}</div><span class="fieldHint" data-field="providerHint"></span></div></div>
-        <div class="field"><label class="fieldLabel" for="sBaseUrl">${esc(T.baseUrl)}</label><div class="fieldMain"><input class="input mono" id="sBaseUrl" data-field="base_url" type="text" inputmode="url" spellcheck="false" autocomplete="off"><span class="fieldHint">${esc(T.baseUrlHint)}</span></div></div>
-        <div class="field"><label class="fieldLabel" for="sApiKey">${esc(T.apiKey)}</label><div class="fieldMain"><div class="inputRow"><input class="input mono" id="sApiKey" data-field="api_key" type="password" spellcheck="false" autocomplete="new-password"><button type="button" class="btn outline sm" data-field="toggleKey" aria-label="${esc(T.showKey)}">${icon('eye')}</button></div><span class="fieldHint" data-field="keyHint"></span></div></div>
-        <div class="field"><label class="fieldLabel" for="sModel">${esc(T.model)}</label><div class="fieldMain"><div class="inputRow"><input class="input mono" id="sModel" data-field="model" list="sModels" spellcheck="false" autocomplete="off"><datalist id="sModels"></datalist><button type="button" class="btn outline sm" data-field="fetch">${icon('refresh')}<span>${esc(T.fetchModels)}</span></button></div><div class="modelChips" data-field="modelChips"></div><span class="fieldHint">${esc(T.modelHint)}</span></div></div>
-        <div class="result" data-field="result" hidden></div>
-        <div class="formFoot"><span class="fieldHint" data-field="footHint">${esc(T.keyPlain)}</span><span class="spacer"></span><button type="button" class="btn outline" data-field="test">${icon('zap')}<span>${esc(T.test)}</span></button><button type="submit" class="btn primary" data-field="save">${esc(T.save)}</button></div>
-      </form>
+      <div class="groupHead"><h2 class="groupTitle">${esc(T.modelsTitle)}</h2><span class="groupMeta">${d.routes.length}</span></div>
+      <div class="statusCard"><span class="pcardIcon">${icon('bulb')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(T.defaultModel)}</span></span><span class="pcardDesc">${esc(T.defaultModelHint)}</span></span><div class="selectWrap"><select class="select" data-field="default" ${d.editable ? '' : 'disabled'}>${opts.join('')}</select>${icon('chev-down', 'ico chev')}</div></div>
+      <div class="cards" data-field="rows">${d.routes.map(routeRow).join('')}</div>
+      <div class="actionsRow"><button type="button" class="btn outline" data-field="add" ${d.editable ? '' : 'disabled'} aria-expanded="${models.open === 'add'}">${icon('plus')}<span>${esc(T.addProvider)}</span></button>${d.editable ? '' : `<span class="fieldHint">${esc(T.readonly)}</span>`}</div>
+      <div data-field="addSlot"></div>
     </div>`;
-}
-function bindSettings() {
-  sf('provider').onchange = () => applyProvider(false);
-  sf('toggleKey').onclick = () => {
-    const key = sf('api_key'); const show = key.type === 'password';
-    key.type = show ? 'text' : 'password'; sf('toggleKey').innerHTML = icon(show ? 'eye-off' : 'eye');
+  sf('default').onchange = async (e) => {
+    try { models.data = await json('/settings/models', { method: 'PUT', body: JSON.stringify({ default: e.target.value || null }) }); toast(T.applied); renderModels(); loadDirectory(); }
+    catch (err) { toast(err.message); }
   };
-  sf('fetch').onclick = fetchModels;
-  sf('test').onclick = testModel;
-  sf('form').onsubmit = (e) => { e.preventDefault(); saveModel(); };
-  sf('modelChips').onclick = (e) => {
-    const chip = e.target.closest('[data-model]'); if (!chip) return;
-    sf('model').value = chip.dataset.model; markChip();
-  };
-  sf('model').oninput = markChip;
+  sf('rows').onclick = (e) => { const row = e.target.closest('.prow'); if (row) openEditor(models.open === row.dataset.route ? null : row.dataset.route); };
+  sf('add').onclick = () => openEditor(models.open === 'add' ? null : 'add');
+  if (models.open === 'add') mountEditor(sf('addSlot'));
+  else if (models.open && routeById(models.open)) mountEditor(sf('editorSlot'));
+  else models.open = null;
 }
-function markChip() {
-  const value = sf('model').value.trim();
-  sf('modelChips').querySelectorAll('[data-model]').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.model === value)));
+function openEditor(target) {
+  models.open = target;
+  if (target === 'add') models.draft = models.draft && models.draft.mode !== 'route' ? models.draft : draftForAdd('catalog');
+  else if (target) models.draft = draftFromRoute(routeById(target));
+  else models.draft = null;
+  renderModels();
 }
-async function showSettings() {
-  setView('settings');
-  $('crumb').textContent = T.settings;
-  const view = $('settingsView');
-  if (!view.dataset.built) { view.innerHTML = settingsMarkup(); view.dataset.built = ''; bindSettings(); }
-  await loadSettings();
+function closeEditor() { models.open = null; models.draft = null; renderModels(); }
+function draftFromRoute(r) {
+  return { mode: 'route', id: r.id, type: r.type, title: r.title, protocol: r.protocol, base_url: r.base_url || '', api_key: '', models: r.models.map((m) => ({ ...m })), info: r.type_info, key: r.api_key, saved: r };
 }
-async function loadSettings() {
-  let d;
-  try { d = await json('/settings/model'); } catch (err) { showResult('error', err.message); return; }
-  settings.data = d;
-  if (d.provider && !d.catalog.some((c) => c.id === d.provider)) {
-    d.catalog.push({ id: d.provider, title: d.provider, available: true, credentials: true, models_api: null, package: null });
+function draftForAdd(kind) {
+  const d = models.data;
+  const free = d.catalog.filter((c) => !routeById(c.id) && c.id !== 'echo');
+  if (kind === 'catalog') {
+    const info = free[0] || null;
+    return { mode: 'catalog', free, id: info ? info.id : '', type: info ? info.id : '', title: '', protocol: null, base_url: '', api_key: '', models: info ? info.models.map((m) => ({ ...m })) : [], info, key: null };
   }
-  const sel = sf('provider');
-  sel.innerHTML = d.catalog.map((c) => `<option value="${esc(c.id)}">${esc(c.title)}${c.available ? '' : ' · ' + esc(T.notInstalledShort)}</option>`).join('');
-  sel.value = d.provider || 'echo';
-  sf('model').value = d.model || '';
-  sf('modelChips').innerHTML = '';
-  renderCurrent();
-  applyProvider(true);
-  const readonly = !d.editable;
-  sf('save').disabled = readonly;
-  if (readonly) sf('footHint').textContent = T.readonly;
+  return { mode: 'custom', id: '', type: 'openai', title: '', protocol: 'openai-chat', base_url: '', api_key: '', models: [], info: typeById('openai'), key: null };
 }
-function renderCurrent() {
-  const d = settings.data;
-  sf('currentModel').textContent = d.model || d.default || '–';
-  sf('currentProvider').textContent = d.provider || '';
-  sf('currentProvider').hidden = !d.provider;
-  sf('currentPending').hidden = !d.restart_pending;
-  const saved = d.providers[d.provider] || {};
-  const info = d.catalog.find((c) => c.id === d.provider) || {};
-  const parts = [`${T.current} · ${T.gen(d.generation)}${d.supervised ? '' : ' · ' + T.unsupervised}`];
-  if (saved.base_url || info.base_url) parts.push(saved.base_url || info.base_url);
-  if (d.env_model) parts.push(`PYH_MODEL=${d.env_model}`);
-  sf('currentDesc').textContent = parts.join(' · ');
-  sf('currentMeta').textContent = d.default || '';
+function keyHint(dr) {
+  const info = dr.info || {};
+  if (info.credentials === false) return ['', T.keyNone];
+  const k = dr.key;
+  if (k && k.source === 'config') return ['warn', T.keyConfig];
+  if (k && k.configured && k.source === 'store') return ['ok', T.keySaved];
+  if (k && k.configured && k.source === 'env') return ['ok', T.keyEnv(k.reference)];
+  const ref = k?.reference || (dr.mode === 'custom' ? `${(dr.id || 'PROVIDER').toUpperCase().replace(/[^A-Z0-9]+/g, '_')}_API_KEY` : info.env || '');
+  return ['', ref ? T.keyMissing(ref) : ''];
 }
-function currentInfo() {
-  const d = settings.data; const id = sf('provider').value;
-  return (d && d.catalog.find((c) => c.id === id)) || { id, available: true, credentials: true };
-}
-function applyProvider(initial) {
-  const d = settings.data; if (!d) return;
-  const info = currentInfo(); const id = info.id;
-  const saved = d.providers[id] || {};
+function editorMarkup(dr) {
+  const info = dr.info || {};
   const creds = info.credentials !== false;
-  for (const name of ['base_url', 'api_key', 'toggleKey']) sf(name).disabled = !creds;
-  sf('base_url').value = saved.base_url || '';
-  sf('base_url').placeholder = info.base_url || '';
-  sf('api_key').value = '';
-  sf('api_key').placeholder = saved.api_key || '';
-  sf('keyHint').textContent = !creds ? '' : saved.has_api_key ? T.keyKept : info.env_set ? T.envKey(info.env) : T.keyNone;
-  const hint = sf('providerHint');
-  hint.textContent = info.package == null ? (id === 'echo' ? T.builtin : T.pluginProvider) : info.available ? `${info.package} · ${T.installed}` : T.notInstalled(info.package, info.extra);
-  hint.dataset.tone = info.available === false ? 'error' : '';
-  sf('fetch').disabled = settings.busy || !info.models_api;
-  sf('model').disabled = id === 'echo';
-  if (!initial) { sf('model').value = id === d.provider ? d.model : ''; sf('modelChips').innerHTML = ''; $('sModels').innerHTML = ''; hideResult(); }
-  if (id === 'echo') sf('model').value = 'echo';
-  markChip();
+  const [keyTone, keyText] = keyHint(dr);
+  const head = dr.mode === 'route'
+    ? `<div class="editorHead"><span class="pcardTitle">${esc(dr.title)}</span><span class="tag" data-tone="outline">${esc(dr.type)}</span>${dr.protocol ? `<span class="tag" data-tone="quiet">${esc((models.data.protocols.find((p) => p.id === dr.protocol) || {}).title || dr.protocol)}</span>` : ''}</div>`
+    : `<div class="editorHead"><div class="segmented" role="tablist"><button type="button" role="tab" data-mode="catalog" aria-pressed="${dr.mode === 'catalog'}">${esc(T.thirdParty)}</button><button type="button" role="tab" data-mode="custom" aria-pressed="${dr.mode === 'custom'}">${esc(T.customApi)}</button></div></div><p class="fieldHint" style="margin:-6px 0 0">${esc(dr.mode === 'catalog' ? T.thirdPartyHint : T.customApiHint)}</p>`;
+  let identity = '';
+  if (dr.mode === 'catalog') {
+    identity = `<div class="field"><label class="fieldLabel" for="eType">${esc(T.providerType)}</label><div class="fieldMain"><div class="selectWrap"><select class="select" id="eType" data-field="type">${dr.free.map((c) => `<option value="${esc(c.id)}" ${c.id === dr.type ? 'selected' : ''}>${esc(c.title)}${c.installed ? '' : ' · ' + esc(T.notInstalledShort)}</option>`).join('')}</select>${icon('chev-down', 'ico chev')}</div><span class="fieldHint" data-field="typeHint"></span></div></div>`;
+  } else if (dr.mode === 'custom') {
+    identity = `<div class="field"><label class="fieldLabel" for="eId">${esc(T.providerId)}</label><div class="fieldMain"><input class="input mono" id="eId" data-field="id" value="${esc(dr.id)}" placeholder="my-gateway" spellcheck="false" autocomplete="off"><span class="fieldHint">${esc(T.providerIdHint)}</span></div></div>
+      <div class="field"><label class="fieldLabel" for="eTitle">${esc(T.displayName)}</label><div class="fieldMain"><input class="input" id="eTitle" data-field="title" value="${esc(dr.title)}" autocomplete="off"></div></div>
+      <div class="field"><label class="fieldLabel" for="eProto">${esc(T.protocol)}</label><div class="fieldMain"><div class="selectWrap"><select class="select" id="eProto" data-field="protocol">${models.data.protocols.map((p) => `<option value="${esc(p.id)}" ${p.id === dr.protocol ? 'selected' : ''}>${esc(p.title)}</option>`).join('')}</select>${icon('chev-down', 'ico chev')}</div></div></div>`;
+  }
+  const urlHint = dr.mode === 'custom' ? T.customBaseUrlHint(dr.protocol) : T.baseUrlHint;
+  const rows = dr.models.map((m, i) => modelRowMarkup(m, i)).join('');
+  return `<form class="form editor" data-field="form" autocomplete="off">
+    ${head}
+    ${identity}
+    ${creds ? `<div class="field"><label class="fieldLabel" for="eKey">${esc(T.apiKey)}</label><div class="fieldMain"><div class="inputRow"><input class="input mono" id="eKey" data-field="api_key" type="password" spellcheck="false" autocomplete="new-password" placeholder="${esc(dr.key?.masked || '')}"><button type="button" class="btn outline sm" data-field="toggleKey" aria-label="${esc(T.showKey)}">${icon('eye')}</button></div><span class="fieldHint" data-field="keyHint" data-tone="${keyTone}">${esc(keyText)}</span></div></div>` : ''}
+    <div class="field"><label class="fieldLabel" for="eUrl">${esc(T.baseUrl)}</label><div class="fieldMain"><input class="input mono" id="eUrl" data-field="base_url" type="text" inputmode="url" spellcheck="false" autocomplete="off" value="${esc(dr.base_url)}" placeholder="${esc(dr.mode === 'custom' ? '' : info.base_url || '')}"><span class="fieldHint" data-field="urlHint">${esc(urlHint)}</span></div></div>
+    <details class="fold" ${dr.mode === 'route' && dr.models.length ? '' : 'open'}><summary>${icon('chev-right', 'ico chevron')}<span>${esc(T.modelsSection)}</span><span class="groupMeta" data-field="modelCount">${dr.models.length}</span></summary>
+      <div class="foldBody">
+        <table class="mtable" data-field="mtable">${rows ? `<thead><tr><th>${esc(T.modelId)}</th><th>${esc(T.modelName)}</th><th>${esc(T.contextWindow)}</th><th>${esc(T.maxTokens)}</th><th></th></tr></thead><tbody>${rows}</tbody>` : ''}</table>
+        ${rows ? '' : `<div class="emptyNote" data-field="emptyNote">${esc(T.noModelsYet)}</div>`}
+        <div class="actionsRow"><button type="button" class="btn outline sm" data-field="fetch">${icon('refresh')}<span>${esc(T.fetchModels)}</span></button><button type="button" class="btn outline sm" data-field="addModel">${icon('plus')}<span>${esc(T.addModel)}</span></button>${(info.models || []).length ? `<button type="button" class="btn outline sm" data-field="restore">${esc(T.restoreModels)}</button>` : ''}</div>
+      </div>
+    </details>
+    <div class="result" data-field="result" hidden></div>
+    <div class="formFoot">${dr.mode === 'route' ? `<button type="button" class="btn danger" data-field="remove">${esc(T.remove)}</button>` : ''}<span class="spacer"></span><button type="button" class="btn outline" data-field="test">${icon('zap')}<span>${esc(T.test)}</span></button><button type="button" class="btn outline" data-field="cancel">${esc(T.cancel)}</button><button type="submit" class="btn primary" data-field="apply">${esc(T.apply)}</button></div>
+  </form>`;
 }
-function payload() {
-  const key = sf('api_key').value;
-  return { provider: sf('provider').value, model: sf('model').value.trim(), base_url: sf('base_url').value.trim(), api_key: key ? key : null };
+function modelRowMarkup(m, i) {
+  return `<tr data-row="${i}"><td><input class="input mono" data-mf="id" value="${esc(m.id)}" placeholder="model-id" spellcheck="false"></td><td><input class="input" data-mf="name" value="${esc(m.name || '')}"></td><td class="num"><input class="input num" data-mf="context_window" type="number" min="1" value="${m.context_window || ''}"></td><td class="num"><input class="input num" data-mf="max_tokens" type="number" min="1" value="${m.max_tokens || ''}"></td><td class="rowDel"><button type="button" class="iconButton" data-del="${i}" title="${esc(T.remove)}">${icon('trash')}</button></td></tr>`;
 }
-function showResult(tone, text, spinning) {
-  const el = sf('result'); el.hidden = false; el.dataset.tone = tone || '';
+function mountEditor(slot) {
+  const dr = models.draft; if (!slot || !dr) return;
+  slot.innerHTML = editorMarkup(dr);
+  const f = slot.querySelector('[data-field="form"]');
+  const q = (n) => f.querySelector(`[data-field="${n}"]`);
+  f.onsubmit = (e) => { e.preventDefault(); applyDraft(f); };
+  q('cancel').onclick = closeEditor;
+  if (q('toggleKey')) q('toggleKey').onclick = () => { const k = q('api_key'); const show = k.type === 'password'; k.type = show ? 'text' : 'password'; q('toggleKey').innerHTML = icon(show ? 'eye-off' : 'eye'); };
+  if (q('api_key')) q('api_key').oninput = (e) => { dr.api_key = e.target.value; };
+  q('base_url').oninput = (e) => { dr.base_url = e.target.value; };
+  if (q('type')) {
+    const typeHint = () => { const info = dr.info || {}; const h = q('typeHint'); h.textContent = info.package ? (info.installed ? `${info.package} · ${T.installed}` : T.notInstalled(info.package, info.extra)) : ''; h.dataset.tone = info.installed === false ? 'error' : ''; };
+    q('type').onchange = (e) => { const info = typeById(e.target.value); dr.type = dr.id = info.id; dr.info = info; dr.models = info.models.map((m) => ({ ...m })); dr.base_url = ''; dr.api_key = ''; mountEditor(slot); };
+    typeHint();
+  }
+  if (q('id')) q('id').oninput = (e) => { dr.id = e.target.value.trim(); const h = q('keyHint'); if (h) { const [tone, text] = keyHint(dr); h.textContent = text; h.dataset.tone = tone; } };
+  if (q('title')) q('title').oninput = (e) => { dr.title = e.target.value; };
+  if (q('protocol')) q('protocol').onchange = (e) => { dr.protocol = e.target.value; dr.type = (models.data.protocols.find((p) => p.id === dr.protocol) || {}).type || 'openai'; dr.info = typeById(dr.type); q('urlHint').textContent = T.customBaseUrlHint(dr.protocol); };
+  f.querySelectorAll('[data-mode]').forEach((b) => { b.onclick = () => { if (dr.mode !== b.dataset.mode) { models.draft = draftForAdd(b.dataset.mode); mountEditor(slot); } }; });
+  const table = q('mtable');
+  table.oninput = (e) => { const tr = e.target.closest('[data-row]'); if (!tr) return; const m = dr.models[+tr.dataset.row]; const k = e.target.dataset.mf; if (k === 'context_window' || k === 'max_tokens') m[k] = e.target.value ? +e.target.value : null; else m[k] = e.target.value; };
+  table.onclick = (e) => { const del = e.target.closest('[data-del]'); if (del) { dr.models.splice(+del.dataset.del, 1); rerenderRows(f); } };
+  q('addModel').onclick = () => { dr.models.push({ id: '', name: '' }); rerenderRows(f); f.querySelector('tbody tr:last-child input')?.focus(); };
+  if (q('restore')) q('restore').onclick = () => { dr.models = (dr.info.models || []).map((m) => ({ ...m })); rerenderRows(f); };
+  q('fetch').onclick = () => fetchForDraft(f);
+  q('test').onclick = () => testDraft(f);
+  if (q('remove')) q('remove').onclick = () => removeRoute(dr.saved);
+  setEditorBusy(f, false);
+}
+function rerenderRows(f) {
+  const dr = models.draft; const table = f.querySelector('[data-field="mtable"]');
+  const rows = dr.models.map((m, i) => modelRowMarkup(m, i)).join('');
+  table.innerHTML = rows ? `<thead><tr><th>${esc(T.modelId)}</th><th>${esc(T.modelName)}</th><th>${esc(T.contextWindow)}</th><th>${esc(T.maxTokens)}</th><th></th></tr></thead><tbody>${rows}</tbody>` : '';
+  f.querySelector('[data-field="modelCount"]').textContent = dr.models.length;
+  const note = f.querySelector('[data-field="emptyNote"]');
+  if (!rows && !note) table.insertAdjacentHTML('afterend', `<div class="emptyNote" data-field="emptyNote">${esc(T.noModelsYet)}</div>`);
+  if (rows && note) note.remove();
+  f.querySelector('.fold').open = true;
+}
+function showEditorResult(f, tone, text, spinning) {
+  const el = f.querySelector('[data-field="result"]'); el.hidden = false; el.dataset.tone = tone || '';
   el.innerHTML = `${spinning ? icon('spinner', 'ico spin') : icon(tone === 'ok' ? 'check' : tone === 'error' ? 'x-circle' : 'alert')}<span></span>`;
   el.querySelector('span').textContent = text;
 }
-function hideResult() { sf('result').hidden = true; }
-function setBusy(on) {
-  settings.busy = on;
-  sf('test').disabled = on; sf('save').disabled = on || !(settings.data && settings.data.editable);
-  sf('fetch').disabled = on || !currentInfo().models_api;
+function setEditorBusy(f, on) {
+  models.busy = on;
+  for (const n of ['fetch', 'test', 'apply', 'remove']) { const b = f.querySelector(`[data-field="${n}"]`); if (b) b.disabled = on || (n === 'apply' && !models.data.editable); }
 }
-async function fetchModels() {
-  setBusy(true); showResult('', T.fetching, true);
+function draftPayload(dr, withModels = true) {
+  const body = { base_url: dr.base_url.trim(), api_key: dr.api_key ? dr.api_key : null };
+  if (dr.mode === 'catalog') body.type = dr.type;
+  if (dr.mode === 'custom') { body.protocol = dr.protocol; body.title = dr.title.trim() || null; }
+  if (withModels) body.models = dr.models.map((m) => ({ id: m.id.trim(), name: (m.name || '').trim() || null, context_window: m.context_window || null, max_tokens: m.max_tokens || null }));
+  return body;
+}
+function routeIdOf(dr, f) {
+  const id = (dr.id || '').trim();
+  if (dr.mode === 'custom' && !ROUTE_ID.test(id)) { showEditorResult(f, 'error', T.needId); f.querySelector('[data-field="id"]')?.focus(); return null; }
+  return id;
+}
+async function fetchForDraft(f) {
+  const dr = models.draft; const id = routeIdOf(dr, f); if (!id) return;
+  if (dr.mode === 'custom' && !dr.base_url.trim()) { showEditorResult(f, 'error', T.needUrl); return; }
+  setEditorBusy(f, true); showEditorResult(f, '', T.fetching, true);
   try {
-    const r = await json('/settings/model/models', { method: 'POST', body: JSON.stringify(payload()) });
-    if (!r.ok) { showResult('error', r.error); return; }
-    if (!r.supported) { showResult('warn', T.modelsNone); return; }
-    $('sModels').innerHTML = r.models.map((m) => `<option value="${esc(m)}"></option>`).join('');
-    sf('modelChips').innerHTML = r.models.map((m) => `<button type="button" class="chipBtn" data-model="${esc(m)}">${esc(m)}</button>`).join('');
-    markChip();
-    showResult('ok', T.modelsFound(r.models.length));
-  } catch (err) { showResult('error', err.message); }
-  finally { setBusy(false); }
+    const r = await json(`/settings/models/${encodeURIComponent(id)}/discover`, { method: 'POST', body: JSON.stringify(draftPayload(dr, false)) });
+    if (!r.ok) { showEditorResult(f, 'error', r.error); return; }
+    if (!r.supported) { showEditorResult(f, 'warn', T.modelsNone); return; }
+    f.querySelector('[data-field="result"]').hidden = true;
+    const picked = await pickModels(r.models, new Set(dr.models.map((m) => m.id)));
+    if (!picked) return;
+    for (const m of picked) if (!dr.models.some((x) => x.id === m.id)) dr.models.push({ id: m.id, name: m.name !== m.id ? m.name : '', context_window: m.context_window || null, max_tokens: m.max_tokens || null });
+    rerenderRows(f); showEditorResult(f, 'ok', T.modelsFound(r.models.length));
+  } catch (err) { showEditorResult(f, 'error', err.message); }
+  finally { setEditorBusy(f, false); }
 }
-async function testModel() {
-  const p = payload(); if (!p.model) { showResult('error', T.noModel); return; }
-  setBusy(true); showResult('', T.testing, true);
+async function testDraft(f) {
+  const dr = models.draft; const id = routeIdOf(dr, f); if (!id) return;
+  const model = (dr.models.find((m) => m.id.trim()) || {}).id;
+  if (!model) { showEditorResult(f, 'error', T.needModel); return; }
+  setEditorBusy(f, true); showEditorResult(f, '', T.testing, true);
   try {
-    const r = await json('/settings/model/test', { method: 'POST', body: JSON.stringify(p) });
-    if (r.ok) showResult('ok', `${T.testOk(r.latency_ms)} · ${r.reply}`); else showResult('error', r.error);
-  } catch (err) { showResult('error', err.message); }
-  finally { setBusy(false); }
+    const r = await json(`/settings/models/${encodeURIComponent(id)}/test`, { method: 'POST', body: JSON.stringify({ ...draftPayload(dr, false), model: model.trim() }) });
+    showEditorResult(f, r.ok ? 'ok' : 'error', r.ok ? `${T.testOk(r.latency_ms)} · ${model} · ${r.reply}` : r.error);
+  } catch (err) { showEditorResult(f, 'error', err.message); }
+  finally { setEditorBusy(f, false); }
 }
-async function saveModel() {
-  const p = payload(); if (!p.model) { showResult('error', T.noModel); return; }
-  setBusy(true); showResult('', T.saving, true);
-  let r;
-  try { r = await json('/settings/model', { method: 'PUT', body: JSON.stringify(p) }); }
-  catch (err) { showResult('error', err.message); setBusy(false); return; }
-  if (r.application === 'rejected') {
-    const errs = (r.errors || []).map((e) => `${e.entry ? e.entry + ': ' : ''}${e.error}`).join('\n') || r.error || '';
-    showResult('error', `${T.rejected}\n${errs}`.trim()); setBusy(false); return;
-  }
-  if (r.application === 'restart-scheduled') {
-    showResult('warn', T.restartScheduled, true);
-    const h = await waitForRestart();  // may reopen the current session: come back to this page
-    setView('settings'); $('crumb').textContent = T.settings;
-    await loadSettings();
-    showResult(h ? 'ok' : 'error', h ? T.restarted(h.generation) : T.restartFailed);
-  } else {
-    await loadSettings();
-    showResult('ok', T.savedUnsupervised);
-  }
-  setBusy(false);
+async function applyDraft(f) {
+  const dr = models.draft; const id = routeIdOf(dr, f); if (!id) return;
+  if (dr.mode !== 'route' && routeById(id)) { showEditorResult(f, 'error', T.dupId); return; }
+  if (dr.mode === 'custom' && !dr.base_url.trim()) { showEditorResult(f, 'error', T.needUrl); return; }
+  const ids = dr.models.map((m) => m.id.trim()).filter(Boolean);
+  if (dr.mode === 'custom' && !ids.length) { showEditorResult(f, 'error', T.needModel); return; }
+  dr.models = dr.models.filter((m) => m.id.trim());
+  setEditorBusy(f, true); showEditorResult(f, '', T.applying, true);
+  try {
+    models.data = await json(`/settings/models/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(draftPayload(dr)) });
+    models.open = null; models.draft = null; renderModels(); toast(T.applied); loadDirectory();
+  } catch (err) { showEditorResult(f, 'error', err.message); setEditorBusy(f, false); }
+}
+async function removeRoute(r) {
+  if (!(await confirmDialog(T.removeConfirm(r.title)))) return;
+  try { models.data = await json(`/settings/models/${encodeURIComponent(r.id)}`, { method: 'DELETE' }); models.open = null; models.draft = null; renderModels(); toast(T.removed); loadDirectory(); }
+  catch (err) { toast(err.message); }
+}
+function modal(inner) {
+  const el = document.createElement('div'); el.className = 'modal'; el.innerHTML = `<div class="modalCard" role="dialog" aria-modal="true">${inner}</div>`;
+  document.body.appendChild(el); return el;
+}
+function confirmDialog(text) {
+  return new Promise((resolve) => {
+    const el = modal(`<div class="modalBody"><p>${esc(text)}</p></div><div class="modalFoot"><span class="spacer"></span><button type="button" class="btn outline" data-no>${esc(T.cancel)}</button><button type="button" class="btn primary reject" data-yes>${esc(T.remove)}</button></div>`);
+    const done = (v) => { el.remove(); document.removeEventListener('keydown', onKey, true); resolve(v); };
+    const onKey = (e) => { if (e.key === 'Escape') done(false); };
+    document.addEventListener('keydown', onKey, true);
+    el.querySelector('[data-no]').onclick = () => done(false); el.querySelector('[data-yes]').onclick = () => done(true);
+    el.onclick = (e) => { if (e.target === el) done(false); };
+    el.querySelector('[data-yes]').focus();
+  });
+}
+function pickModels(candidates, existing) {
+  return new Promise((resolve) => {
+    const chosen = new Set();
+    const el = modal(`<div class="modalHead">${esc(T.pickTitle)}</div><div class="modalBody"><input class="input pickSearch" data-search placeholder="${esc(T.pickSearch)}" autocomplete="off"><div data-list></div></div>
+      <div class="modalFoot"><button type="button" class="btn outline sm" data-all>${esc(T.selectAll)}</button><button type="button" class="btn outline sm" data-none>${esc(T.deselectAll)}</button><span class="count" data-count></span><span class="spacer"></span><button type="button" class="btn outline" data-cancel>${esc(T.cancel)}</button><button type="button" class="btn primary" data-add disabled>${esc(T.addSelected)}</button></div>`);
+    const list = el.querySelector('[data-list]'); const search = el.querySelector('[data-search]');
+    const visible = () => { const q = search.value.trim().toLowerCase(); return candidates.filter((m) => !q || m.id.toLowerCase().includes(q) || (m.name || '').toLowerCase().includes(q)); };
+    const render = () => {
+      const rows = visible();
+      list.innerHTML = rows.length ? rows.map((m) => `<label class="pickRow"><input type="checkbox" data-id="${esc(m.id)}" ${chosen.has(m.id) ? 'checked' : ''} ${existing.has(m.id) ? 'disabled checked' : ''}><span class="mono" title="${esc(m.id)}">${esc(m.id)}</span>${m.name && m.name !== m.id ? `<span class="sub" title="${esc(m.name)}">${esc(m.name)}</span>` : ''}</label>`).join('') : `<div class="emptyNote">${esc(T.noMatch)}</div>`;
+      el.querySelector('[data-count]').textContent = T.selected(chosen.size); el.querySelector('[data-add]').disabled = !chosen.size;
+    };
+    const done = (v) => { el.remove(); document.removeEventListener('keydown', onKey, true); resolve(v); };
+    const onKey = (e) => { if (e.key === 'Escape') done(null); };
+    document.addEventListener('keydown', onKey, true);
+    list.onchange = (e) => { const cb = e.target.closest('[data-id]'); if (!cb) return; if (cb.checked) chosen.add(cb.dataset.id); else chosen.delete(cb.dataset.id); render(); };
+    search.oninput = render;
+    el.querySelector('[data-all]').onclick = () => { for (const m of visible()) if (!existing.has(m.id)) chosen.add(m.id); render(); };
+    el.querySelector('[data-none]').onclick = () => { chosen.clear(); render(); };
+    el.querySelector('[data-cancel]').onclick = () => done(null);
+    el.querySelector('[data-add]').onclick = () => done(candidates.filter((m) => chosen.has(m.id)));
+    el.onclick = (e) => { if (e.target === el) done(null); };
+    render(); search.focus();
+  });
 }
 
 /* ---------- boot ---------- */
 (async () => {
   setPhase('hero'); updateComposer();
-  await refreshHealth(); await refreshSessions(); loadPluginCount();
+  await refreshHealth(); await refreshSessions(); loadPluginCount(); loadDirectory();
   input.focus();
   setInterval(() => { if (!state.streaming) refreshSessions(); }, 15000);
 })();

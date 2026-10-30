@@ -18,10 +18,14 @@ Contract with ``ctx.agents``: ``build()`` returns a LangGraph graph with ``astre
 
 :class:`HarnessMiddleware` runs in the main agent and in every declarative subagent:
 
-| hook       | route                               |
-|------------|-------------------------------------|
-| model call | ``agent/model-request`` (waterfall) |
-| tool call  | ``ctx.tools.execute``               |
+| hook       | route                                                                           |
+|------------|---------------------------------------------------------------------------------|
+| model call | model from ``configurable.model_spec`` or ``ctx.llm.default`` when it differs from the built one; then ``agent/model-request`` (waterfall) |
+
+A default model that cannot be initialised at boot (missing package or credential) does not fail the boot outside
+preflight: the graph is built with ``echo:echo`` and each request resolves the configured model, so the error
+reaches the session and the settings page stays available.
+| tool call  | ``ctx.tools.execute``                                                           |
 
 ``agent-loop/build`` (waterfall) receives the ``create_deep_agent`` keyword arguments.
 
@@ -72,21 +76,26 @@ class ModelCall:
     meta: dict[str, Any] = field(default_factory=dict)
 
 
-def _thread_id() -> str | None:
+def _configurable() -> dict[str, Any]:
     try:
         from langgraph.config import get_config
 
-        return (get_config().get("configurable") or {}).get("thread_id")
+        return dict(get_config().get("configurable") or {})
     except Exception:
-        return None
+        return {}
+
+
+def _thread_id() -> str | None:
+    return _configurable().get("thread_id")
 
 
 class HarnessMiddleware(AgentMiddleware):
     """LangChain middleware → harness events."""
 
-    def __init__(self, ctx: Any) -> None:
+    def __init__(self, ctx: Any, built_spec: str | None = None) -> None:
         super().__init__()
         self._ctx = ctx
+        self._built_spec = built_spec
 
     @property
     def name(self) -> str:  # type: ignore[override]
@@ -104,7 +113,11 @@ class HarnessMiddleware(AgentMiddleware):
         return await self._ctx.tools.execute(call, handler)
 
     async def awrap_model_call(self, request: Any, handler: Any) -> Any:
-        call = ModelCall(session_id=_thread_id(), request=request)
+        configurable = _configurable()
+        spec = configurable.get("model_spec") or self._ctx.llm.default
+        if spec and spec != self._built_spec:
+            request = request.override(model=self._ctx.llm.resolve(spec))
+        call = ModelCall(session_id=configurable.get("thread_id"), request=request, meta={"model_spec": spec})
         return await self._ctx.waterfall("agent/model-request", call, final=lambda c: handler(c.request))
 
 
@@ -207,6 +220,22 @@ class DeepAgentsLoop(Service):
             spec["model"] = self.ctx.llm.resolve(spec["model"])
         return spec
 
+    def _built_model(self) -> tuple[str | None, Any]:
+        """Model the graph is built with. An unusable default falls back to ``echo:echo`` so the harness boots;
+        requests then resolve the configured model and report its error in the session."""
+        from pyharness_llm import LLMConfigError
+
+        spec = self.config.model or self.ctx.llm.default
+        try:
+            return spec, self.ctx.llm.resolve(spec)
+        except LLMConfigError as exc:
+            if self.ctx.lifecycle.preflight or "echo" not in self.ctx.llm.providers():
+                raise
+            self.ctx.logger.warning(
+                "default model %s unusable at boot (%s); built with echo:echo, requests resolve the configured model", spec, exc
+            )
+            return "echo:echo", self.ctx.llm.resolve("echo:echo")
+
     async def build(self) -> Any:
         from deepagents import create_deep_agent
         from deepagents.middleware.subagents import GENERAL_PURPOSE_SUBAGENT
@@ -219,20 +248,21 @@ class DeepAgentsLoop(Service):
         # Every declarative subagent, the general-purpose one included, carries HarnessMiddleware.
         if not any(s.get("name") == GENERAL_PURPOSE_SUBAGENT["name"] for s in subagents):
             subagents.insert(0, dict(GENERAL_PURPOSE_SUBAGENT))
+        built_spec, built_model = self._built_model()
         for spec in subagents:
             if "runnable" in spec or "graph_id" in spec:
                 continue  # compiled and remote subagents keep their own middleware
-            spec["middleware"] = [HarnessMiddleware(ctx), *spec.get("middleware", [])]
+            spec["middleware"] = [HarnessMiddleware(ctx, built_spec), *spec.get("middleware", [])]
         workspace = ctx.get("workspace", None)
         permissions = workspace.permissions() if workspace is not None and hasattr(workspace, "permissions") else []
         backend, skills, skill_rules = self._backend_and_skills()
         permissions = [*permissions, *skill_rules]
         interrupt_on = {**ctx.tools.interrupt_on(), **self.config.interrupt_on}
         kwargs: dict[str, Any] = {
-            "model": ctx.llm.resolve(self.config.model),
+            "model": built_model,
             "tools": tools,
             "system_prompt": ctx.prompt.render(),
-            "middleware": [HarnessMiddleware(ctx), *(m for m, _ in self._middleware)],
+            "middleware": [HarnessMiddleware(ctx, built_spec), *(m for m, _ in self._middleware)],
             "checkpointer": ctx.get("checkpointer"),
             "store": ctx.get("store", None),
             "backend": backend,

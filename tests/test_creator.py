@@ -88,7 +88,7 @@ async def test_creator_profile_mounts_skills_read_only(home):
         assert results["r1"]["status"] == "success" and "plugin_manager action=install_bundle" in results["r1"]["content"]
         assert results["w1"]["status"] == "error" and "denied" in results["w1"]["content"]
         assert results["w2"]["status"] == "success"  # the workspace itself stays writable
-        system = scripted.CALLS[0]["messages"][0][1]
+        system = next(c for c in scripted.CALLS if "messages" in c)["messages"][0][1]
         for name in SKILLS:
             assert f"/skills/pyharness/{name}/SKILL.md" in system
         assert "Extending this harness" not in system

@@ -28,7 +28,8 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 审批 | 黄色审批卡片停靠在输入框上方；对应工具行标记待批准 |
 | 重启 | 输入框上方进度提示；完成后自动重连；续跑消息显示为系统分隔行，回滚时为警告色 |
 | 插件页 | bundle 与条目卡片；状态：运行中、等待依赖、已停用、失败 |
-| 设置页 | 左下角齿轮或输入框的模型标签进入。模型服务：服务类型（OpenAI 兼容 / DeepSeek / Anthropic / Gemini / echo / 插件注册的 provider）、Base URL、API Key、模型名；「获取模型列表」读取端点的 `/models`；「测试连接」发送一条短消息并显示耗时；「保存并重启」写入 profile 补丁、独立进程预检，通过则重启进入新一代，失败则回滚。密钥返回时打码；写入 profile 补丁文件为明文 |
+| 模型菜单 | 输入框右下角的模型标签：按提供方分组的模型菜单；选择后写入会话（`PUT /sessions/{id}/model`），下一次请求生效；新会话在创建时带上选择；菜单底部「管理模型…」进入设置 |
+| 设置页 | 左下角齿轮进入。「模型」：新会话默认模型；提供方行（标题、类型、默认标记、密钥状态点、端点、模型数），点击展开编辑卡（同时只开一张）：API Key（只写、可显示）、Base URL（占位符为默认端点）、模型列表（ID、显示名、上下文、最大输出；「获取可用模型」打开可搜索的勾选列表，「恢复默认模型」）、测试连接、删除（确认框）、应用。「添加模型提供方」：「第三方模型提供方」从 LangChain 预置目录选择（未安装的包标注安装命令），或「自定义模型 API」填写提供方 ID、显示名、API 协议（OpenAI Chat Completions / Responses / Anthropic Messages）、端点，至少一个模型。应用后立即生效，无需重启；密钥写入 profile 的 `credentials.yaml`，配置只记录引用名 |
 
 | 适配 | 行为 |
 |---|---|
@@ -52,10 +53,14 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | POST | `/sessions/{id}/cancel` | | `{"cancelled"}` |
 | DELETE | `/sessions/{id}` | | `{"deleted"}` |
 | GET | `/sessions/{id}/stream` | | 运行中轮次的 SSE；空闲时 204 |
-| GET | `/settings/model` | | 默认模型、各 provider 选项（密钥打码）、provider 目录与可用性 |
-| PUT | `/settings/model` | `{"provider", "model", "base_url"?, "api_key"?}` | 预检后保存；托管运行时 `restart-scheduled`，否则 `saved-restart-required`；预检失败 `rejected` |
-| POST | `/settings/model/test` | 同上 | `{"ok", "reply", "latency_ms"}` 或 `{"ok": false, "error"}` |
-| POST | `/settings/model/models` | 同上 | `{"ok", "supported", "models"}` |
+| PUT | `/sessions/{id}/model` | `{"model"}` | 会话的模型 `route:model`；`null` 回到默认 |
+| GET | `/models` | | 选择器目录：按路由分组的模型、默认模型 |
+| GET | `/settings/models` | | 路由（密钥状态与打码，不含值）、提供方目录、协议 |
+| PUT | `/settings/models` | `{"default"}` | 新会话默认模型 |
+| PUT | `/settings/models/{route}` | 路由设置 | 新建或修改路由；立即生效并写入 profile 补丁 |
+| DELETE | `/settings/models/{route}` | | 删除路由及其凭据 |
+| POST | `/settings/models/{route}/discover` | 路由设置 | 端点提供的模型（OpenAI / Anthropic 的 `/models`、Ollama 的 `/api/tags`） |
+| POST | `/settings/models/{route}/test` | 路由设置 + `model` | `{"ok", "reply", "latency_ms"}` 或 `{"ok": false, "error"}` |
 
 | 状态码 | 条件 |
 |---|---|
@@ -63,7 +68,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 409 | 轮次运行中；或待批准项存在 / 缺失 |
 | 503 | 重启挂起；`Retry-After: 2` |
 
-`api_key` 缺省或 `null` 沿用已保存的密钥，`""` 清除。
+路由设置：`{"type"?, "title"?, "protocol"?, "base_url"?, "api_key"?, "models"?, "options"?}`。`api_key` 缺省沿用，`""` 删除；填写的密钥存入 profile 的 `credentials.yaml`（0600），配置里的 `api_key_env` 只记录引用名；环境变量同名时优先。配置里已有的明文 `api_key` 在下次保存时迁入凭据文件。
 
 运行事件：
 

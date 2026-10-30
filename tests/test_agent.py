@@ -53,7 +53,7 @@ async def test_tool_call_flows_through_pipeline_and_persists(profile):
             assert detail["title"] == "shout hi"
         assert testtools.RESULTS == [("shout", "HI")]
         # System prompt: plugin sections (identity, plugin authoring).
-        system = scripted.CALLS[0]["messages"][0]
+        system = next(c for c in scripted.CALLS if "messages" in c)["messages"][0]
         assert system[0] == "system" and "pyharness" in system[1] and "Extending this harness" in system[1]
 
     # Next generation: same history (SQLite checkpointer, store).

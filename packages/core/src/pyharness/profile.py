@@ -6,7 +6,8 @@
       harness.patch.yaml       home patch, every profile
       profiles/<name>/
         profile.yaml           ordered bundle list
-        harness.patch.yaml     profile patch; written by plugin_manager
+        harness.patch.yaml     profile patch; written by plugin_manager and the settings API
+        credentials.yaml       credential store (0600); values referenced by name from the patch
         site/                  bundles installed into this profile (pip --target)
         data/                  default SQLite location
         runtime/               ready markers, hand-off files, last-known-good, locks
@@ -22,10 +23,13 @@ from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass
 from importlib import metadata
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .config import ConfigError, PatchOp, Tree, compose, deep_merge, dump_yaml, load_yaml, parse_ops, write_yaml
 from .plugin import BUNDLE_GROUP, BundleInfo, load_bundle
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .credentials import CredentialStore
 
 PATCH_HEADER = "# Patch operations addressed by entry id. Managed by pyharness; comments are not preserved.\n"
 
@@ -63,6 +67,13 @@ class Profile:
         self.data = self.dir / "data"
         self.runtime = self.dir / "runtime"
         self.lkg = self.runtime / "last-known-good"
+        self.credentials_path = self.dir / "credentials.yaml"
+
+    @property
+    def credentials(self) -> CredentialStore:
+        from .credentials import CredentialStore
+
+        return CredentialStore(self.credentials_path)
 
     # ------------------------------------------------------------------ creation
     def exists(self) -> bool:
@@ -175,8 +186,7 @@ class Profile:
                     op["config"] = deep_merge(existing, config)
                 else:
                     op["config"] = copy.deepcopy(config)
-                    if existing is None:
-                        op["merge"] = merge
+                    op["merge"] = merge
                 break
         else:
             ops.append({"id": entry_id, "config": copy.deepcopy(config), "merge": merge})

@@ -12,10 +12,14 @@
 | POST   | ``/sessions/{id}/cancel``    |                               | ``{"cancelled"}``                           |
 | DELETE | ``/sessions/{id}``           |                               | ``{"deleted"}``                             |
 | GET    | ``/sessions/{id}/stream``    |                               | SSE of the running turn; 204 when idle      |
-| GET    | ``/settings/model``          |                               | model settings: default, providers, catalog |
-| PUT    | ``/settings/model``          | ``model settings``            | preflight, save, restart when supervised    |
-| POST   | ``/settings/model/test``     | ``model settings``            | one short completion: reply, latency        |
-| POST   | ``/settings/model/models``   | ``model settings``            | model ids of the endpoint                   |
+| PUT    | ``/sessions/{id}/model``     | ``{"model"}``                 | select ``route:model`` for the session      |
+| GET    | ``/models``                  |                               | selector directory: routes, models, default |
+| GET    | ``/settings/models``         |                               | routes with credential state, catalog       |
+| PUT    | ``/settings/models``         | ``{"default"}``               | default model for new sessions              |
+| PUT    | ``/settings/models/{route}`` | ``route settings``            | create or edit a route; applies at once     |
+| DELETE | ``/settings/models/{route}`` |                               | remove a route and its stored credential    |
+| POST   | ``/settings/models/{route}/discover`` | ``route settings``   | model ids served by the endpoint            |
+| POST   | ``/settings/models/{route}/test``     | ``route settings``   | one short completion with ``model``         |
 
 | status | condition                                 |
 |--------|-------------------------------------------|
@@ -25,13 +29,14 @@
 
 ``decision``: ``{"type": "approve"}`` or ``{"type": "reject"}``.
 
-``model settings``: ``{"provider", "model", "base_url"?, "api_key"?}``. ``api_key`` absent or ``null``
-keeps the saved key; ``""`` clears it. Secrets are returned masked.
+``route settings``: ``{"type"?, "title"?, "protocol"?, "base_url"?, "api_key"?, "models"?, "options"?, "model"?}``.
+A typed ``api_key`` is stored in the profile credential store under ``<ROUTE>_API_KEY`` and referenced from the
+configuration; ``""`` deletes it; absent keeps it. Values are never returned. Saved settings apply to the next
+model request without a restart.
 """
 
 from __future__ import annotations
 
-import asyncio
 import json
 from collections.abc import AsyncIterator
 from typing import Any
@@ -51,6 +56,7 @@ class Config(BaseModel):
 
 class NewSession(BaseModel):
     title: str | None = None
+    model: str | None = Field(None, description="route:model for this session; null: the default.")
 
 
 class NewMessage(BaseModel):
@@ -61,27 +67,25 @@ class Approvals(BaseModel):
     decisions: list[dict[str, Any]]
 
 
-class ModelSettings(BaseModel):
-    provider: str = Field(..., min_length=1)
-    model: str = Field("", description="Model name; may contain ':'")
+class RouteSettings(BaseModel):
+    """Fields of one model route. ``None`` keeps the saved value; ``api_key`` '' clears the stored credential."""
+
+    type: str | None = None
+    title: str | None = None
+    protocol: str | None = Field(None, description="Custom endpoints: openai-chat, openai-responses, anthropic-messages.")
     base_url: str | None = None
-    api_key: str | None = Field(None, description="None keeps the saved key; '' clears it.")
+    api_key: str | None = None
+    models: list[dict[str, Any]] | None = None
+    options: dict[str, Any] | None = None
+    model: str | None = Field(None, description="Model id for /test.")
 
-    def overrides(self) -> dict[str, Any]:
-        """Options that override the saved ones for a probe (an empty key means: use the saved one)."""
-        out: dict[str, Any] = {}
-        if self.base_url is not None and self.base_url.strip():
-            out["base_url"] = self.base_url.strip()
-        if self.api_key:
-            out["api_key"] = self.api_key
-        return out
 
-    def patch(self) -> dict[str, Any]:
-        """Config patch for the llm entry (deep-merged)."""
-        options: dict[str, Any] = {"base_url": (self.base_url or "").strip() or None}
-        if self.api_key is not None:
-            options["api_key"] = self.api_key or None
-        return {"default": f"{self.provider}:{self.model}", "providers": {self.provider: options}}
+class DefaultModel(BaseModel):
+    default: str | None = Field(None, description="route:model for new sessions; null clears it.")
+
+
+class SessionModel(BaseModel):
+    model: str | None = Field(None, description="route:model; null returns to the default.")
 
 
 def _sse(events: AsyncIterator[dict[str, Any]]) -> StreamingResponse:
@@ -136,7 +140,14 @@ def build_router(ctx: Any) -> APIRouter:
 
     @router.post("/sessions")
     async def create_session(body: NewSession | None = None) -> dict[str, Any]:
-        return await agents.create_session(title=body.title if body else None)
+        return await agents.create_session(title=body.title if body else None, model=body.model if body else None)
+
+    @router.put("/sessions/{session_id}/model")
+    async def set_session_model(session_id: str, body: SessionModel) -> dict[str, Any]:
+        record = await agents.set_model(session_id, body.model)
+        if record is None:
+            raise HTTPException(404, f"no session {session_id}")
+        return record
 
     @router.get("/sessions/{session_id}")
     async def get_session(session_id: str) -> dict[str, Any]:
@@ -201,9 +212,10 @@ def build_router(ctx: Any) -> APIRouter:
 
 
 def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
-    from pyharness_llm import LLMConfigError
+    from pyharness_llm import PROTOCOLS, LLMConfig, LLMConfigError, ProviderConfig, split_spec, type_info
 
     from pyharness import manage
+    from pyharness.credentials import reference_for
 
     router = APIRouter()
 
@@ -213,52 +225,155 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
             raise HTTPException(503, "model registry (ctx.llm) unavailable")
         return service
 
-    @router.get("/settings/model")
-    async def get_model_settings() -> dict[str, Any]:
-        lifecycle = ctx.lifecycle
-        return {
-            **llm().describe(),
-            "entry": llm_entry,
-            "generation": lifecycle.generation,
-            "supervised": lifecycle.supervised,
-            "restart_pending": lifecycle.restart_pending is not None,
-            "editable": ctx.get("profile", None) is not None,
-        }
-
-    @router.put("/settings/model")
-    async def put_model_settings(body: ModelSettings) -> dict[str, Any]:
+    def profile() -> Any:
         profile = ctx.get("profile", None)
         if profile is None:
             raise HTTPException(409, "no profile: model settings are read-only in this harness")
-        if not body.model.strip() and body.provider != "echo":
-            raise HTTPException(422, "model is required")
-        body.model = body.model.strip() or "echo"
-        result = await manage.set_entry_config(profile, llm_entry, body.patch(), baseline=ctx.loader.snapshot())
-        if result.get("application") == "saved":
-            lifecycle = ctx.lifecycle
-            if lifecycle.supervised:
-                # Request after the response is written; the worker exits 75 once holds are released.
-                asyncio.get_running_loop().call_later(0.3, lifecycle.request_restart, f"model settings: {body.provider}:{body.model}")
-                result["application"] = "restart-scheduled"
-            else:
-                result["application"] = "saved-restart-required"
-        result["default"] = f"{body.provider}:{body.model}"
-        result["generation"] = ctx.lifecycle.generation
-        return result
+        return profile
 
-    @router.post("/settings/model/test")
-    async def test_model_settings(body: ModelSettings) -> dict[str, Any]:
-        try:
-            return await llm().probe(body.provider, body.model.strip() or "echo", **body.overrides())
-        except LLMConfigError as exc:
-            return {"ok": False, "error": str(exc)}
+    async def persist(service: Any) -> None:
+        """Write the live llm configuration (without secrets) to the profile patch; no restart needed."""
+        data = service.config.model_dump(mode="json", exclude_none=True, exclude_defaults=True)
+        for route in data.get("providers", {}).values():
+            route.pop("api_key", None)
+        await manage.set_entry_config(profile(), llm_entry, data, merge=False, preflight=False)
 
-    @router.post("/settings/model/models")
-    async def list_models(body: ModelSettings) -> dict[str, Any]:
+    def view(service: Any) -> dict[str, Any]:
+        lifecycle = ctx.lifecycle
+        return {
+            **service.describe(),
+            "protocols": [{"id": k, "title": v["title"], "type": v["type"]} for k, v in PROTOCOLS.items()],
+            "entry": llm_entry,
+            "generation": lifecycle.generation,
+            "editable": ctx.get("profile", None) is not None,
+        }
+
+    @router.get("/models")
+    async def model_directory() -> dict[str, Any]:
+        return llm().directory()
+
+    @router.get("/settings/models")
+    async def get_model_settings() -> dict[str, Any]:
+        return view(llm())
+
+    @router.put("/settings/models")
+    async def put_default_model(body: DefaultModel) -> dict[str, Any]:
+        service = llm()
+        route, model = split_spec(body.default)
+        if body.default and (not route or not model):
+            raise HTTPException(422, "default must be route:model")
+        service.update(default=body.default or None)
+        await persist(service)
+        return view(service)
+
+    @router.put("/settings/models/{route}")
+    async def put_route(route: str, body: RouteSettings) -> dict[str, Any]:
+        service = llm()
+        store = profile().credentials
+        current = service.config.providers.get(route)
+        data = current.model_dump(mode="python", exclude_none=True) if current is not None else {}
+        data.pop("api_key", None)
+        for field in ("type", "title", "protocol", "base_url", "models", "options"):
+            value = getattr(body, field)
+            if value is not None:
+                data[field] = value or None if field in ("title", "base_url") else value
+        if body.protocol is not None and body.protocol:
+            data["type"] = PROTOCOLS[body.protocol]["type"]
+        kind = PROTOCOLS[data["protocol"]]["type"] if data.get("protocol") else (data.get("type") or route)
+        info = type_info(kind)
+        if info["package"] is None and kind not in service.providers():
+            raise HTTPException(422, f"unknown provider type {kind!r}")
+        if data.get("protocol") and not data.get("base_url"):
+            raise HTTPException(422, "a custom endpoint needs base_url")
+        reference = data.get("api_key_env") or (info["env"] if route == kind else reference_for(route)) or reference_for(route)
+        plain = current.api_key if current is not None else None  # legacy: key written in the configuration
+        if body.api_key:
+            try:
+                store.set(reference, body.api_key)
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from None
+            data["api_key_env"] = reference
+        elif body.api_key == "":
+            store.delete(reference)
+        elif plain and not store.describe(reference)["configured"]:
+            store.set(reference, plain)  # migrate the plain key into the store; the configuration keeps the reference
+            data["api_key_env"] = reference
         try:
-            return {"ok": True, **await llm().list_models(body.provider, **body.overrides())}
+            cfg = ProviderConfig.model_validate(data)
+            providers = {
+                **{k: v.model_dump(mode="python", exclude_none=True) for k, v in service.config.providers.items()},
+                route: cfg.model_dump(mode="python", exclude_none=True),
+            }
+            default = service.config.default
+            if not default or (cfg.models and split_spec(default)[0] not in providers):
+                default = f"{route}:{cfg.models[0].id}" if cfg.models else default
+            service.update(providers=providers, default=default)
+        except (ValueError, LLMConfigError) as exc:
+            raise HTTPException(422, str(exc)) from None
+        await persist(service)
+        return {"route": service.describe_route(route), **view(service)}
+
+    @router.delete("/settings/models/{route}")
+    async def delete_route(route: str) -> dict[str, Any]:
+        service = llm()
+        if route not in service.config.providers:
+            raise HTTPException(404, f"no route {route!r}")
+        cfg = service.config.providers[route]
+        providers = {k: v.model_dump(mode="python", exclude_none=True) for k, v in service.config.providers.items() if k != route}
+        default = service.config.default
+        if default and split_spec(default)[0] == route:
+            default = next((f"{r}:{v['models'][0]['id']}" for r, v in providers.items() if v.get("models")), "echo:echo")
+        service.update(providers=providers, default=default)
+        if cfg.api_key_env:
+            profile().credentials.delete(cfg.api_key_env)
+        await persist(service)
+        return view(service)
+
+    @router.post("/settings/models/{route}/discover")
+    async def discover_models(route: str, body: RouteSettings) -> dict[str, Any]:
+        overrides = {k: v for k, v in (("base_url", body.base_url), ("api_key", body.api_key), ("protocol", body.protocol)) if v}
+        kind = PROTOCOLS[body.protocol]["type"] if body.protocol else body.type
+        try:
+            return {"ok": True, **await llm().list_models(route, kind, **overrides)}
         except LLMConfigError as exc:
             return {"ok": False, "error": str(exc), "models": []}
+
+    @router.post("/settings/models/{route}/test")
+    async def test_route(route: str, body: RouteSettings) -> dict[str, Any]:
+        service = llm()
+        model = (body.model or "").strip()
+        if not model:
+            raise HTTPException(422, "model is required")
+        overrides: dict[str, Any] = {k: v for k, v in (("base_url", body.base_url), ("api_key", body.api_key)) if v}
+        if body.protocol:
+            overrides.update(PROTOCOLS[body.protocol]["options"])
+        cfg = service.config.providers.get(route)
+        if cfg is None and (body.type or body.protocol):
+            kind = PROTOCOLS[body.protocol]["type"] if body.protocol else body.type
+            overrides["type"] = kind
+        try:
+            kind = overrides.pop("type", None)
+            if kind and cfg is None:
+                # Unsaved route: resolve through a temporary configuration.
+                temp = LLMConfig.model_validate(
+                    {
+                        **service.config.model_dump(mode="python"),
+                        "providers": {
+                            **{k: v.model_dump(mode="python", exclude_none=True) for k, v in service.config.providers.items()},
+                            route: {"type": kind},
+                        },
+                    }
+                )
+                saved = service.config
+                service.config = temp
+                try:
+                    return await service.probe(route, model, **overrides)
+                finally:
+                    service.config = saved
+                    service.invalidate()
+            return await service.probe(route, model, **overrides)
+        except LLMConfigError as exc:
+            return {"ok": False, "error": str(exc)}
 
     return router
 
