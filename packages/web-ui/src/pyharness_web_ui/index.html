@@ -123,9 +123,16 @@ svg { display: block; }
 
 /* ---------- frame ---------- */
 .frame { display: grid; grid-template-columns: 260px minmax(0, 1fr); height: 100%; transition: grid-template-columns 0.3s var(--ease); }
-.frame[data-collapsed] { grid-template-columns: 0 minmax(0, 1fr); }
+.frame[data-collapsed] { grid-template-columns: 56px minmax(0, 1fr); }
 .sidebar { min-width: 0; overflow: hidden; display: flex; flex-direction: column; padding: 6px 8px; background: var(--sidebar-fill); border-right: 0.5px solid var(--border-l3); }
-.frame[data-collapsed] .sidebar { border-right: none; }
+.frame[data-collapsed] .sidebar { padding: 6px 6px; }
+.frame[data-collapsed] .brandName, .frame[data-collapsed] .buildBadge, .frame[data-collapsed] .newSession span, .frame[data-collapsed] .panelRow span, .frame[data-collapsed] .region, .frame[data-collapsed] .moreRow span, .frame[data-collapsed] .collapseSidebar { display: none; }
+.frame[data-collapsed] .logoRow { justify-content: center; padding: 8px 0; cursor: pointer; }
+.frame[data-collapsed] .newSession { width: 40px; height: 40px; padding: 0; margin: 0 auto 8px; }
+.frame[data-collapsed] .panelRow { justify-content: center; padding: 7px 0; margin: 0; }
+.frame[data-collapsed] .foot { justify-content: center; margin: auto 0 0; padding-left: 0; padding-right: 0; }
+.frame[data-collapsed] .moreRow { justify-content: center; padding: 7px 0; }
+.frame[data-collapsed] .moreRow .profileMeta { display: none; }
 .center { min-width: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; }
 .scrim { display: none; }
 
@@ -143,7 +150,10 @@ svg { display: block; }
 .iconButton[aria-current='page'] { background: var(--hover); color: var(--label-primary); }
 .panelRow .count { margin-left: auto; color: var(--label-tertiary); font-size: 12px; }
 .region { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
-.regionHead { flex: none; display: flex; align-items: center; height: 32px; padding: 0 12px; color: var(--label-tertiary); font-size: 12px; line-height: 20px; }
+.regionHead { flex: none; display: flex; align-items: center; gap: 4px; height: 32px; padding: 0 4px 0 12px; color: var(--label-tertiary); font-size: 12px; line-height: 20px; }
+.regionHead > span:first-child { flex: 1; }
+.iconButton.sm { width: 24px; height: 24px; }
+.iconButton.sm .ico { width: 14px; height: 14px; }
 .sessions { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 8px; }
 .projectRow, .sessionRow { display: flex; align-items: center; border-radius: var(--r-md); margin: 0 3px; padding: 0 8px 0 9px; color: var(--label-primary); }
 .projectRow { height: 34px; gap: 6px; }
@@ -156,7 +166,13 @@ svg { display: block; }
 .sessionRow .busyDot { position: absolute; left: 15px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; corner-shape: round; background: var(--info); animation: pulse 1.6s var(--ease) infinite; }
 .sessionRow .rowAction { display: none; width: 22px; height: 22px; margin: -3px -4px -3px 0; border: none; border-radius: var(--r-xs); padding: 0; background: transparent; color: var(--label-tertiary); align-items: center; justify-content: center; }
 .empty { padding: 6px 12px 0 31px; color: var(--label-caption); font-size: 12px; }
-.foot { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 4px 2px 8px; border-top: 0.5px solid var(--border-l2); margin: 0 4px; }
+.foot { position: relative; flex: none; display: flex; align-items: center; gap: 8px; padding: 6px 0 2px; border-top: 0.5px solid var(--border-l2); margin: 0 4px; }
+.moreRow { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 36px; padding: 7px 9px; border: none; border-radius: var(--r-md); background: transparent; color: var(--label-primary); font-size: 13px; line-height: 20px; text-align: left; }
+.moreRow .profileMeta { margin-left: auto; }
+.foot .menu { left: 0; right: auto; bottom: calc(100% + 6px); min-width: 220px; }
+.menuRow .ico.lead { color: var(--label-secondary); flex: none; }
+.menuInfo { padding: 8px 10px 6px; font-size: 11px; line-height: 16px; color: var(--label-tertiary); border-top: 0.5px solid var(--border-l2); margin-top: 4px; }
+.menuInfo b { color: var(--label-secondary); font-weight: 500; }
 .avatar { width: 28px; height: 28px; flex: none; border-radius: 50%; corner-shape: round; display: inline-flex; align-items: center; justify-content: center; background: var(--selector); color: var(--label-secondary); }
 .profileText { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 18px; }
 .profileName { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -172,7 +188,9 @@ svg { display: block; }
 .topBar .crumb { min-width: 0; max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 4px 8px; font-size: 14px; line-height: 20px; font-weight: 500; }
 .topBar .spacer { flex: 1; }
 .openSidebar { display: none; }
-.frame[data-collapsed] .openSidebar { display: inline-flex; }
+.crumbTags { display: inline-flex; align-items: center; gap: 6px; min-width: 0; margin-left: 8px; }
+.crumbTags .tag { max-width: 200px; overflow: hidden; text-overflow: ellipsis; display: inline-flex; gap: 4px; align-items: center; }
+.crumbTags .tag .ico { width: 12px; height: 12px; }
 
 /* ---------- conversation ---------- */
 .conversation { flex: 1; min-height: 0; display: flex; flex-direction: column; --chat-width: clamp(min(680px, 100% - 32px), 64%, 920px); }
@@ -451,13 +469,49 @@ svg { display: block; }
 .menuGroup { padding: 8px 8px 2px; font-size: 11px; color: var(--label-tertiary); }
 .menuRow { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 8px; border: none; border-radius: var(--r-sm); background: transparent; color: var(--label-primary); font-size: 13px; line-height: 20px; text-align: left; }
 .menuRow .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.menuRow .check { width: 14px; height: 14px; flex: none; color: var(--info); visibility: hidden; }
+.menuRow .check { order: 3; width: 14px; height: 14px; flex: none; color: var(--label-primary); visibility: hidden; }
+.menuRow > .label, .menuRow .col { flex: 1 1 auto; min-width: 0; order: 1; }
+.menuRow .sub { order: 2; }
 .menuRow[aria-checked='true'] .check { visibility: visible; }
-.menuRow .sub { margin-left: auto; flex: none; font-size: 11px; color: var(--label-tertiary); }
+.menuRow .sub { flex: none; font-size: 11px; color: var(--label-tertiary); }
 .menuFoot { margin-top: 4px; padding-top: 4px; border-top: 0.5px solid var(--border-l2); }
 .menuEmpty { padding: 10px; font-size: 13px; color: var(--label-tertiary); }
 #modelChip { cursor: pointer; }
 #modelChip .chev { color: var(--label-caption); }
+
+/* settings dialog */
+.settingsCard { width: min(1000px, 100%); height: min(720px, 100%); display: flex; flex-direction: column; overflow: hidden; border-radius: var(--r-xl); background: var(--sidebar-fill); box-shadow: var(--shadow-lv2), 0 0 0 0.5px var(--border-l3); }
+.settingsHead { display: flex; align-items: center; gap: 8px; padding: 14px 16px 10px 20px; }
+.settingsHead h2 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 500; }
+.settingsBody { flex: 1; min-height: 0; display: flex; }
+.settingsNav { flex: none; width: 200px; display: flex; flex-direction: column; gap: 2px; padding: 4px 12px 12px; }
+.settingsNav button { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px; border: none; border-radius: var(--r-md); background: transparent; color: var(--label-primary); font-size: 13px; text-align: left; }
+.settingsNav button[aria-current='page'] { background: var(--hover-solid); }
+.settingsContent { flex: 1; min-width: 0; overflow-y: auto; padding: 4px 28px 32px 20px; }
+.settingsContent .group:first-child { margin-top: 0; }
+.settingsContent .sectionTitle { margin: 4px 0 2px; font-size: 16px; line-height: 24px; font-weight: 500; }
+.settingsContent .sectionIntro { margin: 0 0 18px; font-size: 13px; line-height: 20px; color: var(--label-secondary); }
+.srow { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 0.5px solid var(--border-l2); }
+.srow:last-child { border-bottom: none; }
+.srow .main { flex: 1; min-width: 0; }
+.srow .title { font-size: 14px; line-height: 20px; font-weight: 500; }
+.srow .desc { margin-top: 2px; font-size: 12px; line-height: 18px; color: var(--label-tertiary); }
+.srow .ctl { flex: none; max-width: 50%; }
+.srow .ctl .selectWrap { min-width: 180px; }
+.themeCards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.themeCard { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 8px 14px; border: 0.5px solid var(--border-l3); border-radius: var(--r-lg); background: var(--input-major); color: var(--label-primary); font-size: 13px; cursor: pointer; }
+.themeCard[aria-pressed='true'] { border-color: var(--label-primary); box-shadow: 0 0 0 1px var(--label-primary); }
+.subhead { margin: 14px 0 8px; font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--label-tertiary); }
+.presetCard .meta { margin-left: auto; font: 11px/16px var(--mono); color: var(--label-tertiary); }
+.presetCard .pcardTitle .tag { white-space: nowrap; }
+.pageHead .headTools { display: flex; align-items: center; gap: 8px; }
+.btn.dashed { width: 100%; height: 40px; border: 1px dashed var(--border-l4); border-radius: var(--r-lg); color: var(--label-primary); }
+@media (max-width: 760px) {
+  .settingsBody { flex-direction: column; }
+  .settingsNav { width: auto; flex-direction: row; overflow-x: auto; padding: 0 12px 8px; }
+  .settingsContent { padding: 4px 16px 24px; }
+  .themeCards { grid-template-columns: 1fr; }
+}
 
 /* toast */
 .toast { position: fixed; left: 50%; bottom: 96px; transform: translate(-50%, 8px); padding: 8px 14px; border-radius: var(--r-md); background: var(--toast); color: #fff; font-size: 13px; line-height: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 50; max-width: calc(100vw - 32px); }
@@ -483,6 +537,8 @@ svg { display: block; }
   .btn:hover:not(:disabled) { background: var(--hover); }
   .btn.primary:hover:not(:disabled) { background: var(--primary-hover); }
   .btn.reject:hover:not(:disabled) { background: var(--hover-danger); color: var(--error); }
+  .moreRow:hover, .settingsNav button:hover { background: var(--hover); }
+  .themeCard:hover { background: var(--hover-solid); }
   .prow:hover { background: var(--hover); }
   .menuRow:hover { background: var(--hover); }
   .dirRow:hover { background: var(--hover); }
@@ -550,6 +606,12 @@ svg { display: block; }
     <symbol id="i-refresh" viewBox="0 0 16 16"><path d="M13.25 8a5.25 5.25 0 1 1-1.54-3.71"/><path d="M13.25 2.75v2.5h-2.5"/></symbol>
     <symbol id="i-zap" viewBox="0 0 16 16"><path d="M8.75 1.75 3.5 9h4l-.75 5.25L12.5 7h-4z"/></symbol>
     <symbol id="i-eye-off" viewBox="0 0 16 16"><path d="m2.5 2.5 11 11M6.6 6.6A2 2 0 0 0 9.4 9.4M4.1 4.6C2.6 5.8 1.75 8 1.75 8S4 12.25 8 12.25c1.1 0 2.05-.3 2.9-.8M6.9 3.9c.35-.1.72-.15 1.1-.15 4 0 6.25 4.25 6.25 4.25s-.5 1-1.5 2.1"/></symbol>
+    <symbol id="i-dots" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="1" fill="currentColor" stroke="none"/><circle cx="12.5" cy="8" r="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-folder-plus" viewBox="0 0 16 16"><path d="M1.75 4.25c0-.83.67-1.5 1.5-1.5h2.6c.4 0 .78.16 1.06.44l.98.98c.28.28.66.44 1.06.44h3.8c.83 0 1.5.67 1.5 1.5v5.64c0 .83-.67 1.5-1.5 1.5h-9.5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M8 7.25v4M6 9.25h4"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 16 16"><path d="m11.1 2.6 2.3 2.3-7.6 7.6-3 .7.7-3z"/><path d="m9.6 4.1 2.3 2.3"/></symbol>
+    <symbol id="i-unlock" viewBox="0 0 16 16"><rect x="3.25" y="7.25" width="9.5" height="6.5" rx="1.5"/><path d="M5.5 7.25V5a2.5 2.5 0 0 1 4.9-.7"/></symbol>
+    <symbol id="i-mode" viewBox="0 0 16 16"><path d="m8 2.25 6 3-6 3-6-3z"/><path d="m2 8.25 6 3 6-3M2 11.25l6 3 6-3"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 16 16"><path d="M8 1.75 2.75 3.9v4.1c0 2.9 2.2 5.2 5.25 6.25 3.05-1.05 5.25-3.35 5.25-6.25V3.9z"/></symbol>
     <symbol id="i-spinner" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.75" opacity=".25"/><path d="M8 2.25a5.75 5.75 0 0 1 5.75 5.75"/></symbol>
     <!-- Mark: four plugin tiles. -->
     <symbol id="i-mark" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="8.5" height="8.5" rx="2.6" fill="currentColor" stroke="none"/><rect x="13" y="2.5" width="8.5" height="8.5" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="13" width="8.5" height="8.5" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="13" width="8.5" height="8.5" rx="2.6" fill="var(--info)" stroke="none"/></symbol>
@@ -559,23 +621,21 @@ svg { display: block; }
 <div class="frame" id="frame">
   <div class="scrim" id="scrim"></div>
   <aside class="sidebar" id="sidebar">
-    <div class="logoRow">
+    <div class="logoRow" id="logoRow">
       <span class="brand"><svg class="brandMark"><use href="#i-mark"/></svg><span class="brandName">pyharness</span><span class="buildBadge" id="genBadge">gen –</span></span>
       <button class="iconButton collapseSidebar" id="collapse" data-i18n-title="collapse"><svg class="ico"><use href="#i-panel"/></svg></button>
     </div>
-    <button class="newSession" id="newSession"><svg class="ico"><use href="#i-plus-circle"/></svg><span data-i18n="newSession"></span></button>
+    <button class="newSession" id="newSession" data-i18n-title="newSession"><svg class="ico"><use href="#i-plus-circle"/></svg><span data-i18n="newSession"></span></button>
     <nav class="panelList">
-      <button class="panelRow" id="navPlugins"><svg class="ico"><use href="#i-plug"/></svg><span data-i18n="plugins"></span><span class="count" id="pluginCount"></span></button>
+      <button class="panelRow" id="navPlugins" data-i18n-title="plugins"><svg class="ico"><use href="#i-plug"/></svg><span data-i18n="plugins"></span><span class="count" id="pluginCount"></span></button>
     </nav>
     <div class="region">
-      <div class="regionHead" data-i18n="workspace"></div>
+      <div class="regionHead"><span data-i18n="workspaces"></span><button class="iconButton sm" id="addWorkspace" data-i18n-title="addWorkspace"><svg class="ico"><use href="#i-folder-plus"/></svg></button></div>
       <div class="sessions" id="sessions"></div>
     </div>
     <div class="foot">
-      <span class="avatar"><svg class="ico"><use href="#i-box"/></svg></span>
-      <span class="profileText"><span class="profileName" id="profileName">–</span><span class="profileMeta status" id="profileMeta"><span class="dot" data-state="warn"></span><span>…</span></span></span>
-      <button class="iconButton" id="navSettings" data-i18n-title="settings"><svg class="ico"><use href="#i-gear"/></svg></button>
-      <button class="iconButton" id="themeToggle" data-i18n-title="theme"><svg class="ico"><use href="#i-moon"/></svg></button>
+      <button class="moreRow" id="moreButton" data-i18n-title="more"><svg class="ico"><use href="#i-dots"/></svg><span data-i18n="more"></span><span class="profileMeta status" id="profileMeta"><span class="dot" data-state="warn"></span></span></button>
+      <span id="profileName" hidden>–</span>
     </div>
   </aside>
 
@@ -583,17 +643,17 @@ svg { display: block; }
     <div class="topBar" id="topBar">
       <button class="iconButton openSidebar" id="expand" data-i18n-title="expand"><svg class="ico"><use href="#i-panel"/></svg></button>
       <span class="crumb" id="crumb"></span>
+      <span class="crumbTags" id="crumbTags"></span>
       <span class="spacer"></span>
     </div>
 
     <section class="page" id="pluginsView" hidden></section>
-    <section class="page" id="settingsView" hidden></section>
 
     <div class="conversation" id="chatView" data-phase="hero">
       <div class="scrollBody" id="scroll">
         <div class="hero" id="hero">
           <div class="headline"><svg class="heroMark"><use href="#i-mark"/></svg><span data-i18n="headline"></span><span class="previewBadge" id="heroBadge">preview</span></div>
-          <div class="workspaceRow"><span class="chip" id="heroWorkspace" role="button" tabindex="0"><svg class="ico"><use href="#i-folder"/></svg><span class="label">workspace</span><svg class="ico chev"><use href="#i-chev-down"/></svg></span><span class="chip" id="heroPreset" role="button" tabindex="0"><svg class="ico"><use href="#i-plug"/></svg><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span><span class="chip" id="heroMode" role="button" tabindex="0"><svg class="ico"><use href="#i-eye"/></svg><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span></div>
+          <div class="workspaceRow"><span class="chip" id="heroWorkspace" role="button" tabindex="0"><svg class="ico"><use href="#i-folder"/></svg><span class="label">workspace</span><svg class="ico chev"><use href="#i-chev-down"/></svg></span><span class="chip" id="heroPreset" role="button" tabindex="0"><svg class="ico"><use href="#i-mode"/></svg><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span></div>
           <div class="composerSlot" id="heroComposer"></div>
         </div>
         <div class="column" id="log"></div>
@@ -607,9 +667,7 @@ svg { display: block; }
             <div class="cardRow">
               <div class="left">
                 <button type="button" class="add" id="attachButton" data-i18n-title="attach"><svg class="ico"><use href="#i-plus"/></svg></button>
-                <span class="selectChip" id="workspaceChip" role="button" tabindex="0"><svg class="ico"><use href="#i-folder"/></svg><span class="label">workspace</span></span>
-                <span class="selectChip" id="modeChip" role="button" tabindex="0"><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span>
-                <span class="selectChip" id="presetChip" role="button" tabindex="0"><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span>
+                <span class="selectChip" id="modeChip" role="button" tabindex="0"><svg class="ico lead"><use href="#i-pencil"/></svg><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span>
               </div>
               <div class="right">
                 <span class="selectChip" id="modelChip" role="button" tabindex="0" data-i18n-title="modelChip"><span class="label">model</span></span>
@@ -622,6 +680,20 @@ svg { display: block; }
     </div>
   </main>
 </div>
+<div class="modal" id="settingsModal" hidden>
+  <div class="settingsCard" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="settingsHead"><h2 id="settingsTitle" data-i18n="settings"></h2><span class="spacer"></span><button type="button" class="iconButton" id="settingsClose" data-i18n-title="close"><svg class="ico"><use href="#i-x"/></svg></button></div>
+    <div class="settingsBody">
+      <div class="settingsNav" id="settingsNav" role="tablist">
+        <button type="button" data-tab="general"><svg class="ico"><use href="#i-gear"/></svg><span data-i18n="tabGeneral"></span></button>
+        <button type="button" data-tab="models"><svg class="ico"><use href="#i-bulb"/></svg><span data-i18n="tabModels"></span></button>
+        <button type="button" data-tab="presets"><svg class="ico"><use href="#i-mode"/></svg><span data-i18n="tabPresets"></span></button>
+        <button type="button" data-tab="plugins"><svg class="ico"><use href="#i-plug"/></svg><span data-i18n="tabPlugins"></span></button>
+      </div>
+      <div class="settingsContent" id="settingsContent"></div>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -630,8 +702,8 @@ svg { display: block; }
 const $ = (id) => document.getElementById(id);
 const zh = (navigator.language || 'zh').toLowerCase().startsWith('zh');
 const T = zh ? {
-  newSession: '新会话', plugins: '插件', workspace: '会话', headline: '要做什么？', placeholder: '给 agent 发送消息',
-  placeholderBusy: 'agent 工作中…', collapse: '收起侧边栏', expand: '展开侧边栏', theme: '切换主题', attach: '添加图片（也可粘贴或拖入）', send: '发送', stop: '停止',
+  newSession: '新会话', plugins: '插件', workspace: '会话', headline: '要做什么？', placeholder: '描述你想做的事…',
+  placeholderBusy: 'agent 工作中…', collapse: '收起侧边栏', expand: '展开侧边栏', attach: '添加图片（也可粘贴或拖入）', send: '发送', stop: '停止',
   thinking: '思考中', thought: '思考过程', toolRunning: '运行中', copy: '复制', copied: '已复制', del: '删除会话', deleted: '会话已删除',
   approvalStrip: '待批准', approve: '批准', reject: '拒绝', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
   restarting: '重启中：应用插件变更…', restarted: (g) => `第 ${g} 代已启动`, rolledBack: (g) => `变更启动失败；第 ${g} 代运行上一份配置`, offline: '离线', online: '在线', gen: (g) => `第 ${g} 代`,
@@ -642,8 +714,8 @@ const T = zh ? {
   tip: '示例：<code>写一个插件，加一个返回当前时间的工具</code>', missing: '缺少服务', timeNow: '刚刚', min: '分钟', hour: '小时', day: '天',
   restartFailed: '重启后 harness 无响应。日志：运行 pyh run 的终端。', busy: '会话运行中', approvalPending: '有待批准的工具调用',
 } : {
-  newSession: 'New session', plugins: 'Plugins', workspace: 'Sessions', headline: 'What needs doing?', placeholder: 'Message the agent',
-  placeholderBusy: 'The agent is working…', collapse: 'Collapse sidebar', expand: 'Expand sidebar', theme: 'Toggle theme', attach: 'Add images (paste or drop works too)', send: 'Send', stop: 'Stop',
+  newSession: 'New session', plugins: 'Plugins', workspace: 'Sessions', headline: 'What needs doing?', placeholder: 'Describe what you want to build…',
+  placeholderBusy: 'The agent is working…', collapse: 'Collapse sidebar', expand: 'Expand sidebar', attach: 'Add images (paste or drop works too)', send: 'Send', stop: 'Stop',
   thinking: 'Thinking', thought: 'Thoughts', toolRunning: 'Running', copy: 'Copy', copied: 'Copied', del: 'Delete session', deleted: 'Session deleted',
   approvalStrip: 'Awaiting approval', approve: 'Approve', reject: 'Reject', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
   restarting: 'Restarting: applying plugin changes…', restarted: (g) => `Generation ${g} started`, rolledBack: (g) => `Change failed to boot; generation ${g} runs the previous configuration`, offline: 'Offline', online: 'Online', gen: (g) => `generation ${g}`,
@@ -655,7 +727,8 @@ const T = zh ? {
   restartFailed: 'No response after restart. Log: the terminal running pyh run.', busy: 'Session running', approvalPending: 'Tool call awaiting approval',
 };
 Object.assign(T, zh ? {
-  settings: '设置', settingsIntro: '当前 profile 的运行设置。模型设置保存后立即生效，无需重启；密钥写入 profile 的凭据文件，配置文件只记录引用名。',
+  settings: '设置', settingsIntro: '保存后立即生效，无需重启；密钥写入 profile 的凭据文件，配置文件只记录引用名。',
+  workspaces: '工作区', addWorkspace: '添加工作区', more: '更多', close: '关闭', tabGeneral: '通用', tabModels: '模型', tabPresets: '预设', tabPlugins: '内置插件', appearance: '外观', appearanceHint: '跟随系统或固定明暗。', themeLight: '浅色', themeDark: '深色', themeSystem: '跟随系统', language: '语言', languageHint: '跟随浏览器语言。', builtin: '内置', presetsIntro: '选择 agent 的工具与工作方式。标准模式做日常任务，创造模式扩展 harness。', newTaskDefault: '新会话默认', pluginsTabIntro: '当前 profile 的条目与状态；安装与启停在侧边栏的插件页。', refresh: '刷新', theme: '主题',
   modelsTitle: '模型', modelChip: '选择模型', defaultModel: '新会话默认模型', defaultModelHint: '新建会话使用的模型；每个会话可在输入框的模型菜单里单独切换。', noDefault: '未设置',
   addProvider: '添加模型提供方', thirdParty: '第三方模型提供方', customApi: '自定义模型 API', thirdPartyHint: '预置的 LangChain 提供方；填写密钥与模型列表即可。', customApiHint: '自建服务、中转网关或其他 OpenAI / Anthropic 兼容端点。',
   providerType: '提供方类型', providerId: '提供方 ID', providerIdHint: '小写字母、数字、- 与 _；用作配置键与凭据引用名，保存后不可改。', displayName: '显示名称', protocol: 'API 协议',
@@ -673,7 +746,8 @@ Object.assign(T, zh ? {
   removeImage: '移除图片', tooManyImages: (n) => `最多 ${n} 张图片`, imageTooLarge: '图片过大（压缩后仍超过 8 MB）', modelNoImages: (m) => `${m} 不接受图像输入；在设置里勾选该模型的「图像」或换一个模型`, notAnImage: '只支持 PNG、JPEG、GIF、WebP 图片',
   defaultTag: '默认', selectModel: '选择模型', manageModels: '管理模型…', noModels: '没有可用模型；先在设置里添加提供方。', modelSelected: (n) => `已切换到 ${n}`, modelsCount: (n) => `${n} 个模型`, readonly: '无 profile：设置只读。', showKey: '显示 / 隐藏密钥',
 } : {
-  settings: 'Settings', settingsIntro: 'Runtime settings of the current profile. Model settings apply at once, without a restart; keys go to the profile credential file and the configuration keeps only the reference name.',
+  settings: 'Settings', settingsIntro: 'Changes apply at once, without a restart; keys go to the profile credential file and the configuration keeps only the reference name.',
+  workspaces: 'Workspaces', addWorkspace: 'Add workspace', more: 'More', close: 'Close', tabGeneral: 'General', tabModels: 'Models', tabPresets: 'Agent presets', tabPlugins: 'Built-in plugins', appearance: 'Appearance', appearanceHint: 'Follow the system or pin light or dark.', themeLight: 'Light', themeDark: 'Dark', themeSystem: 'System', language: 'Language', languageHint: 'Follows the browser language.', builtin: 'Built-in', presetsIntro: "Choose the agent's tools and how it works. Standard for everyday tasks, Creator to extend the harness.", newTaskDefault: 'New task default', pluginsTabIntro: 'Entries of the current profile with their state; install and toggle on the sidebar Plugins page.', refresh: 'Refresh', theme: 'Theme',
   modelsTitle: 'Models', modelChip: 'Select model', defaultModel: 'Default model for new sessions', defaultModelHint: 'Used by new sessions; each session can switch in the composer model menu.', noDefault: 'Not set',
   addProvider: 'Add model provider', thirdParty: 'Third-party model provider', customApi: 'Custom model API', thirdPartyHint: 'LangChain providers; enter a key and the model list.', customApiHint: 'A self-hosted server, relay, or any other OpenAI- or Anthropic-compatible endpoint.',
   providerType: 'Provider', providerId: 'Provider ID', providerIdHint: 'Lowercase letters, digits, - and _; the configuration key and credential reference stem; fixed after saving.', displayName: 'Display name', protocol: 'API protocol',
@@ -706,14 +780,12 @@ function storedTheme() { try { return localStorage.getItem('pyh-theme'); } catch
 function applyTheme() {
   const theme = storedTheme() || (media.matches ? 'dark' : 'light');
   document.documentElement.dataset.theme = theme;
-  $('themeToggle').innerHTML = icon(theme === 'dark' ? 'sun' : 'moon');
+}
+function setTheme(choice) {
+  try { if (choice === 'system') localStorage.removeItem('pyh-theme'); else localStorage.setItem('pyh-theme', choice); } catch { /* no storage: theme per page load */ }
+  applyTheme();
 }
 media.addEventListener('change', applyTheme);
-$('themeToggle').onclick = () => {
-  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-  try { localStorage.setItem('pyh-theme', next); } catch { /* no storage: theme per page load */ }
-  applyTheme();
-};
 applyTheme();
 
 /* ---------- api ---------- */
@@ -833,11 +905,11 @@ async function refreshHealth() {
     $('genBadge').textContent = `gen ${h.generation}`;
     $('heroBadge').textContent = `gen ${h.generation}`;
     $('profileName').textContent = h.profile || 'pyharness';
-    $('profileMeta').innerHTML = `<span class="dot" data-state="${h.restart_pending ? 'warn' : 'on'}"></span><span>${esc(T.online)} · ${esc(T.gen(h.generation))}${h.supervised ? '' : ' · ' + esc(T.unsupervised)}</span>`;
+    $('profileMeta').innerHTML = `<span class="dot" data-state="${h.restart_pending ? 'warn' : 'on'}"></span>`;
     renderModelChip(); renderSessionChips();
     return h;
   } catch {
-    $('profileMeta').innerHTML = `<span class="dot" data-state="off"></span><span>${esc(T.offline)}</span>`;
+    $('profileMeta').innerHTML = `<span class="dot" data-state="off"></span>`;
     return null;
   }
 }
@@ -861,7 +933,7 @@ async function refreshSessions() {
   box.innerHTML = ordered.map((key) => {
     const name = key === defaultPath ? defaultName : key.split('/').filter(Boolean).pop() || key;
     const rows = groups.get(key).map(row).join('');
-    return `<div class="projectRow" title="${esc(key)}"><span class="folder">${icon('folder')}</span><span class="name">${esc(name)}</span></div>${rows || `<div class="empty">${esc(T.noSessions)}</div>`}`;
+    return `<div class="projectRow" title="${esc(key)}" data-workspace="${esc(key)}" role="button" tabindex="0"><span class="folder">${icon('folder')}</span><span class="name">${esc(name)}</span></div>${rows || `<div class="empty">${esc(T.noSessions)}</div>`}`;
   }).join('');
 }
 $('sessions').addEventListener('click', async (e) => {
@@ -874,19 +946,43 @@ $('sessions').addEventListener('click', async (e) => {
     return;
   }
   const row = e.target.closest('.sessionRow');
-  if (row) { openSession(row.dataset.id); closeDrawer(); }
+  if (row) { openSession(row.dataset.id); closeDrawer(); return; }
+  const project = e.target.closest('.projectRow');
+  if (project) { state.sessionWorkspace = project.dataset.workspace === (state.health?.workspace?.path || '') ? null : project.dataset.workspace; newSession(); closeDrawer(); }
 });
 $('sessions').addEventListener('keydown', (e) => { const row = e.target.closest('.sessionRow'); if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openSession(row.dataset.id); } });
 
 const frame = $('frame');
 const mobile = () => window.matchMedia('(max-width: 760px)').matches;
-$('collapse').onclick = () => { frame.dataset.collapsed = ''; };
+$('collapse').onclick = (e) => { e.stopPropagation(); frame.dataset.collapsed = ''; };
+$('logoRow').onclick = () => { if (frame.dataset.collapsed !== undefined) delete frame.dataset.collapsed; };
 $('expand').onclick = () => { if (mobile()) frame.dataset.drawer = ''; else delete frame.dataset.collapsed; };
+$('addWorkspace').onclick = async () => { const chosen = await browseDirectory(state.health?.workspace?.path || null); if (chosen) { await useWorkspace(chosen); newSession(); closeDrawer(); } };
+let moreMenu = null;
+function closeMoreMenu() { if (moreMenu) { moreMenu.remove(); moreMenu = null; document.removeEventListener('mousedown', onMoreOutside, true); document.removeEventListener('keydown', onMoreKey, true); } }
+function onMoreOutside(e) { if (moreMenu && !moreMenu.contains(e.target) && !$('moreButton').contains(e.target)) closeMoreMenu(); }
+function onMoreKey(e) { if (moreMenu && e.key === 'Escape') closeMoreMenu(); }
+$('moreButton').onclick = () => {
+  if (moreMenu) { closeMoreMenu(); return; }
+  const h = state.health; const theme = storedTheme() || 'system';
+  moreMenu = document.createElement('div'); moreMenu.className = 'menu'; moreMenu.setAttribute('role', 'menu');
+  moreMenu.innerHTML = `<button type="button" class="menuRow" data-act="settings">${icon('gear', 'ico lead')}<span class="label">${esc(T.settings)}</span></button>
+    <button type="button" class="menuRow" data-act="theme">${icon(document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon', 'ico lead')}<span class="label">${esc(T.theme)}</span><span class="sub">${esc(theme === 'system' ? T.themeSystem : theme === 'dark' ? T.themeDark : T.themeLight)}</span></button>
+    <div class="menuInfo"><b>${esc($('profileName').textContent)}</b> · ${h ? esc(T.online + ' · ' + T.gen(h.generation)) + (h.supervised ? '' : ' · ' + esc(T.unsupervised)) : esc(T.offline)}</div>`;
+  moreMenu.onclick = (e) => {
+    const act = e.target.closest('[data-act]')?.dataset.act; if (!act) return;
+    closeMoreMenu();
+    if (act === 'settings') { showSettings('general'); closeDrawer(); }
+    if (act === 'theme') setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  };
+  $('moreButton').parentElement.appendChild(moreMenu);
+  document.addEventListener('mousedown', onMoreOutside, true); document.addEventListener('keydown', onMoreKey, true);
+};
 $('scrim').onclick = () => closeDrawer();
 function closeDrawer() { delete frame.dataset.drawer; }
 $('newSession').onclick = () => { newSession(); closeDrawer(); };
 $('navPlugins').onclick = () => { showPlugins(); closeDrawer(); };
-$('navSettings').onclick = () => { showSettings(); closeDrawer(); };
+
 $('modelChip').onclick = () => toggleModelMenu();
 $('modelChip').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleModelMenu(); } };
 
@@ -900,11 +996,8 @@ function setPhase(phase) {
 function setView(view) {
   state.view = view;
   $('pluginsView').hidden = view !== 'plugins';
-  $('settingsView').hidden = view !== 'settings';
   $('chatView').hidden = view !== 'chat';
-  for (const [id, name] of [['navPlugins', 'plugins'], ['navSettings', 'settings']]) {
-    if (view === name) $(id).setAttribute('aria-current', 'page'); else $(id).removeAttribute('aria-current');
-  }
+  if (view === 'plugins') $('navPlugins').setAttribute('aria-current', 'page'); else $('navPlugins').removeAttribute('aria-current');
   $('topBar').toggleAttribute('data-bordered', view !== 'chat' || $('chatView').dataset.phase !== 'hero');
 }
 function newSession() {
@@ -1290,22 +1383,26 @@ function entryGlyph(e) {
 async function loadPluginCount() {
   try { const d = await json('/plugins'); $('pluginCount').textContent = d.entries.filter((e) => e.state === 'active').length; return d; } catch { return null; }
 }
+function entryCards(d) {
+  return d.entries.map((e) => {
+    const [tone, key] = STATE_TAG[e.state] || ['outline', e.state];
+    const detail = e.state === 'pending' ? `${T.missing}: ${(e.missing || []).join(', ')}` : e.state === 'failed' ? e.error : (e.provides ? `ctx.${e.provides}` : '');
+    return `<div class="pcard"><span class="pcardIcon">${icon(entryGlyph(e))}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(e.id)}</span><span class="tag" data-tone="${tone}">${esc(T[key] || key)}</span></span><span class="pcardDesc"><code>${esc(e.name || '')}</code>${e.source ? ' · ' + esc(e.source) : ''}${detail ? ' · ' + esc(detail) : ''}</span></span></div>`;
+  }).join('');
+}
 async function showPlugins() {
   setView('plugins');
   $('crumb').textContent = T.pluginsTitle;
   const d = await loadPluginCount();
   if (!d) return;
   const bundleCards = d.bundles.map((b) => `<div class="pcard"><span class="pcardIcon">${icon('box')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(b.bundle)}</span><span class="tag" data-tone="${b.enabled ? 'success' : 'outline'}">${esc(b.enabled ? T.enabled : T.off)}</span></span><span class="pcardDesc"><code>${esc(b.dist || '')}</code> ${esc(b.version || '')} · ${esc(b.installed === 'profile' ? T.fromProfile : T.fromEnv)}</span></span></div>`).join('');
-  const entryCards = d.entries.map((e) => {
-    const [tone, key] = STATE_TAG[e.state] || ['outline', e.state];
-    const detail = e.state === 'pending' ? `${T.missing}: ${(e.missing || []).join(', ')}` : e.state === 'failed' ? e.error : (e.provides ? `ctx.${e.provides}` : '');
-    return `<div class="pcard"><span class="pcardIcon">${icon(entryGlyph(e))}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(e.id)}</span><span class="tag" data-tone="${tone}">${esc(T[key] || key)}</span></span><span class="pcardDesc"><code>${esc(e.name || '')}</code>${e.source ? ' · ' + esc(e.source) : ''}${detail ? ' · ' + esc(detail) : ''}</span></span></div>`;
-  }).join('');
+  const entries = entryCards(d);
   $('pluginsView').innerHTML = `
-    <div class="pageHead"><div><h1 class="pageTitle">${esc(T.pluginsTitle)}</h1><p class="pageIntro">${esc(T.pluginsIntro)}</p></div></div>
+    <div class="pageHead"><div><h1 class="pageTitle">${esc(T.pluginsTitle)}</h1><p class="pageIntro">${esc(T.pluginsIntro)}</p></div><div class="headTools"><button type="button" class="iconButton" id="pluginsRefresh" title="${esc(T.refresh)}">${icon('refresh')}</button></div></div>
     <div class="group"><div class="groupHead"><h2 class="groupTitle">${esc(T.bundles)}</h2><span class="groupMeta">${d.bundles.length}</span></div><div class="cards">${bundleCards}</div></div>
-    <div class="group"><div class="groupHead"><h2 class="groupTitle">${esc(T.entries)}</h2><span class="groupMeta">${d.entries.length}</span></div><div class="cards">${entryCards}</div></div>
+    <div class="group"><div class="groupHead"><h2 class="groupTitle">${esc(T.entries)}</h2><span class="groupMeta">${d.entries.length}</span></div><div class="cards">${entries}</div></div>
     <div class="tip">${T.tip}</div>`;
+  $('pluginsRefresh').onclick = showPlugins;
 }
 
 /* ---------- model directory, composer menu ---------- */
@@ -1348,10 +1445,10 @@ async function toggleModelMenu() {
   const d = state.directory || { groups: [], default: null }; const spec = currentSpec();
   menuEl = document.createElement('div'); menuEl.className = 'menu'; menuEl.setAttribute('role', 'menu');
   const groups = d.groups.map((g) => `<div class="menuGroup">${esc(g.title)}</div>${g.models.map((m) => `<button type="button" class="menuRow" role="menuitemradio" aria-checked="${m.spec === spec}" data-spec="${esc(m.spec)}">${icon('check', 'ico check')}<span class="label" title="${esc(m.id)}">${esc(m.name)}</span>${m.spec === d.default ? `<span class="sub">${esc(T.defaultTag)}</span>` : ''}</button>`).join('')}`).join('');
-  menuEl.innerHTML = (groups || `<div class="menuEmpty">${esc(T.noModels)}</div>`) + `<div class="menuFoot"><button type="button" class="menuRow" data-manage>${icon('gear')}<span class="label">${esc(T.manageModels)}</span></button></div>`;
+  menuEl.innerHTML = (groups || `<div class="menuEmpty">${esc(T.noModels)}</div>`) + `<div class="menuFoot"><button type="button" class="menuRow" data-manage>${icon('gear', 'ico lead')}<span class="label">${esc(T.manageModels)}</span></button></div>`;
   $('composer').appendChild(menuEl);
   menuEl.onclick = async (e) => {
-    if (e.target.closest('[data-manage]')) { closeModelMenu(); showSettings(); return; }
+    if (e.target.closest('[data-manage]')) { closeModelMenu(); showSettings('models'); return; }
     const row = e.target.closest('[data-spec]'); if (!row) return;
     await selectModel(row.dataset.spec); closeModelMenu();
   };
@@ -1377,12 +1474,15 @@ const presetLabel = (id) => (T.presetTitle[id] || (state.agent?.presets.find((p)
 function currentWorkspace() { return state.session ? (state.session.workspace || state.health?.workspace?.path || '') : (state.sessionWorkspace || state.health?.workspace?.path || ''); }
 function currentMode() { return (state.session ? state.session.mode : state.sessionMode) || state.agent?.default_mode || ''; }
 function currentPreset() { return (state.session ? state.session.preset : state.sessionPreset) || state.agent?.default_preset || ''; }
+const MODE_ICON = { 'read-only': 'eye', 'workspace-write': 'pencil', 'full-access': 'unlock' };
 function renderSessionChips() {
   const ws = currentWorkspace(); const name = ws.split('/').filter(Boolean).pop() || ws;
-  for (const el of [$('heroWorkspace'), $('workspaceChip')]) { el.querySelector('.label').textContent = name; el.title = state.session ? `${ws} · ${T.fixedForSession}` : ws; el.hidden = !ws; }
   const mode = currentMode(); const preset = currentPreset();
-  for (const el of [$('heroMode'), $('modeChip')]) { el.querySelector('.label').textContent = modeLabel(mode); el.title = `${T.mode_}: ${T.modeDesc[mode] || ''}`; el.hidden = !mode; }
-  for (const el of [$('heroPreset'), $('presetChip')]) { el.querySelector('.label').textContent = presetLabel(preset); el.title = `${T.preset_}: ${T.presetDesc[preset] || ''}`; el.hidden = !preset; }
+  const hw = $('heroWorkspace'); hw.querySelector('.label').textContent = name; hw.title = ws; hw.hidden = !ws;
+  const hp = $('heroPreset'); hp.querySelector('.label').textContent = presetLabel(preset); hp.title = `${T.preset_}: ${T.presetDesc[preset] || ''}`; hp.hidden = !preset;
+  const mc = $('modeChip'); mc.querySelector('.label').textContent = modeLabel(mode); mc.title = `${T.mode_}: ${T.modeDesc[mode] || ''}`; mc.hidden = !mode;
+  mc.querySelector('.lead').innerHTML = `<use href="#i-${MODE_ICON[mode] || 'shield'}"/>`;
+  $('crumbTags').innerHTML = state.session ? `<span class="tag" data-tone="outline" title="${esc(ws)}">${icon('folder')}${esc(name)}</span><span class="tag" data-tone="outline">${icon('mode')}${esc(presetLabel(preset))}</span>` : '';
 }
 let chipMenu = null;
 function closeChipMenu() { if (chipMenu) { chipMenu.remove(); chipMenu = null; document.removeEventListener('mousedown', onChipOutside, true); document.removeEventListener('keydown', onChipKey, true); } }
@@ -1396,11 +1496,11 @@ function openChipMenu(anchor, html, onPick) {
   document.addEventListener('mousedown', onChipOutside, true); document.addEventListener('keydown', onChipKey, true);
   (chipMenu.querySelector('[aria-checked="true"]') || chipMenu.querySelector('.menuRow'))?.focus();
 }
-const rowHtml = (pick, title, desc, checked, extra = '') => `<button type="button" class="menuRow" role="menuitemradio" aria-checked="${checked}" data-pick="${esc(pick)}">${icon('check', 'ico check')}<span class="col"><span class="label">${esc(title)}</span>${desc ? `<span class="desc">${esc(desc)}</span>` : ''}</span>${extra}</button>`;
+const rowHtml = (pick, title, desc, checked, extra = '', lead = null) => `<button type="button" class="menuRow" role="menuitemradio" aria-checked="${checked}" data-pick="${esc(pick)}">${lead ? icon(lead, 'ico lead') : ''}${icon('check', 'ico check')}<span class="col"><span class="label">${esc(title)}</span>${desc ? `<span class="desc">${esc(desc)}</span>` : ''}</span>${extra}</button>`;
 async function openModeMenu(anchor) {
   if (!state.agent) await loadAgentOptions();
   const cur = currentMode();
-  openChipMenu(anchor, `<div class="menuGroup">${esc(T.mode_)}</div>` + (state.agent?.modes || []).map((m) => rowHtml(m.id, modeLabel(m.id), T.modeDesc[m.id] || m.description, m.id === cur)).join(''), async (id) => {
+  openChipMenu(anchor, `<div class="menuGroup">${esc(T.mode_)}</div>` + (state.agent?.modes || []).map((m) => rowHtml(m.id, modeLabel(m.id), T.modeDesc[m.id] || m.description, m.id === cur, '', MODE_ICON[m.id])).join(''), async (id) => {
     closeChipMenu();
     if (id === 'full-access' && cur !== 'full-access' && !(await confirmDialog(T.fullAccessConfirm, T.switchLabel))) return;
     if (state.current) { try { state.session = await json(`/sessions/${state.current}/mode`, { method: 'PUT', body: JSON.stringify({ mode: id }) }); } catch (err) { toast(err.message); return; } }
@@ -1423,7 +1523,7 @@ async function openWorkspaceMenu(anchor) {
   try { state.workspaces = await json('/workspaces'); } catch (err) { toast(err.message); return; }
   const cur = currentWorkspace();
   const rows = (state.workspaces.recent || []).map((w) => rowHtml(w.root, w.name, w.root, w.root === cur, w.default ? `<span class="sub">${esc(T.defaultTag)}</span>` : (w.exists ? '' : `<span class="sub">✕</span>`)));
-  openChipMenu(anchor, `<div class="menuGroup">${esc(T.workspace_)}</div>${rows.join('')}<div class="menuFoot"><button type="button" class="menuRow" data-pick="__browse">${icon('folder')}<span class="label">${esc(T.browseDir)}</span></button></div>`, async (pick) => {
+  openChipMenu(anchor, `<div class="menuGroup">${esc(T.workspace_)}</div>${rows.join('')}<div class="menuFoot"><button type="button" class="menuRow" data-pick="__browse">${icon('folder-plus', 'ico lead')}<span class="label">${esc(T.browseDir)}</span></button></div>`, async (pick) => {
     closeChipMenu();
     if (pick === '__browse') { const chosen = await browseDirectory(cur); if (chosen) await useWorkspace(chosen); return; }
     await useWorkspace(pick);
@@ -1462,23 +1562,63 @@ function browseDirectory(start) {
     load(start || null);
   });
 }
-for (const [id, fn] of [['heroWorkspace', openWorkspaceMenu], ['workspaceChip', openWorkspaceMenu], ['heroMode', openModeMenu], ['modeChip', openModeMenu], ['heroPreset', openPresetMenu], ['presetChip', openPresetMenu]]) {
+for (const [id, fn] of [['heroWorkspace', openWorkspaceMenu], ['modeChip', openModeMenu], ['heroPreset', openPresetMenu]]) {
   $(id).onclick = () => fn($(id));
   $(id).onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn($(id)); } };
 }
 
 /* ---------- settings: models ---------- */
 const models = { data: null, open: null, draft: null, busy: false };
-const sf = (name, root) => (root || $('settingsView')).querySelector(`[data-field="${name}"]`);
+const sf = (name, root) => (root || $('settingsContent')).querySelector(`[data-field="${name}"]`);
 const ROUTE_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
-async function showSettings() {
-  setView('settings'); $('crumb').textContent = T.settings; closeModelMenu(); closeChipMenu();
+const settingsUi = { tab: 'general', open: false };
+function closeSettings() { settingsUi.open = false; $('settingsModal').hidden = true; document.removeEventListener('keydown', onSettingsKey, true); }
+function onSettingsKey(e) { if (e.key === 'Escape' && !document.querySelector('.modal:not(#settingsModal)')) { e.preventDefault(); closeSettings(); } }
+$('settingsClose').onclick = closeSettings;
+$('settingsModal').addEventListener('mousedown', (e) => { if (e.target === $('settingsModal')) closeSettings(); });
+$('settingsNav').onclick = (e) => { const b = e.target.closest('[data-tab]'); if (b) showSettings(b.dataset.tab); };
+async function showSettings(tab) {
+  closeModelMenu(); closeChipMenu(); closeMoreMenu();
+  settingsUi.tab = tab || settingsUi.tab;
+  if (!settingsUi.open) { settingsUi.open = true; $('settingsModal').hidden = false; document.addEventListener('keydown', onSettingsKey, true); }
+  $('settingsNav').querySelectorAll('[data-tab]').forEach((b) => { if (b.dataset.tab === settingsUi.tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   if (!state.agent) await loadAgentOptions();
-  await loadModels();
+  const content = $('settingsContent');
+  if (settingsUi.tab === 'models') await loadModels();
+  else if (settingsUi.tab === 'general') { content.innerHTML = generalMarkup(); bindGeneral(); }
+  else if (settingsUi.tab === 'presets') { content.innerHTML = presetsMarkup(); bindPresets(); }
+  else if (settingsUi.tab === 'plugins') { content.innerHTML = `<h3 class="sectionTitle">${esc(T.tabPlugins)}</h3><p class="sectionIntro">${esc(T.pluginsTabIntro)}</p>`; const d = await loadPluginCount(); if (d) content.innerHTML += `<div class="cards">${entryCards(d)}</div>`; }
+}
+function generalMarkup() {
+  const a = state.agent || { modes: [], default_mode: '' }; const theme = storedTheme() || 'system';
+  const modes = a.modes.map((m) => `<option value="${esc(m.id)}" ${m.id === a.default_mode ? 'selected' : ''}>${esc(modeLabel(m.id))}</option>`).join('');
+  return `<h3 class="sectionTitle">${esc(T.tabGeneral)}</h3><p class="sectionIntro">${esc(T.settingsIntro)}</p>
+    <div class="srow"><div class="main"><div class="title">${esc(T.defaultMode)}</div><div class="desc">${esc(T.modeDesc[a.default_mode] || '')}</div></div><div class="ctl"><div class="selectWrap"><select class="select" data-field="defaultMode">${modes}</select>${icon('chev-down', 'ico chev')}</div></div></div>
+    <div class="srow"><div class="main"><div class="title">${esc(T.language)}</div><div class="desc">${esc(T.languageHint)}</div></div><div class="ctl"><span class="tag" data-tone="outline">${zh ? '中文' : 'English'}</span></div></div>
+    <div class="srow" style="flex-direction:column;align-items:stretch"><div class="main"><div class="title">${esc(T.appearance)}</div><div class="desc">${esc(T.appearanceHint)}</div></div>
+      <div class="themeCards" data-field="themeCards">${[['light', 'sun', T.themeLight], ['dark', 'moon', T.themeDark], ['system', 'panel', T.themeSystem]].map(([id, ic, label]) => `<button type="button" class="themeCard" data-theme-choice="${id}" aria-pressed="${theme === id}">${icon(ic)}<span>${esc(label)}</span></button>`).join('')}</div></div>`;
+}
+function bindGeneral() {
+  const content = $('settingsContent');
+  content.querySelector('[data-field="defaultMode"]').onchange = async (e) => {
+    try { const r = await json('/settings/agent', { method: 'PUT', body: JSON.stringify({ default_mode: e.target.value }) }); state.agent = { ...state.agent, ...r }; renderSessionChips(); toast(T.applied); content.innerHTML = generalMarkup(); bindGeneral(); } catch (err) { toast(err.message); }
+  };
+  content.querySelector('[data-field="themeCards"]').onclick = (e) => { const c = e.target.closest('[data-theme-choice]'); if (!c) return; setTheme(c.dataset.themeChoice); content.innerHTML = generalMarkup(); bindGeneral(); };
+}
+function presetsMarkup() {
+  const a = state.agent; if (!a) return '';
+  const cards = a.presets.map((p) => `<button type="button" class="presetCard" data-preset="${esc(p.id)}" aria-pressed="${p.id === a.default_preset}"><span class="pcardTitle">${esc(presetLabel(p.id))}${p.id === a.default_preset ? `<span class="tag" data-tone="info">${esc(T.newTaskDefault)}</span>` : `<span class="tag" data-tone="outline">${esc(T.builtin)}</span>`}<span class="meta">${esc(p.id)}</span></span><span class="pcardDesc">${esc(T.presetDesc[p.id] || p.description)}</span></button>`).join('');
+  return `<h3 class="sectionTitle">${esc(T.tabPresets)}</h3><p class="sectionIntro">${esc(T.presetsIntro)}</p><div class="subhead">${esc(T.builtin)}</div><div class="presetCards" data-field="presetCards">${cards}</div>`;
+}
+function bindPresets() {
+  $('settingsContent').querySelector('[data-field="presetCards"]').onclick = async (e) => {
+    const c = e.target.closest('[data-preset]'); if (!c) return;
+    try { const r = await json('/settings/agent', { method: 'PUT', body: JSON.stringify({ default_preset: c.dataset.preset }) }); state.agent = { ...state.agent, ...r }; renderSessionChips(); toast(T.applied); $('settingsContent').innerHTML = presetsMarkup(); bindPresets(); } catch (err) { toast(err.message); }
+  };
 }
 async function loadModels() {
   try { models.data = await json('/settings/models'); }
-  catch (err) { $('settingsView').innerHTML = `<div class="pageHead"><h1 class="pageTitle">${esc(T.settings)}</h1></div><div class="result" data-tone="error">${icon('x-circle')}<span>${esc(err.message)}</span></div>`; return; }
+  catch (err) { $('settingsContent').innerHTML = `<div class="result" data-tone="error">${icon('x-circle')}<span>${esc(err.message)}</span></div>`; return; }
   renderModels();
 }
 const routeById = (id) => models.data.routes.find((r) => r.id === id);
@@ -1496,21 +1636,18 @@ function routeRow(r) {
   </button>${open ? `<div data-field="editorSlot"></div>` : ''}`;
 }
 function renderModels() {
-  const d = models.data; const view = $('settingsView');
+  const d = models.data; const view = $('settingsContent');
   const opts = [`<option value="">${esc(T.noDefault)}</option>`];
   for (const r of d.routes) if (r.models.length) opts.push(`<optgroup label="${esc(r.title)}">${r.models.map((m) => `<option value="${esc(r.id + ':' + m.id)}" ${r.id + ':' + m.id === d.default ? 'selected' : ''}>${esc(m.name || m.id)}</option>`).join('')}</optgroup>`);
   if (d.default && !opts.join('').includes(`value="${esc(d.default)}" selected`)) opts.push(`<option value="${esc(d.default)}" selected>${esc(d.default)}</option>`);
   view.innerHTML = `
-    <div class="pageHead"><div><h1 class="pageTitle">${esc(T.settings)}</h1><p class="pageIntro">${esc(T.settingsIntro)}</p></div></div>
+    <h3 class="sectionTitle">${esc(T.modelsTitle)}</h3><p class="sectionIntro">${esc(T.settingsIntro)}</p>
     <div class="group">
-      <div class="groupHead"><h2 class="groupTitle">${esc(T.modelsTitle)}</h2><span class="groupMeta">${d.routes.length}</span></div>
       <div class="statusCard"><span class="pcardIcon">${icon('bulb')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(T.defaultModel)}</span></span><span class="pcardDesc">${esc(T.defaultModelHint)}</span></span><div class="selectWrap"><select class="select" data-field="default" ${d.editable ? '' : 'disabled'}>${opts.join('')}</select>${icon('chev-down', 'ico chev')}</div></div>
       <div class="cards" data-field="rows">${d.routes.map(routeRow).join('')}</div>
-      <div class="actionsRow"><button type="button" class="btn outline" data-field="add" ${d.editable ? '' : 'disabled'} aria-expanded="${models.open === 'add'}">${icon('plus')}<span>${esc(T.addProvider)}</span></button>${d.editable ? '' : `<span class="fieldHint">${esc(T.readonly)}</span>`}</div>
+      <div class="actionsRow" style="margin-top:10px"><button type="button" class="btn dashed" data-field="add" ${d.editable ? '' : 'disabled'} aria-expanded="${models.open === 'add'}">${icon('plus')}<span>${esc(T.addProvider)}</span></button>${d.editable ? '' : `<span class="fieldHint">${esc(T.readonly)}</span>`}</div>
       <div data-field="addSlot"></div>
-    </div>
-    <div class="group" data-field="sessionDefaults">${sessionDefaultsMarkup()}</div>`;
-  bindSessionDefaults();
+    </div>`;
   sf('default').onchange = async (e) => {
     try { models.data = await json('/settings/models', { method: 'PUT', body: JSON.stringify({ default: e.target.value || null }) }); toast(T.applied); renderModels(); loadDirectory(); }
     catch (err) { toast(err.message); }
@@ -1520,20 +1657,6 @@ function renderModels() {
   if (models.open === 'add') mountEditor(sf('addSlot'));
   else if (models.open && routeById(models.open)) mountEditor(sf('editorSlot'));
   else models.open = null;
-}
-function sessionDefaultsMarkup() {
-  const a = state.agent; if (!a) return '';
-  const cards = a.presets.map((p) => `<button type="button" class="presetCard" data-preset="${esc(p.id)}" aria-pressed="${p.id === a.default_preset}"><span class="pcardTitle">${esc(presetLabel(p.id))}<span class="tag" data-tone="quiet"><code>${esc(p.id)}</code></span>${p.id === a.default_preset ? `<span class="tag" data-tone="info">${esc(T.defaultTag)}</span>` : ''}</span><span class="pcardDesc">${esc(T.presetDesc[p.id] || p.description)}</span></button>`).join('');
-  const modes = a.modes.map((m) => `<option value="${esc(m.id)}" ${m.id === a.default_mode ? 'selected' : ''}>${esc(modeLabel(m.id))}</option>`).join('');
-  return `<div class="groupHead"><h2 class="groupTitle">${esc(T.sessionDefaults)}</h2></div>
-    <div class="form"><div class="field"><span class="fieldLabel">${esc(T.defaultPreset)}</span><div class="fieldMain"><div class="presetCards" data-field="presetCards">${cards}</div></div></div>
-    <div class="field"><label class="fieldLabel" for="sMode">${esc(T.defaultMode)}</label><div class="fieldMain"><div class="selectWrap"><select class="select" id="sMode" data-field="defaultMode">${modes}</select>${icon('chev-down', 'ico chev')}</div><span class="fieldHint" data-field="modeHint">${esc(T.modeDesc[a.default_mode] || '')}</span></div></div></div>`;
-}
-function bindSessionDefaults() {
-  const box = sf('sessionDefaults'); if (!box || !state.agent) return;
-  const save = async (body) => { try { const r = await json('/settings/agent', { method: 'PUT', body: JSON.stringify(body) }); state.agent = { ...state.agent, ...r }; box.innerHTML = sessionDefaultsMarkup(); bindSessionDefaults(); renderSessionChips(); toast(T.applied); } catch (err) { toast(err.message); } };
-  box.querySelector('[data-field="presetCards"]').onclick = (e) => { const c = e.target.closest('[data-preset]'); if (c) save({ default_preset: c.dataset.preset }); };
-  box.querySelector('[data-field="defaultMode"]').onchange = (e) => save({ default_mode: e.target.value });
 }
 function openEditor(target) {
   models.open = target;
