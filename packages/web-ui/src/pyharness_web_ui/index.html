@@ -164,7 +164,7 @@ svg { display: block; }
 .projectRow .rowActions .iconButton .ico, .sessionRow .rowActions .iconButton .ico { width: 14px; height: 14px; }
 .projectRow[data-menu-open] .rowActions, .sessionRow[data-menu-open] .rowActions { display: inline-flex; }
 .sessionRow .rowActions { display: none; margin: -3px -4px -3px 0; gap: 2px; }
-.sidebar .menu { position: fixed; bottom: auto; right: auto; min-width: 200px; }
+.sidebar .menu.rowMenu { position: fixed; bottom: auto; right: auto; min-width: 200px; }
 .menuRow[data-danger] { color: var(--error); }
 .menuRow[data-danger] .ico.lead { color: var(--error); }
 .searchRow { padding: 0 8px 6px; }
@@ -999,7 +999,7 @@ function onRowMenuKey(e) { if (rowMenu && e.key === 'Escape') closeRowMenu(); }
 function openRowMenu(button, items, onPick) {
   closeRowMenu();
   const row = button.closest('.projectRow, .sessionRow'); row?.setAttribute('data-menu-open', '');
-  rowMenu = document.createElement('div'); rowMenu.className = 'menu'; rowMenu.setAttribute('role', 'menu'); rowMenu.anchorRow = row;
+  rowMenu = document.createElement('div'); rowMenu.className = 'menu rowMenu'; rowMenu.setAttribute('role', 'menu'); rowMenu.anchorRow = row;
   rowMenu.innerHTML = items.map((it) => `<button type="button" class="menuRow" data-pick="${esc(it.id)}" ${it.danger ? 'data-danger' : ''}>${icon(it.icon, 'ico lead')}<span class="label">${esc(it.label)}</span></button>`).join('');
   const r = button.getBoundingClientRect();
   rowMenu.style.left = `${Math.min(r.left, window.innerWidth - 220)}px`; rowMenu.style.top = `${r.bottom + 4}px`;
