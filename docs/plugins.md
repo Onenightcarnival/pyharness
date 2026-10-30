@@ -13,6 +13,7 @@
 | `pyharness-workspace` | `workspace` | `workspace`、`backend` | 工作区注册表：默认工作区、每会话工作区、最近列表、目录浏览；deepagents `FilesystemBackend` / `LocalShellBackend` |
 | `pyharness-agent-loop-deepagents` | `agent-loop` | `agentLoop` | deepagents 图，按工作区 × 权限模式 × 预设构建；`add_subagent`、`add_middleware`、`add_skills`、`add_preset` |
 | `pyharness-agent` | `agents` | `agents` | 会话、后台运行、审批、重启续跑 |
+| `pyharness-workspace-changes` | `workspace-changes` | `workspaceChanges` | 每轮改动的文件：轮次起止各做一次 git 工作树快照（私有对象目录，不碰仓库），摘要写入 `done` 事件与 store；逐文件 diff |
 | `pyharness-http` | `http` | `http` | FastAPI 根应用 + uvicorn；`include_router`、`mount` |
 | `pyharness-api` | `api` | — | `/api`：REST + SSE |
 | `pyharness-web-ui` | `web-ui` | `webui` | `/`：Web 界面；`register_client(path, calls=)` 登记插件的浏览器模块，`/plugins/{entry}/client.js` 与 `/plugins/{entry}/call/{method}` |

@@ -1,0 +1,17 @@
+[project]
+name = "pyharness-workspace-changes"
+version = "0.1.0"
+description = "pyharness plugin: files changed per turn, from git work-tree snapshots"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = ["pyharness-core", "pyharness-agent", "pyharness-workspace"]
+
+[project.entry-points."pyharness.plugins"]
+pyharness-workspace-changes = "pyharness_workspace_changes:WorkspaceChangesService"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyharness_workspace_changes"]

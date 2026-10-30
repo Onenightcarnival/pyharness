@@ -31,6 +31,10 @@ patch:
   - id: agents
     name: pyharness-agent
 
+  # Changed files per turn, from git work-tree snapshots: ctx.workspaceChanges.
+  - id: workspace-changes
+    name: pyharness-workspace-changes
+
   # Self-extension: introspection, plugin management, where-am-I prompt section.
   - id: inspect
     name: pyharness-inspect

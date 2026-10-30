@@ -23,7 +23,9 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 |---|---|
 | 侧边栏 | 品牌行与当前代；新会话；插件页入口；「工作区」区头（搜索会话、视图选项：按工作区分组 / 单一列表、按最近更新 / 创建时间排序，添加工作区）；工作区行可折叠，悬停显示「操作」（重命名、删除工作区：从列表移除，文件夹与会话保留，会话归入「未分组」）与「在此新建会话」；会话行：相对时间、运行中圆点，悬停显示操作菜单（重命名、复制会话 ID、删除会话，删除需确认）；底部「更多」菜单：设置、主题、profile 状态。收起后为图标栏，点标志展开 |
 | 会话参数 | 欢迎区两个标签：工作区（最近列表、「选择目录…」打开本机的系统文件夹对话框，macOS `osascript` / Windows PowerShell / Linux zenity、kdialog；无对话框时退回内置目录浏览器；会话创建后不可改）、预设（标准 / 创造）；输入框左下角权限标签（仅可查看 / 工作区内修改 / 完全权限，切换完全权限需确认；已有会话可切换，下一轮生效）。会话打开后顶栏显示其工作区与预设 |
-| 对话 | 空会话：居中欢迎区与输入框。用户消息：浅蓝气泡，附图显示在气泡上方。回复：Markdown（代码块带语言与复制、表格、引用、图片），模型返回的图片块作为图片渲染；点击图片放大 |
+| 对话 | 空会话：居中欢迎区与输入框。会话开始后输入区固定在底部，消息区独立滚动。用户消息：浅蓝气泡，附图显示在气泡上方。回复：Markdown（代码块带语言与复制、表格、引用、图片），模型返回的图片块作为图片渲染；点击图片放大 |
+| 代码高亮 | 服务端 Pygments：回复定稿后与历史加载时，代码块按围栏语言请求 `POST /api/highlight` 得到 token span；文件预览的「代码」渲染器按文件名选择 lexer；diff 两侧按文件名分别高亮。配色由 `GET /api/highlight.css` 提供（浅色 xcode、深色 github-dark），仅 token 颜色，背景沿用页面 |
+| 改动文件卡片 | 每轮结束后，`pyharness-workspace-changes` 用 git 工作树快照汇总本轮改动的文件与增删行数；卡片出现在该轮回复之后：单文件显示「已编辑 文件名」，多文件显示文件数与合计，前 4 行展开，其余可展开。点击行在右侧栏打开「第 N 轮改动」tab：文件选择器、单栏 / 左右对比、换行、在侧边栏打开文件、重新读取；hunk 带两侧行号与增删底色，新建 / 删除文件给出说明。摘要持久化；逐文件对比只在记录它的进程内可用，重启后提示不可用。工作区不在 git 仓库内时不记录 |
 | 图片输入 | 输入框的「+」按钮、粘贴、拖入：PNG / JPEG / GIF / WebP，最多 8 张，超过 2048px 的边在浏览器内缩放，压缩后 8 MB 以内；缩略图可移除；当前模型未勾选「图像」输入时拒绝并提示 |
 | 折叠行 | 推理内容、工具调用；展开为输入 / 输出卡片 |
 | 运行中 | 「思考中」闪光；停止按钮取消当前轮 |
@@ -66,6 +68,10 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | GET | `/workspaces/files?path=&root=` | | 工作区内目录的条目（名称、虚拟路径、目录、大小、隐藏、修改时间）；`root` 缺省为默认工作区 |
 | GET | `/workspaces/file?path=&root=&limit=` | | 工作区内文本文件的内容（默认至多 512 KB）；`binary`、`truncated` 标记 |
 | GET | `/workspaces/file/raw?path=&root=` | | 工作区内文件的原始字节（预览图片用，至多 20 MB），按扩展名猜测类型 |
+| GET | `/sessions/{id}/changes` | | 各轮改动文件摘要（`GET /sessions/{id}` 也带 `changes`） |
+| GET | `/sessions/{id}/changes/{run}/diff?index=` | | 所列文件的 hunk，行带高亮 HTML；重启后 `available: false` |
+| POST | `/highlight` | `{"items": [{"code", "lang"?, "filename"?}]}` | 每项的 token span HTML（无匹配 lexer 时为空） |
+| GET | `/highlight.css` | | 浅色与深色主题的 token 配色 |
 | POST | `/workspaces/pick` | `{"path"?: 提示语}` | 本机系统文件夹对话框；取消为 `{"path": null}`；`GET /workspaces` 的 `picker` 为 `native` 或 `browse` |
 | GET | `/sessions/{id}` | | 会话、运行状态、消息、待批准项 |
 | POST | `/sessions/{id}/messages` | `{"content", "images"?}` | SSE 运行事件；`images` 为 data URL，模型未声明图像输入时 422 |

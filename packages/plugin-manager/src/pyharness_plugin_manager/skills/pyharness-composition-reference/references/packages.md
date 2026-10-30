@@ -24,10 +24,11 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 | `pyharness-tools` | service | tools |  | no | Tool registry and the ``tools/execute`` → ``tools/result`` pipeline. |
 | `pyharness-web-ui` | service | webui | http | yes | The Web UI page and the client-module registry. |
 | `pyharness-workspace` | function |  | tools | yes | Workspace provider: ``ctx.workspace`` (the workspace registry) and ``ctx.backend`` (the default deepagents backend). |
+| `pyharness-workspace-changes` | service | workspaceChanges | agents, workspace, store | yes | Per-turn changed-file summaries and diffs. |
 
 ## Bundles
 
 | bundle | title | description | entries (patch op ids) |
 |---|---|---|---|
-| `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui` |
+| `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `workspace-changes`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui` |
 | `creator` | Creator | New sessions start in the Creator preset (plugin-authoring skills, plugin manager and inspection tools). | `agent-loop` |

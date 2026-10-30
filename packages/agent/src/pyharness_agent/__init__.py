@@ -20,7 +20,7 @@ list them under ``images``; an AI message with image blocks emits ``image`` even
 | event                | mode     | listener                               |
 |----------------------|----------|----------------------------------------|
 | ``agent/turn-start`` | parallel | ``(turn: Turn)``                       |
-| ``agent/turn-end``   | parallel | ``(turn: Turn)``; ``turn.outcome`` set |
+| ``agent/turn-end``   | parallel | ``(turn: Turn)``; ``turn.outcome`` set; ``turn.extras`` reaches the ``done`` event as ``extras`` |
 """
 
 from __future__ import annotations
@@ -71,6 +71,7 @@ class Turn:
     outcome: str | None = None
     model: str | None = None  # route:model selected for the session; None: the default
     started_at: float = field(default_factory=time.time)
+    extras: dict[str, Any] = field(default_factory=dict)  # listeners of agent/turn-end attach data for the done event
 
 
 class RunHandle:
@@ -472,7 +473,14 @@ class AgentService(Service):
                     await self.ctx.parallel("agent/turn-end", turn)
                 except Exception:  # pragma: no cover
                     self.ctx.logger.exception("turn-end bookkeeping failed")
-                await handle.publish({"type": "done", "outcome": outcome, "restart_pending": lifecycle.restart_pending is not None})
+                await handle.publish(
+                    {
+                        "type": "done",
+                        "outcome": outcome,
+                        "restart_pending": lifecycle.restart_pending is not None,
+                        "extras": _jsonable(turn.extras),
+                    }
+                )
                 await handle.finish()
 
     @staticmethod

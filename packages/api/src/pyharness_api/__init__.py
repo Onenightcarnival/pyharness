@@ -27,6 +27,10 @@
 | GET    | ``/workspaces/files``        | ``?path=&root=``              | directory entries inside a workspace        |
 | GET    | ``/workspaces/file``         | ``?path=&root=&limit=``       | text of a file inside a workspace           |
 | GET    | ``/workspaces/file/raw``     | ``?path=&root=``              | bytes of a file inside a workspace (images) |
+| GET    | ``/sessions/{id}/changes``   |                               | changed-file summaries per turn             |
+| GET    | ``/sessions/{id}/changes/{run}/diff`` | ``?index=``          | hunks of one listed file, lines highlighted |
+| POST   | ``/highlight``               | ``{"items": [{code, lang?, filename?}]}`` | Pygments token spans per item     |
+| GET    | ``/highlight.css``           |                               | token colors for light and dark themes      |
 | GET    | ``/models``                  |                               | selector directory: routes, models, default |
 | GET    | ``/settings/models``         |                               | routes with credential state, catalog       |
 | PUT    | ``/settings/models``         | ``{"default"}``               | default model for new sessions              |
@@ -52,6 +56,7 @@ model request without a restart.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import mimetypes
 import re
@@ -104,6 +109,16 @@ class AgentDefaults(BaseModel):
 IMAGE_DATA_URL = re.compile(r"^data:image/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$")
 MAX_IMAGES = 8
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
+
+
+class HighlightItem(BaseModel):
+    code: str = Field(max_length=400_000)
+    lang: str | None = None
+    filename: str | None = None
+
+
+class HighlightRequest(BaseModel):
+    items: list[HighlightItem] = Field(max_length=200)
 
 
 class NewMessage(BaseModel):
@@ -404,12 +419,60 @@ def build_router(ctx: Any) -> APIRouter:
     @router.get("/sessions/{session_id}")
     async def get_session(session_id: str) -> dict[str, Any]:
         session = await require(session_id)
+        changes = ctx.get("workspaceChanges", None)
         return {
             **session,
             "busy": agents.busy(session_id),
             "messages": await agents.messages(session_id),
             "pending": await agents.pending(session_id),
+            "changes": await changes.summaries(session_id) if changes is not None else [],
         }
+
+    @router.get("/sessions/{session_id}/changes")
+    async def session_changes(session_id: str) -> dict[str, Any]:
+        """Changed-file summaries of the session's turns (``pyharness-workspace-changes``)."""
+        await require(session_id)
+        changes = ctx.get("workspaceChanges", None)
+        return {"changes": await changes.summaries(session_id) if changes is not None else []}
+
+    @router.get("/sessions/{session_id}/changes/{run_id}/diff")
+    async def session_changes_diff(session_id: str, run_id: str, index: int = 0) -> dict[str, Any]:
+        """Hunks of one listed file with highlighted lines; ``available: false`` after a restart."""
+        await require(session_id)
+        changes = ctx.get("workspaceChanges", None)
+        if changes is None:
+            raise HTTPException(503, "workspace changes unavailable")
+        try:
+            diff = await changes.diff(session_id, run_id, index)
+        except LookupError as exc:
+            raise HTTPException(404, str(exc)) from None
+        from .highlight import escaped_lines
+        from .highlight import lines as highlighted_lines
+
+        name = diff["path"].rsplit("/", 1)[-1]
+        for hunk in diff.get("hunks", []):
+            for side, kinds in (("old", ("ctx", "del")), ("new", ("ctx", "add"))):
+                rows = [line for line in hunk["lines"] if line["kind"] in kinds]
+                text = "\n".join(line["text"] for line in rows)
+                html = await asyncio.to_thread(highlighted_lines, text, None, name) or escaped_lines(text)
+                for line, markup in zip(rows, html, strict=False):
+                    if side == "new" or line["kind"] == "del":
+                        line["html"] = markup
+        return diff
+
+    @router.post("/highlight")
+    async def highlight_code(body: HighlightRequest) -> dict[str, Any]:
+        """Token spans (``hl-`` classes) for code blocks; ``html`` is empty when no lexer matches."""
+        from .highlight import render
+
+        items = await asyncio.to_thread(lambda: [render(item.code, item.lang, item.filename) for item in body.items])
+        return {"items": items}
+
+    @router.get("/highlight.css")
+    async def highlight_css() -> Response:
+        from .highlight import style_css
+
+        return Response(style_css(), media_type="text/css", headers={"Cache-Control": "max-age=3600"})
 
     @router.post("/sessions/{session_id}/messages")
     async def post_message(session_id: str, body: NewMessage) -> StreamingResponse:

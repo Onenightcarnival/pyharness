@@ -189,6 +189,44 @@ svg { display: block; }
 .fileHead .menu.rbMenu { top: calc(100% + 4px); bottom: auto; right: 8px; left: auto; min-width: 160px; }
 .kvTable { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; padding: 12px 14px; font-size: 13px; }
 .kvTable dt { color: var(--label-tertiary); } .kvTable dd { margin: 0; font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+pre.hl, code.hl { color: inherit; }
+.turnTail { width: 100%; margin: 6px 0 10px; }
+.changesCard { border-radius: 16px; box-shadow: inset 0 0 0 0.5px var(--border-l3); overflow: hidden; }
+.changesHead { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border: none; background: transparent; color: var(--label-primary); font-size: 13px; text-align: left; }
+.changesHead .iconBox { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 10px; background: color-mix(in srgb, var(--label-primary) 5%, transparent); box-shadow: inset 0 0 0 0.5px var(--border-l3); flex: none; }
+.changesHead .iconBox .ico { width: 16px; height: 16px; }
+.changesTitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.changesHead .hint { display: none; font-size: 12px; color: var(--label-tertiary); white-space: nowrap; }
+.changesHead:hover .stat, .changesHead:focus-visible .stat { display: none; }
+.changesHead:hover .hint, .changesHead:focus-visible .hint { display: inline; }
+.stat { font: 12px/18px var(--mono); white-space: nowrap; color: var(--label-tertiary); }
+.stat .plus { color: var(--success); } .stat .minus { color: var(--error); }
+.changesRows { border-top: 0.5px solid var(--border-l2); }
+.changesRow { display: flex; align-items: center; gap: 8px; width: 100%; height: 30px; padding: 0 14px; border: none; background: transparent; color: var(--label-primary); font-size: 13px; text-align: left; }
+.changesRow .ico { width: 16px; height: 16px; flex: none; }
+.changesRow .path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.changesRow[hidden] { display: none; }
+.changesMore { width: 100%; height: 30px; border: none; border-top: 0.5px solid var(--border-l2); background: transparent; color: var(--label-tertiary); font-size: 12px; }
+.changesSelect { flex: 1 1 auto; min-width: 0; height: 26px; padding: 0 26px 0 8px; font: 12px var(--mono); }
+.diffScroll { overflow: auto; padding: 6px 0 16px; }
+.diffNote { padding: 6px 14px; font-size: 12px; color: var(--label-tertiary); }
+table.diff { min-width: 100%; border-collapse: collapse; font: 12px/20px var(--mono); }
+table.diff td { padding: 0; vertical-align: top; }
+table.diff td.no { width: 40px; min-width: 40px; padding: 0 8px 0 4px; text-align: right; color: var(--label-caption); user-select: none; white-space: nowrap; }
+table.diff td.code { padding: 0 12px 0 2px; white-space: pre; }
+table.diff[data-wrap] td.code { white-space: pre-wrap; overflow-wrap: anywhere; }
+table.diff[data-split] { table-layout: fixed; width: 100%; min-width: 0; }
+table.diff[data-split] td.code { width: auto; overflow: hidden; }
+table.diff col.colNo { width: 40px; }
+table.diff .sign { display: inline-block; width: 12px; color: var(--label-caption); user-select: none; }
+table.diff tr.k-add td.code, table.diff td.code.k-add { background: color-mix(in srgb, var(--success) 10%, transparent); }
+table.diff tr.k-add td.no, table.diff td.no.k-add { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
+table.diff tr.k-add .sign, table.diff td.k-add .sign { color: var(--success); }
+table.diff tr.k-del td.code, table.diff td.code.k-del { background: color-mix(in srgb, var(--error) 10%, transparent); }
+table.diff tr.k-del td.no, table.diff td.no.k-del { background: color-mix(in srgb, var(--error) 18%, transparent); color: var(--error); }
+table.diff tr.k-del .sign, table.diff td.k-del .sign { color: var(--error); }
+table.diff td.k-empty { background: color-mix(in srgb, var(--label-primary) 3%, transparent); }
+table.diff tr.hunk td { padding: 3px 12px; background: color-mix(in srgb, var(--info) 8%, transparent); color: var(--label-tertiary); font-size: 11px; white-space: nowrap; }
 .mainSlot { flex: 1; min-height: 0; overflow: auto; }
 .dock { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
 .dock:empty { display: none; }
@@ -404,7 +442,7 @@ svg { display: block; }
 .shimmer { background: linear-gradient(90deg, var(--deep-diving) 0%, var(--deep-diving) 40%, var(--shimmer) 50%, var(--deep-diving) 60%, var(--deep-diving) 100%); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: sweep 2.2s linear infinite; }
 
 /* composer */
-.composerSeat { flex: none; position: sticky; bottom: 0; display: flex; flex-direction: column; align-items: center; padding: 0 16px 12px; background: linear-gradient(180deg, color-mix(in srgb, var(--bg-base) 0%, transparent) 0, var(--bg-base) 36px); }
+.composerSeat { flex: none; position: relative; bottom: auto; display: flex; flex-direction: column; align-items: center; padding: 0 16px 12px; background: linear-gradient(180deg, color-mix(in srgb, var(--bg-base) 0%, transparent) 0, var(--bg-base) 36px); }
 .conversation[data-phase='hero'] .composerSeat { position: static; background: none; padding: 0; }
 #approval { width: 100%; display: flex; flex-direction: column; align-items: center; }
 .conversation[data-phase='hero'] .hero .composerSlot { display: contents; }
@@ -630,6 +668,7 @@ svg { display: block; }
   .rbChip:hover { color: var(--label-primary); }
   .rbAdd:hover, .rbChip .close:hover { background: var(--hover); color: var(--label-primary); }
   .guideCard:hover { background: var(--hover); }
+  .changesHead:hover, .changesRow:hover, .changesMore:hover { background: var(--hover); }
   .themeCard:hover { background: var(--hover-solid); }
   .prow:hover { background: var(--hover); }
   .menuRow:hover { background: var(--hover); }
@@ -666,6 +705,7 @@ svg { display: block; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
 }
 </style>
+<link rel="stylesheet" href="/api/highlight.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -838,7 +878,7 @@ const T = zh ? {
 };
 Object.assign(T, zh ? {
   settings: '设置', settingsIntro: '保存后立即生效，无需重启；密钥写入 profile 的凭据文件，配置文件只记录引用名。',
-  rightbarOpen: '打开右侧栏', rightbarClose: '收起右侧栏', tabFiles: '文件', tabInfo: '会话', start: '开始', newTab: '新标签页', closeTab: '关闭', fullscreen: '全屏', exitFullscreen: '退出全屏', reload: '重新读取', reading: '读取中…', emptyDir: '空目录', guideFiles: '工作区文件', guideFilesDesc: '浏览此会话工作区中的文件', guideInfo: '会话信息', guideInfoDesc: '工作区、预设、权限与模型', unsupported: '此文件类型不支持预览', truncatedNote: '文件过大，只显示开头部分', retry: '重试', wrap: '自动换行', renderer: { markdown: 'Markdown', code: '代码', plain: '纯文本', image: '图片' }, noTabType: (k) => `没有名为 ${k} 的右侧栏标签类型`, noSession: '先打开或新建一个会话', up: '上级', loadFailed: (id, m) => `插件 ${id} 加载失败：${m}`, binaryFile: '二进制文件，不预览', truncated: '已截断',
+  rightbarOpen: '打开右侧栏', rightbarClose: '收起右侧栏', tabFiles: '文件', tabInfo: '会话', start: '开始', newTab: '新标签页', closeTab: '关闭', fullscreen: '全屏', exitFullscreen: '退出全屏', reload: '重新读取', reading: '读取中…', emptyDir: '空目录', guideFiles: '工作区文件', guideFilesDesc: '浏览此会话工作区中的文件', guideInfo: '会话信息', guideInfoDesc: '工作区、预设、权限与模型', unsupported: '此文件类型不支持预览', truncatedNote: '文件过大，只显示开头部分', retry: '重试', wrap: '自动换行', renderer: { markdown: 'Markdown', code: '代码', plain: '纯文本', image: '图片' }, noTabType: (k) => `没有名为 ${k} 的右侧栏标签类型`, noSession: '先打开或新建一个会话', up: '上级', loadFailed: (id, m) => `插件 ${id} 加载失败：${m}`, binaryFile: '二进制文件，不预览', truncated: '已截断', editedOne: (name) => `已编辑 ${name}`, editedMany: (n) => `改动了 ${n} 个文件`, showAll: (n) => `显示全部 ${n} 个文件`, collapseRows: '收起', binary: '二进制', previewInSidebar: '在侧边栏预览', changesTab: '改动', turnChanges: (seq) => `第 ${seq} 轮改动`, changesGone: '这轮改动的摘要已不可用', diffGone: 'harness 重启后，这轮的对比不再可用', fileAdded: '本轮新建的文件', fileDeleted: '本轮删除的文件', noTextChanges: '两侧内容相同', diffOversized: '文件过大，未保留对比', unified: '单栏', split: '左右对比', openFile: '在侧边栏打开文件',
   workspaces: '工作区', addWorkspace: '添加工作区', more: '更多', searchSessions: '搜索会话', searchPlaceholder: '搜索会话名称', viewOptions: '视图选项', groupBy: '分组', groupWorkspace: '按工作区', groupNone: '单一列表', orderBy: '排序', orderUpdated: '最近更新', orderCreated: '创建时间', ungrouped: '未分组',
   wsActions: (n) => `工作区「${n}」的操作`, newSessionIn: (n) => `在「${n}」新建会话`, renameWorkspace: '重命名', deleteWorkspace: '删除工作区', deleteWorkspaceText: (n) => `将「${n}」从工作区列表移除。文件夹与会话记录保留，其会话将显示在「未分组」下。`, renameWorkspaceTitle: '重命名工作区', renameLabel: '重命名', cannotDeleteDefault: '默认工作区不可删除',
   sessionActions: '会话操作', renameSession: '重命名', copyId: '复制会话 ID', deleteSession: '删除会话', deleteSessionText: (t) => `删除「${t}」？会话记录将一并删除，不可恢复。`, renameSessionTitle: '重命名会话', noMatch_: '没有匹配的会话', close: '关闭', tabGeneral: '通用', tabModels: '模型', tabPresets: '预设', tabPlugins: '内置插件', appearance: '外观', appearanceHint: '跟随系统或固定明暗。', themeLight: '浅色', themeDark: '深色', themeSystem: '跟随系统', language: '语言', languageHint: '跟随浏览器语言。', builtin: '内置', presetsIntro: '选择 agent 的工具与工作方式。标准模式做日常任务，创造模式扩展 harness。', newTaskDefault: '新会话默认', pluginsTabIntro: '当前 profile 的条目与状态；安装与启停在侧边栏的插件页。', refresh: '刷新', theme: '主题',
@@ -860,7 +900,7 @@ Object.assign(T, zh ? {
   defaultTag: '默认', selectModel: '选择模型', manageModels: '管理模型…', noModels: '没有可用模型；先在设置里添加提供方。', modelSelected: (n) => `已切换到 ${n}`, modelsCount: (n) => `${n} 个模型`, readonly: '无 profile：设置只读。', showKey: '显示 / 隐藏密钥',
 } : {
   settings: 'Settings', settingsIntro: 'Changes apply at once, without a restart; keys go to the profile credential file and the configuration keeps only the reference name.',
-  rightbarOpen: 'Open right sidebar', rightbarClose: 'Collapse right sidebar', tabFiles: 'Files', tabInfo: 'Session', start: 'Start', newTab: 'New tab', closeTab: 'Close', fullscreen: 'Fullscreen', exitFullscreen: 'Exit fullscreen', reload: 'Read again', reading: 'Reading…', emptyDir: 'Empty directory', guideFiles: 'Workspace files', guideFilesDesc: "Browse files in this session's workspace", guideInfo: 'Session info', guideInfoDesc: 'Workspace, preset, permissions and model', unsupported: 'No preview for this file type', truncatedNote: 'Large file; only the beginning is shown', retry: 'Retry', wrap: 'Wrap lines', renderer: { markdown: 'Markdown', code: 'Code', plain: 'Plain text', image: 'Image' }, noTabType: (k) => `no right-sidebar tab type ${k}`, noSession: 'Open or start a session first', up: 'Up', loadFailed: (id, m) => `Plugin ${id} failed to load: ${m}`, binaryFile: 'Binary file; no preview', truncated: 'truncated',
+  rightbarOpen: 'Open right sidebar', rightbarClose: 'Collapse right sidebar', tabFiles: 'Files', tabInfo: 'Session', start: 'Start', newTab: 'New tab', closeTab: 'Close', fullscreen: 'Fullscreen', exitFullscreen: 'Exit fullscreen', reload: 'Read again', reading: 'Reading…', emptyDir: 'Empty directory', guideFiles: 'Workspace files', guideFilesDesc: "Browse files in this session's workspace", guideInfo: 'Session info', guideInfoDesc: 'Workspace, preset, permissions and model', unsupported: 'No preview for this file type', truncatedNote: 'Large file; only the beginning is shown', retry: 'Retry', wrap: 'Wrap lines', renderer: { markdown: 'Markdown', code: 'Code', plain: 'Plain text', image: 'Image' }, noTabType: (k) => `no right-sidebar tab type ${k}`, noSession: 'Open or start a session first', up: 'Up', loadFailed: (id, m) => `Plugin ${id} failed to load: ${m}`, binaryFile: 'Binary file; no preview', truncated: 'truncated', editedOne: (name) => `Edited ${name}`, editedMany: (n) => `Changed ${n} files`, showAll: (n) => `Show all ${n} files`, collapseRows: 'Collapse', binary: 'binary', previewInSidebar: 'Preview in sidebar', changesTab: 'Changes', turnChanges: (seq) => `Turn ${seq} changes`, changesGone: 'The summary of this turn is no longer available', diffGone: 'This diff is no longer available after a harness restart', fileAdded: 'File added in this turn', fileDeleted: 'File deleted in this turn', noTextChanges: 'Both sides are identical', diffOversized: 'File too large; no diff kept', unified: 'Unified', split: 'Side by side', openFile: 'Open the file in the sidebar',
   workspaces: 'Workspaces', addWorkspace: 'Add workspace', more: 'More', searchSessions: 'Search sessions', searchPlaceholder: 'Search session names', viewOptions: 'View options', groupBy: 'Group by', groupWorkspace: 'Workspace', groupNone: 'In one list', orderBy: 'Order by', orderUpdated: 'Last updated', orderCreated: 'Created', ungrouped: 'Ungrouped',
   wsActions: (n) => `Workspace actions for ${n}`, newSessionIn: (n) => `New session in ${n}`, renameWorkspace: 'Rename', deleteWorkspace: 'Delete workspace', deleteWorkspaceText: (n) => `This removes "${n}" from the workspace list. The folder and session logs will be kept. Its sessions will appear under Ungrouped.`, renameWorkspaceTitle: 'Rename workspace', renameLabel: 'Rename', cannotDeleteDefault: 'The default workspace cannot be deleted',
   sessionActions: 'Session actions', renameSession: 'Rename', copyId: 'Copy session ID', deleteSession: 'Delete session', deleteSessionText: (t) => `Delete "${t}"? Its history is deleted and cannot be restored.`, renameSessionTitle: 'Rename session', noMatch_: 'No matching sessions', close: 'Close', tabGeneral: 'General', tabModels: 'Models', tabPresets: 'Agent presets', tabPlugins: 'Built-in plugins', appearance: 'Appearance', appearanceHint: 'Follow the system or pin light or dark.', themeLight: 'Light', themeDark: 'Dark', themeSystem: 'System', language: 'Language', languageHint: 'Follows the browser language.', builtin: 'Built-in', presetsIntro: "Choose the agent's tools and how it works. Standard for everyday tasks, Creator to extend the harness.", newTaskDefault: 'New task default', pluginsTabIntro: 'Entries of the current profile with their state; install and toggle on the sidebar Plugins page.', refresh: 'Refresh', theme: 'Theme',
@@ -1297,7 +1337,7 @@ $('modelChip').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.
 function setPhase(phase) {
   $('chatView').dataset.phase = phase;
   const seat = $('composerSeat');
-  if (phase === 'hero') $('heroComposer').appendChild(seat); else $('scroll').appendChild(seat);
+  if (phase === 'hero') $('heroComposer').appendChild(seat); else $('chatView').appendChild(seat);
   $('topBar').toggleAttribute('data-bordered', phase !== 'hero' || state.view !== 'chat');
 }
 let mainDispose = null;
@@ -1347,7 +1387,7 @@ async function openSession(id) {
   $('crumb').textContent = s.title || T.untitled;
   state.session = s; state.sessionModel = s.model || null; renderModelChip(); renderSessionChips(); renderDock(); renderRightbar(); emitPlugin('session', s);
   setPhase('active'); $('rbExpand').hidden = rightbar.open;
-  renderHistory(s.messages);
+  renderHistory(s.messages, s.changes);
   renderApproval(s.pending || []);
   refreshSessions();
   scrollToEnd(true);
@@ -1462,9 +1502,11 @@ function addSystem(marker) {
   if (marker.rollback_error) el.title = marker.rollback_error;
   log().appendChild(el); return el;
 }
-function renderHistory(messages) {
+function renderHistory(messages, changes) {
   log().innerHTML = '';
-  for (const m of messages) {
+  const cards = {};
+  for (const c of changes || []) (cards[c.after] ||= []).push(c);
+  messages.forEach((m, i) => {
     if (m.role === 'human' && m.harness) addSystem(m.harness);
     else if (m.role === 'human') addUser(m.content, m.images);
     else if (m.role === 'ai') {
@@ -1475,8 +1517,9 @@ function renderHistory(messages) {
       const el = findTool(m.tool_call_id) || addTool({ id: m.tool_call_id, name: m.name || 'tool', args: {} });
       finishTool(el, m);
     }
-  }
-  markLast();
+    for (const c of cards[i + 1] || []) addChangesCard(c);
+  });
+  markLast(); highlightBlocks(log());
 }
 
 /* ---------- running indicator ---------- */
@@ -1494,7 +1537,7 @@ async function consume(res) {
   state.streaming = true; updateComposer();
   showRunning(true); scrollToEnd(true);
   const reader = res.body.getReader(); const dec = new TextDecoder();
-  let buf = '', ai = null, reasoning = null, restart = false, frame = 0;
+  let buf = '', ai = null, reasoning = null, restart = false, frame = 0, queuedChanges = null;
   const repaint = () => {
     if (frame) return;
     frame = requestAnimationFrame(() => {
@@ -1537,6 +1580,7 @@ async function consume(res) {
           case 'error': addLine(ev.message, 'error'); break;
           case 'done':
             restart = ev.restart_pending;
+            if (ev.extras?.changes) { queuedChanges = ev.extras.changes; if (state.session) (state.session.changes ||= []).push(ev.extras.changes); }
             if (ev.outcome === 'cancelled') addLine(T.cancelled);
             break;
         }
@@ -1548,7 +1592,9 @@ async function consume(res) {
     if (frame) { cancelAnimationFrame(frame); frame = 0; }
     if (ai) ai.querySelector('.md').innerHTML = markdown(ai._raw);
     if (reasoning) reasoning.querySelector('.reasoningBody').innerHTML = markdown(reasoning._raw);
-    showRunning(false); markLast();
+    showRunning(false);
+    if (queuedChanges) { addChangesCard(queuedChanges); queuedChanges = null; scrollToEnd(); }
+    markLast(); highlightBlocks(log());
     state.streaming = false; updateComposer(); refreshSessions();
     if (restart) waitForRestart();
   }
@@ -1914,6 +1960,95 @@ for (const [id, fn] of [['heroWorkspace', openWorkspaceMenu], ['modeChip', openM
   $(id).onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn($(id)); } };
 }
 
+/* ---------- syntax highlighting (server-side Pygments) and changed-file cards ---------- */
+async function highlightBlocks(root) {
+  const blocks = [...root.querySelectorAll('.codeBlock:not([data-hl]) pre code')];
+  if (!blocks.length) return;
+  const items = blocks.map((c) => { c.closest('.codeBlock').dataset.hl = 'pending'; return { code: c.textContent, lang: c.closest('.codeBlock').querySelector('.lang')?.textContent || '' }; });
+  let res;
+  try { res = await json('/highlight', { method: 'POST', body: JSON.stringify({ items }) }); } catch { blocks.forEach((c) => delete c.closest('.codeBlock').dataset.hl); return; }
+  res.items.forEach((it, i) => {
+    const c = blocks[i]; const block = c.closest('.codeBlock');
+    if (!c.isConnected || c.textContent !== items[i].code) { delete block.dataset.hl; return; }
+    if (it.html) { c.innerHTML = it.html; c.classList.add('hl'); }
+    block.dataset.hl = it.html ? 'done' : 'plain';
+  });
+}
+async function highlightCode(codeEl, code, filename, alive) {
+  try { const r = await json('/highlight', { method: 'POST', body: JSON.stringify({ items: [{ code, filename }] }) }); if (alive() && codeEl.isConnected && r.items[0]?.html) { codeEl.innerHTML = r.items[0].html; codeEl.classList.add('hl'); } } catch { /* plain text stays */ }
+}
+const statHtml = (f) => (f.binary ? `<span class="stat">${esc(T.binary)}</span>` : `<span class="stat"><span class="plus">+${f.added ?? 0}</span> <span class="minus">−${f.deleted ?? 0}</span></span>`);
+function addChangesCard(c) {
+  const el = document.createElement('div'); el.className = 'turnTail'; el.dataset.run = c.run_id;
+  const one = c.files.length === 1 && c.total === 1; const first = c.files[0];
+  const rows = c.files.map((f, i) => `<button type="button" class="changesRow" data-open="${i}" ${i >= 4 ? 'hidden' : ''} title="${esc(f.display)}">${fileIcon(f.display.split('/').pop())}<span class="path">${esc(f.display)}</span>${statHtml(f)}</button>`).join('');
+  el.innerHTML = `<div class="changesCard"><button type="button" class="changesHead" data-open="0" title="${esc(one ? first.display : '')}"><span class="iconBox">${one ? fileIcon(first.display.split('/').pop()) : icon('terminal')}</span><span class="changesTitle">${esc(one ? T.editedOne(first.display.split('/').pop()) : T.editedMany(c.total))}</span>${one ? statHtml(first) : statHtml(c)}<span class="hint">${esc(T.previewInSidebar)}</span></button>${one ? '' : `<div class="changesRows">${rows}</div>${c.files.length > 4 ? `<button type="button" class="changesMore" data-more>${esc(T.showAll(c.files.length))}</button>` : ''}`}</div>`;
+  el.onclick = (e) => {
+    const more = e.target.closest('[data-more]');
+    if (more) { const expanded = more.dataset.open === '1'; el.querySelectorAll('.changesRow').forEach((r, i) => { r.hidden = expanded && i >= 4; }); more.dataset.open = expanded ? '0' : '1'; more.textContent = expanded ? T.showAll(c.files.length) : T.collapseRows; return; }
+    const b = e.target.closest('[data-open]'); if (b) rbOpenTab('changes', { params: { run: c.run_id, index: Number(b.dataset.open) } });
+  };
+  log().appendChild(el); return el;
+}
+function changesTab(el, props) {
+  const run = props.tab.params.run; const st = props.tab.store; st.view ||= 'split'; st.wrap ??= true;
+  let index = Number(props.tab.params.index ?? st.index ?? 0); let alive = true; let data = null;
+  const summary = (state.session?.changes || []).find((c) => c.run_id === run);
+  if (!summary) { el.innerHTML = `<div class="rbEmpty">${esc(T.changesGone)}</div>`; return () => {}; }
+  if (!(index >= 0 && index < summary.files.length)) index = 0;
+  const file = () => summary.files[index];
+  const canOpen = () => !file().display.startsWith('../') && !file().display.startsWith('/') && file().status !== 'D';
+  el.innerHTML = `<div class="fileHead"><select class="select changesSelect" data-file>${summary.files.map((f, i) => `<option value="${i}" ${i === index ? 'selected' : ''}>${esc(f.display)}  ${f.binary ? T.binary : `+${f.added ?? 0} −${f.deleted ?? 0}`}</option>`).join('')}</select><span class="headTools" data-tools></span></div><div class="docBody" data-doc></div>`;
+  const tools = el.querySelector('[data-tools]'); const doc = el.querySelector('[data-doc]');
+  el.querySelector('[data-file]').onchange = (e) => { index = Number(e.target.value); st.index = index; load(); };
+  function drawTools() {
+    tools.innerHTML = `<button type="button" class="iconButton sm" data-view title="${esc(st.view === 'split' ? T.unified : T.split)}">${icon(st.view === 'split' ? 'list' : 'panel')}</button><button type="button" class="iconButton sm" data-wrap aria-pressed="${st.wrap}" title="${esc(T.wrap)}">${icon('wrap')}</button>${canOpen() ? `<button type="button" class="iconButton sm" data-openfile title="${esc(T.openFile)}">${icon('file')}</button>` : ''}<button type="button" class="iconButton sm" data-reload title="${esc(T.reload)}">${icon('refresh')}</button>`;
+    tools.querySelector('[data-view]').onclick = () => { st.view = st.view === 'split' ? 'unified' : 'split'; drawTools(); draw(); };
+    tools.querySelector('[data-wrap]').onclick = () => { st.wrap = !st.wrap; drawTools(); draw(); };
+    tools.querySelector('[data-openfile]')?.addEventListener('click', () => props.tab.openFile('/' + file().display));
+    tools.querySelector('[data-reload]').onclick = load;
+  }
+  const cell = (ln, kind) => `<td class="code k-${kind}">${ln ? `<span class="sign">${kind === 'add' ? '+' : kind === 'del' ? '−' : ''}</span><span class="hl">${ln.html ?? esc(ln.text)}</span>` : ''}</td>`;
+  const no = (n, kind) => `<td class="no ${kind ? 'k-' + kind : ''}">${n ?? ''}</td>`;
+  function draw() {
+    if (!data) return;
+    const notes = [];
+    if (!data.available) notes.push(T.diffGone);
+    else if (data.binary) notes.push(T.binary);
+    else if (data.oversized) notes.push(T.diffOversized);
+    if (data.status === 'A') notes.push(T.fileAdded); if (data.status === 'D') notes.push(T.fileDeleted);
+    if (data.available && !data.binary && !data.oversized && !data.hunks.length) notes.push(T.noTextChanges);
+    const onlyOneSide = !data.hunks.some((h) => h.lines.some((l) => l.kind === 'add')) || !data.hunks.some((h) => h.lines.some((l) => l.kind === 'del'));
+    const split = st.view === 'split' && !onlyOneSide;
+    let rows = '';
+    for (const h of data.hunks) {
+      const range = (h.header.split('@@')[1] || '').trim();
+      rows += `<tr class="hunk"><td colspan="${split ? 4 : 3}">${esc(range ? `@@ ${range} @@` : h.header)}</td></tr>`;
+      if (!split) { for (const ln of h.lines) rows += `<tr class="k-${ln.kind}">${no(ln.old)}${no(ln.new)}${cell(ln, ln.kind)}</tr>`; continue; }
+      let i = 0;
+      while (i < h.lines.length) {
+        const ln = h.lines[i];
+        if (ln.kind === 'ctx') { rows += `<tr>${no(ln.old)}${cell(ln, 'ctx')}${no(ln.new)}${cell(ln, 'ctx')}</tr>`; i++; continue; }
+        const dels = []; const adds = [];
+        while (i < h.lines.length && h.lines[i].kind === 'del') dels.push(h.lines[i++]);
+        while (i < h.lines.length && h.lines[i].kind === 'add') adds.push(h.lines[i++]);
+        for (let k = 0; k < Math.max(dels.length, adds.length); k++) {
+          const d = dels[k]; const a = adds[k];
+          rows += `<tr>${d ? no(d.old, 'del') : '<td class="no k-empty"></td>'}${d ? cell(d, 'del') : '<td class="code k-empty"></td>'}${a ? no(a.new, 'add') : '<td class="no k-empty"></td>'}${a ? cell(a, 'add') : '<td class="code k-empty"></td>'}</tr>`;
+        }
+      }
+    }
+    doc.innerHTML = `${notes.map((n) => `<div class="diffNote">${esc(n)}</div>`).join('')}${rows ? `<div class="diffScroll"><table class="diff" ${st.wrap ? 'data-wrap' : ''} ${split ? 'data-split' : ''}><colgroup>${split ? '<col class="colNo"><col><col class="colNo"><col>' : '<col class="colNo"><col class="colNo"><col>'}</colgroup><tbody>${rows}</tbody></table></div>` : ''}`;
+  }
+  async function load() {
+    drawTools(); doc.innerHTML = `<div class="fileNote">${esc(T.reading)}</div>`;
+    try { data = await json(`/sessions/${encodeURIComponent(state.current)}/changes/${encodeURIComponent(run)}/diff?index=${index}`); } catch (err) { if (!alive) return; doc.innerHTML = `<div class="docEmpty"><p>${esc(err.message)}</p><button type="button" class="btn outline sm" data-retry>${esc(T.retry)}</button></div>`; doc.querySelector('[data-retry]').onclick = load; return; }
+    if (alive) draw();
+  }
+  load();
+  return () => { alive = false; };
+}
+
 /* ---------- right sidebar: per-session tab layout, guide page, files tree, preview ---------- */
 const rightbar = (() => { try { return { open: false, width: 380, ...JSON.parse(localStorage.getItem('pyh-rightbar') || '{}') }; } catch { return { open: false, width: 380 }; } })();
 function saveRightbar() { try { localStorage.setItem('pyh-rightbar', JSON.stringify({ open: rightbar.open, width: rightbar.width })); } catch { /* no storage */ } }
@@ -2101,6 +2236,7 @@ function previewTab(el, props) {
       doc.innerHTML = `<div class="docCode" ${st.wrap ? 'data-wrap' : ''}><div class="codeBlock"><div class="codeBanner"><span class="lang">${esc(codeLang(name))}</span><button type="button" data-copy>${icon('copy')}<span>${esc(T.copy)}</span></button></div><pre><code></code></pre></div></div>${note}`;
       doc.querySelector('code').textContent = data.text;
       doc.querySelector('[data-copy]').onclick = (e) => copyText(data.text, e.currentTarget);
+      highlightCode(doc.querySelector('code'), data.text, name, () => alive && st.renderer === 'code');
     } else { doc.innerHTML = `<pre class="filePreview" ${st.wrap ? 'data-wrap' : ''}></pre>${note}`; doc.querySelector('pre').textContent = data.text; }
   }
   async function load() {
@@ -2129,6 +2265,7 @@ slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'guide', label: T.start, ic
 slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'files', label: T.tabFiles, icon: 'folder', iconClass: 'ft-folder', guide: { title: T.guideFiles, description: T.guideFilesDesc, order: 10 } }, filesTab);
 slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'preview', label: T.tabFiles, icon: 'file', contentId: (p) => p.path, title: (p) => String(p.path || '').split('/').pop() || '/' }, previewTab);
 slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'info', label: T.tabInfo, icon: 'eye', guide: { title: T.guideInfo, description: T.guideInfoDesc, order: 20 } }, infoTab);
+slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'changes', label: T.changesTab, icon: 'branch', contentId: (p) => p.run, title: (p) => T.turnChanges((state.session?.changes || []).find((c) => c.run_id === p.run)?.seq ?? '?') }, changesTab);
 
 /* ---------- settings: models ---------- */
 const models = { data: null, open: null, draft: null, busy: false };
