@@ -13,7 +13,15 @@
 | ``open(path)``               | a validated :class:`Workspace` for ``path``; ``None`` is the default       |
 | ``backend_for(path, shell)`` | cached backend for a workspace; ``shell=False`` gives a filesystem-only one |
 | ``recent()`` / ``remember`` / ``forget`` | workspaces used by sessions, kept in ``ctx.store``                |
-| ``browse(path)``             | one directory level: subdirectories only, for a picker                   |
+| ``browse(path)``             | one directory level: subdirectories only, for the in-app picker          |
+| ``picker()``                 | ``native`` (an OS folder dialog on this machine) or ``browse``            |
+| ``pick(prompt)``             | opens the OS folder dialog; the chosen absolute path, or ``None``        |
+
+| platform | native dialog                                   |
+|----------|-------------------------------------------------|
+| macOS    | ``osascript`` ``choose folder``                 |
+| Windows  | PowerShell ``FolderBrowserDialog``              |
+| Linux    | ``zenity`` or ``kdialog`` when a display exists |
 
 | harness home vs root     | effect                                         |
 |--------------------------|------------------------------------------------|
@@ -23,10 +31,14 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
+import shutil
+import subprocess
+import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -43,6 +55,13 @@ class Config(BaseModel):
     shell_approval: bool = True
     shell_timeout: int = 120
     recent_limit: int = Field(20, description="Workspaces remembered for the picker.")
+    picker: Literal["auto", "native", "browse"] = Field(
+        "auto", description="Directory picker: the OS dialog when available, else the in-app browser."
+    )
+    picker_command: list[str] | None = Field(
+        None, description="Command printing the chosen directory (empty output: cancelled); replaces the platform dialog."
+    )
+    picker_timeout: int = Field(600, description="Seconds to wait for the OS dialog.")
 
 
 class WorkspaceError(ValueError):
@@ -192,6 +211,52 @@ class Workspaces:
             return False
         await store.adelete(NAMESPACE, key)
         return True
+
+    # ------------------------------------------------------------------ OS picker
+    def _native_command(self, prompt: str) -> list[str] | None:
+        if self.config.picker_command:
+            return list(self.config.picker_command)
+        if sys.platform == "darwin" and shutil.which("osascript"):
+            return ["osascript", "-e", f'POSIX path of (choose folder with prompt "{prompt}")']
+        if sys.platform == "win32":
+            ps = (
+                "Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.FolderBrowserDialog; "
+                f"$d.Description = '{prompt}'; if ($d.ShowDialog() -eq 'OK') {{ Write-Output $d.SelectedPath }}"
+            )
+            return ["powershell", "-NoProfile", "-Command", ps]
+        if os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
+            if shutil.which("zenity"):
+                return ["zenity", "--file-selection", "--directory", f"--title={prompt}"]
+            if shutil.which("kdialog"):
+                return ["kdialog", "--getexistingdirectory", str(Path.home()), "--title", prompt]
+        return None
+
+    def picker(self) -> str:
+        """``native`` when an OS folder dialog can open on this machine, else ``browse``."""
+        if self.config.picker == "browse":
+            return "browse"
+        if self.config.picker == "native" or self._native_command("x") is not None:
+            return "native"
+        return "browse"
+
+    async def pick(self, prompt: str = "Choose a workspace directory") -> str | None:
+        """Open the OS folder dialog; the chosen absolute path, ``None`` when cancelled. Raises ``WorkspaceError`` without a dialog."""
+        command = self._native_command(prompt.replace('"', "").replace("'", "")) if self.picker() == "native" else None
+        if command is None:
+            raise WorkspaceError("no native directory picker on this host")
+
+        def run() -> str | None:
+            proc = subprocess.run(command, capture_output=True, text=True, timeout=self.config.picker_timeout)
+            output = proc.stdout.strip()
+            if proc.returncode != 0 or not output:
+                return None  # cancelled
+            return output.rstrip("/") or "/"
+
+        try:
+            chosen = await asyncio.get_running_loop().run_in_executor(None, run)
+        except subprocess.TimeoutExpired:
+            raise WorkspaceError("the directory dialog timed out") from None
+        return str(Path(chosen).expanduser().resolve()) if chosen else None
 
     def browse(self, path: str | None = None) -> dict[str, Any]:
         """One directory level for a picker: ``path``, ``parent``, ``dirs`` (name-sorted, hidden flagged), ``home``."""

@@ -170,3 +170,31 @@ async def test_agent_defaults_persist(profile):
     assert loop_op["config"] == {"default_preset": "creator", "default_mode": "read-only"} and loop_op["merge"] is True
     async with Harness(profile, patch=[{"id": "http", "config": {"serve": False}}], generation=2) as h2:
         assert h2.get("agentLoop").config.default_preset == "creator"
+
+
+async def test_native_picker_through_a_command(profile, tmp_path, monkeypatch):
+    import sys
+
+    chosen = tmp_path / "picked"
+    chosen.mkdir()
+    cmd = [sys.executable, "-c", f"print({str(chosen)!r})"]
+    extra = [{"id": "workspace", "config": {"picker_command": cmd}, "merge": True}]
+    async with Harness(profile, patch=patch([], extra)) as h:
+        ws = h.get("workspace")
+        assert ws.picker() == "native"
+        assert await ws.pick() == str(chosen.resolve())
+        async with client(h) as c:
+            assert (await c.get("/api/workspaces")).json()["picker"] == "native"
+            r = (await c.post("/api/workspaces/pick", json={})).json()
+            assert r["path"] == str(chosen.resolve()) and r["root"] == str(chosen.resolve())
+            assert any(w["root"] == str(chosen.resolve()) for w in (await c.get("/api/workspaces")).json()["recent"])
+    # Cancelled dialog: empty output.
+    extra = [{"id": "workspace", "config": {"picker_command": [sys.executable, "-c", "print('')"]}, "merge": True}]
+    async with Harness(profile, patch=patch([], extra)) as h:
+        assert await h.get("workspace").pick() is None
+    # Forced in-app browser.
+    extra = [{"id": "workspace", "config": {"picker": "browse"}, "merge": True}]
+    async with Harness(profile, patch=patch([], extra)) as h:
+        assert h.get("workspace").picker() == "browse"
+        async with client(h) as c:
+            assert (await c.post("/api/workspaces/pick", json={})).status_code == 422

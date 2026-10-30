@@ -741,7 +741,7 @@ Object.assign(T, zh ? {
   fetching: '获取中…', modelsFound: (n) => `找到 ${n} 个模型`, modelsNone: '该提供方不支持列出模型。', needModel: '至少添加一个模型。', needId: '请填写提供方 ID。', needUrl: '请填写 Base URL。', dupId: '提供方 ID 已存在。', noneLeft: '预置提供方均已添加。',
   modeTitle: { 'read-only': '仅可查看', 'workspace-write': '工作区内修改', 'full-access': '完全权限' }, modeDesc: { 'read-only': '文件工具只读，不提供 shell。', 'workspace-write': '可写工作区内文件；受控工具需批准。', 'full-access': '工作区写入与 shell 均不再询问。' },
   presetTitle: { standard: '标准', creator: '创造' }, presetDesc: { standard: '日常工作：文件、shell、子 agent；不暴露插件管理。', creator: '标准之上加 harness 检查、插件管理与插件编写 skills：扩展 harness 本身。' },
-  workspace_: '工作区', mode_: '权限', preset_: '预设', browseDir: '浏览目录…', chooseDir: '选择此目录', upDir: '上级目录', showHidden: '显示隐藏目录', dirTitle: '选择工作区目录', notSelectable: '该目录不能作为工作区', forgetWorkspace: '从列表移除',
+  workspace_: '工作区', mode_: '权限', preset_: '预设', browseDir: '浏览目录…', pickDir: '选择目录…', pickerOpen: '系统目录选择器已打开，请在对话框中选择。', chooseDir: '选择此目录', upDir: '上级目录', showHidden: '显示隐藏目录', dirTitle: '选择工作区目录', notSelectable: '该目录不能作为工作区', forgetWorkspace: '从列表移除',
   fullAccessConfirm: '完全权限：agent 的写入与 shell 命令不再询问。切换到完全权限？', switchLabel: '切换', sessionDefaults: '会话默认', defaultPreset: '新会话预设', defaultMode: '新会话权限', fixedForSession: '会话已创建，工作区不可更改',
   removeImage: '移除图片', tooManyImages: (n) => `最多 ${n} 张图片`, imageTooLarge: '图片过大（压缩后仍超过 8 MB）', modelNoImages: (m) => `${m} 不接受图像输入；在设置里勾选该模型的「图像」或换一个模型`, notAnImage: '只支持 PNG、JPEG、GIF、WebP 图片',
   defaultTag: '默认', selectModel: '选择模型', manageModels: '管理模型…', noModels: '没有可用模型；先在设置里添加提供方。', modelSelected: (n) => `已切换到 ${n}`, modelsCount: (n) => `${n} 个模型`, readonly: '无 profile：设置只读。', showKey: '显示 / 隐藏密钥',
@@ -760,7 +760,7 @@ Object.assign(T, zh ? {
   fetching: 'Fetching…', modelsFound: (n) => `${n} models found`, modelsNone: 'This provider cannot list models.', needModel: 'Add at least one model.', needId: 'A provider ID is required.', needUrl: 'A base URL is required.', dupId: 'That provider ID already exists.', noneLeft: 'Every preset provider is already added.',
   modeTitle: { 'read-only': 'Read only', 'workspace-write': 'Workspace write', 'full-access': 'Full access' }, modeDesc: { 'read-only': 'File tools read only; no shell.', 'workspace-write': 'Writes inside the workspace; gated tools ask for approval.', 'full-access': 'Workspace writes and the shell without approval prompts.' },
   presetTitle: { standard: 'Standard', creator: 'Creator' }, presetDesc: { standard: 'Everyday work: files, shell, subagents; plugin management stays out of the way.', creator: 'Standard plus harness inspection, plugin management and the plugin-authoring skills.' },
-  workspace_: 'Workspace', mode_: 'Permissions', preset_: 'Preset', browseDir: 'Browse…', chooseDir: 'Use this directory', upDir: 'Up', showHidden: 'Show hidden', dirTitle: 'Choose a workspace directory', notSelectable: 'This directory cannot be a workspace', forgetWorkspace: 'Remove from list',
+  workspace_: 'Workspace', mode_: 'Permissions', preset_: 'Preset', browseDir: 'Browse…', pickDir: 'Choose directory…', pickerOpen: 'The system folder dialog is open; choose a directory there.', chooseDir: 'Use this directory', upDir: 'Up', showHidden: 'Show hidden', dirTitle: 'Choose a workspace directory', notSelectable: 'This directory cannot be a workspace', forgetWorkspace: 'Remove from list',
   fullAccessConfirm: 'Full access: writes and shell commands run without asking. Switch to full access?', switchLabel: 'Switch', sessionDefaults: 'Session defaults', defaultPreset: 'Preset for new sessions', defaultMode: 'Permissions for new sessions', fixedForSession: 'The workspace is fixed once a session exists',
   removeImage: 'Remove image', tooManyImages: (n) => `At most ${n} images`, imageTooLarge: 'Image too large (over 8 MB after compression)', modelNoImages: (m) => `${m} does not accept image input; tick Image for the model in Settings or pick another model`, notAnImage: 'Only PNG, JPEG, GIF and WebP images',
   defaultTag: 'default', selectModel: 'Select model', manageModels: 'Manage models…', noModels: 'No models available; add a provider in Settings.', modelSelected: (n) => `Switched to ${n}`, modelsCount: (n) => `${n} models`, readonly: 'No profile: settings are read-only.', showKey: 'Show / hide key',
@@ -957,7 +957,7 @@ const mobile = () => window.matchMedia('(max-width: 760px)').matches;
 $('collapse').onclick = (e) => { e.stopPropagation(); frame.dataset.collapsed = ''; };
 $('logoRow').onclick = () => { if (frame.dataset.collapsed !== undefined) delete frame.dataset.collapsed; };
 $('expand').onclick = () => { if (mobile()) frame.dataset.drawer = ''; else delete frame.dataset.collapsed; };
-$('addWorkspace').onclick = async () => { const chosen = await browseDirectory(state.health?.workspace?.path || null); if (chosen) { await useWorkspace(chosen); newSession(); closeDrawer(); } };
+$('addWorkspace').onclick = async () => { const chosen = await chooseDirectory(state.health?.workspace?.path || null); if (chosen) { await useWorkspace(chosen); newSession(); closeDrawer(); } };
 let moreMenu = null;
 function closeMoreMenu() { if (moreMenu) { moreMenu.remove(); moreMenu = null; document.removeEventListener('mousedown', onMoreOutside, true); document.removeEventListener('keydown', onMoreKey, true); } }
 function onMoreOutside(e) { if (moreMenu && !moreMenu.contains(e.target) && !$('moreButton').contains(e.target)) closeMoreMenu(); }
@@ -1523,11 +1523,21 @@ async function openWorkspaceMenu(anchor) {
   try { state.workspaces = await json('/workspaces'); } catch (err) { toast(err.message); return; }
   const cur = currentWorkspace();
   const rows = (state.workspaces.recent || []).map((w) => rowHtml(w.root, w.name, w.root, w.root === cur, w.default ? `<span class="sub">${esc(T.defaultTag)}</span>` : (w.exists ? '' : `<span class="sub">✕</span>`)));
-  openChipMenu(anchor, `<div class="menuGroup">${esc(T.workspace_)}</div>${rows.join('')}<div class="menuFoot"><button type="button" class="menuRow" data-pick="__browse">${icon('folder-plus', 'ico lead')}<span class="label">${esc(T.browseDir)}</span></button></div>`, async (pick) => {
+  const native = state.workspaces.picker === 'native';
+  openChipMenu(anchor, `<div class="menuGroup">${esc(T.workspace_)}</div>${rows.join('')}<div class="menuFoot"><button type="button" class="menuRow" data-pick="__choose">${icon('folder-plus', 'ico lead')}<span class="label">${esc(native ? T.pickDir : T.browseDir)}</span></button></div>`, async (pick) => {
     closeChipMenu();
-    if (pick === '__browse') { const chosen = await browseDirectory(cur); if (chosen) await useWorkspace(chosen); return; }
+    if (pick === '__choose') { const chosen = await chooseDirectory(cur); if (chosen) await useWorkspace(chosen); return; }
     await useWorkspace(pick);
   });
+}
+async function chooseDirectory(start) {
+  if (!state.workspaces) { try { state.workspaces = await json('/workspaces'); } catch { state.workspaces = { picker: 'browse' }; } }
+  if (state.workspaces.picker !== 'native') return browseDirectory(start);
+  toast(T.pickerOpen);
+  try {
+    const r = await json('/workspaces/pick', { method: 'POST', body: JSON.stringify({ path: T.dirTitle }) });
+    return r.path || null;
+  } catch (err) { toast(err.message); return browseDirectory(start); }
 }
 async function useWorkspace(path) {
   try { await json('/workspaces', { method: 'POST', body: JSON.stringify({ path }) }); } catch (err) { toast(err.message); return; }

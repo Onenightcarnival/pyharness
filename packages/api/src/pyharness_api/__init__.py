@@ -17,7 +17,8 @@
 | PUT    | ``/sessions/{id}/preset``    | ``{"preset"}``                | agent preset; next run                      |
 | GET    | ``/agent``                   |                               | presets, modes, defaults for new sessions   |
 | PUT    | ``/settings/agent``          | ``{"default_preset"?, "default_mode"?}`` | defaults for new sessions; persisted |
-| GET    | ``/workspaces``              |                               | default and recent workspaces               |
+| GET    | ``/workspaces``              |                               | default and recent workspaces, picker kind  |
+| POST   | ``/workspaces/pick``         | ``{"path"?: prompt}``         | OS folder dialog on this machine; null = cancelled |
 | POST   | ``/workspaces``              | ``{"path"}``                  | validate and remember a workspace           |
 | DELETE | ``/workspaces?path=``        |                               | forget a workspace                          |
 | POST   | ``/workspaces/browse``       | ``{"path"?}``                 | one directory level for the picker          |
@@ -247,7 +248,21 @@ def build_router(ctx: Any) -> APIRouter:
         workspaces = ctx.get("workspace", None)
         if workspaces is None or not hasattr(workspaces, "recent"):
             return {"default": None, "recent": []}
-        return {"default": workspaces.default.describe(), "recent": await workspaces.recent()}
+        return {"default": workspaces.default.describe(), "recent": await workspaces.recent(), "picker": workspaces.picker()}
+
+    @router.post("/workspaces/pick")
+    async def pick_workspace(body: WorkspacePath) -> dict[str, Any]:
+        """Open the OS folder dialog on this machine; ``{"path": null}`` when cancelled."""
+        workspaces = ctx.get("workspace", None)
+        if workspaces is None or not hasattr(workspaces, "pick"):
+            raise HTTPException(503, "workspace registry unavailable")
+        try:
+            chosen = await workspaces.pick(body.path or "Choose a workspace directory")
+            if chosen is None:
+                return {"path": None}
+            return {"path": chosen, **(await workspaces.remember(chosen))}
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
 
     @router.post("/workspaces")
     async def add_workspace(body: WorkspacePath) -> dict[str, Any]:
