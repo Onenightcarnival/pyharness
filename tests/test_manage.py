@@ -39,7 +39,7 @@ async def test_install_preflight_boot_and_uninstall(profile, example_bundle, tmp
         states = {e["id"]: e["state"] for e in h.loader.snapshot()}
         assert states["audit"] == "active"
         agents = h.get("agents")
-        session = await agents.create_session()
+        session = await agents.create_session(preset="creator")
         await agents.start_run(session["id"], "go").wait()
         routes = {r["path"] for r in h.get("http").routes()}
         assert "/audit" in routes
@@ -93,7 +93,7 @@ async def test_agent_installs_a_bundle_through_the_tool(profile, example_bundle,
     ]
     async with Harness(profile, patch=patch_for(replies), supervised=True) as h:
         agents = h.get("agents")
-        session = await agents.create_session()
+        session = await agents.create_session(preset="creator")
         events = await agents.start_run(session["id"], "install the audit plugin").wait()
         interrupt = next(e for e in events if e["type"] == "interrupt")
         assert interrupt["interrupts"][0]["value"]["action_requests"][0]["name"] == "plugin_manager"
@@ -114,7 +114,7 @@ async def test_read_only_actions_need_no_approval(profile):
     ]
     async with Harness(profile, patch=patch_for(replies)) as h:
         agents = h.get("agents")
-        session = await agents.create_session()
+        session = await agents.create_session(preset="creator")
         events = await agents.start_run(session["id"], "list plugins").wait()
         assert not any(e["type"] == "interrupt" for e in events)
         listing = json.loads(next(e for e in events if e["type"] == "tool_result")["content"])

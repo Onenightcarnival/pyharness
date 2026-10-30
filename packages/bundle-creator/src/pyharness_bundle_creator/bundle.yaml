@@ -1,8 +1,7 @@
 title: Creator
-description: Plugin-authoring skills mounted at /skills/pyharness/; the base prompt guidance is replaced by the skill catalog.
+description: New sessions start in the Creator preset (plugin-authoring skills, plugin manager and inspection tools).
 patch:
-  - id: plugin-manager
+  - id: agent-loop
     merge: true
     config:
-      skills: true
-      guidance: false
+      default_preset: creator

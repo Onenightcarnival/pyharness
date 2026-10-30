@@ -1,9 +1,9 @@
 """``plugin_manager`` tool, the plugin-authoring skills, and the short prompt section.
 
-| config       | effect                                                                       |
-|--------------|------------------------------------------------------------------------------|
-| ``guidance`` | three-line section in the system prompt (profiles without the skills)        |
-| ``skills``   | ``skills/`` of this package mounted at ``/skills/pyharness/`` (``creator``)  |
+| config       | effect                                                                                   |
+|--------------|------------------------------------------------------------------------------------------|
+| ``guidance`` | three-line section in the system prompt for the presets without the skills (``standard``) |
+| ``skills``   | ``skills/`` of this package mounted at ``/skills/pyharness/`` for the ``creator`` preset |
 
 Skills (``skills/<name>/SKILL.md``): ``pyharness-plugin-development``, ``editing-pyharness-compositions``,
 ``pyharness-composition-reference``, ``agent-experience``. Templates: ``skills/pyharness-plugin-development/templates/``.
@@ -53,15 +53,18 @@ MUTATING = {"install_bundle", "uninstall_bundle", "set_bundle_enabled", "set_plu
 
 class Config(BaseModel):
     require_approval: bool = Field(True, description="Human approval for each mutating action.")
-    guidance: bool = Field(True, description="Short plugin-authoring section in the system prompt.")
-    skills: bool = Field(False, description="Mount the plugin-authoring skills at /skills/pyharness/ (the creator bundle sets it).")
+    guidance: bool = Field(True, description="Short plugin-authoring section in the system prompt of presets without the skills.")
+    skills: bool = Field(
+        True, description="Mount the plugin-authoring skills at /skills/pyharness/ for the presets listed in skills_presets."
+    )
+    skills_presets: list[str] = Field(default_factory=lambda: ["creator"], description="Agent presets that see the skills.")
 
 
 GUIDANCE = """\
 ## Extending this harness
 Plugins are Python distributions mounted in this profile's configuration tree. `harness_inspect` shows the live API; \
 `plugin_manager` writes starter files, installs bundles (approval, preflight in a separate process, restart after the turn) \
-and toggles entries; profile files change only through it. The `creator` bundle adds skills with the full procedure."""
+and toggles entries; profile files change only through it. The Creator preset adds skills with the full procedure."""
 
 
 def template_variants() -> list[str]:
@@ -94,10 +97,13 @@ def render_template(short: str, variant: str = "basic") -> dict[str, str]:
 
 
 def apply(ctx: Any, config: Config) -> None:
-    if config.guidance:
-        ctx.prompt.add("plugin-authoring", GUIDANCE, order=50)
     if config.skills:
-        ctx.agentLoop.add_skills(SKILLS_DIR, "pyharness")
+        ctx.agentLoop.add_skills(SKILLS_DIR, "pyharness", presets=config.skills_presets)
+    if config.guidance:
+        presets = ctx.agentLoop.preset_ids()
+        without_skills = [p for p in presets if p not in config.skills_presets] if config.skills else None
+        if without_skills or not config.skills:
+            ctx.prompt.add("plugin-authoring", GUIDANCE, order=50, presets=without_skills or None)
 
     def session_of(runtime: Any) -> str | None:
         try:

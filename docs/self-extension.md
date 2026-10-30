@@ -2,12 +2,12 @@
 
 agent 编写插件、安装进自己的 profile，在下一代中使用。
 
-| 模式 | profile 模板 | agent 看到的 |
+| 预设 | 工具 | agent 看到的 |
 |---|---|---|
-| 基础 | `web`（`base`） | 系统提示词中三行「Extending this harness」：`harness_inspect`、`plugin_manager`、`creator` bundle |
-| 创造 | `creator`（`base` + `creator`） | 提示词中只有 skill 目录；完整流程按需由 `read_file` 加载 |
+| `standard` | 不含 `plugin_manager`、`harness_inspect` | 系统提示词中三行「Extending this harness」：指向 Creator 预设 |
+| `creator` | 全部 | skill 目录（`/skills/pyharness/`）；完整流程按需由 `read_file` 加载 |
 
-对照 dsh 创造模式（`cordis` preset）：pyharness 没有每会话 preset，创造模式是一个 bundle，按 profile 启用。
+预设按会话选择（输入框的「预设」标签），对照 dsh 的 agent preset；`creator` bundle 只把新会话默认预设设为 `creator`（`pyh init --template creator`）。
 
 ## 流程
 
@@ -23,7 +23,7 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 
 ## skills
 
-`creator` bundle 给 `plugin-manager` 条目设置 `skills: true`、`guidance: false`。`pyharness-plugin-manager` 包内的 `skills/` 目录经 `ctx.agentLoop.add_skills(dir, "pyharness")` 只读挂载到 agent 文件区的 `/skills/pyharness/`（deepagents `CompositeBackend` 路由；写入被拒绝）。deepagents 的 skills 中间件在系统提示词里列出 skill 名称与描述；正文由 agent 用 `read_file` 按需读取。
+`pyharness-plugin-manager` 包内的 `skills/` 目录经 `ctx.agentLoop.add_skills(dir, "pyharness", presets=["creator"])` 只读挂载到 `creator` 预设会话的 `/skills/pyharness/`（deepagents `CompositeBackend` 路由；写入被拒绝）。deepagents 的 skills 中间件在系统提示词里列出 skill 名称与描述；正文由 agent 用 `read_file` 按需读取。
 
 | skill | 内容 |
 |---|---|
@@ -34,7 +34,7 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 
 知识来源顺序：运行时检查（`harness_inspect`）→ 包目录中的模块文档（`topic=config` 的 `package_dir`）→ skill 的参考文件。
 
-每个 `SKILL.md` 小于 8000 字符。其他插件：`ctx.agentLoop.add_skills(directory, label)` 挂载自己的 skills 目录，随插件停止卸载。
+每个 `SKILL.md` 小于 8000 字符。其他插件：`ctx.agentLoop.add_skills(directory, label, presets=None)` 挂载自己的 skills 目录，随插件停止卸载；`ctx.agentLoop.add_preset(id, title, description, tools=…, exclude_tools=…)` 添加预设；`ctx.prompt.add(..., presets=[…])` 限定提示词片段。
 
 ## 工具
 
@@ -77,8 +77,9 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 | 配置 | 默认 | 效果 |
 |---|---|---|
 | `require_approval` | `true` | 变更动作需人工批准 |
-| `guidance` | `true` | 系统提示词中的三行插件编写片段 |
-| `skills` | `false` | 挂载插件编写 skills 到 `/skills/pyharness/`；`creator` bundle 置为 `true` |
+| `guidance` | `true` | 没有 skills 的预设的三行插件编写片段 |
+| `skills` | `true` | 挂载插件编写 skills 到 `/skills/pyharness/` |
+| `skills_presets` | `["creator"]` | 看到 skills 的预设 |
 
 ### `dev-context` 提示词段
 

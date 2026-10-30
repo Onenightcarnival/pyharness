@@ -41,7 +41,7 @@ def _values(ctx: Any) -> list[str]:
         rows.append(f"- profile: `{profile.name}` at {profile.dir}")
     workspace = ctx.get("workspace", None)
     if workspace is not None and getattr(workspace, "root", None) is not None:
-        rows.append(f"- workspace: {workspace.root}")
+        rows.append(f"- default workspace: {workspace.root} (file tools address the session workspace as `/`)")
     http = ctx.get("http", None)
     config = getattr(http, "config", None)
     if config is not None and getattr(config, "serve", True):

@@ -10,8 +10,8 @@
 | `pyharness-prompt` | `prompt` | `prompt` | 有序的系统提示词片段 |
 | `pyharness-checkpoint-sqlite` | `checkpoint` | `checkpointer`、`store` | SQLite 持久化 |
 | `pyharness-checkpoint-postgres` | `checkpoint` | `checkpointer`、`store` | Postgres 持久化；共享连接池 |
-| `pyharness-workspace` | `workspace` | `workspace`、`backend` | agent 文件区：deepagents `FilesystemBackend` / `LocalShellBackend` |
-| `pyharness-agent-loop-deepagents` | `agent-loop` | `agentLoop` | deepagents 图；`add_subagent`、`add_middleware` |
+| `pyharness-workspace` | `workspace` | `workspace`、`backend` | 工作区注册表：默认工作区、每会话工作区、最近列表、目录浏览；deepagents `FilesystemBackend` / `LocalShellBackend` |
+| `pyharness-agent-loop-deepagents` | `agent-loop` | `agentLoop` | deepagents 图，按工作区 × 权限模式 × 预设构建；`add_subagent`、`add_middleware`、`add_skills`、`add_preset` |
 | `pyharness-agent` | `agents` | `agents` | 会话、后台运行、审批、重启续跑 |
 | `pyharness-http` | `http` | `http` | FastAPI 根应用 + uvicorn；`include_router`、`mount` |
 | `pyharness-api` | `api` | — | `/api`：REST + SSE |

@@ -21,7 +21,8 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 
 | 区域 | 内容 |
 |---|---|
-| 侧边栏 | 品牌行与当前代；新会话；插件页入口；按工作区分组的会话列表：相对时间、运行中圆点、悬停删除；profile 状态；设置入口；明暗主题切换 |
+| 侧边栏 | 品牌行与当前代；新会话；插件页入口；按工作区分组的会话列表（默认工作区在前）：相对时间、运行中圆点、悬停删除；profile 状态；设置入口；明暗主题切换 |
+| 会话参数 | 欢迎区与输入框的三个标签：工作区（最近列表、「浏览目录…」目录浏览器，会话创建后不可改）、权限（仅可查看 / 工作区内修改 / 完全权限，切换完全权限需确认；已有会话可切换，下一轮生效）、预设（标准 / 创造；已有会话可切换）。设置页「会话默认」设置新会话的预设与权限 |
 | 对话 | 空会话：居中欢迎区与输入框。用户消息：浅蓝气泡，附图显示在气泡上方。回复：Markdown（代码块带语言与复制、表格、引用、图片），模型返回的图片块作为图片渲染；点击图片放大 |
 | 图片输入 | 输入框的「+」按钮、粘贴、拖入：PNG / JPEG / GIF / WebP，最多 8 张，超过 2048px 的边在浏览器内缩放，压缩后 8 MB 以内；缩略图可移除；当前模型未勾选「图像」输入时拒绝并提示 |
 | 折叠行 | 推理内容、工具调用；展开为输入 / 输出卡片 |
@@ -47,7 +48,15 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | GET | `/health` | | 代、重启状态、模型、工作区 |
 | GET | `/plugins` | | Loader 条目、已安装 bundle |
 | GET | `/sessions` | | 会话列表 |
-| POST | `/sessions` | `{"title"?}` | 会话 |
+| POST | `/sessions` | `{"title"?, "model"?, "workspace"?, "mode"?, "preset"?}` | 会话；工作区为绝对路径，不在 harness home 内 |
+| PUT | `/sessions/{id}/mode` | `{"mode"}` | 权限模式；下一轮生效 |
+| PUT | `/sessions/{id}/preset` | `{"preset"}` | 预设；下一轮生效 |
+| GET | `/agent` | | 预设、权限模式、新会话默认 |
+| PUT | `/settings/agent` | `{"default_preset"?, "default_mode"?}` | 新会话默认；写入 profile 补丁 |
+| GET | `/workspaces` | | 默认与最近工作区 |
+| POST | `/workspaces` | `{"path"}` | 校验并记住工作区 |
+| DELETE | `/workspaces?path=` | | 从最近列表移除 |
+| POST | `/workspaces/browse` | `{"path"?}` | 一级目录列表（仅目录，隐藏目录标记） |
 | GET | `/sessions/{id}` | | 会话、运行状态、消息、待批准项 |
 | POST | `/sessions/{id}/messages` | `{"content", "images"?}` | SSE 运行事件；`images` 为 data URL，模型未声明图像输入时 422 |
 | POST | `/sessions/{id}/approvals` | `{"decisions": [{"type": "approve" \| "reject"}]}` | SSE 运行事件 |

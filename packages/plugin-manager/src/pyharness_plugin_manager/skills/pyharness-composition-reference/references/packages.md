@@ -23,11 +23,11 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 | `pyharness-prompt` | service | prompt |  | no | Ordered system-prompt sections. |
 | `pyharness-tools` | service | tools |  | no | Tool registry and the ``tools/execute`` → ``tools/result`` pipeline. |
 | `pyharness-web-ui` | function |  | http | yes | Web UI: one self-contained page at ``config.path`` on ``ctx.http``; data from ``/api``. |
-| `pyharness-workspace` | function |  | tools | yes | Workspace provider: ``ctx.workspace`` (paths) and ``ctx.backend`` (deepagents backend). |
+| `pyharness-workspace` | function |  | tools | yes | Workspace provider: ``ctx.workspace`` (the workspace registry) and ``ctx.backend`` (the default deepagents backend). |
 
 ## Bundles
 
 | bundle | title | description | entries (patch op ids) |
 |---|---|---|---|
 | `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui` |
-| `creator` | Creator | Plugin-authoring skills mounted at /skills/pyharness/; the base prompt guidance is replaced by the skill catalog. | `plugin-manager` |
+| `creator` | Creator | New sessions start in the Creator preset (plugin-authoring skills, plugin manager and inspection tools). | `agent-loop` |

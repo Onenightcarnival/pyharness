@@ -77,9 +77,18 @@ async def test_creator_profile_mounts_skills_read_only(home):
     scripted.CALLS.clear()
     async with Harness(profile, patch=patch_for(replies)) as h:
         mounts = h.get("agentLoop").skills()
-        assert mounts == [{"label": "pyharness", "path": str(SKILLS_DIR), "mount": "/skills/pyharness/", "owner": "plugin-manager"}]
-        prompt = h.get("prompt").render()
-        assert "Extending this harness" not in prompt  # guidance off: the skill catalog carries it
+        assert mounts == [
+            {
+                "label": "pyharness",
+                "path": str(SKILLS_DIR),
+                "mount": "/skills/pyharness/",
+                "owner": "plugin-manager",
+                "presets": ["creator"],
+            }
+        ]
+        assert h.get("agentLoop").config.default_preset == "creator"
+        prompt = h.get("prompt").render("creator")
+        assert "Extending this harness" not in prompt  # the skill catalog carries it in the creator preset
         assert "## This harness" in prompt and f"`{profile.name}` at {profile.dir}" in prompt
         agents = h.get("agents")
         session = await agents.create_session()
@@ -97,7 +106,9 @@ async def test_creator_profile_mounts_skills_read_only(home):
 async def test_base_profile_keeps_the_short_guidance(home):
     profile = Profile.init("web", home=str(home))
     async with Harness(profile, patch=patch_for([{"content": "hi"}])) as h:
-        assert h.get("agentLoop").skills() == []
-        prompt = h.get("prompt").render()
-        assert "Extending this harness" in prompt and "`creator` bundle" in prompt
+        loop = h.get("agentLoop")
+        assert loop.config.default_preset == "standard" and [p["id"] for p in loop.presets()] == ["standard", "creator"]
+        prompt = h.get("prompt").render("standard")
+        assert "Extending this harness" in prompt and "Creator preset" in prompt
+        assert "Extending this harness" not in h.get("prompt").render("creator")
         assert "## This harness" in prompt

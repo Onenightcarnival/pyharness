@@ -5,7 +5,7 @@
 | GET    | ``/health``                  |                               | generation, restart state, model, workspace |
 | GET    | ``/plugins``                 |                               | loader entries, installed bundles           |
 | GET    | ``/sessions``                |                               | sessions                                    |
-| POST   | ``/sessions``                | ``{"title"?}``                | session                                     |
+| POST   | ``/sessions``                | ``{"title"?, "model"?, "workspace"?, "mode"?, "preset"?}`` | session        |
 | GET    | ``/sessions/{id}``           |                               | session, busy, messages, pending approvals  |
 | POST   | ``/sessions/{id}/messages``  | ``{"content", "images"?}``    | SSE run events; images: data URLs           |
 | POST   | ``/sessions/{id}/approvals`` | ``{"decisions": [decision]}`` | SSE run events                              |
@@ -13,6 +13,14 @@
 | DELETE | ``/sessions/{id}``           |                               | ``{"deleted"}``                             |
 | GET    | ``/sessions/{id}/stream``    |                               | SSE of the running turn; 204 when idle      |
 | PUT    | ``/sessions/{id}/model``     | ``{"model"}``                 | select ``route:model`` for the session      |
+| PUT    | ``/sessions/{id}/mode``      | ``{"mode"}``                  | permission mode; next run                   |
+| PUT    | ``/sessions/{id}/preset``    | ``{"preset"}``                | agent preset; next run                      |
+| GET    | ``/agent``                   |                               | presets, modes, defaults for new sessions   |
+| PUT    | ``/settings/agent``          | ``{"default_preset"?, "default_mode"?}`` | defaults for new sessions; persisted |
+| GET    | ``/workspaces``              |                               | default and recent workspaces               |
+| POST   | ``/workspaces``              | ``{"path"}``                  | validate and remember a workspace           |
+| DELETE | ``/workspaces?path=``        |                               | forget a workspace                          |
+| POST   | ``/workspaces/browse``       | ``{"path"?}``                 | one directory level for the picker          |
 | GET    | ``/models``                  |                               | selector directory: routes, models, default |
 | GET    | ``/settings/models``         |                               | routes with credential state, catalog       |
 | PUT    | ``/settings/models``         | ``{"default"}``               | default model for new sessions              |
@@ -59,6 +67,26 @@ class Config(BaseModel):
 class NewSession(BaseModel):
     title: str | None = None
     model: str | None = Field(None, description="route:model for this session; null: the default.")
+    workspace: str | None = Field(None, description="Absolute workspace directory; null: the default workspace.")
+    mode: str | None = Field(None, description="Permission mode; null: the default.")
+    preset: str | None = Field(None, description="Agent preset; null: the default.")
+
+
+class SessionMode(BaseModel):
+    mode: str
+
+
+class SessionPreset(BaseModel):
+    preset: str
+
+
+class WorkspacePath(BaseModel):
+    path: str | None = None
+
+
+class AgentDefaults(BaseModel):
+    default_preset: str | None = None
+    default_mode: str | None = None
 
 
 IMAGE_DATA_URL = re.compile(r"^data:image/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$")
@@ -167,7 +195,13 @@ def build_router(ctx: Any) -> APIRouter:
 
     @router.post("/sessions")
     async def create_session(body: NewSession | None = None) -> dict[str, Any]:
-        return await agents.create_session(title=body.title if body else None, model=body.model if body else None)
+        body = body or NewSession()
+        try:
+            return await agents.create_session(
+                title=body.title, model=body.model, workspace=body.workspace, mode=body.mode, preset=body.preset
+            )
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
 
     @router.put("/sessions/{session_id}/model")
     async def set_session_model(session_id: str, body: SessionModel) -> dict[str, Any]:
@@ -175,6 +209,72 @@ def build_router(ctx: Any) -> APIRouter:
         if record is None:
             raise HTTPException(404, f"no session {session_id}")
         return record
+
+    @router.put("/sessions/{session_id}/mode")
+    async def set_session_mode(session_id: str, body: SessionMode) -> dict[str, Any]:
+        try:
+            record = await agents.set_mode(session_id, body.mode)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        if record is None:
+            raise HTTPException(404, f"no session {session_id}")
+        return record
+
+    @router.put("/sessions/{session_id}/preset")
+    async def set_session_preset(session_id: str, body: SessionPreset) -> dict[str, Any]:
+        try:
+            record = await agents.set_preset(session_id, body.preset)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        if record is None:
+            raise HTTPException(404, f"no session {session_id}")
+        return record
+
+    @router.get("/agent")
+    async def agent_options() -> dict[str, Any]:
+        loop = ctx.get("agentLoop", None)
+        if loop is None or not hasattr(loop, "presets"):
+            return {"presets": [], "modes": [], "default_preset": None, "default_mode": None}
+        return {
+            "presets": loop.presets(),
+            "modes": loop.modes(),
+            "default_preset": loop.config.default_preset,
+            "default_mode": loop.config.default_mode,
+        }
+
+    @router.get("/workspaces")
+    async def list_workspaces() -> dict[str, Any]:
+        workspaces = ctx.get("workspace", None)
+        if workspaces is None or not hasattr(workspaces, "recent"):
+            return {"default": None, "recent": []}
+        return {"default": workspaces.default.describe(), "recent": await workspaces.recent()}
+
+    @router.post("/workspaces")
+    async def add_workspace(body: WorkspacePath) -> dict[str, Any]:
+        workspaces = ctx.get("workspace", None)
+        if workspaces is None or not hasattr(workspaces, "remember"):
+            raise HTTPException(503, "workspace registry unavailable")
+        try:
+            return await workspaces.remember(body.path)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+
+    @router.delete("/workspaces")
+    async def forget_workspace(path: str) -> dict[str, Any]:
+        workspaces = ctx.get("workspace", None)
+        if workspaces is None or not hasattr(workspaces, "forget"):
+            raise HTTPException(503, "workspace registry unavailable")
+        return {"forgotten": await workspaces.forget(path)}
+
+    @router.post("/workspaces/browse")
+    async def browse_workspaces(body: WorkspacePath) -> dict[str, Any]:
+        workspaces = ctx.get("workspace", None)
+        if workspaces is None or not hasattr(workspaces, "browse"):
+            raise HTTPException(503, "workspace registry unavailable")
+        try:
+            return workspaces.browse(body.path)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
 
     @router.get("/sessions/{session_id}")
     async def get_session(session_id: str) -> dict[str, Any]:
@@ -285,6 +385,18 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
     @router.get("/models")
     async def model_directory() -> dict[str, Any]:
         return llm().directory()
+
+    @router.put("/settings/agent")
+    async def put_agent_defaults(body: AgentDefaults) -> dict[str, Any]:
+        loop = ctx.get("agentLoop", None)
+        if loop is None or not hasattr(loop, "set_defaults"):
+            raise HTTPException(503, "agent loop unavailable")
+        try:
+            defaults = loop.set_defaults(preset=body.default_preset, mode=body.default_mode)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        await manage.set_entry_config(profile(), "agent-loop", defaults, merge=True, preflight=False)
+        return {**defaults, "presets": loop.presets(), "modes": loop.modes()}
 
     @router.get("/settings/models")
     async def get_model_settings() -> dict[str, Any]:

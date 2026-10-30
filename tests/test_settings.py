@@ -168,10 +168,10 @@ async def test_route_lifecycle_through_the_api(profile):
             assert s["model"] == "alt:m2"
             events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
             assert events[-1]["outcome"] == "completed"
-            assert [x["model"] for x in scripted.CALLS if "model" in x][-1] == "m2"
+            assert [x["via"] for x in scripted.CALLS if "via" in x][-1] == "m2"
             assert (await c.put(f"/api/sessions/{s['id']}/model", json={"model": "alt:m1"})).json()["model"] == "alt:m1"
             await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "again"})
-            assert [x["model"] for x in scripted.CALLS if "model" in x][-1] == "m1"
+            assert [x["via"] for x in scripted.CALLS if "via" in x][-1] == "m1"
             assert (await c.get(f"/api/sessions/{s['id']}")).json()["model"] == "alt:m1"
 
             # Edit keeps the stored key; '' removes it; delete removes the route, its key, and moves the default.

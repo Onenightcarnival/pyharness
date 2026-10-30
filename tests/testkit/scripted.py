@@ -23,6 +23,7 @@ class Config(BaseModel):
 
 class ScriptedModel(BaseChatModel):
     replies: list[dict[str, Any]]
+    model_name: str = "test"
     cursor: list[int] = Field(default_factory=lambda: [0])
 
     @property
@@ -32,6 +33,7 @@ class ScriptedModel(BaseChatModel):
     def _generate(self, messages: Any, stop: Any = None, run_manager: Any = None, **kwargs: Any) -> ChatResult:
         CALLS.append(
             {
+                "via": self.model_name,
                 "messages": [(m.type, m.text) for m in messages],
                 "images": sum(
                     1
@@ -64,6 +66,6 @@ def apply(ctx: Any, config: Config) -> None:
 
     def factory(model: str, **_: Any) -> ScriptedModel:
         CALLS.append({"model": model})
-        return ScriptedModel(replies=replies)
+        return ScriptedModel(replies=replies, model_name=model)
 
     ctx.llm.register("scripted", factory)

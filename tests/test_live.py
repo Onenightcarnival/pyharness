@@ -79,7 +79,7 @@ def test_agent_extends_itself_across_a_restart(home, example_bundle, tmp_path):
     try:
         with httpx.Client(base_url=base, timeout=60, trust_env=False) as client:
             assert wait_for(lambda: client.get("/health").json()["generation"] == 1)
-            sid = client.post("/sessions", json={}).json()["id"]
+            sid = client.post("/sessions", json={"preset": "creator"}).json()["id"]
             events = sse(client.post(f"/sessions/{sid}/messages", json={"content": "install the audit plugin"}).text)
             assert events[-1]["outcome"] == "interrupted"
             events = sse(client.post(f"/sessions/{sid}/approvals", json={"decisions": [{"type": "approve"}]}).text)

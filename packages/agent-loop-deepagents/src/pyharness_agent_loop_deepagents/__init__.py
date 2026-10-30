@@ -3,7 +3,24 @@
 Contract with ``ctx.agents``: ``build()`` returns a LangGraph graph with ``astream`` and
 ``aget_state``. Another loop replaces this entry through a patch.
 
-``build()`` runs on ``app/ready`` and reads:
+``build(workspace, mode, preset)`` builds one graph; ``build()`` builds the default one on ``app/ready``.
+Sessions choose a workspace (root directory), a permission mode and an agent preset; ``ctx.agents`` keeps
+one graph per combination.
+
+| permission mode     | effect                                                                  |
+|---------------------|-------------------------------------------------------------------------|
+| ``read-only``       | file writes denied, no ``execute`` tool; approvals as configured        |
+| ``workspace-write`` | writes inside the workspace; approvals as configured                    |
+| ``full-access``     | writes inside the workspace; no approval gates                          |
+
+| preset field      | effect                                                          |
+|-------------------|-----------------------------------------------------------------|
+| ``tools``         | registered tool names the preset keeps (``None``: all)          |
+| ``exclude_tools`` | registered tool names the preset drops                          |
+| ``skills``        | skills directories mounted for the preset (``add_skills``)      |
+| prompt sections   | ``ctx.prompt.add(..., presets=[...])`` limits a section          |
+
+``build()`` reads:
 
 | input         | source                                                          |
 |---------------|-----------------------------------------------------------------|
@@ -49,13 +66,45 @@ from pyharness import Service
 
 SKILLS_MOUNT = "/skills"
 
+MODES: dict[str, dict[str, str]] = {
+    "read-only": {"title": "Read only", "description": "File tools read the workspace; writes and the shell are unavailable."},
+    "workspace-write": {"title": "Workspace write", "description": "File tools write inside the workspace; gated tools ask for approval."},
+    "full-access": {"title": "Full access", "description": "Workspace writes and the shell without approval prompts."},
+}
+
 DEFAULT_SYSTEM_PROMPT = (
     "Role: agent inside pyharness, a plugin-based agent harness.\nStyle: direct answers; tools where they help; failures reported plainly."
 )
 
 
+class PresetConfig(BaseModel):
+    title: str
+    description: str = ""
+    tools: list[str] | None = Field(None, description="Registered tool names the preset keeps; None keeps all.")
+    exclude_tools: list[str] = Field(default_factory=list, description="Registered tool names the preset drops.")
+    order: int = 100
+
+
+DEFAULT_PRESETS: dict[str, PresetConfig] = {
+    "standard": PresetConfig(
+        title="Standard",
+        description="Everyday work in the workspace: files, shell, subagents. Plugin management stays out of the way.",
+        exclude_tools=["plugin_manager", "harness_inspect"],
+        order=1,
+    ),
+    "creator": PresetConfig(
+        title="Creator",
+        description="Standard plus harness inspection, plugin management and the plugin-authoring skills: extend the harness itself.",
+        order=2,
+    ),
+}
+
+
 class LoopConfig(BaseModel):
     model: str | None = Field(None, description="Model spec; None selects ctx.llm's default.")
+    default_preset: str = Field("standard", description="Agent preset for new sessions.")
+    default_mode: str = Field("workspace-write", description="Permission mode for new sessions: read-only, workspace-write, full-access.")
+    presets: dict[str, PresetConfig] = Field(default_factory=lambda: dict(DEFAULT_PRESETS), description="Agent presets by id.")
     system_prompt: str = Field(DEFAULT_SYSTEM_PROMPT, description="Identity section of the system prompt (order 0).")
     interrupt_on: dict[str, Any] = Field(default_factory=dict, description="Additional approval gates by tool name.")
     subagents: list[dict[str, Any]] = Field(
@@ -133,7 +182,10 @@ class DeepAgentsLoop(Service):
         super().__init__(ctx, config)
         self._subagents: list[tuple[dict[str, Any], str]] = []
         self._middleware: list[tuple[AgentMiddleware, str]] = []
-        self._skills: list[tuple[str, Path, str]] = []  # (label, directory, owner)
+        self._skills: list[tuple[str, Path, str, tuple[str, ...] | None]] = []  # (label, directory, owner, presets)
+        self._presets: dict[str, tuple[PresetConfig, str]] = {}  # plugin-added presets: id -> (config, owner)
+        if self.config.default_mode not in MODES:
+            raise ValueError(f"unknown default_mode {self.config.default_mode!r}; one of {', '.join(MODES)}")
 
     async def start(self) -> None:
         self.ctx.define_event(
@@ -168,39 +220,107 @@ class DeepAgentsLoop(Service):
     def subagents(self) -> list[dict[str, Any]]:
         return [{"name": s.get("name"), "owner": owner} for s, owner in self._subagents]
 
-    def add_skills(self, directory: str | Path, label: str | None = None) -> Any:
-        """Mount ``directory`` (``<skill>/SKILL.md`` layout) read-only at ``/skills/<label>/``; returns the disposer."""
+    def add_skills(self, directory: str | Path, label: str | None = None, presets: list[str] | None = None) -> Any:
+        """Mount ``directory`` (``<skill>/SKILL.md`` layout) read-only at ``/skills/<label>/`` for ``presets`` (``None``: all); returns the disposer."""
         path = Path(directory).expanduser().resolve()
         if not path.is_dir():
             raise ValueError(f"skills directory {path} does not exist")
         slug = re.sub(r"[^a-z0-9]+", "-", (label or path.name).lower()).strip("-") or "skills"
-        if any(existing == slug for existing, _, _ in self._skills):
+        if any(existing == slug for existing, _, _, _ in self._skills):
             raise ValueError(f"skills label {slug!r} is already mounted")
-        item = (slug, path, self.caller.entry_id)
+        item = (slug, path, self.caller.entry_id, tuple(presets) if presets else None)
         self._skills.append(item)
         return self.caller.on_dispose(lambda: self._skills.remove(item) if item in self._skills else None)
 
     def skills(self) -> list[dict[str, Any]]:
-        """Mounted skills directories: ``label``, ``path``, ``mount``, ``owner``."""
-        return [{"label": s, "path": str(p), "mount": f"{SKILLS_MOUNT}/{s}/", "owner": o} for s, p, o in self._skills]
+        """Mounted skills directories: ``label``, ``path``, ``mount``, ``owner``, ``presets``."""
+        return [
+            {"label": s, "path": str(p), "mount": f"{SKILLS_MOUNT}/{s}/", "owner": o, "presets": list(pr) if pr else None}
+            for s, p, o, pr in self._skills
+        ]
 
-    def _backend_and_skills(self) -> tuple[Any, list[str], list[Any]]:
-        """``ctx.backend`` with skills routes, the skill source paths, and the write-deny rule for the mounts."""
-        backend = self.ctx.get("backend", None)
-        sources = list(self.config.skills or [])
-        if not self._skills:
-            return backend, sources, []
+    # ------------------------------------------------------------------ presets and modes
+    def add_preset(self, id: str, title: str, description: str = "", **fields: Any) -> Any:
+        """Add an agent preset owned by the calling plugin; returns the disposer."""
+        if id in self.config.presets or id in self._presets:
+            raise ValueError(f"preset {id!r} already exists")
+        item = (PresetConfig(title=title, description=description, **fields), self.caller.entry_id)
+        self._presets[id] = item
+        return self.caller.on_dispose(lambda: self._presets.pop(id, None))
+
+    def preset(self, id: str | None) -> tuple[str, PresetConfig]:
+        """``(id, config)`` of ``id`` or of the default preset; unknown ids raise ``ValueError``."""
+        id = id or self.config.default_preset
+        if id in self.config.presets:
+            return id, self.config.presets[id]
+        if id in self._presets:
+            return id, self._presets[id][0]
+        raise ValueError(f"unknown preset {id!r}; one of {', '.join(self.preset_ids())}")
+
+    def preset_ids(self) -> list[str]:
+        return [*self.config.presets, *(p for p in self._presets if p not in self.config.presets)]
+
+    def presets(self) -> list[dict[str, Any]]:
+        """Roster for selectors: ``id``, ``title``, ``description``, ``default``, ``owner``."""
+        rows = []
+        for id in self.preset_ids():
+            cfg = self.config.presets.get(id) or self._presets[id][0]
+            owner = self._presets[id][1] if id in self._presets else self.ctx.entry_id
+            rows.append(
+                {
+                    "id": id,
+                    "title": cfg.title,
+                    "description": cfg.description,
+                    "order": cfg.order,
+                    "default": id == self.config.default_preset,
+                    "owner": owner,
+                }
+            )
+        return sorted(rows, key=lambda r: (r["order"], r["id"]))
+
+    def modes(self) -> list[dict[str, Any]]:
+        return [{"id": id, **info, "default": id == self.config.default_mode} for id, info in MODES.items()]
+
+    def mode(self, id: str | None) -> str:
+        id = id or self.config.default_mode
+        if id not in MODES:
+            raise ValueError(f"unknown permission mode {id!r}; one of {', '.join(MODES)}")
+        return id
+
+    def set_defaults(self, preset: str | None = None, mode: str | None = None) -> dict[str, str]:
+        """Change the defaults for new sessions (live); the settings API persists them."""
+        if preset is not None:
+            self.config.default_preset = self.preset(preset)[0]
+        if mode is not None:
+            self.config.default_mode = self.mode(mode)
+        return {"default_preset": self.config.default_preset, "default_mode": self.config.default_mode}
+
+    def _backend_and_skills(self, workspace: str | None, mode: str, preset: str) -> tuple[Any, list[str], list[Any]]:
+        """Backend for the workspace and mode with the preset's skills routes, the skill sources, and the write-deny rules."""
         from deepagents import FilesystemPermission
+
+        workspaces = self.ctx.get("workspace", None)
+        if workspaces is not None and hasattr(workspaces, "backend_for"):
+            backend = workspaces.backend_for(workspace, shell=mode != "read-only")
+        else:
+            backend = self.ctx.get("backend", None)
+        sources = list(self.config.skills or [])
+        rules: list[Any] = []
+        if mode == "read-only":
+            rules.append(FilesystemPermission(operations=["write"], paths=["/", "/**"], mode="deny"))
+        mounts = [(s, p) for s, p, _, presets in self._skills if presets is None or preset in presets]
+        if not mounts:
+            return backend, sources, rules
         from deepagents.backends import CompositeBackend, FilesystemBackend, StateBackend
 
         routes: dict[str, Any] = {}
-        for slug, path, _ in self._skills:
+        for slug, path in mounts:
             mount = f"{SKILLS_MOUNT}/{slug}/"
             routes[mount] = FilesystemBackend(root_dir=path, virtual_mode=True)
             sources.append(mount)
         composite = CompositeBackend(default=backend if backend is not None else StateBackend(), routes=routes)
-        deny = FilesystemPermission(operations=["write"], paths=[SKILLS_MOUNT, f"{SKILLS_MOUNT}/**"], mode="deny")
-        return composite, sources, [deny]
+        rules.append(FilesystemPermission(operations=["write"], paths=[SKILLS_MOUNT, f"{SKILLS_MOUNT}/**"], mode="deny"))
+        return composite, sources, rules
 
     # ------------------------------------------------------------------ build
     def _resolve_subagent(self, spec: dict[str, Any], registry: dict[str, Any]) -> dict[str, Any]:
@@ -236,12 +356,17 @@ class DeepAgentsLoop(Service):
             )
             return "echo:echo", self.ctx.llm.resolve("echo:echo")
 
-    async def build(self) -> Any:
+    async def build(self, workspace: str | None = None, mode: str | None = None, preset: str | None = None) -> Any:
+        """Graph for a workspace root (``None``: the default), a permission mode and an agent preset."""
         from deepagents import create_deep_agent
         from deepagents.middleware.subagents import GENERAL_PURPOSE_SUBAGENT
 
         ctx = self.ctx
-        tools = ctx.tools.list()
+        mode = self.mode(mode)
+        preset_id, preset_cfg = self.preset(preset)
+        keep = set(preset_cfg.tools) if preset_cfg.tools is not None else None
+        drop = set(preset_cfg.exclude_tools)
+        tools = [t for t in ctx.tools.list() if (keep is None or t.name in keep) and t.name not in drop]
         registry = {t.name: t for t in tools}
         subagents = [self._resolve_subagent(s, registry) for s in self.config.subagents]
         subagents += [self._resolve_subagent(s, registry) for s, _ in self._subagents]
@@ -253,15 +378,21 @@ class DeepAgentsLoop(Service):
             if "runnable" in spec or "graph_id" in spec:
                 continue  # compiled and remote subagents keep their own middleware
             spec["middleware"] = [HarnessMiddleware(ctx, built_spec), *spec.get("middleware", [])]
-        workspace = ctx.get("workspace", None)
-        permissions = workspace.permissions() if workspace is not None and hasattr(workspace, "permissions") else []
-        backend, skills, skill_rules = self._backend_and_skills()
-        permissions = [*permissions, *skill_rules]
-        interrupt_on = {**ctx.tools.interrupt_on(), **self.config.interrupt_on}
+        workspaces = ctx.get("workspace", None)
+        ws = workspaces.open(workspace) if workspaces is not None and hasattr(workspaces, "open") else workspaces
+        permissions = ws.permissions() if ws is not None and hasattr(ws, "permissions") else []
+        backend, skills, rules = self._backend_and_skills(workspace, mode, preset_id)
+        permissions = [*permissions, *rules]
+        interrupt_on = {} if mode == "full-access" else {**ctx.tools.interrupt_on(), **self.config.interrupt_on}
+        policy = (
+            f"## Session policy\nPermission mode: {MODES[mode]['title']}. {MODES[mode]['description']}\n"
+            f"Agent preset: {preset_cfg.title}. Workspace root: {ws.root if ws is not None and hasattr(ws, 'root') else '(none)'}; "
+            "the file tools address it as `/` (paths inside the workspace are relative to that root)."
+        )
         kwargs: dict[str, Any] = {
             "model": built_model,
             "tools": tools,
-            "system_prompt": ctx.prompt.render(),
+            "system_prompt": ctx.prompt.render(preset_id) + "\n\n" + policy,
             "middleware": [HarnessMiddleware(ctx, built_spec), *(m for m, _ in self._middleware)],
             "checkpointer": ctx.get("checkpointer"),
             "store": ctx.get("store", None),
@@ -277,4 +408,4 @@ class DeepAgentsLoop(Service):
         return create_deep_agent(**{k: v for k, v in kwargs.items() if v is not None})
 
 
-__all__ = ["SKILLS_MOUNT", "DeepAgentsLoop", "HarnessMiddleware", "LoopConfig", "ModelCall"]
+__all__ = ["DEFAULT_PRESETS", "MODES", "SKILLS_MOUNT", "DeepAgentsLoop", "HarnessMiddleware", "LoopConfig", "ModelCall", "PresetConfig"]

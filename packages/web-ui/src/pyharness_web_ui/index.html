@@ -189,6 +189,24 @@ svg { display: block; }
 .chip { display: inline-flex; align-items: center; gap: 4px; max-width: min(100%, 360px); min-height: 28px; padding: 0 8px; border: none; border-radius: var(--r-sm); background: transparent; color: var(--label-primary); font-size: 13px; line-height: 20px; font-weight: 500; }
 .chip .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip .chev { color: var(--label-caption); }
+.chip[role='button'], .selectChip[role='button'] { cursor: pointer; }
+.workspaceRow { gap: 4px; flex-wrap: wrap; }
+.menuRow .desc { display: block; font-size: 11px; line-height: 15px; color: var(--label-tertiary); white-space: normal; }
+.menuRow .col { min-width: 0; display: flex; flex-direction: column; }
+.menu.left { left: 8px; right: auto; }
+.workspaceRow { position: relative; }
+.workspaceRow .menu { top: calc(100% + 6px); bottom: auto; left: 8px; right: auto; z-index: 46; }
+.dirList { display: flex; flex-direction: column; }
+.dirRow { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; border: none; border-radius: var(--r-sm); background: transparent; color: var(--label-primary); font-size: 13px; text-align: left; }
+.dirRow .ico { color: var(--info); }
+.dirRow[data-hidden] { color: var(--label-tertiary); }
+.dirPath { display: flex; gap: 8px; align-items: center; margin: 4px 4px 8px; }
+.dirPath .input { font-family: var(--mono); font-size: 12px; }
+.presetCards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.presetCard { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 0.5px solid var(--border-l3); border-radius: var(--r-lg); background: var(--input-major); text-align: left; color: inherit; cursor: pointer; }
+.presetCard[aria-pressed='true'] { border-color: var(--info); box-shadow: 0 0 0 1px var(--info); }
+.presetCard .pcardTitle { display: flex; align-items: center; gap: 8px; }
+.presetCard .pcardDesc { white-space: normal; }
 
 .userRow { display: flex; flex-direction: column; align-items: flex-end; margin: 12px 0 8px; }
 .bubble { max-width: min(calc(var(--chat-width) * 0.702), 82%); padding: 10px 16px; border-radius: var(--r-xl); background: var(--bubble); font-size: 14px; line-height: 22px; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -296,7 +314,10 @@ svg { display: block; }
 .conversation[data-phase='hero'] .card textarea { min-height: 52px; }
 .cardRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 8px 6px; min-width: 0; }
 .cardRow .left, .cardRow .right { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.cardRow .right { margin-left: auto; flex: none; }
+.cardRow .left { flex: 1 1 auto; overflow: hidden; }
+.cardRow .left .selectChip { flex: 0 1 auto; min-width: 28px; }
+.cardRow .right { margin-left: auto; flex: none; max-width: 55%; }
+.cardRow .right #modelChip { flex: 0 1 auto; min-width: 60px; }
 .selectChip { display: inline-flex; align-items: center; gap: 4px; max-width: 240px; height: 28px; padding: 0 6px 0 8px; border: none; border-radius: var(--r-sm); background: transparent; color: var(--label-secondary); font-size: 13px; line-height: 20px; font-weight: 500; white-space: nowrap; }
 .selectChip .label { overflow: hidden; text-overflow: ellipsis; }
 .selectChip .sub { color: var(--label-caption); font-weight: 400; }
@@ -464,6 +485,8 @@ svg { display: block; }
   .btn.reject:hover:not(:disabled) { background: var(--hover-danger); color: var(--error); }
   .prow:hover { background: var(--hover); }
   .menuRow:hover { background: var(--hover); }
+  .dirRow:hover { background: var(--hover); }
+  .presetCard:hover { background: var(--hover-solid); }
   .pickRow:hover { background: var(--hover); }
   .codeBanner button:hover { color: var(--label-primary); }
 }
@@ -487,7 +510,7 @@ svg { display: block; }
   .field { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .fieldLabel { line-height: 20px; }
   .form { padding: 14px; }
-  .menu { right: 0; left: 0; max-width: none; }
+  .menu, .menu.left { right: 0; left: 0; max-width: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
@@ -570,7 +593,7 @@ svg { display: block; }
       <div class="scrollBody" id="scroll">
         <div class="hero" id="hero">
           <div class="headline"><svg class="heroMark"><use href="#i-mark"/></svg><span data-i18n="headline"></span><span class="previewBadge" id="heroBadge">preview</span></div>
-          <div class="workspaceRow"><span class="chip" id="heroWorkspace"><svg class="ico"><use href="#i-folder"/></svg><span class="label">workspace</span></span></div>
+          <div class="workspaceRow"><span class="chip" id="heroWorkspace" role="button" tabindex="0"><svg class="ico"><use href="#i-folder"/></svg><span class="label">workspace</span><svg class="ico chev"><use href="#i-chev-down"/></svg></span><span class="chip" id="heroPreset" role="button" tabindex="0"><svg class="ico"><use href="#i-plug"/></svg><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span><span class="chip" id="heroMode" role="button" tabindex="0"><svg class="ico"><use href="#i-eye"/></svg><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span></div>
           <div class="composerSlot" id="heroComposer"></div>
         </div>
         <div class="column" id="log"></div>
@@ -584,7 +607,9 @@ svg { display: block; }
             <div class="cardRow">
               <div class="left">
                 <button type="button" class="add" id="attachButton" data-i18n-title="attach"><svg class="ico"><use href="#i-plus"/></svg></button>
-                <span class="selectChip" id="workspaceChip"><svg class="ico"><use href="#i-folder"/></svg><span class="label">workspace</span></span>
+                <span class="selectChip" id="workspaceChip" role="button" tabindex="0"><svg class="ico"><use href="#i-folder"/></svg><span class="label">workspace</span></span>
+                <span class="selectChip" id="modeChip" role="button" tabindex="0"><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span>
+                <span class="selectChip" id="presetChip" role="button" tabindex="0"><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span>
               </div>
               <div class="right">
                 <span class="selectChip" id="modelChip" role="button" tabindex="0" data-i18n-title="modelChip"><span class="label">model</span></span>
@@ -641,6 +666,10 @@ Object.assign(T, zh ? {
   pickTitle: '可用模型', pickSearch: '搜索模型', selectAll: '全选', deselectAll: '取消全选', addSelected: '添加所选', selected: (n) => `已选 ${n}`, noMatch: '没有匹配的模型',
   test: '测试连接', testing: '测试中…', testOk: (ms) => `连接成功 · ${ms} ms`, apply: '应用', applying: '保存中…', applied: '已应用；下次请求起生效。', cancel: '取消', remove: '删除', removeConfirm: (t) => `删除提供方「${t}」？其模型与已保存的密钥一并移除。`, removed: '已删除',
   fetching: '获取中…', modelsFound: (n) => `找到 ${n} 个模型`, modelsNone: '该提供方不支持列出模型。', needModel: '至少添加一个模型。', needId: '请填写提供方 ID。', needUrl: '请填写 Base URL。', dupId: '提供方 ID 已存在。', noneLeft: '预置提供方均已添加。',
+  modeTitle: { 'read-only': '仅可查看', 'workspace-write': '工作区内修改', 'full-access': '完全权限' }, modeDesc: { 'read-only': '文件工具只读，不提供 shell。', 'workspace-write': '可写工作区内文件；受控工具需批准。', 'full-access': '工作区写入与 shell 均不再询问。' },
+  presetTitle: { standard: '标准', creator: '创造' }, presetDesc: { standard: '日常工作：文件、shell、子 agent；不暴露插件管理。', creator: '标准之上加 harness 检查、插件管理与插件编写 skills：扩展 harness 本身。' },
+  workspace_: '工作区', mode_: '权限', preset_: '预设', browseDir: '浏览目录…', chooseDir: '选择此目录', upDir: '上级目录', showHidden: '显示隐藏目录', dirTitle: '选择工作区目录', notSelectable: '该目录不能作为工作区', forgetWorkspace: '从列表移除',
+  fullAccessConfirm: '完全权限：agent 的写入与 shell 命令不再询问。切换到完全权限？', switchLabel: '切换', sessionDefaults: '会话默认', defaultPreset: '新会话预设', defaultMode: '新会话权限', fixedForSession: '会话已创建，工作区不可更改',
   removeImage: '移除图片', tooManyImages: (n) => `最多 ${n} 张图片`, imageTooLarge: '图片过大（压缩后仍超过 8 MB）', modelNoImages: (m) => `${m} 不接受图像输入；在设置里勾选该模型的「图像」或换一个模型`, notAnImage: '只支持 PNG、JPEG、GIF、WebP 图片',
   defaultTag: '默认', selectModel: '选择模型', manageModels: '管理模型…', noModels: '没有可用模型；先在设置里添加提供方。', modelSelected: (n) => `已切换到 ${n}`, modelsCount: (n) => `${n} 个模型`, readonly: '无 profile：设置只读。', showKey: '显示 / 隐藏密钥',
 } : {
@@ -655,6 +684,10 @@ Object.assign(T, zh ? {
   pickTitle: 'Available models', pickSearch: 'Search models', selectAll: 'Select all', deselectAll: 'Deselect all', addSelected: 'Add selected', selected: (n) => `${n} selected`, noMatch: 'No matching models',
   test: 'Test connection', testing: 'Testing…', testOk: (ms) => `Connected · ${ms} ms`, apply: 'Apply', applying: 'Saving…', applied: 'Applied; in effect from the next request.', cancel: 'Cancel', remove: 'Remove', removeConfirm: (t) => `Remove provider "${t}"? Its models and stored key are removed.`, removed: 'Removed',
   fetching: 'Fetching…', modelsFound: (n) => `${n} models found`, modelsNone: 'This provider cannot list models.', needModel: 'Add at least one model.', needId: 'A provider ID is required.', needUrl: 'A base URL is required.', dupId: 'That provider ID already exists.', noneLeft: 'Every preset provider is already added.',
+  modeTitle: { 'read-only': 'Read only', 'workspace-write': 'Workspace write', 'full-access': 'Full access' }, modeDesc: { 'read-only': 'File tools read only; no shell.', 'workspace-write': 'Writes inside the workspace; gated tools ask for approval.', 'full-access': 'Workspace writes and the shell without approval prompts.' },
+  presetTitle: { standard: 'Standard', creator: 'Creator' }, presetDesc: { standard: 'Everyday work: files, shell, subagents; plugin management stays out of the way.', creator: 'Standard plus harness inspection, plugin management and the plugin-authoring skills.' },
+  workspace_: 'Workspace', mode_: 'Permissions', preset_: 'Preset', browseDir: 'Browse…', chooseDir: 'Use this directory', upDir: 'Up', showHidden: 'Show hidden', dirTitle: 'Choose a workspace directory', notSelectable: 'This directory cannot be a workspace', forgetWorkspace: 'Remove from list',
+  fullAccessConfirm: 'Full access: writes and shell commands run without asking. Switch to full access?', switchLabel: 'Switch', sessionDefaults: 'Session defaults', defaultPreset: 'Preset for new sessions', defaultMode: 'Permissions for new sessions', fixedForSession: 'The workspace is fixed once a session exists',
   removeImage: 'Remove image', tooManyImages: (n) => `At most ${n} images`, imageTooLarge: 'Image too large (over 8 MB after compression)', modelNoImages: (m) => `${m} does not accept image input; tick Image for the model in Settings or pick another model`, notAnImage: 'Only PNG, JPEG, GIF and WebP images',
   defaultTag: 'default', selectModel: 'Select model', manageModels: 'Manage models…', noModels: 'No models available; add a provider in Settings.', modelSelected: (n) => `Switched to ${n}`, modelsCount: (n) => `${n} models`, readonly: 'No profile: settings are read-only.', showKey: 'Show / hide key',
 });
@@ -662,7 +695,7 @@ document.documentElement.lang = zh ? 'zh-CN' : 'en';
 document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = T[el.dataset.i18n]; });
 document.querySelectorAll('[data-i18n-title]').forEach((el) => { el.title = T[el.dataset.i18nTitle]; el.setAttribute('aria-label', T[el.dataset.i18nTitle]); });
 
-const state = { sessions: [], current: null, view: 'chat', streaming: false, generation: null, health: null, run: null, pending: false, directory: null, sessionModel: null };
+const state = { sessions: [], current: null, view: 'chat', streaming: false, generation: null, health: null, run: null, pending: false, directory: null, sessionModel: null, agent: null, workspaces: null, session: null, sessionWorkspace: null, sessionMode: null, sessionPreset: null };
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const icon = (name, cls = 'ico') => `<svg class="${cls}"><use href="#i-${name}"/></svg>`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -801,9 +834,7 @@ async function refreshHealth() {
     $('heroBadge').textContent = `gen ${h.generation}`;
     $('profileName').textContent = h.profile || 'pyharness';
     $('profileMeta').innerHTML = `<span class="dot" data-state="${h.restart_pending ? 'warn' : 'on'}"></span><span>${esc(T.online)} · ${esc(T.gen(h.generation))}${h.supervised ? '' : ' · ' + esc(T.unsupervised)}</span>`;
-    const ws = h.workspace?.name || '';
-    for (const el of [$('heroWorkspace'), $('workspaceChip')]) { el.querySelector('.label').textContent = ws; el.title = h.workspace?.path || ''; el.hidden = !ws; }
-    renderModelChip();
+    renderModelChip(); renderSessionChips();
     return h;
   } catch {
     $('profileMeta').innerHTML = `<span class="dot" data-state="off"></span><span>${esc(T.offline)}</span>`;
@@ -814,15 +845,24 @@ async function refreshHealth() {
 async function refreshSessions() {
   try { state.sessions = await json('/sessions'); } catch { return; }
   const box = $('sessions');
-  const ws = state.health?.workspace?.name || 'workspace';
-  const rows = state.sessions.map((s) => `
+  const defaultPath = state.health?.workspace?.path || '';
+  const defaultName = state.health?.workspace?.name || 'workspace';
+  const groups = new Map();
+  for (const s of state.sessions) { const key = s.workspace || defaultPath; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(s); }
+  if (!groups.has(defaultPath)) groups.set(defaultPath, []);
+  const row = (s) => `
     <div class="sessionRow${s.id === state.current ? ' selected' : ''}" data-id="${esc(s.id)}" role="button" tabindex="0">
       ${s.busy ? '<span class="busyDot"></span>' : ''}
       <span class="title">${esc(s.title || T.untitled)}</span>
       <span class="time">${esc(ago(s.updated_at))}</span>
       <button class="rowAction" data-delete="${esc(s.id)}" title="${esc(T.del)}" aria-label="${esc(T.del)}">${icon('trash')}</button>
-    </div>`).join('');
-  box.innerHTML = `<div class="projectRow"><span class="folder">${icon('folder')}</span><span class="name">${esc(ws)}</span></div>${rows || `<div class="empty">${esc(T.noSessions)}</div>`}`;
+    </div>`;
+  const ordered = [defaultPath, ...[...groups.keys()].filter((k) => k !== defaultPath)];
+  box.innerHTML = ordered.map((key) => {
+    const name = key === defaultPath ? defaultName : key.split('/').filter(Boolean).pop() || key;
+    const rows = groups.get(key).map(row).join('');
+    return `<div class="projectRow" title="${esc(key)}"><span class="folder">${icon('folder')}</span><span class="name">${esc(name)}</span></div>${rows || `<div class="empty">${esc(T.noSessions)}</div>`}`;
+  }).join('');
 }
 $('sessions').addEventListener('click', async (e) => {
   const del = e.target.closest('[data-delete]');
@@ -868,7 +908,7 @@ function setView(view) {
   $('topBar').toggleAttribute('data-bordered', view !== 'chat' || $('chatView').dataset.phase !== 'hero');
 }
 function newSession() {
-  state.current = null; state.run = null; state.sessionModel = null; closeModelMenu(); renderModelChip();
+  state.current = null; state.run = null; state.session = null; state.sessionModel = null; state.sessionMode = null; state.sessionPreset = null; closeModelMenu(); renderModelChip(); renderSessionChips();
   setView('chat'); $('log').innerHTML = ''; $('approval').innerHTML = '';
   $('crumb').textContent = '';
   setPhase('hero'); refreshSessions(); updateComposer(); $('input').focus();
@@ -879,7 +919,7 @@ async function openSession(id) {
   try { s = await json('/sessions/' + id); } catch (err) { toast(err.message); return; }
   if (state.current !== id) return;
   $('crumb').textContent = s.title || T.untitled;
-  state.sessionModel = s.model || null; renderModelChip();
+  state.session = s; state.sessionModel = s.model || null; renderModelChip(); renderSessionChips();
   setPhase('active');
   renderHistory(s.messages);
   renderApproval(s.pending || []);
@@ -1223,8 +1263,8 @@ $('composer').addEventListener('submit', async (e) => {
   if (state.pending) { toast(T.approvalPending); return; }
   if (!state.current) {
     let s;
-    try { s = await json('/sessions', { method: 'POST', body: JSON.stringify({ title: (text || attachments[0].name).slice(0, 60), model: state.sessionModel }) }); } catch (err) { toast(err.message); return; }
-    state.current = s.id; log().innerHTML = '';
+    try { s = await json('/sessions', { method: 'POST', body: JSON.stringify({ title: (text || attachments[0].name).slice(0, 60), model: state.sessionModel, workspace: state.sessionWorkspace, mode: state.sessionMode, preset: state.sessionPreset }) }); } catch (err) { toast(err.message); return; }
+    state.current = s.id; state.session = s; log().innerHTML = ''; renderSessionChips();
     $('crumb').textContent = s.title || T.untitled;
     setPhase('active'); refreshSessions();
   }
@@ -1327,12 +1367,113 @@ async function selectModel(spec) {
   renderModelChip(); toast(T.modelSelected(specLabel(spec).name));
 }
 
+/* ---------- session chips: workspace, permission mode, preset ---------- */
+async function loadAgentOptions() {
+  try { state.agent = await json('/agent'); } catch { state.agent = null; }
+  renderSessionChips();
+}
+const modeLabel = (id) => (T.modeTitle[id] || (state.agent?.modes.find((m) => m.id === id) || {}).title || id || '');
+const presetLabel = (id) => (T.presetTitle[id] || (state.agent?.presets.find((p) => p.id === id) || {}).title || id || '');
+function currentWorkspace() { return state.session ? (state.session.workspace || state.health?.workspace?.path || '') : (state.sessionWorkspace || state.health?.workspace?.path || ''); }
+function currentMode() { return (state.session ? state.session.mode : state.sessionMode) || state.agent?.default_mode || ''; }
+function currentPreset() { return (state.session ? state.session.preset : state.sessionPreset) || state.agent?.default_preset || ''; }
+function renderSessionChips() {
+  const ws = currentWorkspace(); const name = ws.split('/').filter(Boolean).pop() || ws;
+  for (const el of [$('heroWorkspace'), $('workspaceChip')]) { el.querySelector('.label').textContent = name; el.title = state.session ? `${ws} · ${T.fixedForSession}` : ws; el.hidden = !ws; }
+  const mode = currentMode(); const preset = currentPreset();
+  for (const el of [$('heroMode'), $('modeChip')]) { el.querySelector('.label').textContent = modeLabel(mode); el.title = `${T.mode_}: ${T.modeDesc[mode] || ''}`; el.hidden = !mode; }
+  for (const el of [$('heroPreset'), $('presetChip')]) { el.querySelector('.label').textContent = presetLabel(preset); el.title = `${T.preset_}: ${T.presetDesc[preset] || ''}`; el.hidden = !preset; }
+}
+let chipMenu = null;
+function closeChipMenu() { if (chipMenu) { chipMenu.remove(); chipMenu = null; document.removeEventListener('mousedown', onChipOutside, true); document.removeEventListener('keydown', onChipKey, true); } }
+function onChipOutside(e) { if (chipMenu && !chipMenu.contains(e.target) && !chipMenu._anchor.contains(e.target)) closeChipMenu(); }
+function onChipKey(e) { if (chipMenu && e.key === 'Escape') { e.preventDefault(); closeChipMenu(); } }
+function openChipMenu(anchor, html, onPick) {
+  closeChipMenu(); closeModelMenu();
+  chipMenu = document.createElement('div'); chipMenu.className = 'menu left'; chipMenu.setAttribute('role', 'menu'); chipMenu._anchor = anchor; chipMenu.innerHTML = html;
+  const host = anchor.closest('.card') || anchor.closest('.workspaceRow'); host.appendChild(chipMenu);
+  chipMenu.onclick = async (e) => { const row = e.target.closest('[data-pick]'); if (!row) return; await onPick(row.dataset.pick, row); };
+  document.addEventListener('mousedown', onChipOutside, true); document.addEventListener('keydown', onChipKey, true);
+  (chipMenu.querySelector('[aria-checked="true"]') || chipMenu.querySelector('.menuRow'))?.focus();
+}
+const rowHtml = (pick, title, desc, checked, extra = '') => `<button type="button" class="menuRow" role="menuitemradio" aria-checked="${checked}" data-pick="${esc(pick)}">${icon('check', 'ico check')}<span class="col"><span class="label">${esc(title)}</span>${desc ? `<span class="desc">${esc(desc)}</span>` : ''}</span>${extra}</button>`;
+async function openModeMenu(anchor) {
+  if (!state.agent) await loadAgentOptions();
+  const cur = currentMode();
+  openChipMenu(anchor, `<div class="menuGroup">${esc(T.mode_)}</div>` + (state.agent?.modes || []).map((m) => rowHtml(m.id, modeLabel(m.id), T.modeDesc[m.id] || m.description, m.id === cur)).join(''), async (id) => {
+    closeChipMenu();
+    if (id === 'full-access' && cur !== 'full-access' && !(await confirmDialog(T.fullAccessConfirm, T.switchLabel))) return;
+    if (state.current) { try { state.session = await json(`/sessions/${state.current}/mode`, { method: 'PUT', body: JSON.stringify({ mode: id }) }); } catch (err) { toast(err.message); return; } }
+    else state.sessionMode = id;
+    renderSessionChips();
+  });
+}
+async function openPresetMenu(anchor) {
+  if (!state.agent) await loadAgentOptions();
+  const cur = currentPreset();
+  openChipMenu(anchor, `<div class="menuGroup">${esc(T.preset_)}</div>` + (state.agent?.presets || []).map((p) => rowHtml(p.id, presetLabel(p.id), T.presetDesc[p.id] || p.description, p.id === cur, p.default ? `<span class="sub">${esc(T.defaultTag)}</span>` : '')).join(''), async (id) => {
+    closeChipMenu();
+    if (state.current) { try { state.session = await json(`/sessions/${state.current}/preset`, { method: 'PUT', body: JSON.stringify({ preset: id }) }); } catch (err) { toast(err.message); return; } }
+    else state.sessionPreset = id;
+    renderSessionChips();
+  });
+}
+async function openWorkspaceMenu(anchor) {
+  if (state.session) { toast(T.fixedForSession); return; }
+  try { state.workspaces = await json('/workspaces'); } catch (err) { toast(err.message); return; }
+  const cur = currentWorkspace();
+  const rows = (state.workspaces.recent || []).map((w) => rowHtml(w.root, w.name, w.root, w.root === cur, w.default ? `<span class="sub">${esc(T.defaultTag)}</span>` : (w.exists ? '' : `<span class="sub">✕</span>`)));
+  openChipMenu(anchor, `<div class="menuGroup">${esc(T.workspace_)}</div>${rows.join('')}<div class="menuFoot"><button type="button" class="menuRow" data-pick="__browse">${icon('folder')}<span class="label">${esc(T.browseDir)}</span></button></div>`, async (pick) => {
+    closeChipMenu();
+    if (pick === '__browse') { const chosen = await browseDirectory(cur); if (chosen) await useWorkspace(chosen); return; }
+    await useWorkspace(pick);
+  });
+}
+async function useWorkspace(path) {
+  try { await json('/workspaces', { method: 'POST', body: JSON.stringify({ path }) }); } catch (err) { toast(err.message); return; }
+  state.sessionWorkspace = path === state.health?.workspace?.path ? null : path;
+  renderSessionChips();
+}
+function browseDirectory(start) {
+  return new Promise((resolve) => {
+    let showHidden = false; let listing = null;
+    const el = modal(`<div class="modalHead">${esc(T.dirTitle)}</div><div class="modalBody"><div class="dirPath"><input class="input" data-path spellcheck="false" autocomplete="off"><button type="button" class="btn outline sm" data-up>${esc(T.upDir)}</button></div><div class="dirList" data-list></div></div>
+      <div class="modalFoot"><label class="checkOpt"><input type="checkbox" data-hidden><span>${esc(T.showHidden)}</span></label><span class="spacer"></span><button type="button" class="btn outline" data-cancel>${esc(T.cancel)}</button><button type="button" class="btn primary" data-choose>${esc(T.chooseDir)}</button></div>`);
+    const pathInput = el.querySelector('[data-path]'); const list = el.querySelector('[data-list]'); const choose = el.querySelector('[data-choose]');
+    const done = (v) => { el.remove(); document.removeEventListener('keydown', onKey, true); resolve(v); };
+    const onKey = (e) => { if (e.key === 'Escape') done(null); };
+    document.addEventListener('keydown', onKey, true);
+    const render = () => {
+      const dirs = (listing.dirs || []).filter((d) => showHidden || !d.hidden);
+      list.innerHTML = dirs.map((d) => `<button type="button" class="dirRow" data-dir="${esc(d.path)}" ${d.hidden ? 'data-hidden' : ''}>${icon('folder')}<span>${esc(d.name)}</span></button>`).join('') || `<div class="emptyNote">—</div>`;
+      choose.disabled = !listing.selectable; choose.title = listing.selectable ? '' : T.notSelectable;
+    };
+    const load = async (path) => {
+      try { listing = await json('/workspaces/browse', { method: 'POST', body: JSON.stringify({ path: path || null }) }); } catch (err) { toast(err.message); return; }
+      pathInput.value = listing.path; render();
+    };
+    list.onclick = (e) => { const d = e.target.closest('[data-dir]'); if (d) load(d.dataset.dir); };
+    el.querySelector('[data-up]').onclick = () => { if (listing?.parent) load(listing.parent); };
+    pathInput.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); load(pathInput.value.trim()); } };
+    el.querySelector('[data-hidden]').onchange = (e) => { showHidden = e.target.checked; render(); };
+    el.querySelector('[data-cancel]').onclick = () => done(null);
+    choose.onclick = () => done(listing?.path || null);
+    el.onclick = (e) => { if (e.target === el) done(null); };
+    load(start || null);
+  });
+}
+for (const [id, fn] of [['heroWorkspace', openWorkspaceMenu], ['workspaceChip', openWorkspaceMenu], ['heroMode', openModeMenu], ['modeChip', openModeMenu], ['heroPreset', openPresetMenu], ['presetChip', openPresetMenu]]) {
+  $(id).onclick = () => fn($(id));
+  $(id).onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn($(id)); } };
+}
+
 /* ---------- settings: models ---------- */
 const models = { data: null, open: null, draft: null, busy: false };
 const sf = (name, root) => (root || $('settingsView')).querySelector(`[data-field="${name}"]`);
 const ROUTE_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 async function showSettings() {
-  setView('settings'); $('crumb').textContent = T.settings; closeModelMenu();
+  setView('settings'); $('crumb').textContent = T.settings; closeModelMenu(); closeChipMenu();
+  if (!state.agent) await loadAgentOptions();
   await loadModels();
 }
 async function loadModels() {
@@ -1367,7 +1508,9 @@ function renderModels() {
       <div class="cards" data-field="rows">${d.routes.map(routeRow).join('')}</div>
       <div class="actionsRow"><button type="button" class="btn outline" data-field="add" ${d.editable ? '' : 'disabled'} aria-expanded="${models.open === 'add'}">${icon('plus')}<span>${esc(T.addProvider)}</span></button>${d.editable ? '' : `<span class="fieldHint">${esc(T.readonly)}</span>`}</div>
       <div data-field="addSlot"></div>
-    </div>`;
+    </div>
+    <div class="group" data-field="sessionDefaults">${sessionDefaultsMarkup()}</div>`;
+  bindSessionDefaults();
   sf('default').onchange = async (e) => {
     try { models.data = await json('/settings/models', { method: 'PUT', body: JSON.stringify({ default: e.target.value || null }) }); toast(T.applied); renderModels(); loadDirectory(); }
     catch (err) { toast(err.message); }
@@ -1377,6 +1520,20 @@ function renderModels() {
   if (models.open === 'add') mountEditor(sf('addSlot'));
   else if (models.open && routeById(models.open)) mountEditor(sf('editorSlot'));
   else models.open = null;
+}
+function sessionDefaultsMarkup() {
+  const a = state.agent; if (!a) return '';
+  const cards = a.presets.map((p) => `<button type="button" class="presetCard" data-preset="${esc(p.id)}" aria-pressed="${p.id === a.default_preset}"><span class="pcardTitle">${esc(presetLabel(p.id))}<span class="tag" data-tone="quiet"><code>${esc(p.id)}</code></span>${p.id === a.default_preset ? `<span class="tag" data-tone="info">${esc(T.defaultTag)}</span>` : ''}</span><span class="pcardDesc">${esc(T.presetDesc[p.id] || p.description)}</span></button>`).join('');
+  const modes = a.modes.map((m) => `<option value="${esc(m.id)}" ${m.id === a.default_mode ? 'selected' : ''}>${esc(modeLabel(m.id))}</option>`).join('');
+  return `<div class="groupHead"><h2 class="groupTitle">${esc(T.sessionDefaults)}</h2></div>
+    <div class="form"><div class="field"><span class="fieldLabel">${esc(T.defaultPreset)}</span><div class="fieldMain"><div class="presetCards" data-field="presetCards">${cards}</div></div></div>
+    <div class="field"><label class="fieldLabel" for="sMode">${esc(T.defaultMode)}</label><div class="fieldMain"><div class="selectWrap"><select class="select" id="sMode" data-field="defaultMode">${modes}</select>${icon('chev-down', 'ico chev')}</div><span class="fieldHint" data-field="modeHint">${esc(T.modeDesc[a.default_mode] || '')}</span></div></div></div>`;
+}
+function bindSessionDefaults() {
+  const box = sf('sessionDefaults'); if (!box || !state.agent) return;
+  const save = async (body) => { try { const r = await json('/settings/agent', { method: 'PUT', body: JSON.stringify(body) }); state.agent = { ...state.agent, ...r }; box.innerHTML = sessionDefaultsMarkup(); bindSessionDefaults(); renderSessionChips(); toast(T.applied); } catch (err) { toast(err.message); } };
+  box.querySelector('[data-field="presetCards"]').onclick = (e) => { const c = e.target.closest('[data-preset]'); if (c) save({ default_preset: c.dataset.preset }); };
+  box.querySelector('[data-field="defaultMode"]').onchange = (e) => save({ default_mode: e.target.value });
 }
 function openEditor(target) {
   models.open = target;
@@ -1561,9 +1718,9 @@ function modal(inner) {
   const el = document.createElement('div'); el.className = 'modal'; el.innerHTML = `<div class="modalCard" role="dialog" aria-modal="true">${inner}</div>`;
   document.body.appendChild(el); return el;
 }
-function confirmDialog(text) {
+function confirmDialog(text, label) {
   return new Promise((resolve) => {
-    const el = modal(`<div class="modalBody"><p>${esc(text)}</p></div><div class="modalFoot"><span class="spacer"></span><button type="button" class="btn outline" data-no>${esc(T.cancel)}</button><button type="button" class="btn primary reject" data-yes>${esc(T.remove)}</button></div>`);
+    const el = modal(`<div class="modalBody"><p>${esc(text)}</p></div><div class="modalFoot"><span class="spacer"></span><button type="button" class="btn outline" data-no>${esc(T.cancel)}</button><button type="button" class="btn primary reject" data-yes>${esc(label || T.remove)}</button></div>`);
     const done = (v) => { el.remove(); document.removeEventListener('keydown', onKey, true); resolve(v); };
     const onKey = (e) => { if (e.key === 'Escape') done(false); };
     document.addEventListener('keydown', onKey, true);
@@ -1601,7 +1758,7 @@ function pickModels(candidates, existing) {
 /* ---------- boot ---------- */
 (async () => {
   setPhase('hero'); updateComposer();
-  await refreshHealth(); await refreshSessions(); loadPluginCount(); loadDirectory();
+  await refreshHealth(); await refreshSessions(); loadPluginCount(); loadDirectory(); loadAgentOptions();
   input.focus();
   setInterval(() => { if (!state.streaming) refreshSessions(); }, 15000);
 })();

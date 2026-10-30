@@ -15,6 +15,8 @@
 | `dsh-harness-dev-context` | `pyharness-dev-context` 提示词段 |
 | `dsh-skill` + `dsh-skill-filesystem` + `dsh-tool-skill` | deepagents `SkillsMiddleware`；`ctx.agentLoop.add_skills` |
 | 插件的浏览器端（client slot） | 无；Web 界面是挂路由的插件 |
+| `dsh-sandbox-policy` + `dsh-permission-presets`（read-only / workspace-write / danger-full-access） | `agent-loop` 的权限模式 `read-only` / `workspace-write` / `full-access`：deepagents 文件权限规则、shell 工具有无、审批闸门有无；每会话可切换 |
+| `dsh-workspace` + directory picker | `pyharness-workspace` 注册表：每会话工作区根目录、最近列表（`ctx.store`）、目录浏览 |
 
 ## 生效方式
 
@@ -50,5 +52,5 @@ bundle 中条目的位置（`after` / `before` / `parent`）对应 mount 路径�
 | dsh 能力 | pyharness |
 |---|---|
 | 插件的浏览器端（client slot） | 无；界面扩展仅限 HTTP 路由 |
-| 每会话 agent preset（preset + isolate realm） | 无；全部会话共享一套组合。创造模式按 profile 启用（`creator` bundle），不按会话 |
+| 每会话 agent preset（preset + isolate realm） | 预设是 `agent-loop` 的配置（工具子集、skills、提示词片段），每会话一张图；没有 realm 级的服务隔离 |
 | 进程内热替换 | 换代重启 |
