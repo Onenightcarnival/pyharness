@@ -16,11 +16,13 @@ facts (``base_url``, ``api_key_env``), and its model catalog. A model spec is ``
 Credentials: ``api_key_env`` is a reference resolved through the environment, then the profile credential store;
 ``api_key`` in the configuration is accepted and discouraged.
 
-| ``type`` catalog       | source                                                            |
-|------------------------|-------------------------------------------------------------------|
-| LangChain built-ins    | ``langchain.chat_models.base._BUILTIN_PROVIDERS``                 |
-| curated facts          | :data:`CURATED`: key and endpoint keyword names, env, defaults    |
-| registered             | :meth:`LLMService.register` (``echo`` built in)                   |
+| ``type``                | source                                                                    |
+|-------------------------|---------------------------------------------------------------------------|
+| presets (:data:`PRESETS`) | offered by the settings page; their packages are dependencies of this plugin |
+| other LangChain built-ins | accepted in configuration (``langchain.chat_models.base._BUILTIN_PROVIDERS``) |
+| registered              | :meth:`LLMService.register` (``echo`` built in)                           |
+
+Each model entry carries its input modalities (``input``: ``text``, ``image``); selectors and attachment handling read them.
 """
 
 from __future__ import annotations
@@ -31,7 +33,7 @@ import os
 import re
 import time
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Literal
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
@@ -39,6 +41,8 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from pyharness import Service
+
+Modality = Literal["text", "image"]
 
 ModelFactory = Callable[..., BaseChatModel]
 
@@ -51,16 +55,19 @@ PROTOCOLS: dict[str, dict[str, Any]] = {
     "anthropic-messages": {"title": "Anthropic Messages", "type": "anthropic", "options": {}, "models_api": "anthropic"},
 }
 
+# Provider types the settings page offers; their integration packages are dependencies of pyharness-llm.
+PRESETS = ["openai", "anthropic", "deepseek", "google_genai", "openrouter"]
+
 # Curated facts per LangChain provider type. Missing types fall back to generic ``api_key`` / ``base_url`` keywords.
 CURATED: dict[str, dict[str, Any]] = {
     "openai": {"title": "OpenAI", "env": "OPENAI_API_KEY", "base_url": "https://api.openai.com/v1", "models_api": "openai"},
+    "openrouter": {"title": "OpenRouter", "env": "OPENROUTER_API_KEY", "base_url": "https://openrouter.ai/api/v1", "models_api": "openai"},
     "azure_openai": {"title": "Azure OpenAI", "env": "AZURE_OPENAI_API_KEY", "keys": {"base_url": "azure_endpoint"}, "models_api": None},
     "anthropic": {"title": "Anthropic", "env": "ANTHROPIC_API_KEY", "base_url": "https://api.anthropic.com", "models_api": "anthropic"},
     "deepseek": {
         "title": "DeepSeek",
         "env": "DEEPSEEK_API_KEY",
         "base_url": "https://api.deepseek.com",
-        "keys": {"base_url": "api_base"},
         "models_api": "openai",
         "models": [{"id": "deepseek-chat", "name": "DeepSeek Chat"}, {"id": "deepseek-reasoner", "name": "DeepSeek Reasoner"}],
     },
@@ -87,7 +94,6 @@ CURATED: dict[str, dict[str, Any]] = {
     "together": {"title": "Together AI", "env": "TOGETHER_API_KEY", "base_url": "https://api.together.xyz/v1", "models_api": "openai"},
     "xai": {"title": "xAI", "env": "XAI_API_KEY", "base_url": "https://api.x.ai/v1", "models_api": "openai"},
     "perplexity": {"title": "Perplexity", "env": "PPLX_API_KEY", "base_url": "https://api.perplexity.ai", "models_api": "openai"},
-    "openrouter": {"title": "OpenRouter", "env": "OPENROUTER_API_KEY", "base_url": "https://openrouter.ai/api/v1", "models_api": "openai"},
     "ollama": {"title": "Ollama", "credentials": False, "base_url": "http://localhost:11434", "models_api": "ollama"},
     "cohere": {"title": "Cohere", "env": "COHERE_API_KEY", "keys": {"api_key": "cohere_api_key"}, "models_api": None},
     "huggingface": {"title": "Hugging Face", "env": "HUGGINGFACEHUB_API_TOKEN", "models_api": None},
@@ -113,8 +119,6 @@ CURATED: dict[str, dict[str, Any]] = {
         "models": [{"id": "echo", "name": "Echo"}],
     },
 }
-HIDDEN_TYPES = {"langsmith", "bedrock_mantle_anthropic", "bedrock_mantle_openai"}
-EXTRAS = {"deepseek": "deepseek", "anthropic": "anthropic"}
 
 
 class ModelEntry(BaseModel):
@@ -124,7 +128,16 @@ class ModelEntry(BaseModel):
     name: str | None = None
     context_window: int | None = Field(None, gt=0)
     max_tokens: int | None = Field(None, gt=0)
+    input: list[Modality] = Field(default_factory=lambda: ["text"], description="Input modalities the model accepts.")
     options: dict[str, Any] = Field(default_factory=dict, description="Keyword arguments for this model only.")
+
+    @field_validator("input")
+    @classmethod
+    def _input(cls, value: list[str]) -> list[str]:
+        out = [m for m in ("text", "image") if m in value]
+        if not out:
+            raise ValueError("a model accepts at least one input modality")
+        return out
 
 
 class ProviderConfig(BaseModel):
@@ -224,7 +237,7 @@ def type_info(kind: str) -> dict[str, Any]:
         "id": kind,
         "title": curated.get("title", kind.replace("_", " ").title()),
         "package": package,
-        "extra": EXTRAS.get(kind),
+        "preset": kind in PRESETS,
         "installed": installed,
         "env": curated.get("env", f"{kind.upper()}_API_KEY" if curated.get("credentials", True) and kind != "echo" else None),
         "base_url": curated.get("base_url"),
@@ -399,8 +412,9 @@ class LLMService(Service):
             if info["package"] is None:
                 raise LLMConfigError(f"unknown provider type {kind!r} for route {route!r}")
             if not info["installed"]:
-                hint = f" (uv sync --extra {info['extra']})" if info["extra"] else f" (pip install {info['package'].replace('_', '-')})"
-                raise LLMConfigError(f"provider {kind!r} needs the {info['package']} package{hint}")
+                raise LLMConfigError(
+                    f"provider {kind!r} needs the {info['package']} package (pip install {info['package'].replace('_', '-')})"
+                )
             from langchain.chat_models import init_chat_model
 
             try:
@@ -412,17 +426,9 @@ class LLMService(Service):
 
     # ------------------------------------------------------------------ settings support
     def catalog(self) -> list[dict[str, Any]]:
-        """Provider types offered for configuration: LangChain built-ins, curated facts, registered factories."""
-        out = []
-        seen = set()
-        for kind in list(CURATED) + sorted(builtin_types()):
-            if kind in seen or kind in HIDDEN_TYPES:
-                continue
-            seen.add(kind)
-            info = type_info(kind)
-            if kind in self._providers:
-                info["installed"] = True
-            out.append(info)
+        """Provider types offered for configuration: the presets, ``echo``, and registered factories."""
+        out = [type_info(kind) for kind in [*PRESETS, "echo"]]
+        seen = {c["id"] for c in out}
         for kind, owner in self.providers().items():
             if kind not in seen:
                 out.append(
@@ -471,7 +477,7 @@ class LLMService(Service):
         """Selector view: routes with their model catalogs and the default spec."""
         groups = []
         for route, cfg in self.config.providers.items():
-            models = [{"id": m.id, "name": m.name or m.id, "spec": f"{route}:{m.id}"} for m in cfg.models]
+            models = [{"id": m.id, "name": m.name or m.id, "spec": f"{route}:{m.id}", "input": list(m.input)} for m in cfg.models]
             if models:
                 groups.append({"id": route, "title": self.describe_route(route)["title"], "type": self.route_type(route), "models": models})
         default_route, default_model = split_spec(self.config.default)
@@ -558,6 +564,13 @@ class LLMService(Service):
                 ):
                     if isinstance(row.get(src), int) and row[src] > 0:
                         entry.setdefault(dst, row[src])
+                top = row.get("top_provider") if isinstance(row.get("top_provider"), dict) else {}
+                if isinstance(top.get("max_completion_tokens"), int) and top["max_completion_tokens"] > 0:
+                    entry.setdefault("max_tokens", top["max_completion_tokens"])
+                arch = row.get("architecture") if isinstance(row.get("architecture"), dict) else {}
+                modalities = row.get("input_modalities") or arch.get("input_modalities")
+                if isinstance(modalities, list):
+                    entry["input"] = [m for m in ("text", "image") if m in modalities] or ["text"]
                 models.append(entry)
             elif isinstance(row, str):
                 models.append({"id": row, "name": row})
@@ -567,6 +580,7 @@ class LLMService(Service):
 
 __all__ = [
     "CURATED",
+    "PRESETS",
     "PROTOCOLS",
     "EchoChatModel",
     "LLMConfig",

@@ -4,7 +4,17 @@ version = "0.1.0"
 description = "pyharness plugin: chat-model provider registry (ctx.llm)"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core", "langchain>=1.0", "langchain-core>=1.0", "langchain-openai>=1.0", "httpx>=0.27"]
+dependencies = [
+    "pyharness-core",
+    "langchain>=1.0",
+    "langchain-core>=1.0",
+    "langchain-openai>=1.0",
+    "httpx>=0.27",
+    "langchain-deepseek>=1.0",
+    "langchain-anthropic>=1.0",
+    "langchain-google-genai>=3.0",
+    "langchain-openrouter>=0.1",
+]
 
 [project.entry-points."pyharness.plugins"]
 pyharness-llm = "pyharness_llm:LLMService"

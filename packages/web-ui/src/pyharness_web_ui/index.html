@@ -383,13 +383,18 @@ svg { display: block; }
 .fold > summary .chevron { transition: transform 0.15s var(--ease); }
 .fold[open] > summary .chevron { transform: rotate(90deg); }
 .fold .foldBody { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
-.mtable { width: 100%; border-collapse: collapse; }
+.mscroll { width: 100%; overflow-x: auto; }
+.mtable { width: 100%; min-width: 620px; border-collapse: collapse; }
+.mtable td:first-child { min-width: 200px; }
 .mtable th { padding: 2px 6px; text-align: left; font-size: 11px; font-weight: 500; color: var(--label-tertiary); white-space: nowrap; }
 .mtable td { padding: 3px 4px; vertical-align: middle; }
 .mtable .input { height: 30px; font-size: 13px; padding: 0 8px; }
 .mtable .input.mono { font-size: 12px; }
 .mtable .num { width: 96px; }
 .mtable .rowDel { width: 28px; }
+.mtable .inputs { white-space: nowrap; }
+.checkOpt { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; font-size: 12px; color: var(--label-secondary); cursor: pointer; }
+.checkOpt input { accent-color: var(--info); margin: 0; }
 .mtable:empty { display: none; }
 .actionsRow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .emptyNote { font-size: 13px; color: var(--label-tertiary); padding: 2px 0; }
@@ -614,8 +619,8 @@ Object.assign(T, zh ? {
   providerType: '提供方类型', providerId: '提供方 ID', providerIdHint: '小写字母、数字、- 与 _；用作配置键与凭据引用名，保存后不可改。', displayName: '显示名称', protocol: 'API 协议',
   apiKey: 'API Key', baseUrl: 'Base URL', baseUrlHint: '留空使用默认地址。', customBaseUrlHint: (p) => p === 'anthropic-messages' ? '例如 https://gateway.example；SDK 自行追加 /v1/messages。' : '例如 https://gateway.example/v1。',
   keySaved: '已保存密钥；留空则沿用。', keyEnv: (e) => `使用环境变量 ${e}。`, keyMissing: (e) => `未配置；可设置环境变量 ${e} 或在此填写。`, keyNone: '该提供方不使用 API Key。', keyConfig: '密钥写在配置文件中（明文）；在此填写会迁移到凭据文件。',
-  installed: '已安装', notInstalled: (pkg, extra) => `未安装 ${pkg}${extra ? `：uv sync --extra ${extra}` : `：uv pip install ${pkg.replace(/_/g, '-')}`}`, notInstalledShort: '未安装',
-  modelsSection: '模型列表', modelId: '模型 ID', modelName: '显示名', contextWindow: '上下文', maxTokens: '最大输出', fetchModels: '获取可用模型', addModel: '添加模型', restoreModels: '恢复默认模型', noModelsYet: '还没有模型；获取或手动添加。',
+  installed: '已安装', notInstalled: (pkg) => `未安装 ${pkg}：uv pip install ${pkg.replace(/_/g, '-')}`, notInstalledShort: '未安装',
+  modelsSection: '模型列表', modelId: '模型 ID', modelName: '显示名', contextWindow: '上下文', maxTokens: '最大输出', inputTypes: '输入', inputText: '文本', inputImage: '图像', fetchModels: '获取可用模型', addModel: '添加模型', restoreModels: '恢复默认模型', noModelsYet: '还没有模型；获取或手动添加。',
   pickTitle: '可用模型', pickSearch: '搜索模型', selectAll: '全选', deselectAll: '取消全选', addSelected: '添加所选', selected: (n) => `已选 ${n}`, noMatch: '没有匹配的模型',
   test: '测试连接', testing: '测试中…', testOk: (ms) => `连接成功 · ${ms} ms`, apply: '应用', applying: '保存中…', applied: '已应用；下次请求起生效。', cancel: '取消', remove: '删除', removeConfirm: (t) => `删除提供方「${t}」？其模型与已保存的密钥一并移除。`, removed: '已删除',
   fetching: '获取中…', modelsFound: (n) => `找到 ${n} 个模型`, modelsNone: '该提供方不支持列出模型。', needModel: '至少添加一个模型。', needId: '请填写提供方 ID。', needUrl: '请填写 Base URL。', dupId: '提供方 ID 已存在。', noneLeft: '预置提供方均已添加。',
@@ -627,8 +632,8 @@ Object.assign(T, zh ? {
   providerType: 'Provider', providerId: 'Provider ID', providerIdHint: 'Lowercase letters, digits, - and _; the configuration key and credential reference stem; fixed after saving.', displayName: 'Display name', protocol: 'API protocol',
   apiKey: 'API key', baseUrl: 'Base URL', baseUrlHint: "Empty: the provider's default endpoint.", customBaseUrlHint: (p) => p === 'anthropic-messages' ? 'e.g. https://gateway.example; the SDK appends /v1/messages.' : 'e.g. https://gateway.example/v1.',
   keySaved: 'A key is saved; leave empty to keep it.', keyEnv: (e) => `Using environment variable ${e}.`, keyMissing: (e) => `Not configured; set ${e} or enter a key here.`, keyNone: 'This provider does not use an API key.', keyConfig: 'The key is written in the configuration file (plain); entering one here moves it to the credential file.',
-  installed: 'installed', notInstalled: (pkg, extra) => `${pkg} is not installed${extra ? `: uv sync --extra ${extra}` : `: uv pip install ${pkg.replace(/_/g, '-')}`}`, notInstalledShort: 'not installed',
-  modelsSection: 'Models', modelId: 'Model ID', modelName: 'Display name', contextWindow: 'Context', maxTokens: 'Max output', fetchModels: 'Fetch available models', addModel: 'Add model', restoreModels: 'Restore default models', noModelsYet: 'No models yet; fetch or add them.',
+  installed: 'installed', notInstalled: (pkg) => `${pkg} is not installed: uv pip install ${pkg.replace(/_/g, '-')}`, notInstalledShort: 'not installed',
+  modelsSection: 'Models', modelId: 'Model ID', modelName: 'Display name', contextWindow: 'Context', maxTokens: 'Max output', inputTypes: 'Input', inputText: 'Text', inputImage: 'Image', fetchModels: 'Fetch available models', addModel: 'Add model', restoreModels: 'Restore default models', noModelsYet: 'No models yet; fetch or add them.',
   pickTitle: 'Available models', pickSearch: 'Search models', selectAll: 'Select all', deselectAll: 'Deselect all', addSelected: 'Add selected', selected: (n) => `${n} selected`, noMatch: 'No matching models',
   test: 'Test connection', testing: 'Testing…', testOk: (ms) => `Connected · ${ms} ms`, apply: 'Apply', applying: 'Saving…', applied: 'Applied; in effect from the next request.', cancel: 'Cancel', remove: 'Remove', removeConfirm: (t) => `Remove provider "${t}"? Its models and stored key are removed.`, removed: 'Removed',
   fetching: 'Fetching…', modelsFound: (n) => `${n} models found`, modelsNone: 'This provider cannot list models.', needModel: 'Add at least one model.', needId: 'A provider ID is required.', needUrl: 'A base URL is required.', dupId: 'That provider ID already exists.', noneLeft: 'Every preset provider is already added.',
@@ -1333,7 +1338,7 @@ function editorMarkup(dr) {
     <div class="field"><label class="fieldLabel" for="eUrl">${esc(T.baseUrl)}</label><div class="fieldMain"><input class="input mono" id="eUrl" data-field="base_url" type="text" inputmode="url" spellcheck="false" autocomplete="off" value="${esc(dr.base_url)}" placeholder="${esc(dr.mode === 'custom' ? '' : info.base_url || '')}"><span class="fieldHint" data-field="urlHint">${esc(urlHint)}</span></div></div>
     <details class="fold" ${dr.mode === 'route' && dr.models.length ? '' : 'open'}><summary>${icon('chev-right', 'ico chevron')}<span>${esc(T.modelsSection)}</span><span class="groupMeta" data-field="modelCount">${dr.models.length}</span></summary>
       <div class="foldBody">
-        <table class="mtable" data-field="mtable">${rows ? `<thead><tr><th>${esc(T.modelId)}</th><th>${esc(T.modelName)}</th><th>${esc(T.contextWindow)}</th><th>${esc(T.maxTokens)}</th><th></th></tr></thead><tbody>${rows}</tbody>` : ''}</table>
+        <div class="mscroll"><table class="mtable" data-field="mtable">${rows ? `${HEAD_ROW()}<tbody>${rows}</tbody>` : ''}</table></div>
         ${rows ? '' : `<div class="emptyNote" data-field="emptyNote">${esc(T.noModelsYet)}</div>`}
         <div class="actionsRow"><button type="button" class="btn outline sm" data-field="fetch">${icon('refresh')}<span>${esc(T.fetchModels)}</span></button><button type="button" class="btn outline sm" data-field="addModel">${icon('plus')}<span>${esc(T.addModel)}</span></button>${(info.models || []).length ? `<button type="button" class="btn outline sm" data-field="restore">${esc(T.restoreModels)}</button>` : ''}</div>
       </div>
@@ -1342,8 +1347,11 @@ function editorMarkup(dr) {
     <div class="formFoot">${dr.mode === 'route' ? `<button type="button" class="btn danger" data-field="remove">${esc(T.remove)}</button>` : ''}<span class="spacer"></span><button type="button" class="btn outline" data-field="test">${icon('zap')}<span>${esc(T.test)}</span></button><button type="button" class="btn outline" data-field="cancel">${esc(T.cancel)}</button><button type="submit" class="btn primary" data-field="apply">${esc(T.apply)}</button></div>
   </form>`;
 }
+const HEAD_ROW = () => `<thead><tr><th>${esc(T.modelId)}</th><th>${esc(T.modelName)}</th><th>${esc(T.contextWindow)}</th><th>${esc(T.maxTokens)}</th><th>${esc(T.inputTypes)}</th><th></th></tr></thead>`;
 function modelRowMarkup(m, i) {
-  return `<tr data-row="${i}"><td><input class="input mono" data-mf="id" value="${esc(m.id)}" placeholder="model-id" spellcheck="false"></td><td><input class="input" data-mf="name" value="${esc(m.name || '')}"></td><td class="num"><input class="input num" data-mf="context_window" type="number" min="1" value="${m.context_window || ''}"></td><td class="num"><input class="input num" data-mf="max_tokens" type="number" min="1" value="${m.max_tokens || ''}"></td><td class="rowDel"><button type="button" class="iconButton" data-del="${i}" title="${esc(T.remove)}">${icon('trash')}</button></td></tr>`;
+  const input = m.input && m.input.length ? m.input : ['text'];
+  const box = (k, label) => `<label class="checkOpt"><input type="checkbox" data-mf="input" value="${k}" ${input.includes(k) ? 'checked' : ''}><span>${esc(label)}</span></label>`;
+  return `<tr data-row="${i}"><td><input class="input mono" data-mf="id" value="${esc(m.id)}" placeholder="model-id" spellcheck="false"></td><td><input class="input" data-mf="name" value="${esc(m.name || '')}"></td><td class="num"><input class="input num" data-mf="context_window" type="number" min="1" value="${m.context_window || ''}"></td><td class="num"><input class="input num" data-mf="max_tokens" type="number" min="1" value="${m.max_tokens || ''}"></td><td class="inputs">${box('text', T.inputText)}${box('image', T.inputImage)}</td><td class="rowDel"><button type="button" class="iconButton" data-del="${i}" title="${esc(T.remove)}">${icon('trash')}</button></td></tr>`;
 }
 function mountEditor(slot) {
   const dr = models.draft; if (!slot || !dr) return;
@@ -1356,7 +1364,7 @@ function mountEditor(slot) {
   if (q('api_key')) q('api_key').oninput = (e) => { dr.api_key = e.target.value; };
   q('base_url').oninput = (e) => { dr.base_url = e.target.value; };
   if (q('type')) {
-    const typeHint = () => { const info = dr.info || {}; const h = q('typeHint'); h.textContent = info.package ? (info.installed ? `${info.package} · ${T.installed}` : T.notInstalled(info.package, info.extra)) : ''; h.dataset.tone = info.installed === false ? 'error' : ''; };
+    const typeHint = () => { const info = dr.info || {}; const h = q('typeHint'); h.textContent = info.package ? (info.installed ? `${info.package} · ${T.installed}` : T.notInstalled(info.package)) : ''; h.dataset.tone = info.installed === false ? 'error' : ''; };
     q('type').onchange = (e) => { const info = typeById(e.target.value); dr.type = dr.id = info.id; dr.info = info; dr.models = info.models.map((m) => ({ ...m })); dr.base_url = ''; dr.api_key = ''; mountEditor(slot); };
     typeHint();
   }
@@ -1365,7 +1373,12 @@ function mountEditor(slot) {
   if (q('protocol')) q('protocol').onchange = (e) => { dr.protocol = e.target.value; dr.type = (models.data.protocols.find((p) => p.id === dr.protocol) || {}).type || 'openai'; dr.info = typeById(dr.type); q('urlHint').textContent = T.customBaseUrlHint(dr.protocol); };
   f.querySelectorAll('[data-mode]').forEach((b) => { b.onclick = () => { if (dr.mode !== b.dataset.mode) { models.draft = draftForAdd(b.dataset.mode); mountEditor(slot); } }; });
   const table = q('mtable');
-  table.oninput = (e) => { const tr = e.target.closest('[data-row]'); if (!tr) return; const m = dr.models[+tr.dataset.row]; const k = e.target.dataset.mf; if (k === 'context_window' || k === 'max_tokens') m[k] = e.target.value ? +e.target.value : null; else m[k] = e.target.value; };
+  table.oninput = (e) => {
+    const tr = e.target.closest('[data-row]'); if (!tr) return; const m = dr.models[+tr.dataset.row]; const k = e.target.dataset.mf;
+    if (k === 'input') { const picked = [...tr.querySelectorAll('[data-mf="input"]')].filter((b) => b.checked).map((b) => b.value); if (!picked.length) { e.target.checked = true; return; } m.input = picked; }
+    else if (k === 'context_window' || k === 'max_tokens') m[k] = e.target.value ? +e.target.value : null;
+    else m[k] = e.target.value;
+  };
   table.onclick = (e) => { const del = e.target.closest('[data-del]'); if (del) { dr.models.splice(+del.dataset.del, 1); rerenderRows(f); } };
   q('addModel').onclick = () => { dr.models.push({ id: '', name: '' }); rerenderRows(f); f.querySelector('tbody tr:last-child input')?.focus(); };
   if (q('restore')) q('restore').onclick = () => { dr.models = (dr.info.models || []).map((m) => ({ ...m })); rerenderRows(f); };
@@ -1377,7 +1390,7 @@ function mountEditor(slot) {
 function rerenderRows(f) {
   const dr = models.draft; const table = f.querySelector('[data-field="mtable"]');
   const rows = dr.models.map((m, i) => modelRowMarkup(m, i)).join('');
-  table.innerHTML = rows ? `<thead><tr><th>${esc(T.modelId)}</th><th>${esc(T.modelName)}</th><th>${esc(T.contextWindow)}</th><th>${esc(T.maxTokens)}</th><th></th></tr></thead><tbody>${rows}</tbody>` : '';
+  table.innerHTML = rows ? `${HEAD_ROW()}<tbody>${rows}</tbody>` : '';
   f.querySelector('[data-field="modelCount"]').textContent = dr.models.length;
   const note = f.querySelector('[data-field="emptyNote"]');
   if (!rows && !note) table.insertAdjacentHTML('afterend', `<div class="emptyNote" data-field="emptyNote">${esc(T.noModelsYet)}</div>`);
@@ -1397,7 +1410,7 @@ function draftPayload(dr, withModels = true) {
   const body = { base_url: dr.base_url.trim(), api_key: dr.api_key ? dr.api_key : null };
   if (dr.mode === 'catalog') body.type = dr.type;
   if (dr.mode === 'custom') { body.protocol = dr.protocol; body.title = dr.title.trim() || null; }
-  if (withModels) body.models = dr.models.map((m) => ({ id: m.id.trim(), name: (m.name || '').trim() || null, context_window: m.context_window || null, max_tokens: m.max_tokens || null }));
+  if (withModels) body.models = dr.models.map((m) => ({ id: m.id.trim(), name: (m.name || '').trim() || null, context_window: m.context_window || null, max_tokens: m.max_tokens || null, input: m.input && m.input.length ? m.input : ['text'] }));
   return body;
 }
 function routeIdOf(dr, f) {
@@ -1416,7 +1429,7 @@ async function fetchForDraft(f) {
     f.querySelector('[data-field="result"]').hidden = true;
     const picked = await pickModels(r.models, new Set(dr.models.map((m) => m.id)));
     if (!picked) return;
-    for (const m of picked) if (!dr.models.some((x) => x.id === m.id)) dr.models.push({ id: m.id, name: m.name !== m.id ? m.name : '', context_window: m.context_window || null, max_tokens: m.max_tokens || null });
+    for (const m of picked) if (!dr.models.some((x) => x.id === m.id)) dr.models.push({ id: m.id, name: m.name !== m.id ? m.name : '', context_window: m.context_window || null, max_tokens: m.max_tokens || null, input: m.input && m.input.length ? m.input : ['text'] });
     rerenderRows(f); showEditorResult(f, 'ok', T.modelsFound(r.models.length));
   } catch (err) { showEditorResult(f, 'error', err.message); }
   finally { setEditorBusy(f, false); }
@@ -1474,7 +1487,7 @@ function pickModels(candidates, existing) {
     const visible = () => { const q = search.value.trim().toLowerCase(); return candidates.filter((m) => !q || m.id.toLowerCase().includes(q) || (m.name || '').toLowerCase().includes(q)); };
     const render = () => {
       const rows = visible();
-      list.innerHTML = rows.length ? rows.map((m) => `<label class="pickRow"><input type="checkbox" data-id="${esc(m.id)}" ${chosen.has(m.id) ? 'checked' : ''} ${existing.has(m.id) ? 'disabled checked' : ''}><span class="mono" title="${esc(m.id)}">${esc(m.id)}</span>${m.name && m.name !== m.id ? `<span class="sub" title="${esc(m.name)}">${esc(m.name)}</span>` : ''}</label>`).join('') : `<div class="emptyNote">${esc(T.noMatch)}</div>`;
+      list.innerHTML = rows.length ? rows.map((m) => `<label class="pickRow"><input type="checkbox" data-id="${esc(m.id)}" ${chosen.has(m.id) ? 'checked' : ''} ${existing.has(m.id) ? 'disabled checked' : ''}><span class="mono" title="${esc(m.id)}">${esc(m.id)}</span>${m.input && m.input.includes('image') ? `<span class="tag" data-tone="outline">${esc(T.inputImage)}</span>` : ''}${m.name && m.name !== m.id ? `<span class="sub" title="${esc(m.name)}">${esc(m.name)}</span>` : ''}</label>`).join('') : `<div class="emptyNote">${esc(T.noMatch)}</div>`;
       el.querySelector('[data-count]').textContent = T.selected(chosen.size); el.querySelector('[data-add]').disabled = !chosen.size;
     };
     const done = (v) => { el.remove(); document.removeEventListener('keydown', onKey, true); resolve(v); };

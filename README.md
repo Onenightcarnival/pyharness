@@ -41,19 +41,14 @@ uv run pyh run         # supervisor + worker: http://127.0.0.1:8765
 默认模型：`echo:echo`，无需凭据。真实模型：
 
 ```bash
-export OPENAI_API_KEY=...           # OpenAI 及兼容服务：langchain-openai 随 pyharness-llm 安装
-export PYH_MODEL=openai:gpt-4o
-uv run pyh run
-
-uv sync --extra deepseek            # 或 anthropic：其他提供方按需安装
-export DEEPSEEK_API_KEY=...
+export DEEPSEEK_API_KEY=...         # 预置提供方 openai、anthropic、deepseek、google_genai、openrouter 的集成包随 pyharness-llm 安装
 export PYH_MODEL=deepseek:deepseek-chat
 uv run pyh run
 ```
 
 `PYH_MODEL`：`init_chat_model` 可识别的任意 `provider:model`。
 
-也可在 Web 界面左下角「设置 → 模型」里添加提供方：预置 LangChain 提供方（OpenAI、Anthropic、DeepSeek、Gemini、Groq、Ollama……）或自定义 OpenAI / Anthropic 兼容端点；获取模型列表、测试连接、应用即生效，无需重启。每个会话可在输入框的模型菜单里切换模型。路由配置写入 profile 补丁的 `llm` 条目（`providers.<route>`，模型规格为 `route:model`），优先于 `PYH_MODEL`；API Key 存入 `~/.pyharness/profiles/web/credentials.yaml`，配置只记录引用名（环境变量同名时优先）。
+也可在 Web 界面左下角「设置 → 模型」里添加提供方：预置提供方（OpenAI、Anthropic、DeepSeek、Google Gemini、OpenRouter）或自定义 OpenAI / Anthropic 兼容端点；获取模型列表、测试连接、应用即生效，无需重启。每个会话可在输入框的模型菜单里切换模型。路由配置写入 profile 补丁的 `llm` 条目（`providers.<route>`，模型规格为 `route:model`），优先于 `PYH_MODEL`；API Key 存入 `~/.pyharness/profiles/web/credentials.yaml`，配置只记录引用名（环境变量同名时优先）。
 
 ## 命令
 

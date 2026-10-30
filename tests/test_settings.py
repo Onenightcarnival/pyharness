@@ -43,7 +43,7 @@ def test_helpers():
     assert split_spec("gpt-4o") == ("", "gpt-4o")
     assert mask_secret("cs-sk-3078205a-1234") == "••••••••1234"
     assert mask_secret(None) is None
-    assert translate_options("deepseek", {"base_url": "u", "api_key": None, "temperature": 0}) == {"api_base": "u", "temperature": 0}
+    assert translate_options("deepseek", {"base_url": "u", "api_key": None, "temperature": 0}) == {"base_url": "u", "temperature": 0}
     assert translate_options("google_genai", {"api_key": "k"}) == {"google_api_key": "k"}
     assert translate_options("openai", {"base_url": "http://127.0.0.1:1/v1"}) == {
         "base_url": "http://127.0.0.1:1/v1",
@@ -54,7 +54,8 @@ def test_helpers():
     assert reference_for("1x") == "P_1X_API_KEY"
     openai = type_info("openai")
     assert openai["installed"] and openai["env"] == "OPENAI_API_KEY" and openai["models_api"] == "openai"
-    assert type_info("deepseek")["extra"] == "deepseek" and type_info("ollama")["credentials"] is False
+    assert type_info("deepseek")["installed"] and type_info("openrouter")["installed"] and type_info("google_genai")["installed"]
+    assert type_info("ollama")["credentials"] is False and type_info("ollama")["preset"] is False
     assert type_info("nonexistent")["package"] is None
 
 
@@ -68,7 +69,11 @@ def test_config_model():
     custom = ProviderConfig.model_validate(
         {"protocol": "openai-responses", "base_url": "http://x/v1", "models": [{"id": "m", "max_tokens": 10}]}
     )
-    assert custom.models[0].max_tokens == 10
+    assert custom.models[0].max_tokens == 10 and custom.models[0].input == ["text"]
+    vision = ProviderConfig.model_validate({"models": [{"id": "v", "input": ["image", "text"]}]})
+    assert vision.models[0].input == ["text", "image"]
+    with pytest.raises(ValueError):
+        ProviderConfig.model_validate({"models": [{"id": "v", "input": []}]})
 
 
 def test_credential_store(tmp_path, monkeypatch):
@@ -95,7 +100,16 @@ async def test_route_lifecycle_through_the_api(profile):
         async with client(h) as c:
             d = (await c.get("/api/settings/models")).json()
             assert d["default"] == "scripted:test" and d["routes"] == [] and d["editable"] is True
-            assert {c_["id"] for c_ in d["catalog"]} >= {"openai", "anthropic", "deepseek", "ollama", "echo", "scripted"}
+            assert [c_["id"] for c_ in d["catalog"]] == [
+                "openai",
+                "anthropic",
+                "deepseek",
+                "google_genai",
+                "openrouter",
+                "echo",
+                "scripted",
+            ]
+            assert all(c_["installed"] for c_ in d["catalog"])
             assert [p["id"] for p in d["protocols"]] == ["openai-chat", "openai-responses", "anthropic-messages"]
 
             # Create a route on the registered test provider; the key goes to the store, not the configuration.
@@ -105,7 +119,7 @@ async def test_route_lifecycle_through_the_api(profile):
                     "type": "scripted",
                     "title": "Alt",
                     "api_key": "sk-alt-0001",
-                    "models": [{"id": "m1", "name": "Model one"}, {"id": "m2"}],
+                    "models": [{"id": "m1", "name": "Model one", "input": ["text", "image"]}, {"id": "m2"}],
                 },
             )
             assert r.status_code == 200, r.text
@@ -126,7 +140,7 @@ async def test_route_lifecycle_through_the_api(profile):
                 "type": "scripted",
                 "title": "Alt",
                 "api_key_env": "ALT_API_KEY",
-                "models": [{"id": "m1", "name": "Model one"}, {"id": "m2"}],
+                "models": [{"id": "m1", "name": "Model one", "input": ["text", "image"]}, {"id": "m2"}],
             }
             assert '"api_key":' not in json.dumps(llm_op)
 
@@ -141,7 +155,10 @@ async def test_route_lifecycle_through_the_api(profile):
                         "id": "alt",
                         "title": "Alt",
                         "type": "scripted",
-                        "models": [{"id": "m1", "name": "Model one", "spec": "alt:m1"}, {"id": "m2", "name": "m2", "spec": "alt:m2"}],
+                        "models": [
+                            {"id": "m1", "name": "Model one", "spec": "alt:m1", "input": ["text", "image"]},
+                            {"id": "m2", "name": "m2", "spec": "alt:m2", "input": ["text"]},
+                        ],
                     }
                 ],
             }
