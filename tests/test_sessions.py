@@ -198,3 +198,28 @@ async def test_native_picker_through_a_command(profile, tmp_path, monkeypatch):
         assert h.get("workspace").picker() == "browse"
         async with client(h) as c:
             assert (await c.post("/api/workspaces/pick", json={})).status_code == 422
+
+
+async def test_workspace_and_session_rename(profile, tmp_path):
+    other = tmp_path / "other"
+    other.mkdir()
+    async with Harness(profile, patch=patch([])) as h:
+        async with client(h) as c:
+            r = (await c.put("/api/workspaces", json={"path": str(other), "name": "Side project"})).json()
+            assert r["name"] == "Side project"
+            recent = (await c.get("/api/workspaces")).json()["recent"]
+            assert next(w for w in recent if w["root"] == str(other.resolve()))["name"] == "Side project"
+            # Remembering again (a new session) keeps the display name; an empty name restores the directory name.
+            await c.post("/api/sessions", json={"workspace": str(other)})
+            recent = (await c.get("/api/workspaces")).json()["recent"]
+            assert next(w for w in recent if w["root"] == str(other.resolve()))["name"] == "Side project"
+            r = (await c.put("/api/workspaces", json={"path": str(other), "name": ""})).json()
+            assert r["name"] == "other"
+            # The default workspace can be renamed too.
+            r = (await c.put("/api/workspaces", json={"path": None, "name": "Main"})).json()
+            assert (await c.get("/api/workspaces")).json()["recent"][0]["name"] == "Main"
+            assert (await c.put("/api/workspaces", json={"path": "relative", "name": "x"})).status_code == 422
+            s = (await c.post("/api/sessions", json={"title": "first"})).json()
+            assert (await c.put(f"/api/sessions/{s['id']}", json={"title": "  Renamed  "})).json()["title"] == "Renamed"
+            assert (await c.get(f"/api/sessions/{s['id']}")).json()["title"] == "Renamed"
+            assert (await c.put("/api/sessions/nope", json={"title": "x"})).status_code == 404

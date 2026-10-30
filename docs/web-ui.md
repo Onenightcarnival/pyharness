@@ -21,7 +21,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 
 | 区域 | 内容 |
 |---|---|
-| 侧边栏 | 品牌行与当前代；新会话；插件页入口；「工作区」区头（添加工作区）与按工作区分组的会话列表（默认工作区在前；点工作区行在该目录新建会话）：相对时间、运行中圆点、悬停删除；底部「更多」菜单：设置、主题、profile 状态。收起后为图标栏，点标志展开 |
+| 侧边栏 | 品牌行与当前代；新会话；插件页入口；「工作区」区头（搜索会话、视图选项：按工作区分组 / 单一列表、按最近更新 / 创建时间排序，添加工作区）；工作区行可折叠，悬停显示「操作」（重命名、删除工作区：从列表移除，文件夹与会话保留，会话归入「未分组」）与「在此新建会话」；会话行：相对时间、运行中圆点，悬停显示操作菜单（重命名、复制会话 ID、删除会话，删除需确认）；底部「更多」菜单：设置、主题、profile 状态。收起后为图标栏，点标志展开 |
 | 会话参数 | 欢迎区两个标签：工作区（最近列表、「选择目录…」打开本机的系统文件夹对话框，macOS `osascript` / Windows PowerShell / Linux zenity、kdialog；无对话框时退回内置目录浏览器；会话创建后不可改）、预设（标准 / 创造）；输入框左下角权限标签（仅可查看 / 工作区内修改 / 完全权限，切换完全权限需确认；已有会话可切换，下一轮生效）。会话打开后顶栏显示其工作区与预设 |
 | 对话 | 空会话：居中欢迎区与输入框。用户消息：浅蓝气泡，附图显示在气泡上方。回复：Markdown（代码块带语言与复制、表格、引用、图片），模型返回的图片块作为图片渲染；点击图片放大 |
 | 图片输入 | 输入框的「+」按钮、粘贴、拖入：PNG / JPEG / GIF / WebP，最多 8 张，超过 2048px 的边在浏览器内缩放，压缩后 8 MB 以内；缩略图可移除；当前模型未勾选「图像」输入时拒绝并提示 |
@@ -49,13 +49,15 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | GET | `/plugins` | | Loader 条目、已安装 bundle |
 | GET | `/sessions` | | 会话列表 |
 | POST | `/sessions` | `{"title"?, "model"?, "workspace"?, "mode"?, "preset"?}` | 会话；工作区为绝对路径，不在 harness home 内 |
+| PUT | `/sessions/{id}` | `{"title"}` | 重命名会话 |
 | PUT | `/sessions/{id}/mode` | `{"mode"}` | 权限模式；下一轮生效 |
 | PUT | `/sessions/{id}/preset` | `{"preset"}` | 预设；下一轮生效 |
 | GET | `/agent` | | 预设、权限模式、新会话默认 |
 | PUT | `/settings/agent` | `{"default_preset"?, "default_mode"?}` | 新会话默认；写入 profile 补丁 |
 | GET | `/workspaces` | | 默认与最近工作区 |
 | POST | `/workspaces` | `{"path"}` | 校验并记住工作区 |
-| DELETE | `/workspaces?path=` | | 从最近列表移除 |
+| PUT | `/workspaces` | `{"path", "name"}` | 工作区显示名；空值恢复目录名 |
+| DELETE | `/workspaces?path=` | | 从最近列表移除；文件夹与会话保留 |
 | POST | `/workspaces/browse` | `{"path"?}` | 一级目录列表（仅目录，隐藏目录标记） |
 | POST | `/workspaces/pick` | `{"path"?: 提示语}` | 本机系统文件夹对话框；取消为 `{"path": null}`；`GET /workspaces` 的 `picker` 为 `native` 或 `browse` |
 | GET | `/sessions/{id}` | | 会话、运行状态、消息、待批准项 |

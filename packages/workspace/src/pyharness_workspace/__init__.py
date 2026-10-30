@@ -13,6 +13,7 @@
 | ``open(path)``               | a validated :class:`Workspace` for ``path``; ``None`` is the default       |
 | ``backend_for(path, shell)`` | cached backend for a workspace; ``shell=False`` gives a filesystem-only one |
 | ``recent()`` / ``remember`` / ``forget`` | workspaces used by sessions, kept in ``ctx.store``                |
+| ``rename(path, name)``       | display name of a workspace (``None`` restores the directory name)       |
 | ``browse(path)``             | one directory level: subdirectories only, for the in-app picker          |
 | ``picker()``                 | ``native`` (an OS folder dialog on this machine) or ``browse``            |
 | ``pick(prompt)``             | opens the OS folder dialog; the chosen absolute path, or ``None``        |
@@ -186,20 +187,48 @@ class Workspaces:
         if store is not None:
             items = await store.asearch(NAMESPACE, limit=self.config.recent_limit * 2)
             rows = sorted((dict(i.value) for i in items), key=lambda r: r.get("last_used") or 0, reverse=True)
-        default = self.default.describe() | {"default": True, "exists": True}
+        default_row = next((r for r in rows if r.get("root") == str(self.default.root)), {})
+        default = self.default.describe() | {"default": True, "exists": True, "name": default_row.get("name") or self.default.name}
         out = [default]
         for row in rows:
             if row.get("root") == str(self.default.root):
                 continue
-            out.append({**row, "default": False, "exists": Path(row["root"]).is_dir()})
+            out.append(
+                {
+                    **row,
+                    "name": row.get("name") or Path(row["root"]).name or row["root"],
+                    "default": False,
+                    "exists": Path(row["root"]).is_dir(),
+                }
+            )
         return out[: self.config.recent_limit]
 
     async def remember(self, path: str | os.PathLike[str] | None) -> dict[str, Any]:
         workspace = self.open(path)
-        record = workspace.describe() | {"last_used": time.time()}
         store = self._store()
+        previous = await store.aget(NAMESPACE, str(workspace.root)) if store is not None else None
+        record = workspace.describe() | {"last_used": time.time()}
+        if previous is not None and previous.value.get("name"):
+            record["name"] = previous.value["name"]
         if store is not None and workspace is not self.default:
             await store.aput(NAMESPACE, str(workspace.root), record)
+        return record
+
+    async def rename(self, path: str | os.PathLike[str] | None, name: str | None) -> dict[str, Any]:
+        """Set the display name shown for a workspace; empty or ``None`` restores the directory name."""
+        workspace = self.open(path)
+        store = self._store()
+        if store is None:
+            raise WorkspaceError("no store: workspace names are not persisted")
+        item = await store.aget(NAMESPACE, str(workspace.root))
+        record = dict(item.value) if item is not None else workspace.describe() | {"last_used": time.time()}
+        name = (name or "").strip()
+        if name:
+            record["name"] = name[:80]
+        else:
+            record.pop("name", None)
+            record["name"] = workspace.name
+        await store.aput(NAMESPACE, str(workspace.root), record)
         return record
 
     async def forget(self, path: str) -> bool:

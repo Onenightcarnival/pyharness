@@ -328,6 +328,10 @@ class AgentService(Service):
         """Select ``model`` (``route:model``; ``None`` = the default) for the session's next requests."""
         return await self._set(session_id, "model", model or None)
 
+    async def set_title(self, session_id: str, title: str | None) -> dict[str, Any] | None:
+        """Rename the session; empty keeps automatic titling from the next message."""
+        return await self._set(session_id, "title", (title or "").strip()[: self.config.title_chars] or None)
+
     async def set_mode(self, session_id: str, mode: str | None) -> dict[str, Any] | None:
         """Switch the permission mode; takes effect on the next run."""
         return await self._set(session_id, "mode", self.ctx.agentLoop.mode(mode))

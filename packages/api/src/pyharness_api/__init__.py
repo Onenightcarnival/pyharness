@@ -12,6 +12,7 @@
 | POST   | ``/sessions/{id}/cancel``    |                               | ``{"cancelled"}``                           |
 | DELETE | ``/sessions/{id}``           |                               | ``{"deleted"}``                             |
 | GET    | ``/sessions/{id}/stream``    |                               | SSE of the running turn; 204 when idle      |
+| PUT    | ``/sessions/{id}``           | ``{"title"}``                 | rename the session                          |
 | PUT    | ``/sessions/{id}/model``     | ``{"model"}``                 | select ``route:model`` for the session      |
 | PUT    | ``/sessions/{id}/mode``      | ``{"mode"}``                  | permission mode; next run                   |
 | PUT    | ``/sessions/{id}/preset``    | ``{"preset"}``                | agent preset; next run                      |
@@ -20,6 +21,7 @@
 | GET    | ``/workspaces``              |                               | default and recent workspaces, picker kind  |
 | POST   | ``/workspaces/pick``         | ``{"path"?: prompt}``         | OS folder dialog on this machine; null = cancelled |
 | POST   | ``/workspaces``              | ``{"path"}``                  | validate and remember a workspace           |
+| PUT    | ``/workspaces``              | ``{"path", "name"}``          | display name of a workspace                 |
 | DELETE | ``/workspaces?path=``        |                               | forget a workspace                          |
 | POST   | ``/workspaces/browse``       | ``{"path"?}``                 | one directory level for the picker          |
 | GET    | ``/models``                  |                               | selector directory: routes, models, default |
@@ -83,6 +85,11 @@ class SessionPreset(BaseModel):
 
 class WorkspacePath(BaseModel):
     path: str | None = None
+    name: str | None = None
+
+
+class SessionTitle(BaseModel):
+    title: str | None = None
 
 
 class AgentDefaults(BaseModel):
@@ -204,6 +211,13 @@ def build_router(ctx: Any) -> APIRouter:
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
 
+    @router.put("/sessions/{session_id}")
+    async def rename_session(session_id: str, body: SessionTitle) -> dict[str, Any]:
+        record = await agents.set_title(session_id, body.title)
+        if record is None:
+            raise HTTPException(404, f"no session {session_id}")
+        return record
+
     @router.put("/sessions/{session_id}/model")
     async def set_session_model(session_id: str, body: SessionModel) -> dict[str, Any]:
         record = await agents.set_model(session_id, body.model)
@@ -271,6 +285,16 @@ def build_router(ctx: Any) -> APIRouter:
             raise HTTPException(503, "workspace registry unavailable")
         try:
             return await workspaces.remember(body.path)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+
+    @router.put("/workspaces")
+    async def rename_workspace(body: WorkspacePath) -> dict[str, Any]:
+        workspaces = ctx.get("workspace", None)
+        if workspaces is None or not hasattr(workspaces, "rename"):
+            raise HTTPException(503, "workspace registry unavailable")
+        try:
+            return await workspaces.rename(body.path, body.name)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
 

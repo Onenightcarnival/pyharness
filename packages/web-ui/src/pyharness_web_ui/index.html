@@ -156,7 +156,21 @@ svg { display: block; }
 .iconButton.sm .ico { width: 14px; height: 14px; }
 .sessions { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 8px; }
 .projectRow, .sessionRow { display: flex; align-items: center; border-radius: var(--r-md); margin: 0 3px; padding: 0 8px 0 9px; color: var(--label-primary); }
-.projectRow { height: 34px; gap: 6px; }
+.projectRow { height: 34px; gap: 6px; cursor: pointer; }
+.projectRow .fold { display: none; width: 16px; height: 16px; color: var(--label-tertiary); transition: transform 0.15s var(--ease); }
+.projectRow[data-folded] .fold { transform: rotate(-90deg); }
+.projectRow .rowActions { display: none; margin-left: auto; gap: 2px; }
+.projectRow .rowActions .iconButton, .sessionRow .rowActions .iconButton { width: 22px; height: 22px; border-radius: var(--r-xs); color: var(--label-tertiary); }
+.projectRow .rowActions .iconButton .ico, .sessionRow .rowActions .iconButton .ico { width: 14px; height: 14px; }
+.projectRow[data-menu-open] .rowActions, .sessionRow[data-menu-open] .rowActions { display: inline-flex; }
+.sessionRow .rowActions { display: none; margin: -3px -4px -3px 0; gap: 2px; }
+.sidebar .menu { position: fixed; bottom: auto; right: auto; min-width: 200px; }
+.menuRow[data-danger] { color: var(--error); }
+.menuRow[data-danger] .ico.lead { color: var(--error); }
+.searchRow { padding: 0 8px 6px; }
+.searchRow .input { height: 30px; font-size: 13px; }
+.regionHead .iconButton[aria-pressed='true'] { background: var(--hover); color: var(--label-primary); }
+.sessionRow .tag { margin-right: 6px; }
 .projectRow .folder { color: var(--info); }
 .projectRow .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 20px; }
 .sessionRow { position: relative; height: 32px; padding-inline-start: 31px; cursor: pointer; border: none; background: transparent; width: calc(100% - 6px); text-align: left; }
@@ -164,7 +178,7 @@ svg { display: block; }
 .sessionRow .title { flex: 1; min-width: 0; margin-right: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 20px; }
 .sessionRow .time { flex: none; font-size: 10px; line-height: 16px; color: var(--label-tertiary); }
 .sessionRow .busyDot { position: absolute; left: 15px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; corner-shape: round; background: var(--info); animation: pulse 1.6s var(--ease) infinite; }
-.sessionRow .rowAction { display: none; width: 22px; height: 22px; margin: -3px -4px -3px 0; border: none; border-radius: var(--r-xs); padding: 0; background: transparent; color: var(--label-tertiary); align-items: center; justify-content: center; }
+.sessionRow .rowAction { display: none; }
 .empty { padding: 6px 12px 0 31px; color: var(--label-caption); font-size: 12px; }
 .foot { position: relative; flex: none; display: flex; align-items: center; gap: 8px; padding: 6px 0 2px; border-top: 0.5px solid var(--border-l2); margin: 0 4px; }
 .moreRow { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 36px; padding: 7px 9px; border: none; border-radius: var(--r-md); background: transparent; color: var(--label-primary); font-size: 13px; line-height: 20px; text-align: left; }
@@ -457,6 +471,8 @@ svg { display: block; }
 .modalHead { padding: 14px 16px 6px; font-size: 15px; font-weight: 500; }
 .modalBody { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 12px; }
 .modalBody p { margin: 6px 4px 10px; font-size: 13px; line-height: 20px; color: var(--label-secondary); }
+.modalBody .input { margin: 4px 4px 8px; width: calc(100% - 8px); }
+.modalCard.narrow { width: min(440px, 100%); height: auto; }
 .modalFoot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 16px; border-top: 0.5px solid var(--border-l2); }
 .modalFoot .spacer { flex: 1; }
 .modalFoot .count { font-size: 12px; color: var(--label-tertiary); }
@@ -525,8 +541,10 @@ svg { display: block; }
   .iconButton:hover, .panelRow:hover, .projectRow:hover, .sessionRow:hover, .chip:hover, .selectChip:hover:not(:disabled) { background: var(--hover); }
   .newSession:hover { background: var(--floating-hover); }
   .sessionRow:hover .time { display: none; }
-  .sessionRow:hover .rowAction { display: inline-flex; }
-  .rowAction:hover { color: var(--label-primary); }
+  .sessionRow:hover .rowActions, .projectRow:hover .rowActions { display: inline-flex; }
+  .projectRow:hover .folder { display: none; }
+  .projectRow:hover .fold { display: block; }
+  .rowActions .iconButton:hover { color: var(--label-primary); background: var(--active); }
   .drow:hover { color: var(--label-secondary); }
   .drow:hover .lead .leadIcon { opacity: 0; }
   .drow:hover .lead .chevron { opacity: 1; }
@@ -536,7 +554,7 @@ svg { display: block; }
   .send[data-mode='stop']:hover { background: var(--primary-hover); }
   .btn:hover:not(:disabled) { background: var(--hover); }
   .btn.primary:hover:not(:disabled) { background: var(--primary-hover); }
-  .btn.reject:hover:not(:disabled) { background: var(--hover-danger); color: var(--error); }
+  .btn.reject:hover:not(:disabled), .btn.danger:hover:not(:disabled) { background: var(--hover-danger); color: var(--error); }
   .moreRow:hover, .settingsNav button:hover { background: var(--hover); }
   .themeCard:hover { background: var(--hover-solid); }
   .prow:hover { background: var(--hover); }
@@ -612,6 +630,7 @@ svg { display: block; }
     <symbol id="i-unlock" viewBox="0 0 16 16"><rect x="3.25" y="7.25" width="9.5" height="6.5" rx="1.5"/><path d="M5.5 7.25V5a2.5 2.5 0 0 1 4.9-.7"/></symbol>
     <symbol id="i-mode" viewBox="0 0 16 16"><path d="m8 2.25 6 3-6 3-6-3z"/><path d="m2 8.25 6 3 6-3M2 11.25l6 3 6-3"/></symbol>
     <symbol id="i-shield" viewBox="0 0 16 16"><path d="M8 1.75 2.75 3.9v4.1c0 2.9 2.2 5.2 5.25 6.25 3.05-1.05 5.25-3.35 5.25-6.25V3.9z"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 16 16"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/><circle cx="6" cy="4.5" r="1.4" fill="var(--sidebar-fill)"/><circle cx="10.5" cy="8" r="1.4" fill="var(--sidebar-fill)"/><circle cx="5" cy="11.5" r="1.4" fill="var(--sidebar-fill)"/></symbol>
     <symbol id="i-spinner" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.75" opacity=".25"/><path d="M8 2.25a5.75 5.75 0 0 1 5.75 5.75"/></symbol>
     <!-- Mark: four plugin tiles. -->
     <symbol id="i-mark" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="8.5" height="8.5" rx="2.6" fill="currentColor" stroke="none"/><rect x="13" y="2.5" width="8.5" height="8.5" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="13" width="8.5" height="8.5" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="13" width="8.5" height="8.5" rx="2.6" fill="var(--info)" stroke="none"/></symbol>
@@ -630,7 +649,8 @@ svg { display: block; }
       <button class="panelRow" id="navPlugins" data-i18n-title="plugins"><svg class="ico"><use href="#i-plug"/></svg><span data-i18n="plugins"></span><span class="count" id="pluginCount"></span></button>
     </nav>
     <div class="region">
-      <div class="regionHead"><span data-i18n="workspaces"></span><button class="iconButton sm" id="addWorkspace" data-i18n-title="addWorkspace"><svg class="ico"><use href="#i-folder-plus"/></svg></button></div>
+      <div class="regionHead"><span data-i18n="workspaces"></span><button class="iconButton sm" id="searchToggle" data-i18n-title="searchSessions"><svg class="ico"><use href="#i-search"/></svg></button><button class="iconButton sm" id="viewOptions" data-i18n-title="viewOptions"><svg class="ico"><use href="#i-sliders"/></svg></button><button class="iconButton sm" id="addWorkspace" data-i18n-title="addWorkspace"><svg class="ico"><use href="#i-folder-plus"/></svg></button></div>
+      <div class="searchRow" id="searchRow" hidden><input class="input" id="searchInput" data-i18n-placeholder="searchPlaceholder" autocomplete="off"></div>
       <div class="sessions" id="sessions"></div>
     </div>
     <div class="foot">
@@ -728,7 +748,9 @@ const T = zh ? {
 };
 Object.assign(T, zh ? {
   settings: '设置', settingsIntro: '保存后立即生效，无需重启；密钥写入 profile 的凭据文件，配置文件只记录引用名。',
-  workspaces: '工作区', addWorkspace: '添加工作区', more: '更多', close: '关闭', tabGeneral: '通用', tabModels: '模型', tabPresets: '预设', tabPlugins: '内置插件', appearance: '外观', appearanceHint: '跟随系统或固定明暗。', themeLight: '浅色', themeDark: '深色', themeSystem: '跟随系统', language: '语言', languageHint: '跟随浏览器语言。', builtin: '内置', presetsIntro: '选择 agent 的工具与工作方式。标准模式做日常任务，创造模式扩展 harness。', newTaskDefault: '新会话默认', pluginsTabIntro: '当前 profile 的条目与状态；安装与启停在侧边栏的插件页。', refresh: '刷新', theme: '主题',
+  workspaces: '工作区', addWorkspace: '添加工作区', more: '更多', searchSessions: '搜索会话', searchPlaceholder: '搜索会话名称', viewOptions: '视图选项', groupBy: '分组', groupWorkspace: '按工作区', groupNone: '单一列表', orderBy: '排序', orderUpdated: '最近更新', orderCreated: '创建时间', ungrouped: '未分组',
+  wsActions: (n) => `工作区「${n}」的操作`, newSessionIn: (n) => `在「${n}」新建会话`, renameWorkspace: '重命名', deleteWorkspace: '删除工作区', deleteWorkspaceText: (n) => `将「${n}」从工作区列表移除。文件夹与会话记录保留，其会话将显示在「未分组」下。`, renameWorkspaceTitle: '重命名工作区', renameLabel: '重命名', cannotDeleteDefault: '默认工作区不可删除',
+  sessionActions: '会话操作', renameSession: '重命名', copyId: '复制会话 ID', deleteSession: '删除会话', deleteSessionText: (t) => `删除「${t}」？会话记录将一并删除，不可恢复。`, renameSessionTitle: '重命名会话', noMatch_: '没有匹配的会话', close: '关闭', tabGeneral: '通用', tabModels: '模型', tabPresets: '预设', tabPlugins: '内置插件', appearance: '外观', appearanceHint: '跟随系统或固定明暗。', themeLight: '浅色', themeDark: '深色', themeSystem: '跟随系统', language: '语言', languageHint: '跟随浏览器语言。', builtin: '内置', presetsIntro: '选择 agent 的工具与工作方式。标准模式做日常任务，创造模式扩展 harness。', newTaskDefault: '新会话默认', pluginsTabIntro: '当前 profile 的条目与状态；安装与启停在侧边栏的插件页。', refresh: '刷新', theme: '主题',
   modelsTitle: '模型', modelChip: '选择模型', defaultModel: '新会话默认模型', defaultModelHint: '新建会话使用的模型；每个会话可在输入框的模型菜单里单独切换。', noDefault: '未设置',
   addProvider: '添加模型提供方', thirdParty: '第三方模型提供方', customApi: '自定义模型 API', thirdPartyHint: '预置的 LangChain 提供方；填写密钥与模型列表即可。', customApiHint: '自建服务、中转网关或其他 OpenAI / Anthropic 兼容端点。',
   providerType: '提供方类型', providerId: '提供方 ID', providerIdHint: '小写字母、数字、- 与 _；用作配置键与凭据引用名，保存后不可改。', displayName: '显示名称', protocol: 'API 协议',
@@ -747,7 +769,9 @@ Object.assign(T, zh ? {
   defaultTag: '默认', selectModel: '选择模型', manageModels: '管理模型…', noModels: '没有可用模型；先在设置里添加提供方。', modelSelected: (n) => `已切换到 ${n}`, modelsCount: (n) => `${n} 个模型`, readonly: '无 profile：设置只读。', showKey: '显示 / 隐藏密钥',
 } : {
   settings: 'Settings', settingsIntro: 'Changes apply at once, without a restart; keys go to the profile credential file and the configuration keeps only the reference name.',
-  workspaces: 'Workspaces', addWorkspace: 'Add workspace', more: 'More', close: 'Close', tabGeneral: 'General', tabModels: 'Models', tabPresets: 'Agent presets', tabPlugins: 'Built-in plugins', appearance: 'Appearance', appearanceHint: 'Follow the system or pin light or dark.', themeLight: 'Light', themeDark: 'Dark', themeSystem: 'System', language: 'Language', languageHint: 'Follows the browser language.', builtin: 'Built-in', presetsIntro: "Choose the agent's tools and how it works. Standard for everyday tasks, Creator to extend the harness.", newTaskDefault: 'New task default', pluginsTabIntro: 'Entries of the current profile with their state; install and toggle on the sidebar Plugins page.', refresh: 'Refresh', theme: 'Theme',
+  workspaces: 'Workspaces', addWorkspace: 'Add workspace', more: 'More', searchSessions: 'Search sessions', searchPlaceholder: 'Search session names', viewOptions: 'View options', groupBy: 'Group by', groupWorkspace: 'Workspace', groupNone: 'In one list', orderBy: 'Order by', orderUpdated: 'Last updated', orderCreated: 'Created', ungrouped: 'Ungrouped',
+  wsActions: (n) => `Workspace actions for ${n}`, newSessionIn: (n) => `New session in ${n}`, renameWorkspace: 'Rename', deleteWorkspace: 'Delete workspace', deleteWorkspaceText: (n) => `This removes "${n}" from the workspace list. The folder and session logs will be kept. Its sessions will appear under Ungrouped.`, renameWorkspaceTitle: 'Rename workspace', renameLabel: 'Rename', cannotDeleteDefault: 'The default workspace cannot be deleted',
+  sessionActions: 'Session actions', renameSession: 'Rename', copyId: 'Copy session ID', deleteSession: 'Delete session', deleteSessionText: (t) => `Delete "${t}"? Its history is deleted and cannot be restored.`, renameSessionTitle: 'Rename session', noMatch_: 'No matching sessions', close: 'Close', tabGeneral: 'General', tabModels: 'Models', tabPresets: 'Agent presets', tabPlugins: 'Built-in plugins', appearance: 'Appearance', appearanceHint: 'Follow the system or pin light or dark.', themeLight: 'Light', themeDark: 'Dark', themeSystem: 'System', language: 'Language', languageHint: 'Follows the browser language.', builtin: 'Built-in', presetsIntro: "Choose the agent's tools and how it works. Standard for everyday tasks, Creator to extend the harness.", newTaskDefault: 'New task default', pluginsTabIntro: 'Entries of the current profile with their state; install and toggle on the sidebar Plugins page.', refresh: 'Refresh', theme: 'Theme',
   modelsTitle: 'Models', modelChip: 'Select model', defaultModel: 'Default model for new sessions', defaultModelHint: 'Used by new sessions; each session can switch in the composer model menu.', noDefault: 'Not set',
   addProvider: 'Add model provider', thirdParty: 'Third-party model provider', customApi: 'Custom model API', thirdPartyHint: 'LangChain providers; enter a key and the model list.', customApiHint: 'A self-hosted server, relay, or any other OpenAI- or Anthropic-compatible endpoint.',
   providerType: 'Provider', providerId: 'Provider ID', providerIdHint: 'Lowercase letters, digits, - and _; the configuration key and credential reference stem; fixed after saving.', displayName: 'Display name', protocol: 'API protocol',
@@ -768,6 +792,7 @@ Object.assign(T, zh ? {
 document.documentElement.lang = zh ? 'zh-CN' : 'en';
 document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = T[el.dataset.i18n]; });
 document.querySelectorAll('[data-i18n-title]').forEach((el) => { el.title = T[el.dataset.i18nTitle]; el.setAttribute('aria-label', T[el.dataset.i18nTitle]); });
+document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => { el.placeholder = T[el.dataset.i18nPlaceholder]; });
 
 const state = { sessions: [], current: null, view: 'chat', streaming: false, generation: null, health: null, run: null, pending: false, directory: null, sessionModel: null, agent: null, workspaces: null, session: null, sessionWorkspace: null, sessionMode: null, sessionPreset: null };
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -914,42 +939,143 @@ async function refreshHealth() {
   }
 }
 
+const sidebarView = (() => { try { return JSON.parse(localStorage.getItem('pyh-sidebar') || '{}'); } catch { return {}; } })();
+function saveSidebarView() { try { localStorage.setItem('pyh-sidebar', JSON.stringify(sidebarView)); } catch { /* no storage */ } }
+const folded = new Set(sidebarView.folded || []);
+let sessionQuery = '';
 async function refreshSessions() {
-  try { state.sessions = await json('/sessions'); } catch { return; }
-  const box = $('sessions');
-  const defaultPath = state.health?.workspace?.path || '';
-  const defaultName = state.health?.workspace?.name || 'workspace';
-  const groups = new Map();
-  for (const s of state.sessions) { const key = s.workspace || defaultPath; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(s); }
-  if (!groups.has(defaultPath)) groups.set(defaultPath, []);
-  const row = (s) => `
-    <div class="sessionRow${s.id === state.current ? ' selected' : ''}" data-id="${esc(s.id)}" role="button" tabindex="0">
+  try { [state.sessions, state.workspaces] = await Promise.all([json('/sessions'), json('/workspaces').catch(() => state.workspaces)]); } catch { return; }
+  renderSessions();
+}
+function sessionRowHtml(s) {
+  return `
+    <div class="sessionRow${s.id === state.current ? ' selected' : ''}" data-id="${esc(s.id)}" role="button" tabindex="0" title="${esc(s.title || T.untitled)}">
       ${s.busy ? '<span class="busyDot"></span>' : ''}
       <span class="title">${esc(s.title || T.untitled)}</span>
       <span class="time">${esc(ago(s.updated_at))}</span>
-      <button class="rowAction" data-delete="${esc(s.id)}" title="${esc(T.del)}" aria-label="${esc(T.del)}">${icon('trash')}</button>
+      <span class="rowActions"><button class="iconButton" data-session-menu="${esc(s.id)}" title="${esc(T.sessionActions)}" aria-label="${esc(T.sessionActions)}">${icon('dots')}</button></span>
     </div>`;
-  const ordered = [defaultPath, ...[...groups.keys()].filter((k) => k !== defaultPath)];
-  box.innerHTML = ordered.map((key) => {
-    const name = key === defaultPath ? defaultName : key.split('/').filter(Boolean).pop() || key;
-    const rows = groups.get(key).map(row).join('');
-    return `<div class="projectRow" title="${esc(key)}" data-workspace="${esc(key)}" role="button" tabindex="0"><span class="folder">${icon('folder')}</span><span class="name">${esc(name)}</span></div>${rows || `<div class="empty">${esc(T.noSessions)}</div>`}`;
-  }).join('');
 }
-$('sessions').addEventListener('click', async (e) => {
-  const del = e.target.closest('[data-delete]');
-  if (del) {
-    e.stopPropagation();
-    try { await api('/sessions/' + del.dataset.delete, { method: 'DELETE' }); toast(T.deleted); } catch (err) { toast(err.message); return; }
-    if (state.current === del.dataset.delete) newSession();
-    refreshSessions();
+function renderSessions() {
+  const box = $('sessions');
+  const defaultPath = state.health?.workspace?.path || '';
+  const order = sidebarView.order === 'created' ? (a, b) => (b.created_at || 0) - (a.created_at || 0) : (a, b) => (b.updated_at || 0) - (a.updated_at || 0);
+  const q = sessionQuery.trim().toLowerCase();
+  const sessions = state.sessions.filter((s) => !q || (s.title || T.untitled).toLowerCase().includes(q)).sort(order);
+  if (sidebarView.group === 'none') {
+    box.innerHTML = sessions.map(sessionRowHtml).join('') || `<div class="empty">${esc(q ? T.noMatch_ : T.noSessions)}</div>`;
     return;
   }
+  const known = state.workspaces?.recent || [{ root: defaultPath, name: state.health?.workspace?.name || 'workspace', default: true, exists: true }];
+  const groups = new Map(known.map((w) => [w.root, { ...w, sessions: [] }]));
+  const ungrouped = [];
+  for (const s of sessions) { const key = s.workspace || defaultPath; if (groups.has(key)) groups.get(key).sessions.push(s); else ungrouped.push(s); }
+  const html = [];
+  for (const w of groups.values()) {
+    const isFolded = folded.has(w.root);
+    const rows = w.sessions.map(sessionRowHtml).join('');
+    html.push(`<div class="projectRow" title="${esc(w.root)}" data-workspace="${esc(w.root)}" ${isFolded ? 'data-folded' : ''} role="button" tabindex="0" aria-expanded="${!isFolded}">
+      <span class="folder">${icon('folder')}</span>${icon('chev-down', 'ico fold')}<span class="name">${esc(w.name)}</span>
+      <span class="rowActions"><button class="iconButton" data-ws-menu="${esc(w.root)}" title="${esc(T.wsActions(w.name))}" aria-label="${esc(T.wsActions(w.name))}">${icon('dots')}</button><button class="iconButton" data-ws-new="${esc(w.root)}" title="${esc(T.newSessionIn(w.name))}" aria-label="${esc(T.newSessionIn(w.name))}">${icon('plus-circle')}</button></span>
+    </div>`);
+    if (!isFolded) html.push(rows || (q ? '' : `<div class="empty">${esc(T.noSessions)}</div>`));
+  }
+  if (ungrouped.length) {
+    const isFolded = folded.has('__ungrouped');
+    html.push(`<div class="projectRow" data-workspace="__ungrouped" ${isFolded ? 'data-folded' : ''} role="button" tabindex="0"><span class="folder">${icon('box')}</span>${icon('chev-down', 'ico fold')}<span class="name">${esc(T.ungrouped)}</span></div>`);
+    if (!isFolded) html.push(ungrouped.map(sessionRowHtml).join(''));
+  }
+  box.innerHTML = html.join('');
+}
+let rowMenu = null;
+function closeRowMenu() {
+  if (!rowMenu) return;
+  rowMenu.anchorRow?.removeAttribute('data-menu-open');
+  rowMenu.remove(); rowMenu = null;
+  document.removeEventListener('mousedown', onRowMenuOutside, true); document.removeEventListener('keydown', onRowMenuKey, true);
+}
+function onRowMenuOutside(e) { if (rowMenu && !rowMenu.contains(e.target)) closeRowMenu(); }
+function onRowMenuKey(e) { if (rowMenu && e.key === 'Escape') closeRowMenu(); }
+function openRowMenu(button, items, onPick) {
+  closeRowMenu();
+  const row = button.closest('.projectRow, .sessionRow'); row?.setAttribute('data-menu-open', '');
+  rowMenu = document.createElement('div'); rowMenu.className = 'menu'; rowMenu.setAttribute('role', 'menu'); rowMenu.anchorRow = row;
+  rowMenu.innerHTML = items.map((it) => `<button type="button" class="menuRow" data-pick="${esc(it.id)}" ${it.danger ? 'data-danger' : ''}>${icon(it.icon, 'ico lead')}<span class="label">${esc(it.label)}</span></button>`).join('');
+  const r = button.getBoundingClientRect();
+  rowMenu.style.left = `${Math.min(r.left, window.innerWidth - 220)}px`; rowMenu.style.top = `${r.bottom + 4}px`;
+  $('sidebar').appendChild(rowMenu);
+  rowMenu.onclick = async (e) => { const pick = e.target.closest('[data-pick]')?.dataset.pick; if (!pick) return; closeRowMenu(); await onPick(pick); };
+  document.addEventListener('mousedown', onRowMenuOutside, true); document.addEventListener('keydown', onRowMenuKey, true);
+  rowMenu.querySelector('.menuRow')?.focus();
+}
+function promptDialog(title, value, confirmLabel) {
+  return new Promise((resolve) => {
+    const el = modal(`<div class="modalHead">${esc(title)}</div><div class="modalBody"><input class="input" data-value autocomplete="off"></div><div class="modalFoot"><span class="spacer"></span><button type="button" class="btn outline" data-no>${esc(T.cancel)}</button><button type="button" class="btn primary" data-yes>${esc(confirmLabel)}</button></div>`);
+    el.querySelector('.modalCard').classList.add('narrow');
+    const input = el.querySelector('[data-value]'); input.value = value || '';
+    const done = (v) => { el.remove(); document.removeEventListener('keydown', onKey, true); resolve(v); };
+    const onKey = (e) => { if (e.key === 'Escape') done(null); };
+    document.addEventListener('keydown', onKey, true);
+    input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); done(input.value); } };
+    el.querySelector('[data-no]').onclick = () => done(null); el.querySelector('[data-yes]').onclick = () => done(input.value);
+    el.onclick = (e) => { if (e.target === el) done(null); };
+    input.focus(); input.select();
+  });
+}
+async function deleteSession(id) {
+  const s = state.sessions.find((x) => x.id === id);
+  if (!(await confirmDialog(T.deleteSessionText(s?.title || T.untitled), T.deleteSession, T.deleteSession))) return;
+  try { await api('/sessions/' + id, { method: 'DELETE' }); toast(T.deleted); } catch (err) { toast(err.message); return; }
+  if (state.current === id) newSession();
+  refreshSessions();
+}
+$('sessions').addEventListener('click', async (e) => {
+  const sessionMenu = e.target.closest('[data-session-menu]');
+  if (sessionMenu) {
+    e.stopPropagation();
+    const id = sessionMenu.dataset.sessionMenu; const s = state.sessions.find((x) => x.id === id);
+    openRowMenu(sessionMenu, [
+      { id: 'rename', icon: 'pencil', label: T.renameSession }, { id: 'copy', icon: 'copy', label: T.copyId }, { id: 'delete', icon: 'trash', label: T.deleteSession, danger: true },
+    ], async (pick) => {
+      if (pick === 'rename') { const title = await promptDialog(T.renameSessionTitle, s?.title || '', T.renameLabel); if (title === null) return; try { await json('/sessions/' + id, { method: 'PUT', body: JSON.stringify({ title }) }); if (state.current === id) $('crumb').textContent = title.trim() || T.untitled; refreshSessions(); } catch (err) { toast(err.message); } }
+      if (pick === 'copy') copyText(id);
+      if (pick === 'delete') deleteSession(id);
+    });
+    return;
+  }
+  const wsMenu = e.target.closest('[data-ws-menu]');
+  if (wsMenu) {
+    e.stopPropagation();
+    const root = wsMenu.dataset.wsMenu; const w = (state.workspaces?.recent || []).find((x) => x.root === root) || { root, name: root };
+    openRowMenu(wsMenu, [{ id: 'rename', icon: 'pencil', label: T.renameWorkspace }, { id: 'delete', icon: 'trash', label: T.deleteWorkspace, danger: true }], async (pick) => {
+      if (pick === 'rename') { const name = await promptDialog(T.renameWorkspaceTitle, w.name, T.renameLabel); if (name === null) return; try { await json('/workspaces', { method: 'PUT', body: JSON.stringify({ path: root, name }) }); refreshSessions(); renderSessionChips(); } catch (err) { toast(err.message); } }
+      if (pick === 'delete') {
+        if (w.default) { toast(T.cannotDeleteDefault); return; }
+        if (!(await confirmDialog(T.deleteWorkspaceText(w.name), T.deleteWorkspace, T.deleteWorkspace))) return;
+        try { await api('/workspaces?path=' + encodeURIComponent(root), { method: 'DELETE' }); } catch (err) { toast(err.message); return; }
+        if (state.sessionWorkspace === root) state.sessionWorkspace = null;
+        refreshSessions(); renderSessionChips();
+      }
+    });
+    return;
+  }
+  const wsNew = e.target.closest('[data-ws-new]');
+  if (wsNew) { e.stopPropagation(); const root = wsNew.dataset.wsNew; state.sessionWorkspace = root === (state.health?.workspace?.path || '') ? null : root; newSession(); closeDrawer(); return; }
   const row = e.target.closest('.sessionRow');
   if (row) { openSession(row.dataset.id); closeDrawer(); return; }
   const project = e.target.closest('.projectRow');
-  if (project) { state.sessionWorkspace = project.dataset.workspace === (state.health?.workspace?.path || '') ? null : project.dataset.workspace; newSession(); closeDrawer(); }
+  if (project) { const key = project.dataset.workspace; if (folded.has(key)) folded.delete(key); else folded.add(key); sidebarView.folded = [...folded]; saveSidebarView(); renderSessions(); }
 });
+$('searchToggle').onclick = () => { const row = $('searchRow'); row.hidden = !row.hidden; $('searchToggle').setAttribute('aria-pressed', String(!row.hidden)); if (!row.hidden) $('searchInput').focus(); else { sessionQuery = ''; $('searchInput').value = ''; renderSessions(); } };
+$('searchInput').oninput = (e) => { sessionQuery = e.target.value; renderSessions(); };
+$('searchInput').onkeydown = (e) => { if (e.key === 'Escape') $('searchToggle').click(); };
+$('viewOptions').onclick = () => {
+  const group = sidebarView.group || 'workspace'; const order = sidebarView.order || 'updated';
+  const row = (id, label, checked) => `<button type="button" class="menuRow" role="menuitemradio" aria-checked="${checked}" data-pick="${id}">${icon('check', 'ico check')}<span class="label">${esc(label)}</span></button>`;
+  openRowMenu($('viewOptions'), [], () => {});
+  rowMenu.innerHTML = `<div class="menuGroup">${esc(T.groupBy)}</div>${row('group:workspace', T.groupWorkspace, group === 'workspace')}${row('group:none', T.groupNone, group === 'none')}<div class="menuGroup">${esc(T.orderBy)}</div>${row('order:updated', T.orderUpdated, order === 'updated')}${row('order:created', T.orderCreated, order === 'created')}`;
+  rowMenu.onclick = (e) => { const pick = e.target.closest('[data-pick]')?.dataset.pick; if (!pick) return; const [k, v] = pick.split(':'); sidebarView[k] = v; saveSidebarView(); closeRowMenu(); renderSessions(); };
+};
 $('sessions').addEventListener('keydown', (e) => { const row = e.target.closest('.sessionRow'); if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openSession(row.dataset.id); } });
 
 const frame = $('frame');
@@ -1472,11 +1598,12 @@ async function loadAgentOptions() {
 const modeLabel = (id) => (T.modeTitle[id] || (state.agent?.modes.find((m) => m.id === id) || {}).title || id || '');
 const presetLabel = (id) => (T.presetTitle[id] || (state.agent?.presets.find((p) => p.id === id) || {}).title || id || '');
 function currentWorkspace() { return state.session ? (state.session.workspace || state.health?.workspace?.path || '') : (state.sessionWorkspace || state.health?.workspace?.path || ''); }
+function workspaceName(path) { const w = (state.workspaces?.recent || []).find((x) => x.root === path); return w ? w.name : (path.split('/').filter(Boolean).pop() || path); }
 function currentMode() { return (state.session ? state.session.mode : state.sessionMode) || state.agent?.default_mode || ''; }
 function currentPreset() { return (state.session ? state.session.preset : state.sessionPreset) || state.agent?.default_preset || ''; }
 const MODE_ICON = { 'read-only': 'eye', 'workspace-write': 'pencil', 'full-access': 'unlock' };
 function renderSessionChips() {
-  const ws = currentWorkspace(); const name = ws.split('/').filter(Boolean).pop() || ws;
+  const ws = currentWorkspace(); const name = workspaceName(ws);
   const mode = currentMode(); const preset = currentPreset();
   const hw = $('heroWorkspace'); hw.querySelector('.label').textContent = name; hw.title = ws; hw.hidden = !ws;
   const hp = $('heroPreset'); hp.querySelector('.label').textContent = presetLabel(preset); hp.title = `${T.preset_}: ${T.presetDesc[preset] || ''}`; hp.hidden = !preset;
@@ -1502,7 +1629,7 @@ async function openModeMenu(anchor) {
   const cur = currentMode();
   openChipMenu(anchor, `<div class="menuGroup">${esc(T.mode_)}</div>` + (state.agent?.modes || []).map((m) => rowHtml(m.id, modeLabel(m.id), T.modeDesc[m.id] || m.description, m.id === cur, '', MODE_ICON[m.id])).join(''), async (id) => {
     closeChipMenu();
-    if (id === 'full-access' && cur !== 'full-access' && !(await confirmDialog(T.fullAccessConfirm, T.switchLabel))) return;
+    if (id === 'full-access' && cur !== 'full-access' && !(await confirmDialog(T.fullAccessConfirm, T.switchLabel, modeLabel('full-access')))) return;
     if (state.current) { try { state.session = await json(`/sessions/${state.current}/mode`, { method: 'PUT', body: JSON.stringify({ mode: id }) }); } catch (err) { toast(err.message); return; } }
     else state.sessionMode = id;
     renderSessionChips();
@@ -1843,7 +1970,7 @@ async function applyDraft(f) {
   } catch (err) { showEditorResult(f, 'error', err.message); setEditorBusy(f, false); }
 }
 async function removeRoute(r) {
-  if (!(await confirmDialog(T.removeConfirm(r.title)))) return;
+  if (!(await confirmDialog(T.removeConfirm(r.title), T.remove, T.remove))) return;
   try { models.data = await json(`/settings/models/${encodeURIComponent(r.id)}`, { method: 'DELETE' }); models.open = null; models.draft = null; renderModels(); toast(T.removed); loadDirectory(); }
   catch (err) { toast(err.message); }
 }
@@ -1851,9 +1978,10 @@ function modal(inner) {
   const el = document.createElement('div'); el.className = 'modal'; el.innerHTML = `<div class="modalCard" role="dialog" aria-modal="true">${inner}</div>`;
   document.body.appendChild(el); return el;
 }
-function confirmDialog(text, label) {
+function confirmDialog(text, label, title) {
   return new Promise((resolve) => {
-    const el = modal(`<div class="modalBody"><p>${esc(text)}</p></div><div class="modalFoot"><span class="spacer"></span><button type="button" class="btn outline" data-no>${esc(T.cancel)}</button><button type="button" class="btn primary reject" data-yes>${esc(label || T.remove)}</button></div>`);
+    const el = modal(`${title ? `<div class="modalHead">${esc(title)}</div>` : ''}<div class="modalBody"><p>${esc(text)}</p></div><div class="modalFoot"><span class="spacer"></span><button type="button" class="btn outline" data-no>${esc(T.cancel)}</button><button type="button" class="btn outline danger" data-yes>${esc(label || T.remove)}</button></div>`);
+    el.querySelector('.modalCard').classList.add('narrow');
     const done = (v) => { el.remove(); document.removeEventListener('keydown', onKey, true); resolve(v); };
     const onKey = (e) => { if (e.key === 'Escape') done(false); };
     document.addEventListener('keydown', onKey, true);
