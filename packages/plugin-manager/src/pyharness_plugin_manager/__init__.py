@@ -139,7 +139,7 @@ def apply(ctx: Any, config: Config) -> None:
 
         action                                              effect
         list                                                entries with state; installed bundles
-        template target=<name> [variant=basic|tool-and-route] starter bundle files; variant default basic
+        template target=<name> [variant=basic|tool-and-route|ui-panel] starter bundle files; variant default basic
         install_bundle target=<dir>                         install a bundle from a workspace directory
         uninstall_bundle target=<bundle>                    remove an installed bundle
         set_bundle_enabled target=<bundle> enabled=<bool>   enable or disable a bundle

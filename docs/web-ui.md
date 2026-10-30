@@ -29,7 +29,9 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 运行中 | 「思考中」闪光；停止按钮取消当前轮 |
 | 审批 | 黄色审批卡片停靠在输入框上方；对应工具行标记待批准 |
 | 重启 | 输入框上方进度提示；完成后自动重连；续跑消息显示为系统分隔行，回滚时为警告色 |
-| 插件页 | bundle 与条目卡片；状态：运行中、等待依赖、已停用、失败 |
+| 插件页 | bundle 与条目卡片；状态：运行中、等待依赖、已停用、失败；「客户端模块」列出各插件的浏览器模块与加载状态 |
+| 右侧栏 | 会话打开后顶栏右侧的展开按钮；可拖动调宽（280px 起，至多 70% 视口）、收起；状态存于 `localStorage`。tab：文件（会话工作区的目录树与文本预览，二进制文件不预览，大文件截断）、会话（ID、工作区、预设、权限、模型、时间，复制 ID）；插件可增加 tab。移动端为覆盖层 |
+| 插件槽位 | 页面在加载时读取 `window.__PYH_BOOT__` 的模块清单，依次加载各插件的 `client.js`；模块通过 `ctx.slots.register` 填入槽位：侧边栏面板行、「更多」菜单行、主区面板、输入框旁的停靠位、设置分区、右侧栏 tab。契约见 `pyharness_web_ui` 包文档与创造模式 skill 的 `references/ui-plugin.md` |
 | 模型菜单 | 输入框右下角的模型标签：按提供方分组的模型菜单；选择后写入会话（`PUT /sessions/{id}/model`），下一次请求生效；新会话在创建时带上选择；菜单底部「管理模型…」进入设置 |
 | 设置对话框 | 「更多 → 设置」或模型菜单的「管理模型…」进入；左侧分区：通用（新会话权限、语言、外观浅色 / 深色 / 跟随系统）、模型、预设（卡片，点击设为新会话默认）、内置插件（条目只读）。「模型」：新会话默认模型；提供方行（标题、类型、默认标记、密钥状态点、端点、模型数），点击展开编辑卡（同时只开一张）：API Key（只写、可显示）、Base URL（占位符为默认端点）、模型列表（ID、显示名、上下文、最大输出、输入模态勾选：文本 / 图像；「获取可用模型」打开可搜索的勾选列表，端点披露的模态随之带入，「恢复默认模型」）、测试连接、删除（确认框）、应用。「添加模型提供方」：「第三方模型提供方」从预置目录选择（OpenAI、Anthropic、DeepSeek、Google Gemini、OpenRouter；集成包随 pyharness-llm 安装），或「自定义模型 API」填写提供方 ID、显示名、API 协议（OpenAI Chat Completions / Responses / Anthropic Messages）、端点，至少一个模型。应用后立即生效，无需重启；密钥写入 profile 的 `credentials.yaml`，配置只记录引用名 |
 
@@ -40,6 +42,8 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 移动端 | 侧边栏为抽屉 |
 
 ## API
+
+`pyharness-web-ui` 的路由（无前缀）：`GET /` 页面（含 `window.__PYH_BOOT__` 模块清单）；`GET /plugins/{entry}/client.js` 插件的浏览器模块；`POST /plugins/{entry}/call/{method}` 以 JSON 对象调用插件在 `register_client(calls=)` 登记的函数，返回 `{"result"}`，`ValueError` 为 422。
 
 `pyharness-api`，前缀 `/api`。
 
@@ -59,6 +63,8 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | PUT | `/workspaces` | `{"path", "name"}` | 工作区显示名；空值恢复目录名 |
 | DELETE | `/workspaces?path=` | | 从最近列表移除；文件夹与会话保留 |
 | POST | `/workspaces/browse` | `{"path"?}` | 一级目录列表（仅目录，隐藏目录标记） |
+| GET | `/workspaces/files?path=&root=` | | 工作区内目录的条目（名称、虚拟路径、目录、大小、隐藏、修改时间）；`root` 缺省为默认工作区 |
+| GET | `/workspaces/file?path=&root=&limit=` | | 工作区内文本文件的内容（默认至多 512 KB）；`binary`、`truncated` 标记 |
 | POST | `/workspaces/pick` | `{"path"?: 提示语}` | 本机系统文件夹对话框；取消为 `{"path": null}`；`GET /workspaces` 的 `picker` 为 `native` 或 `browse` |
 | GET | `/sessions/{id}` | | 会话、运行状态、消息、待批准项 |
 | POST | `/sessions/{id}/messages` | `{"content", "images"?}` | SSE 运行事件；`images` 为 data URL，模型未声明图像输入时 422 |

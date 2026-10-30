@@ -15,7 +15,7 @@
 | `pyharness-agent` | `agents` | `agents` | 会话、后台运行、审批、重启续跑 |
 | `pyharness-http` | `http` | `http` | FastAPI 根应用 + uvicorn；`include_router`、`mount` |
 | `pyharness-api` | `api` | — | `/api`：REST + SSE |
-| `pyharness-web-ui` | `web-ui` | — | `/`：Web 界面 |
+| `pyharness-web-ui` | `web-ui` | `webui` | `/`：Web 界面；`register_client(path, calls=)` 登记插件的浏览器模块，`/plugins/{entry}/client.js` 与 `/plugins/{entry}/call/{method}` |
 | `pyharness-inspect` | `inspect` | — | `harness_inspect` 工具 |
 | `pyharness-plugin-manager` | `plugin-manager` | — | `plugin_manager` 工具；插件编写 skills（`skills: true`）；三行提示词片段（`guidance`） |
 | `pyharness-plugin-manager` | `dev-context` | — | `pyharness-dev-context`：harness 位置提示词段 |

@@ -24,6 +24,8 @@
 | PUT    | ``/workspaces``              | ``{"path", "name"}``          | display name of a workspace                 |
 | DELETE | ``/workspaces?path=``        |                               | forget a workspace                          |
 | POST   | ``/workspaces/browse``       | ``{"path"?}``                 | one directory level for the picker          |
+| GET    | ``/workspaces/files``        | ``?path=&root=``              | directory entries inside a workspace        |
+| GET    | ``/workspaces/file``         | ``?path=&root=&limit=``       | text of a file inside a workspace           |
 | GET    | ``/models``                  |                               | selector directory: routes, models, default |
 | GET    | ``/settings/models``         |                               | routes with credential state, catalog       |
 | PUT    | ``/settings/models``         | ``{"default"}``               | default model for new sessions              |
@@ -304,6 +306,64 @@ def build_router(ctx: Any) -> APIRouter:
         if workspaces is None or not hasattr(workspaces, "forget"):
             raise HTTPException(503, "workspace registry unavailable")
         return {"forgotten": await workspaces.forget(path)}
+
+    @router.get("/workspaces/files")
+    async def list_files(path: str = "/", root: str | None = None) -> dict[str, Any]:
+        """Entries of a directory inside a workspace (``root``: its directory; default workspace when absent)."""
+        workspaces = ctx.get("workspace", None)
+        if workspaces is None or not hasattr(workspaces, "open"):
+            raise HTTPException(503, "workspace registry unavailable")
+        try:
+            ws = workspaces.open(root)
+            real = ws.resolve(path)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        if not real.is_dir():
+            raise HTTPException(404, f"{path} is not a directory")
+        entries = []
+        try:
+            for item in sorted(real.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())):
+                try:
+                    stat = item.stat()
+                except OSError:
+                    continue
+                virtual = "/" + item.relative_to(ws.root).as_posix()
+                entries.append(
+                    {
+                        "name": item.name,
+                        "path": virtual,
+                        "dir": item.is_dir(),
+                        "size": None if item.is_dir() else stat.st_size,
+                        "hidden": item.name.startswith("."),
+                        "mtime": stat.st_mtime,
+                    }
+                )
+        except PermissionError as exc:
+            raise HTTPException(403, str(exc)) from None
+        return {"root": str(ws.root), "path": "/" + real.relative_to(ws.root).as_posix() if real != ws.root else "/", "entries": entries}
+
+    @router.get("/workspaces/file")
+    async def read_file(path: str, root: str | None = None, limit: int = 512 * 1024) -> dict[str, Any]:
+        """Text of a file inside a workspace, up to ``limit`` bytes; binary files report ``binary``."""
+        workspaces = ctx.get("workspace", None)
+        if workspaces is None or not hasattr(workspaces, "open"):
+            raise HTTPException(503, "workspace registry unavailable")
+        try:
+            ws = workspaces.open(root)
+            real = ws.resolve(path)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        if not real.is_file():
+            raise HTTPException(404, f"{path} is not a file")
+        size = real.stat().st_size
+        with real.open("rb") as fh:
+            data = fh.read(limit)
+        try:
+            text = data.decode("utf-8")
+            binary = "\x00" in text
+        except UnicodeDecodeError:
+            text, binary = "", True
+        return {"path": path, "size": size, "truncated": size > limit, "binary": binary, "text": "" if binary else text}
 
     @router.post("/workspaces/browse")
     async def browse_workspaces(body: WorkspacePath) -> dict[str, Any]:

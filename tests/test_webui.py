@@ -1,0 +1,84 @@
+"""Web UI: boot manifest, client modules, plugin calls, workspace file browsing, the inspect ``ui`` topic."""
+
+from __future__ import annotations
+
+import json
+
+import httpx
+
+from pyharness import Harness, Profile
+
+HTTP_OFF = {"id": "http", "config": {"serve": False}}
+UI_PLUGIN = {"id": "uiplugin", "name": "testkit.uiplugin", "after": "web-ui", "config": {"greeting": "hello"}}
+
+
+def client(h):
+    return httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=30)
+
+
+async def test_page_carries_the_boot_manifest_and_serves_client_modules(home):
+    profile = Profile.init("web", home=str(home))
+    async with Harness(profile, patch=[HTTP_OFF, UI_PLUGIN]) as h:
+        webui = h.get("webui")
+        assert [c["entry"] for c in webui.clients()] == ["uiplugin"]
+        assert {s["name"] for s in webui.slots()} >= {"main", "sidebar.panellist", "rightbar.tabs", "settings.sections"}
+        async with client(h) as c:
+            page = (await c.get("/")).text
+            boot = page.split("window.__PYH_BOOT__ = ", 1)[1].split(";</script>", 1)[0]
+            manifest = json.loads(boot)
+            (plugin,) = manifest["plugins"]
+            assert (
+                plugin["id"] == "uiplugin"
+                and plugin["url"].startswith("/plugins/uiplugin/client.js?rev=")
+                and plugin["calls"] == ["slow", "stats"]
+            )
+            assert (await c.get("/plugins/boot.json")).json() == manifest
+            js = await c.get(plugin["url"])
+            assert js.status_code == 200 and js.headers["content-type"].startswith("application/javascript") and "__PyhModules__" in js.text
+            assert (await c.get("/plugins/nope/client.js")).status_code == 404
+            r = await c.post("/plugins/uiplugin/call/stats", json={"echo": 1})
+            assert r.json() == {"result": {"greeting": "hello", "echo": 1}}
+            assert (await c.post("/plugins/uiplugin/call/slow", json={})).json() == {"result": "async ok"}
+            assert (await c.post("/plugins/uiplugin/call/stats", json={"fail": True})).status_code == 422
+            assert (await c.post("/plugins/uiplugin/call/stats", json=[1])).status_code == 422
+            assert (await c.post("/plugins/uiplugin/call/missing", json={})).status_code == 404
+        # The inspect topic lists slots and clients.
+        tool = next(t for t in h.get("tools").list() if t.name == "harness_inspect")
+        ui = json.loads(tool.invoke({"topic": "ui"}))
+        assert ui["clients"][0]["entry"] == "uiplugin" and any(s["name"] == "rightbar.tabs" for s in ui["slots"])
+    # Without the plugin the manifest is empty and the page still renders.
+    async with Harness(profile, patch=[HTTP_OFF]) as h:
+        async with client(h) as c:
+            assert '"plugins": []' in (await c.get("/")).text
+
+
+async def test_workspace_files_api(home, tmp_path):
+    profile = Profile.init("web", home=str(home))
+    ws = tmp_path / "ws"
+    (ws / "src").mkdir(parents=True)
+    (ws / "src" / "a.py").write_text("print(1)\n")
+    (ws / ".hidden").write_text("x")
+    (ws / "blob.bin").write_bytes(b"\x00\x01\x02")
+    extra = [{"id": "workspace", "config": {"root": str(ws)}, "merge": True}]
+    async with Harness(profile, patch=[HTTP_OFF, *extra]) as h:
+        async with client(h) as c:
+            d = (await c.get("/api/workspaces/files")).json()
+            assert d["path"] == "/" and d["root"] == str(ws.resolve())
+            assert [e["name"] for e in d["entries"]] == ["src", ".hidden", "blob.bin"]
+            assert d["entries"][0]["dir"] is True and d["entries"][1]["hidden"] is True
+            d = (await c.get("/api/workspaces/files", params={"path": "/src"})).json()
+            assert d["path"] == "/src" and d["entries"][0]["path"] == "/src/a.py" and d["entries"][0]["size"] == 9
+            f = (await c.get("/api/workspaces/file", params={"path": "/src/a.py"})).json()
+            assert f["text"] == "print(1)\n" and f["binary"] is False and f["truncated"] is False
+            f = (await c.get("/api/workspaces/file", params={"path": "/blob.bin"})).json()
+            assert f["binary"] is True and f["text"] == ""
+            f = (await c.get("/api/workspaces/file", params={"path": "/src/a.py", "limit": 3})).json()
+            assert f["text"] == "pri" and f["truncated"] is True
+            assert (await c.get("/api/workspaces/file", params={"path": "/src"})).status_code == 404
+            assert (await c.get("/api/workspaces/files", params={"path": "/../"})).status_code in (404, 422)
+            # Another workspace root: the session's own directory.
+            other = tmp_path / "other"
+            other.mkdir()
+            (other / "note.md").write_text("n")
+            d = (await c.get("/api/workspaces/files", params={"root": str(other)})).json()
+            assert [e["name"] for e in d["entries"]] == ["note.md"]

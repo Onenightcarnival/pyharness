@@ -52,6 +52,7 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 | `tools` | 已注册工具与审批闸门；带 `name`：参数 schema |
 | `routes` | HTTP 路由及其贡献插件 |
 | `prompt` | 系统提示词片段 |
+| `ui` | Web 界面的槽位与已登记的浏览器模块 |
 
 生效配置中来自 `${env:...}` 的值、名称类似密钥的字段：脱敏。
 
@@ -60,7 +61,7 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 | action | 参数 | 审批 | 效果 |
 |---|---|---|---|
 | `list` | — | 否 | 条目与状态；已安装 bundle |
-| `template` | `target=<name>`、`variant=basic\|tool-and-route` | 否 | bundle 模板文件；来自 skill 的 `templates/` |
+| `template` | `target=<name>`、`variant=basic\|tool-and-route\|ui-panel` | 否 | bundle 模板文件；来自 skill 的 `templates/`；`ui-panel` 含浏览器模块 `client.js`，注册主区面板与侧边栏行 |
 | `install_bundle` | `target=<dir>` | 是 | 从工作区目录安装 bundle |
 | `uninstall_bundle` | `target=<bundle>` | 是 | 移除已安装的 bundle |
 | `set_bundle_enabled` | `target=<bundle> enabled=<bool>` | 是 | 启用 / 停用 bundle |

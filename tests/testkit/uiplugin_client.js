@@ -1,0 +1,1 @@
+window.__PyhModules__.load({ id: "uiplugin", factory(require) { return { apply(ctx) { ctx.slots.register({ slot: "main", key: "uiplugin", label: "UI plugin" }, (el) => { el.textContent = "ok"; }); } }; } });

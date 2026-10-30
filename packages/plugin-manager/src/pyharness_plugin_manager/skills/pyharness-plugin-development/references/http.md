@@ -11,7 +11,7 @@
 
 Reserved prefixes: `/api` (`pyharness-api`), `/` (`pyharness-web-ui`), `/docs` and `/openapi.json` (FastAPI). Choose a prefix named after the bundle.
 
-Pages: the harness has no client-side plugin slot. A plugin page is an HTML response on a route of its own, self-contained (no external requests), reading data from its own JSON routes. The Web UI theme tokens are in the page served at `/`; a plugin page is a separate document and does not inherit them.
+Pages: a plugin that extends the Web UI itself (a panel, a sidebar row, a settings or right-sidebar tab) registers a browser module with `ctx.webui` and fills a slot; see `references/ui-plugin.md`. A standalone page is an HTML response on a route of its own, self-contained (no external requests), reading data from its own JSON routes; it is a separate document and does not inherit the Web UI theme.
 
 Server: `app/serve` binds the socket; the port is `ctx.http.config.port` and `ctx.http.bound_port` once serving. Requests from the agent's own shell reach it at `http://127.0.0.1:<port>`.
 

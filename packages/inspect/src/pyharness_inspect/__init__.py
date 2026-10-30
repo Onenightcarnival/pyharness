@@ -10,6 +10,7 @@
 | tools    | registered tools and approval gates; with ``name``: argument schema       |
 | routes   | HTTP routes and their contributing plugins                                |
 | prompt   | system-prompt sections                                                    |
+| ui       | Web UI extension slots and registered client modules (``ctx.webui``)      |
 
 Effective config values from ``${env:...}`` and fields named like secrets are redacted.
 """
@@ -28,7 +29,7 @@ from pyharness import Service, unwrap
 name = "pyharness-inspect"
 inject = ["tools"]
 
-Topic = Literal["overview", "services", "events", "plugins", "config", "tools", "routes", "prompt"]
+Topic = Literal["overview", "services", "events", "plugins", "config", "tools", "routes", "prompt", "ui"]
 
 
 class Config(BaseModel):
@@ -182,6 +183,20 @@ class Inspector:
         if prompt is None:
             return {"error": "no prompt service is active"}
         return prompt.sections()
+
+    def ui(self, name: str | None) -> Any:
+        webui = self.ctx.get("webui", None)
+        if webui is None:
+            return {"error": "no webui service is active"}
+        slots = webui.slots()
+        if name:
+            match = [s for s in slots if s["name"] == name]
+            return match or {"error": f"no slot {name!r}", "available": [s["name"] for s in slots]}
+        return {
+            "slots": slots,
+            "clients": webui.clients(),
+            "contract": "ctx.webui.register_client(path, calls={...}); the page: window.__PyhModules__.load({id, factory(require) { return { apply(ctx) {...} } }})",
+        }
 
     def overview(self, name: str | None) -> Any:
         lifecycle = self.ctx.lifecycle

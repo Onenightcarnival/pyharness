@@ -14,7 +14,7 @@
 | Plugin Manager + 创造模式（`cordis` preset：`dsh-tool-cordis` + skills） | `plugin_manager` + `harness_inspect` + `creator` bundle：skills 挂载到 `/skills/pyharness/`，deepagents skills 中间件按需加载 |
 | `dsh-harness-dev-context` | `pyharness-dev-context` 提示词段 |
 | `dsh-skill` + `dsh-skill-filesystem` + `dsh-tool-skill` | deepagents `SkillsMiddleware`；`ctx.agentLoop.add_skills` |
-| 插件的浏览器端（client slot） | 无；Web 界面是挂路由的插件 |
+| 插件的浏览器端（client slot） | 有：`ctx.webui.register_client` + 页面槽位（侧边栏行、更多菜单、主区面板、输入框停靠位、设置分区、右侧栏 tab）；模块为无打包的 JS，`window.__PyhModules__.load({id, factory})` |
 | `dsh-sandbox-policy` + `dsh-permission-presets`（read-only / workspace-write / danger-full-access） | `agent-loop` 的权限模式 `read-only` / `workspace-write` / `full-access`：deepagents 文件权限规则、shell 工具有无、审批闸门有无；每会话可切换 |
 | `dsh-workspace` + directory picker | `pyharness-workspace` 注册表：每会话工作区根目录、最近列表（`ctx.store`）、目录浏览 |
 
@@ -51,6 +51,6 @@ bundle 中条目的位置（`after` / `before` / `parent`）对应 mount 路径�
 
 | dsh 能力 | pyharness |
 |---|---|
-| 插件的浏览器端（client slot） | 无；界面扩展仅限 HTTP 路由 |
+| 插件的浏览器端（client slot） | 有；槽位种类对齐 dsh（list / keyed），未做 chain 类型与独立构建链 |
 | 每会话 agent preset（preset + isolate realm） | 预设是 `agent-loop` 的配置（工具子集、skills、提示词片段），每会话一张图；没有 realm 级的服务隔离 |
 | 进程内热替换 | 换代重启 |

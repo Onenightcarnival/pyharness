@@ -122,7 +122,35 @@ svg { display: block; }
 @supports (corner-shape: superellipse(1.5)) { * { corner-shape: superellipse(1.5); } }
 
 /* ---------- frame ---------- */
-.frame { display: grid; grid-template-columns: 260px minmax(0, 1fr); height: 100%; transition: grid-template-columns 0.3s var(--ease); }
+.frame { display: grid; grid-template-columns: 260px minmax(0, 1fr) 0px; height: 100%; transition: grid-template-columns 0.3s var(--ease); }
+.frame[data-rightbar] { grid-template-columns: 260px minmax(0, 1fr) var(--rb-width, 380px); }
+.frame[data-collapsed][data-rightbar] { grid-template-columns: 56px minmax(0, 1fr) var(--rb-width, 380px); }
+.frame[data-resizing] { transition: none; user-select: none; }
+.rightbar { position: relative; min-width: 0; display: flex; flex-direction: column; overflow: hidden; border-left: 0.5px solid var(--border-l3); background: var(--bg-base); }
+.rightbar[hidden] { display: none; }
+.rbHandle { position: absolute; left: -3px; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 5; }
+.rbHandle:hover { background: color-mix(in srgb, var(--info) 30%, transparent); }
+.rbStrip { flex: none; display: flex; align-items: center; gap: 4px; min-height: 50px; padding: 10px 8px 10px 12px; border-bottom: 0.5px solid var(--border-l3); }
+.rbTabs { display: flex; gap: 2px; min-width: 0; overflow-x: auto; }
+.rbTab { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: none; border-radius: var(--r-sm); background: transparent; color: var(--label-secondary); font-size: 13px; white-space: nowrap; }
+.rbTab[aria-selected='true'] { background: var(--hover); color: var(--label-primary); }
+.rbBody { flex: 1; min-height: 0; overflow: auto; }
+.rbEmpty { padding: 24px 16px; font-size: 13px; color: var(--label-tertiary); }
+.fileHead { display: flex; align-items: center; gap: 6px; padding: 8px 10px; font: 12px/18px var(--mono); color: var(--label-tertiary); border-bottom: 0.5px solid var(--border-l2); min-width: 0; }
+.fileHead .path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--label-secondary); }
+.fileRow { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 12px; border: none; background: transparent; color: var(--label-primary); font-size: 13px; text-align: left; }
+.fileRow .ico { color: var(--label-tertiary); }
+.fileRow[data-dir] .ico { color: var(--info); }
+.fileRow .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fileRow .size { font-size: 11px; color: var(--label-caption); }
+.fileRow[data-hidden] { color: var(--label-tertiary); }
+.filePreview { margin: 0; padding: 12px 14px; font: 12px/19px var(--mono); white-space: pre; overflow: auto; color: var(--label-primary); }
+.kvTable { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; padding: 12px 14px; font-size: 13px; }
+.kvTable dt { color: var(--label-tertiary); } .kvTable dd { margin: 0; font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+.mainSlot { flex: 1; min-height: 0; overflow: auto; }
+.dock { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.dock:empty { display: none; }
+.pluginFail { padding: 10px 12px; }
 .frame[data-collapsed] { grid-template-columns: 56px minmax(0, 1fr); }
 .sidebar { min-width: 0; overflow: hidden; display: flex; flex-direction: column; padding: 6px 8px; background: var(--sidebar-fill); border-right: 0.5px solid var(--border-l3); }
 .frame[data-collapsed] .sidebar { padding: 6px 6px; }
@@ -556,6 +584,8 @@ svg { display: block; }
   .btn.primary:hover:not(:disabled) { background: var(--primary-hover); }
   .btn.reject:hover:not(:disabled), .btn.danger:hover:not(:disabled) { background: var(--hover-danger); color: var(--error); }
   .moreRow:hover, .settingsNav button:hover { background: var(--hover); }
+  .fileRow:hover { background: var(--hover); }
+  .rbTab:hover { background: var(--hover); color: var(--label-primary); }
   .themeCard:hover { background: var(--hover-solid); }
   .prow:hover { background: var(--hover); }
   .menuRow:hover { background: var(--hover); }
@@ -568,7 +598,9 @@ svg { display: block; }
 .disclosure[data-open] .drow .lead .chevron { opacity: 1; }
 
 @media (max-width: 760px) {
-  .frame, .frame[data-collapsed] { grid-template-columns: minmax(0, 1fr); }
+  .frame, .frame[data-collapsed], .frame[data-rightbar], .frame[data-collapsed][data-rightbar] { grid-template-columns: minmax(0, 1fr) 0px; }
+  .rightbar { position: fixed; inset: 0 0 0 auto; width: min(420px, 100vw); z-index: 35; box-shadow: 0 0 40px rgba(0, 0, 0, 0.2); }
+  .rbHandle { display: none; }
   .sidebar { position: fixed; inset: 0 auto 0 0; width: min(300px, 86vw); z-index: 40; transform: translateX(-100%); visibility: hidden; transition: transform 0.25s var(--ease), visibility 0s 0.25s; }
   .frame[data-drawer] .sidebar { transform: none; visibility: visible; transition: transform 0.25s var(--ease); box-shadow: 0 0 40px rgba(0, 0, 0, 0.12); }
   .scrim { position: fixed; inset: 0; z-index: 30; background: rgba(0, 0, 0, 0.24); }
@@ -647,6 +679,7 @@ svg { display: block; }
     <button class="newSession" id="newSession" data-i18n-title="newSession"><svg class="ico"><use href="#i-plus-circle"/></svg><span data-i18n="newSession"></span></button>
     <nav class="panelList">
       <button class="panelRow" id="navPlugins" data-i18n-title="plugins"><svg class="ico"><use href="#i-plug"/></svg><span data-i18n="plugins"></span><span class="count" id="pluginCount"></span></button>
+      <span id="panelSlots" style="display:contents"></span>
     </nav>
     <div class="region">
       <div class="regionHead"><span data-i18n="workspaces"></span><button class="iconButton sm" id="searchToggle" data-i18n-title="searchSessions"><svg class="ico"><use href="#i-search"/></svg></button><button class="iconButton sm" id="viewOptions" data-i18n-title="viewOptions"><svg class="ico"><use href="#i-sliders"/></svg></button><button class="iconButton sm" id="addWorkspace" data-i18n-title="addWorkspace"><svg class="ico"><use href="#i-folder-plus"/></svg></button></div>
@@ -659,15 +692,17 @@ svg { display: block; }
     </div>
   </aside>
 
-  <main class="center">
+  <main class="center" id="center">
     <div class="topBar" id="topBar">
       <button class="iconButton openSidebar" id="expand" data-i18n-title="expand"><svg class="ico"><use href="#i-panel"/></svg></button>
       <span class="crumb" id="crumb"></span>
       <span class="crumbTags" id="crumbTags"></span>
       <span class="spacer"></span>
+      <button class="iconButton" id="rbExpand" data-i18n-title="rightbarOpen" hidden><svg class="ico" style="transform:scaleX(-1)"><use href="#i-panel"/></svg></button>
     </div>
 
     <section class="page" id="pluginsView" hidden></section>
+    <section class="mainSlot" id="mainSlot" hidden></section>
 
     <div class="conversation" id="chatView" data-phase="hero">
       <div class="scrollBody" id="scroll">
@@ -688,6 +723,7 @@ svg { display: block; }
               <div class="left">
                 <button type="button" class="add" id="attachButton" data-i18n-title="attach"><svg class="ico"><use href="#i-plus"/></svg></button>
                 <span class="selectChip" id="modeChip" role="button" tabindex="0"><svg class="ico lead"><use href="#i-pencil"/></svg><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span>
+                <span class="dock" id="composerDock"></span>
               </div>
               <div class="right">
                 <span class="selectChip" id="modelChip" role="button" tabindex="0" data-i18n-title="modelChip"><span class="label">model</span></span>
@@ -699,6 +735,11 @@ svg { display: block; }
       </div>
     </div>
   </main>
+  <aside class="rightbar" id="rightbar" hidden>
+    <div class="rbHandle" id="rbHandle"></div>
+    <div class="rbStrip"><div class="rbTabs" id="rbTabs" role="tablist"></div><span class="spacer"></span><button type="button" class="iconButton" id="rbCollapse" data-i18n-title="rightbarClose"><svg class="ico" style="transform:scaleX(-1)"><use href="#i-panel"/></svg></button></div>
+    <div class="rbBody" id="rbBody"></div>
+  </aside>
 </div>
 <div class="modal" id="settingsModal" hidden>
   <div class="settingsCard" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
@@ -729,7 +770,7 @@ const T = zh ? {
   restarting: '重启中：应用插件变更…', restarted: (g) => `第 ${g} 代已启动`, rolledBack: (g) => `变更启动失败；第 ${g} 代运行上一份配置`, offline: '离线', online: '在线', gen: (g) => `第 ${g} 代`,
   unsupervised: '未托管', noSessions: '无会话', input: '输入', output: '输出', error: '错误', cancelled: '已停止', untitled: '未命名会话',
   pluginsTitle: '插件', pluginsIntro: '当前 profile 的插件组合。变更路径：agent 编写或安装 → 预检 → 重启生效。',
-  bundles: '组合包', entries: '条目', running: '运行中', pending: '等待依赖', disabled: '已停用', failed: '失败', stopped: '已停止',
+  bundles: '组合包', entries: '条目', clientModules: '客户端模块', running: '运行中', pending: '等待依赖', disabled: '已停用', failed: '失败', stopped: '已停止',
   enabled: '已启用', off: '未启用', fromEnv: '随环境安装', fromProfile: '装在本 profile',
   tip: '示例：<code>写一个插件，加一个返回当前时间的工具</code>', missing: '缺少服务', timeNow: '刚刚', min: '分钟', hour: '小时', day: '天',
   restartFailed: '重启后 harness 无响应。日志：运行 pyh run 的终端。', busy: '会话运行中', approvalPending: '有待批准的工具调用',
@@ -741,13 +782,14 @@ const T = zh ? {
   restarting: 'Restarting: applying plugin changes…', restarted: (g) => `Generation ${g} started`, rolledBack: (g) => `Change failed to boot; generation ${g} runs the previous configuration`, offline: 'Offline', online: 'Online', gen: (g) => `generation ${g}`,
   unsupervised: 'unsupervised', noSessions: 'No sessions', input: 'Input', output: 'Output', error: 'Error', cancelled: 'Stopped', untitled: 'Untitled session',
   pluginsTitle: 'Plugins', pluginsIntro: 'Plugin composition of the current profile. Change path: agent writes or installs → preflight → restart.',
-  bundles: 'Bundles', entries: 'Entries', running: 'Running', pending: 'Pending', disabled: 'Disabled', failed: 'Failed', stopped: 'Stopped',
+  bundles: 'Bundles', entries: 'Entries', clientModules: 'Client modules', running: 'Running', pending: 'Pending', disabled: 'Disabled', failed: 'Failed', stopped: 'Stopped',
   enabled: 'Enabled', off: 'Off', fromEnv: 'installed with the environment', fromProfile: 'installed in this profile',
   tip: 'Example: <code>write a plugin that adds a tool returning the current time</code>', missing: 'missing', timeNow: 'now', min: 'm', hour: 'h', day: 'd',
   restartFailed: 'No response after restart. Log: the terminal running pyh run.', busy: 'Session running', approvalPending: 'Tool call awaiting approval',
 };
 Object.assign(T, zh ? {
   settings: '设置', settingsIntro: '保存后立即生效，无需重启；密钥写入 profile 的凭据文件，配置文件只记录引用名。',
+  rightbarOpen: '打开右侧栏', rightbarClose: '收起右侧栏', tabFiles: '文件', tabInfo: '会话', noSession: '先打开或新建一个会话', up: '上级', loadFailed: (id, m) => `插件 ${id} 加载失败：${m}`, binaryFile: '二进制文件，不预览', truncated: '已截断',
   workspaces: '工作区', addWorkspace: '添加工作区', more: '更多', searchSessions: '搜索会话', searchPlaceholder: '搜索会话名称', viewOptions: '视图选项', groupBy: '分组', groupWorkspace: '按工作区', groupNone: '单一列表', orderBy: '排序', orderUpdated: '最近更新', orderCreated: '创建时间', ungrouped: '未分组',
   wsActions: (n) => `工作区「${n}」的操作`, newSessionIn: (n) => `在「${n}」新建会话`, renameWorkspace: '重命名', deleteWorkspace: '删除工作区', deleteWorkspaceText: (n) => `将「${n}」从工作区列表移除。文件夹与会话记录保留，其会话将显示在「未分组」下。`, renameWorkspaceTitle: '重命名工作区', renameLabel: '重命名', cannotDeleteDefault: '默认工作区不可删除',
   sessionActions: '会话操作', renameSession: '重命名', copyId: '复制会话 ID', deleteSession: '删除会话', deleteSessionText: (t) => `删除「${t}」？会话记录将一并删除，不可恢复。`, renameSessionTitle: '重命名会话', noMatch_: '没有匹配的会话', close: '关闭', tabGeneral: '通用', tabModels: '模型', tabPresets: '预设', tabPlugins: '内置插件', appearance: '外观', appearanceHint: '跟随系统或固定明暗。', themeLight: '浅色', themeDark: '深色', themeSystem: '跟随系统', language: '语言', languageHint: '跟随浏览器语言。', builtin: '内置', presetsIntro: '选择 agent 的工具与工作方式。标准模式做日常任务，创造模式扩展 harness。', newTaskDefault: '新会话默认', pluginsTabIntro: '当前 profile 的条目与状态；安装与启停在侧边栏的插件页。', refresh: '刷新', theme: '主题',
@@ -769,6 +811,7 @@ Object.assign(T, zh ? {
   defaultTag: '默认', selectModel: '选择模型', manageModels: '管理模型…', noModels: '没有可用模型；先在设置里添加提供方。', modelSelected: (n) => `已切换到 ${n}`, modelsCount: (n) => `${n} 个模型`, readonly: '无 profile：设置只读。', showKey: '显示 / 隐藏密钥',
 } : {
   settings: 'Settings', settingsIntro: 'Changes apply at once, without a restart; keys go to the profile credential file and the configuration keeps only the reference name.',
+  rightbarOpen: 'Open right sidebar', rightbarClose: 'Collapse right sidebar', tabFiles: 'Files', tabInfo: 'Session', noSession: 'Open or start a session first', up: 'Up', loadFailed: (id, m) => `Plugin ${id} failed to load: ${m}`, binaryFile: 'Binary file; no preview', truncated: 'truncated',
   workspaces: 'Workspaces', addWorkspace: 'Add workspace', more: 'More', searchSessions: 'Search sessions', searchPlaceholder: 'Search session names', viewOptions: 'View options', groupBy: 'Group by', groupWorkspace: 'Workspace', groupNone: 'In one list', orderBy: 'Order by', orderUpdated: 'Last updated', orderCreated: 'Created', ungrouped: 'Ungrouped',
   wsActions: (n) => `Workspace actions for ${n}`, newSessionIn: (n) => `New session in ${n}`, renameWorkspace: 'Rename', deleteWorkspace: 'Delete workspace', deleteWorkspaceText: (n) => `This removes "${n}" from the workspace list. The folder and session logs will be kept. Its sessions will appear under Ungrouped.`, renameWorkspaceTitle: 'Rename workspace', renameLabel: 'Rename', cannotDeleteDefault: 'The default workspace cannot be deleted',
   sessionActions: 'Session actions', renameSession: 'Rename', copyId: 'Copy session ID', deleteSession: 'Delete session', deleteSessionText: (t) => `Delete "${t}"? Its history is deleted and cannot be restored.`, renameSessionTitle: 'Rename session', noMatch_: 'No matching sessions', close: 'Close', tabGeneral: 'General', tabModels: 'Models', tabPresets: 'Agent presets', tabPlugins: 'Built-in plugins', appearance: 'Appearance', appearanceHint: 'Follow the system or pin light or dark.', themeLight: 'Light', themeDark: 'Dark', themeSystem: 'System', language: 'Language', languageHint: 'Follows the browser language.', builtin: 'Built-in', presetsIntro: "Choose the agent's tools and how it works. Standard for everyday tasks, Creator to extend the harness.", newTaskDefault: 'New task default', pluginsTabIntro: 'Entries of the current profile with their state; install and toggle on the sidebar Plugins page.', refresh: 'Refresh', theme: 'Theme',
@@ -829,6 +872,92 @@ let toastTimer = null;
 function toast(text) {
   const el = $('toast'); el.textContent = text; el.dataset.show = '';
   clearTimeout(toastTimer); toastTimer = setTimeout(() => delete el.dataset.show, 2400);
+}
+
+/* ---------- slots, plugin events, client modules ---------- */
+const SLOT_KINDS = { 'sidebar.panellist': 'list', 'sidebar.more': 'list', main: 'keyed', 'conversation.composer.dock': 'list', 'settings.sections': 'keyed', 'rightbar.tabs': 'keyed' };
+const slotEntries = {}; const slotListeners = {};
+function slotRegister(owner, spec, mount) {
+  const name = spec && spec.slot;
+  if (!SLOT_KINDS[name]) throw new Error(`unknown slot ${name}; one of ${Object.keys(SLOT_KINDS).join(', ')}`);
+  const entry = { ...spec, owner, mount: typeof mount === 'function' ? mount : (typeof spec.mount === 'function' ? spec.mount : null), order: spec.order ?? 100 };
+  entry.key = String(entry.key || entry.id || '');
+  if (!entry.key) throw new Error(`slot ${name}: id or key required`);
+  const list = (slotEntries[name] ||= []);
+  const taken = list.find((e) => e.key === entry.key);
+  if (taken) throw new Error(`slot ${name}: ${entry.key} is already registered by ${taken.owner}`);
+  list.push(entry); list.sort((a, b) => a.order - b.order);
+  notifySlot(name);
+  return () => { const i = list.indexOf(entry); if (i >= 0) { list.splice(i, 1); notifySlot(name); } };
+}
+const slotList = (name) => slotEntries[name] || [];
+const slotGet = (name, key) => slotList(name).find((e) => e.key === key) || null;
+function onSlot(name, fn) { (slotListeners[name] ||= new Set()).add(fn); return () => slotListeners[name].delete(fn); }
+function notifySlot(name) { for (const fn of slotListeners[name] || []) { try { fn(); } catch (err) { console.error(err); } } }
+function mountEntry(entry, container, props) {
+  container.innerHTML = '';
+  if (!entry.mount) return () => {};
+  try { const d = entry.mount(container, props || {}); return typeof d === 'function' ? d : () => {}; }
+  catch (err) { console.error(err); container.innerHTML = `<div class="pluginFail"><div class="result" data-tone="error">${icon('x-circle')}<span>${esc(entry.owner + ': ' + err.message)}</span></div></div>`; return () => {}; }
+}
+const pluginListeners = {};
+function onPlugin(name, fn) { (pluginListeners[name] ||= new Set()).add(fn); return () => pluginListeners[name].delete(fn); }
+function emitPlugin(name, data) { for (const fn of pluginListeners[name] || []) { try { fn(data); } catch (err) { console.error(err); } } }
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === 'class') el.className = v; else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v); else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2).toLowerCase(), v); else if (v !== null && v !== undefined && v !== false) el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of children.flat()) if (c !== null && c !== undefined && c !== false) el.append(c instanceof Node ? c : String(c));
+  return el;
+}
+const moduleFactories = {}; const moduleStatus = {}; let pendingModules = [];
+window.__PyhModules__ = { load({ id, factory }) { if (typeof factory !== 'function') throw new Error('load({ id, factory }) requires a factory function'); pendingModules.push({ id: String(id || ''), factory }); } };
+function pluginRequire(name) {
+  if (name === 'pyharness') return { h, icon, esc, toast, json, api, markdown, copyText, confirmDialog, promptDialog, T, locale: zh ? 'zh' : 'en' };
+  throw new Error(`module ${name} is not available; only "pyharness" can be required`);
+}
+async function hostCall(entry, method, args) {
+  const res = await fetch(`/plugins/${encodeURIComponent(entry)}/call/${encodeURIComponent(method)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(args || {}) });
+  if (!res.ok) { let detail = res.statusText; try { detail = (await res.json()).detail || detail; } catch { /* non-JSON */ } throw new Error(detail); }
+  return (await res.json()).result;
+}
+function pluginContext(id) {
+  const disposers = [];
+  const keep = (d) => { if (typeof d === 'function') disposers.push(d); return d; };
+  return {
+    entry: id, locale: zh ? 'zh' : 'en', theme: () => document.documentElement.dataset.theme,
+    slots: { register: (spec, mount) => keep(slotRegister(id, spec, mount)), list: slotList },
+    api: json, host: { call: (method, args) => hostCall(id, method, args) },
+    on: (name, fn) => keep(onPlugin(name, fn)), effect: (fn) => keep(fn),
+    session: () => state.session, dispose: () => { while (disposers.length) { try { disposers.pop()(); } catch (err) { console.error(err); } } },
+  };
+}
+function loadScript(url) {
+  return new Promise((resolve, reject) => { const el = document.createElement('script'); el.src = url; el.onload = resolve; el.onerror = () => reject(new Error('script failed to load')); document.head.appendChild(el); });
+}
+async function loadClientModules() {
+  let boot = window.__PYH_BOOT__;
+  if (!boot) { try { boot = await (await fetch('/plugins/boot.json')).json(); } catch { boot = { plugins: [] }; } window.__PYH_BOOT__ = boot; }
+  for (const p of boot.plugins || []) {
+    try {
+      if (!moduleFactories[p.id]) {
+        pendingModules = []; await loadScript(p.url);
+        // The script's own id is informational: the file the entry serves is the entry's module.
+        const found = pendingModules.find((m) => m.id === p.id) || (pendingModules.length === 1 ? pendingModules[0] : null);
+        if (found) moduleFactories[p.id] = found.factory;
+      }
+      const factory = moduleFactories[p.id];
+      if (!factory) throw new Error('the module did not call window.__PyhModules__.load({ id, factory })');
+      const plugin = factory(pluginRequire) || {};
+      const ctx = pluginContext(p.id);
+      if (typeof plugin.apply === 'function') await plugin.apply(ctx);
+      moduleStatus[p.id] = { ok: true, ctx };
+    } catch (err) {
+      moduleStatus[p.id] = { ok: false, error: err.message };
+      console.error(`plugin ${p.id}`, err); toast(T.loadFailed(p.id, err.message));
+    }
+  }
 }
 
 /* ---------- markdown: escaped input, CommonMark subset ---------- */
@@ -926,7 +1055,7 @@ function ago(ts) {
 async function refreshHealth() {
   try {
     const h = await json('/health');
-    state.health = h; state.generation = h.generation;
+    state.health = h; state.generation = h.generation; emitPlugin('health', h);
     $('genBadge').textContent = `gen ${h.generation}`;
     $('heroBadge').textContent = `gen ${h.generation}`;
     $('profileName').textContent = h.profile || 'pyharness';
@@ -1090,16 +1219,18 @@ function onMoreOutside(e) { if (moreMenu && !moreMenu.contains(e.target) && !$('
 function onMoreKey(e) { if (moreMenu && e.key === 'Escape') closeMoreMenu(); }
 $('moreButton').onclick = () => {
   if (moreMenu) { closeMoreMenu(); return; }
-  const h = state.health; const theme = storedTheme() || 'system';
+  const hl = state.health; const theme = storedTheme() || 'system';
   moreMenu = document.createElement('div'); moreMenu.className = 'menu'; moreMenu.setAttribute('role', 'menu');
   moreMenu.innerHTML = `<button type="button" class="menuRow" data-act="settings">${icon('gear', 'ico lead')}<span class="label">${esc(T.settings)}</span></button>
     <button type="button" class="menuRow" data-act="theme">${icon(document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon', 'ico lead')}<span class="label">${esc(T.theme)}</span><span class="sub">${esc(theme === 'system' ? T.themeSystem : theme === 'dark' ? T.themeDark : T.themeLight)}</span></button>
-    <div class="menuInfo"><b>${esc($('profileName').textContent)}</b> · ${h ? esc(T.online + ' · ' + T.gen(h.generation)) + (h.supervised ? '' : ' · ' + esc(T.unsupervised)) : esc(T.offline)}</div>`;
+    ${slotList('sidebar.more').map((e) => `<button type="button" class="menuRow" data-act="slot:${esc(e.key)}">${icon(e.icon || 'box', 'ico lead')}<span class="label">${esc(e.label || e.key)}</span></button>`).join('')}
+    <div class="menuInfo"><b>${esc($('profileName').textContent)}</b> · ${hl ? esc(T.online + ' · ' + T.gen(hl.generation)) + (hl.supervised ? '' : ' · ' + esc(T.unsupervised)) : esc(T.offline)}</div>`;
   moreMenu.onclick = (e) => {
     const act = e.target.closest('[data-act]')?.dataset.act; if (!act) return;
     closeMoreMenu();
     if (act === 'settings') { showSettings('general'); closeDrawer(); }
     if (act === 'theme') setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+    if (act.startsWith('slot:')) { const entry = slotGet('sidebar.more', act.slice(5)); if (entry?.onPick) entry.onPick(); else if (entry?.mount) selectPanel(entry.key); }
   };
   $('moreButton').parentElement.appendChild(moreMenu);
   document.addEventListener('mousedown', onMoreOutside, true); document.addEventListener('keydown', onMoreKey, true);
@@ -1119,16 +1250,42 @@ function setPhase(phase) {
   if (phase === 'hero') $('heroComposer').appendChild(seat); else $('scroll').appendChild(seat);
   $('topBar').toggleAttribute('data-bordered', phase !== 'hero' || state.view !== 'chat');
 }
-function setView(view) {
+let mainDispose = null;
+function setView(view, key) {
   state.view = view;
-  $('pluginsView').hidden = view !== 'plugins';
+  if (mainDispose) { mainDispose(); mainDispose = null; }
+  $('pluginsView').hidden = true;
+  $('mainSlot').hidden = view !== 'panel';
   $('chatView').hidden = view !== 'chat';
-  if (view === 'plugins') $('navPlugins').setAttribute('aria-current', 'page'); else $('navPlugins').removeAttribute('aria-current');
+  state.panel = view === 'panel' ? key : null;
+  if (view === 'panel') { const entry = slotGet('main', key); if (entry) mainDispose = mountEntry(entry, $('mainSlot'), { session: state.session }); }
+  if (state.panel === 'plugins') $('navPlugins').setAttribute('aria-current', 'page'); else $('navPlugins').removeAttribute('aria-current');
+  $('panelSlots').querySelectorAll('[data-panel]').forEach((b) => { if (b.dataset.panel === state.panel) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   $('topBar').toggleAttribute('data-bordered', view !== 'chat' || $('chatView').dataset.phase !== 'hero');
+  $('rbExpand').hidden = view !== 'chat' || !state.current || rightbar.open;
 }
+function selectPanel(key) {
+  if (key === 'conversation') { if (state.current) openSession(state.current); else newSession(); return; }
+  const entry = slotGet('main', key);
+  if (!entry) { toast(`no panel ${key}`); return; }
+  $('crumb').textContent = entry.label || key; $('crumbTags').innerHTML = '';
+  setView('panel', key);
+}
+function renderPanelList() {
+  $('panelSlots').innerHTML = slotList('sidebar.panellist').map((e) => `<button type="button" class="panelRow" data-panel="${esc(e.key)}" ${state.panel === e.key ? 'aria-current="page"' : ''}>${icon(e.icon || 'box')}<span>${esc(e.label || e.key)}</span></button>`).join('');
+}
+$('panelSlots').onclick = (e) => { const b = e.target.closest('[data-panel]'); if (b) { selectPanel(b.dataset.panel); closeDrawer(); } };
+onSlot('sidebar.panellist', renderPanelList);
+let dockDisposers = [];
+function renderDock() {
+  for (const d of dockDisposers) d(); dockDisposers = [];
+  const dock = $('composerDock'); dock.innerHTML = '';
+  for (const e of slotList('conversation.composer.dock')) { const host = document.createElement('span'); dock.appendChild(host); dockDisposers.push(mountEntry(e, host, { session: state.session })); }
+}
+onSlot('conversation.composer.dock', renderDock);
 function newSession() {
   state.current = null; state.run = null; state.session = null; state.sessionModel = null; state.sessionMode = null; state.sessionPreset = null; closeModelMenu(); renderModelChip(); renderSessionChips();
-  setView('chat'); $('log').innerHTML = ''; $('approval').innerHTML = '';
+  setView('chat'); $('log').innerHTML = ''; $('approval').innerHTML = ''; renderDock(); renderRightbar(); emitPlugin('session', null);
   $('crumb').textContent = '';
   setPhase('hero'); refreshSessions(); updateComposer(); $('input').focus();
 }
@@ -1138,8 +1295,8 @@ async function openSession(id) {
   try { s = await json('/sessions/' + id); } catch (err) { toast(err.message); return; }
   if (state.current !== id) return;
   $('crumb').textContent = s.title || T.untitled;
-  state.session = s; state.sessionModel = s.model || null; renderModelChip(); renderSessionChips();
-  setPhase('active');
+  state.session = s; state.sessionModel = s.model || null; renderModelChip(); renderSessionChips(); renderDock(); renderRightbar(); emitPlugin('session', s);
+  setPhase('active'); $('rbExpand').hidden = rightbar.open;
   renderHistory(s.messages);
   renderApproval(s.pending || []);
   refreshSessions();
@@ -1306,6 +1463,7 @@ async function consume(res) {
         const chunk = buf.slice(0, cut); buf = buf.slice(cut + 2);
         if (!chunk.startsWith('data: ')) continue;
         const ev = JSON.parse(chunk.slice(6));
+        emitPlugin('run', ev);
         switch (ev.type) {
           case 'reasoning':
             if (!reasoning) { reasoning = addReasoning(''); ai = null; }
@@ -1516,20 +1674,22 @@ function entryCards(d) {
     return `<div class="pcard"><span class="pcardIcon">${icon(entryGlyph(e))}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(e.id)}</span><span class="tag" data-tone="${tone}">${esc(T[key] || key)}</span></span><span class="pcardDesc"><code>${esc(e.name || '')}</code>${e.source ? ' · ' + esc(e.source) : ''}${detail ? ' · ' + esc(detail) : ''}</span></span></div>`;
   }).join('');
 }
-async function showPlugins() {
-  setView('plugins');
-  $('crumb').textContent = T.pluginsTitle;
+function showPlugins() { selectPanel('plugins'); }
+async function renderPluginsPanel(el) {
   const d = await loadPluginCount();
   if (!d) return;
   const bundleCards = d.bundles.map((b) => `<div class="pcard"><span class="pcardIcon">${icon('box')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(b.bundle)}</span><span class="tag" data-tone="${b.enabled ? 'success' : 'outline'}">${esc(b.enabled ? T.enabled : T.off)}</span></span><span class="pcardDesc"><code>${esc(b.dist || '')}</code> ${esc(b.version || '')} · ${esc(b.installed === 'profile' ? T.fromProfile : T.fromEnv)}</span></span></div>`).join('');
   const entries = entryCards(d);
-  $('pluginsView').innerHTML = `
+  const clients = (window.__PYH_BOOT__?.plugins || []).map((p) => { const st = moduleStatus[p.id]; return `<div class="pcard"><span class="pcardIcon">${icon('terminal')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(p.id)}</span><span class="tag" data-tone="${st?.ok ? 'success' : st ? 'danger' : 'outline'}">${esc(st?.ok ? T.running : st ? T.failed : T.pending)}</span></span><span class="pcardDesc"><code>${esc(p.url.split('?')[0])}</code>${p.calls?.length ? ' · ' + esc(p.calls.join(', ')) : ''}${st && !st.ok ? ' · ' + esc(st.error) : ''}</span></span></div>`; }).join('');
+  el.innerHTML = `<div class="page">
     <div class="pageHead"><div><h1 class="pageTitle">${esc(T.pluginsTitle)}</h1><p class="pageIntro">${esc(T.pluginsIntro)}</p></div><div class="headTools"><button type="button" class="iconButton" id="pluginsRefresh" title="${esc(T.refresh)}">${icon('refresh')}</button></div></div>
     <div class="group"><div class="groupHead"><h2 class="groupTitle">${esc(T.bundles)}</h2><span class="groupMeta">${d.bundles.length}</span></div><div class="cards">${bundleCards}</div></div>
     <div class="group"><div class="groupHead"><h2 class="groupTitle">${esc(T.entries)}</h2><span class="groupMeta">${d.entries.length}</span></div><div class="cards">${entries}</div></div>
-    <div class="tip">${T.tip}</div>`;
-  $('pluginsRefresh').onclick = showPlugins;
+    ${clients ? `<div class="group"><div class="groupHead"><h2 class="groupTitle">${esc(T.clientModules)}</h2><span class="groupMeta">${(window.__PYH_BOOT__?.plugins || []).length}</span></div><div class="cards">${clients}</div></div>` : ''}
+    <div class="tip">${T.tip}</div></div>`;
+  $('pluginsRefresh').onclick = () => renderPluginsPanel(el);
 }
+slotRegister('web-ui', { slot: 'main', key: 'plugins', label: T.pluginsTitle }, (el) => { renderPluginsPanel(el); return () => {}; });
 
 /* ---------- model directory, composer menu ---------- */
 async function loadDirectory() {
@@ -1704,12 +1864,78 @@ for (const [id, fn] of [['heroWorkspace', openWorkspaceMenu], ['modeChip', openM
   $(id).onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn($(id)); } };
 }
 
+/* ---------- right sidebar ---------- */
+const rightbar = (() => { try { return { open: false, width: 380, tab: 'files', ...JSON.parse(localStorage.getItem('pyh-rightbar') || '{}') }; } catch { return { open: false, width: 380, tab: 'files' }; } })();
+let rbDispose = null;
+function saveRightbar() { try { localStorage.setItem('pyh-rightbar', JSON.stringify({ open: rightbar.open, width: rightbar.width, tab: rightbar.tab })); } catch { /* no storage */ } }
+function renderRightbar() {
+  const bar = $('rightbar'); const tabs = slotList('rightbar.tabs');
+  const show = rightbar.open && !!state.current && state.view === 'chat';
+  bar.hidden = !show; frame.toggleAttribute('data-rightbar', show);
+  frame.style.setProperty('--rb-width', `${Math.max(280, Math.min(rightbar.width, Math.floor(window.innerWidth * 0.7)))}px`);
+  $('rbExpand').hidden = !state.current || state.view !== 'chat' || show;
+  if (rbDispose) { rbDispose(); rbDispose = null; }
+  if (!show) return;
+  if (!tabs.some((t) => t.key === rightbar.tab)) rightbar.tab = tabs[0]?.key;
+  $('rbTabs').innerHTML = tabs.map((t) => `<button type="button" class="rbTab" role="tab" data-tab="${esc(t.key)}" aria-selected="${t.key === rightbar.tab}">${t.icon ? icon(t.icon) : ''}<span>${esc(t.label || t.key)}</span></button>`).join('');
+  const entry = slotGet('rightbar.tabs', rightbar.tab);
+  if (entry) rbDispose = mountEntry(entry, $('rbBody'), { session: state.session, workspace: currentWorkspace() });
+  else $('rbBody').innerHTML = `<div class="rbEmpty">${esc(T.noSession)}</div>`;
+}
+$('rbTabs').onclick = (e) => { const b = e.target.closest('[data-tab]'); if (b) { rightbar.tab = b.dataset.tab; saveRightbar(); renderRightbar(); } };
+$('rbExpand').onclick = () => { rightbar.open = true; saveRightbar(); if (!mobile()) delete frame.dataset.collapsed; renderRightbar(); };
+$('rbCollapse').onclick = () => { rightbar.open = false; saveRightbar(); renderRightbar(); };
+$('rbHandle').onmousedown = (e) => {
+  e.preventDefault(); frame.dataset.resizing = '';
+  const move = (ev) => { rightbar.width = Math.max(280, Math.min(window.innerWidth - ev.clientX, Math.floor(window.innerWidth * 0.7))); frame.style.setProperty('--rb-width', `${rightbar.width}px`); };
+  const up = () => { delete frame.dataset.resizing; saveRightbar(); document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+  document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+};
+onSlot('rightbar.tabs', renderRightbar);
+window.addEventListener('resize', () => { if (rightbar.open) renderRightbar(); });
+function fmtSize(n) { if (n == null) return ''; if (n < 1024) return `${n} B`; if (n < 1048576) return `${(n / 1024).toFixed(1)} KB`; return `${(n / 1048576).toFixed(1)} MB`; }
+function filesTab(el, props) {
+  const root = props.workspace || null; let path = '/'; let alive = true;
+  const q = (p) => `?path=${encodeURIComponent(p)}${root ? '&root=' + encodeURIComponent(root) : ''}`;
+  async function list(next) {
+    let d;
+    try { d = await json('/workspaces/files' + q(next)); } catch (err) { el.innerHTML = `<div class="rbEmpty">${esc(err.message)}</div>`; return; }
+    if (!alive) return; path = d.path;
+    const parent = path === '/' ? null : path.replace(/\/[^/]*$/, '') || '/';
+    el.innerHTML = `<div class="fileHead">${parent !== null ? `<button type="button" class="iconButton sm" data-up title="${esc(T.up)}">${icon('arrow-up')}</button>` : icon('folder')}<span class="path" title="${esc(d.root + path)}">${esc(path)}</span></div>
+      <div>${d.entries.map((x) => `<button type="button" class="fileRow" data-path="${esc(x.path)}" ${x.dir ? 'data-dir' : ''} ${x.hidden ? 'data-hidden' : ''}>${icon(x.dir ? 'folder' : 'file')}<span class="name">${esc(x.name)}</span><span class="size">${esc(fmtSize(x.size))}</span></button>`).join('') || `<div class="rbEmpty">—</div>`}</div>`;
+    el.querySelector('[data-up]')?.addEventListener('click', () => list(parent));
+    el.querySelectorAll('[data-path]').forEach((b) => { b.onclick = () => (b.hasAttribute('data-dir') ? list(b.dataset.path) : preview(b.dataset.path)); });
+  }
+  async function preview(file) {
+    let d;
+    try { d = await json('/workspaces/file' + q(file)); } catch (err) { toast(err.message); return; }
+    if (!alive) return;
+    const back = file.replace(/\/[^/]*$/, '') || '/';
+    el.innerHTML = `<div class="fileHead"><button type="button" class="iconButton sm" data-back title="${esc(T.up)}">${icon('arrow-up')}</button><span class="path" title="${esc(file)}">${esc(file)}</span><span>${esc(fmtSize(d.size))}${d.truncated ? ' · ' + esc(T.truncated) : ''}</span></div>${d.binary ? `<div class="rbEmpty">${esc(T.binaryFile)}</div>` : `<pre class="filePreview"></pre>`}`;
+    if (!d.binary) el.querySelector('.filePreview').textContent = d.text;
+    el.querySelector('[data-back]').onclick = () => list(back);
+  }
+  list('/');
+  return () => { alive = false; };
+}
+function infoTab(el, props) {
+  const s = props.session;
+  if (!s) { el.innerHTML = `<div class="rbEmpty">${esc(T.noSession)}</div>`; return () => {}; }
+  const rows = [['ID', s.id], [T.workspace_, s.workspace || props.workspace], [T.preset_, presetLabel(s.preset || state.agent?.default_preset)], [T.mode_, modeLabel(s.mode || state.agent?.default_mode)], [T.model, s.model || state.directory?.default || ''], ['Created', new Date((s.created_at || 0) * 1000).toLocaleString()], ['Updated', new Date((s.updated_at || 0) * 1000).toLocaleString()]];
+  el.innerHTML = `<dl class="kvTable">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v || '')}</dd>`).join('')}</dl><div class="actionsRow" style="padding:0 14px"><button type="button" class="btn outline sm" data-copy-id>${icon('copy')}<span>${esc(T.copyId)}</span></button></div>`;
+  el.querySelector('[data-copy-id]').onclick = (e) => copyText(s.id, e.currentTarget);
+  return () => {};
+}
+slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'files', label: T.tabFiles, icon: 'folder', order: 1 }, filesTab);
+slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'info', label: T.tabInfo, icon: 'eye', order: 2 }, infoTab);
+
 /* ---------- settings: models ---------- */
 const models = { data: null, open: null, draft: null, busy: false };
 const sf = (name, root) => (root || $('settingsContent')).querySelector(`[data-field="${name}"]`);
 const ROUTE_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 const settingsUi = { tab: 'general', open: false };
-function closeSettings() { settingsUi.open = false; $('settingsModal').hidden = true; document.removeEventListener('keydown', onSettingsKey, true); }
+function closeSettings() { settingsUi.open = false; $('settingsModal').hidden = true; document.removeEventListener('keydown', onSettingsKey, true); if (settingsUi.dispose) { settingsUi.dispose(); settingsUi.dispose = null; } }
 function onSettingsKey(e) { if (e.key === 'Escape' && !document.querySelector('.modal:not(#settingsModal)')) { e.preventDefault(); closeSettings(); } }
 $('settingsClose').onclick = closeSettings;
 $('settingsModal').addEventListener('mousedown', (e) => { if (e.target === $('settingsModal')) closeSettings(); });
@@ -1717,6 +1943,7 @@ $('settingsNav').onclick = (e) => { const b = e.target.closest('[data-tab]'); if
 async function showSettings(tab) {
   closeModelMenu(); closeChipMenu(); closeMoreMenu();
   settingsUi.tab = tab || settingsUi.tab;
+  if (settingsUi.dispose) { settingsUi.dispose(); settingsUi.dispose = null; }
   if (!settingsUi.open) { settingsUi.open = true; $('settingsModal').hidden = false; document.addEventListener('keydown', onSettingsKey, true); }
   $('settingsNav').querySelectorAll('[data-tab]').forEach((b) => { if (b.dataset.tab === settingsUi.tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   if (!state.agent) await loadAgentOptions();
@@ -1725,7 +1952,13 @@ async function showSettings(tab) {
   else if (settingsUi.tab === 'general') { content.innerHTML = generalMarkup(); bindGeneral(); }
   else if (settingsUi.tab === 'presets') { content.innerHTML = presetsMarkup(); bindPresets(); }
   else if (settingsUi.tab === 'plugins') { content.innerHTML = `<h3 class="sectionTitle">${esc(T.tabPlugins)}</h3><p class="sectionIntro">${esc(T.pluginsTabIntro)}</p>`; const d = await loadPluginCount(); if (d) content.innerHTML += `<div class="cards">${entryCards(d)}</div>`; }
+  else { const entry = slotGet('settings.sections', settingsUi.tab); if (entry) { content.innerHTML = `<h3 class="sectionTitle">${esc(entry.label || entry.key)}</h3><div data-section></div>`; settingsUi.dispose = mountEntry(entry, content.querySelector('[data-section]'), {}); } }
 }
+function renderSettingsNav() {
+  $('settingsNav').querySelectorAll('[data-slot-tab]').forEach((b) => b.remove());
+  for (const e of slotList('settings.sections')) $('settingsNav').insertAdjacentHTML('beforeend', `<button type="button" data-tab="${esc(e.key)}" data-slot-tab>${icon(e.icon || 'box')}<span>${esc(e.label || e.key)}</span></button>`);
+}
+onSlot('settings.sections', renderSettingsNav);
 function generalMarkup() {
   const a = state.agent || { modes: [], default_mode: '' }; const theme = storedTheme() || 'system';
   const modes = a.modes.map((m) => `<option value="${esc(m.id)}" ${m.id === a.default_mode ? 'selected' : ''}>${esc(modeLabel(m.id))}</option>`).join('');
@@ -2020,6 +2253,7 @@ function pickModels(candidates, existing) {
 (async () => {
   setPhase('hero'); updateComposer();
   await refreshHealth(); await refreshSessions(); loadPluginCount(); loadDirectory(); loadAgentOptions();
+  await loadClientModules(); renderDock(); renderRightbar();
   input.focus();
   setInterval(() => { if (!state.streaming) refreshSessions(); }, 15000);
 })();
