@@ -1845,9 +1845,9 @@ $('composer').addEventListener('submit', async (e) => {
   if (!state.current) {
     let s;
     try { s = await json('/sessions', { method: 'POST', body: JSON.stringify({ title: (text || attachments[0].name).slice(0, 60), model: state.sessionModel, workspace: state.sessionWorkspace, mode: state.sessionMode, preset: state.sessionPreset }) }); } catch (err) { toast(err.message); return; }
-    state.current = s.id; state.session = s; log().innerHTML = ''; renderSessionChips();
+    state.current = s.id; state.session = s; log().innerHTML = ''; curTurn = null; renderSessionChips();
     $('crumb').textContent = s.title || T.untitled;
-    setPhase('active'); refreshSessions();
+    setPhase('active'); setConvView('chat'); renderDock(); renderRightbar(); renderStats(); emitPlugin('session', s); refreshSessions();
   }
   input.value = ''; autosize(); attachments.length = 0; renderAttachments();
   addUser(text, images); scrollToEnd(true);
