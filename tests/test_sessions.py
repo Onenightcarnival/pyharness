@@ -92,7 +92,7 @@ async def test_presets_select_tools_skills_and_prompt_sections(profile):
         prompts = [c["messages"][0][1] for c in scripted.CALLS if "messages" in c]
         assert "Agent preset: Standard" in prompts[0] and "Extending this harness" in prompts[0]
         assert "Agent preset: Creator" in prompts[1] and "/skills/pyharness/pyharness-plugin-development/SKILL.md" in prompts[1]
-        assert "/skills/" not in prompts[0]
+        assert "/skills/pyharness/" not in prompts[0]  # the user skills mount (config-center) is in every preset
         # Tool sets per graph: the standard graph has no plugin_manager tool.
         standard_graph = await agents.graph_for(standard)
         creator_graph = await agents.graph_for(creator)

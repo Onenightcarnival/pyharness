@@ -19,6 +19,7 @@ members = [
     "pyharness-checkpoint-postgres",
     "pyharness-checkpoint-sqlite",
     "pyharness-compaction",
+    "pyharness-config-center",
     "pyharness-core",
     "pyharness-http",
     "pyharness-inspect",
@@ -1732,6 +1733,35 @@ requires-dist = [
 ]
 
 [[package]]
+name = "pyharness-config-center"
+version = "0.1.0"
+source = { editable = "packages/config-center" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pyharness-agent-loop-deepagents" },
+    { name = "pyharness-core" },
+    { name = "pyharness-http" },
+    { name = "pyharness-mcp" },
+    { name = "pyharness-web-ui" },
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = ">=0.115" },
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "pydantic", specifier = ">=2" },
+    { name = "pyharness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
+    { name = "pyharness-core", editable = "packages/core" },
+    { name = "pyharness-http", editable = "packages/http" },
+    { name = "pyharness-mcp", editable = "packages/mcp" },
+    { name = "pyharness-web-ui", editable = "packages/web-ui" },
+    { name = "pyyaml", specifier = ">=6" },
+]
+
+[[package]]
 name = "pyharness-core"
 version = "0.1.0"
 source = { editable = "packages/core" }
@@ -1873,6 +1903,7 @@ dependencies = [
     { name = "pyharness-checkpoint-postgres" },
     { name = "pyharness-checkpoint-sqlite" },
     { name = "pyharness-compaction" },
+    { name = "pyharness-config-center" },
     { name = "pyharness-core" },
     { name = "pyharness-http" },
     { name = "pyharness-inspect" },
@@ -1913,6 +1944,7 @@ requires-dist = [
     { name = "pyharness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
     { name = "pyharness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
     { name = "pyharness-compaction", editable = "packages/compaction" },
+    { name = "pyharness-config-center", editable = "packages/config-center" },
     { name = "pyharness-core", editable = "packages/core" },
     { name = "pyharness-http", editable = "packages/http" },
     { name = "pyharness-inspect", editable = "packages/inspect" },

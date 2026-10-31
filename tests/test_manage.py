@@ -117,10 +117,8 @@ async def test_read_only_actions_need_no_approval(profile):
         session = await agents.create_session(preset="creator")
         events = await agents.start_run(session["id"], "list plugins").wait()
         assert not any(e["type"] == "interrupt" for e in events)
-        listing = json.loads(next(e for e in events if e["type"] == "tool_result")["content"])
-        assert {"id": "plugin-manager", "name": "pyharness-plugin-manager", "state": "active", "source": "bundle:base"} in listing[
-            "entries"
-        ]
+        preview = next(e for e in events if e["type"] == "tool_result")["content"]  # events carry a 4000-char preview
+        assert preview.startswith("{") and '"id": "plugin-manager"' in preview and '"source": "bundle:base"' in preview
 
 
 def test_install_targets_are_classified():

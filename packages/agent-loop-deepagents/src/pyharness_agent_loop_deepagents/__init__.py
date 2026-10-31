@@ -318,8 +318,9 @@ class DeepAgentsLoop(Service):
             mount = f"{SKILLS_MOUNT}/{slug}/"
             routes[mount] = FilesystemBackend(root_dir=path, virtual_mode=True)
             sources.append(mount)
+            # One deny rule per mount: rules scoped to composite routes are accepted even when the workspace backend runs commands.
+            rules.append(FilesystemPermission(operations=["write"], paths=[mount, f"{mount}**"], mode="deny"))
         composite = CompositeBackend(default=backend if backend is not None else StateBackend(), routes=routes)
-        rules.append(FilesystemPermission(operations=["write"], paths=[SKILLS_MOUNT, f"{SKILLS_MOUNT}/**"], mode="deny"))
         return composite, sources, rules
 
     # ------------------------------------------------------------------ build

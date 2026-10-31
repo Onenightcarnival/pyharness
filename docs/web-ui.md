@@ -39,6 +39,9 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 记忆页 | `pyharness-memory` 的浏览器模块，左侧栏「记忆」：页头（版本历史、导出、导入、刷新、清空）、版本号与最近修改时间、「允许 Agent 使用」开关（关掉后两个工具与提示词段立即注销）；「简历」视图（个人信息与能力、工作经历卡片、项目卡片，按经历时间最新 / 最早排序）与「目录」视图（工作经历 / 项目 / 经验三列 + 详情，独立项目分组）；编辑弹窗按类型给出字段（日期区间与「至今」、所属工作经历 / 项目下拉）；版本历史：修订列表（人工 / Agent、摘要、时间）、字段级修改前后对比、恢复此版本；导入 / 导出 `career-memory.json`；每 5 秒静默刷新 |
 | 数据库页 | `pyharness-rdb` 的浏览器模块，左侧栏「数据库」：页头「允许 Agent 使用」开关；左栏连接列表（类型徽标、名称、「可写」标记，当前连接的测试 / 编辑 / 删除）与对象树（多 schema 时下拉、过滤框、表 / 视图分组）；右侧 数据 / 结构 / SQL 三个页签。数据：过滤条（列、运算符、值）、刷新、导出 CSV、新增行、删除所选；表头点击排序、主键标记；双击单元格编辑（∅ 设为 NULL），改动按事务生成 SQL，保存前弹窗预览语句再执行；无主键的表只读。结构：列、索引、DDL。SQL：编辑器（Ctrl/Cmd+Enter 执行，选中部分只跑选中），看起来会写数据的语句先确认，结果表与导出。连接弹窗按类型（PostgreSQL / MySQL / GaussDB / SQLite）给字段，目标节点与随机选节点为可选项 |
 | S3 页 | `pyharness-s3` 的浏览器模块，左侧栏「S3」：页头「允许 Agent 使用」开关；左栏桶配置列表（名称、桶 / 前缀、endpoint，当前配置的测试 / 编辑 / 删除）；右侧对象浏览器：面包屑（桶 + 前缀为根）、当前页过滤、刷新、新建文件夹、上传（多选或拖入，XHR 进度条）；表格（全选、名称、大小、修改时间、操作：下载、分享链接、重命名、删除），点文件夹进入，点对象预览（图片内联、文本前 512 KB、二进制提示下载）；多选后删除所选；「加载更多」翻页；分享链接弹窗选有效期（1 小时 / 1 天 / 7 天）并复制预签名 URL；删除弹窗列出全部 key，文件夹递归。配置弹窗：桶、Endpoint、AK / SK（编辑时留空保留）、显示名、Region、限定前缀、路径风格 |
+| MCP 页 | `pyharness-config-center` 的浏览器模块，左侧栏「MCP」（替代原来设置里的 MCP 页签）：页头「导入 JSON」（Claude Desktop / Cursor 风格 `mcpServers`）与刷新；「连接设置」折叠区设启动等待秒数；左栏服务器列表（状态点：绿已连接 / 红失败、名称、命令或 URL、「已停用」标签），「＋ 添加」；右侧编辑卡：名称、连接方式（streamable HTTP / SSE / stdio）、stdio 的命令 / 参数（每行一个）/ 环境变量键值对 / 工作目录，HTTP 的地址 / 请求头键值对，调用前批准，启用开关；底部删除 / 测试连接（真实握手并列出工具名）/ 保存（写入 profile 补丁，重启后列表刷新） |
+| 技能页 | 左侧栏「技能」：页头刷新、打开目录、安装 ZIP（冲突时提示覆盖 / 跳过 / 取消）；左栏技能列表（版本、启停状态、描述），右侧详情：启用开关、打开目录、删除、描述、「技能信息」（路径与 frontmatter）、文件树与预览（256 KB 截断） |
+| 环境依赖 | 设置 →「环境依赖」（`settings.sections` 槽位）：bun / bunx 卡片（状态标签、已安装 / 提供版本、平台、可执行文件、数据目录、下载进度条、安装 / 修复 / 检测），安装中每 1.5 秒轮询 |
 | 斜杠命令 | 输入框里键入 `/` 弹出命令菜单（↑↓ 选择，Enter / Tab 执行，Esc 关闭）：`/compact`、`/new`、`/model`、`/mode`、`/files`、`/terminal`、`/jobs`、`/clear`、`/settings`、`/help`；命令不会变成模型消息。插件的浏览器模块用 `ctx.commands.register({ name, description, icon, order?, when?, run(args) })` 添加命令 |
 | @ 引用 | 键入 `@` 弹出工作区文件菜单（`GET /workspaces/search`，跳过隐藏目录与依赖目录；子串优先，其次子序列），选中插入 `@path`（含空格时 `@"path"`，目录以 `/` 结尾可继续下钻）。发送时 host 把能解析的引用展开成 `<attached-file path=…>`（文本，超长截断）或 `<attached-directory path=…>`（目录列表）附在消息后；气泡只显示原文与引用标签，点标签在右侧栏预览 |
 | agent 提问 | agent 调用 `ask_user_question` 时轮次暂停（过程头显示「等待回答」），输入框上方出现问题卡片：标题、问题、单选 / 多选选项、自由输入；「提交回答」或「全部跳过」后续跑，工具收到 `{"answers": [...]}` |
@@ -53,7 +56,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 插件槽位 | 页面在加载时读取 `window.__PYH_BOOT__` 的模块清单，依次加载各插件的 `client.js`；模块通过 `ctx.slots.register` 填入槽位：侧边栏面板行、「更多」菜单行、主区面板、输入框旁的停靠位、设置分区、右侧栏 tab。契约见 `pyharness_web_ui` 包文档与创造模式 skill 的 `references/ui-plugin.md` |
 | 模型菜单 | 输入框右下角的模型标签：按提供方分组的模型菜单；选择后写入会话（`PUT /sessions/{id}/model`），下一次请求生效；新会话在创建时带上选择；菜单底部「管理模型…」进入设置 |
 | 会话顶栏 | 两行（同 dsh）：标题行（标题、工作区与预设标签、右侧栏按钮）与视图页签行（对话 / 轨迹，下划线样式）；首页不显示 |
-| 设置对话框 | 800 × 800、28px 圆角、layer-2 底色；左侧 188px 导航（40px 行）；「MCP 服务器」页列出已配置的服务器（状态、工具数、错误），可添加 / 编辑 / 删除：名称、传输（stdio / HTTP / SSE）、命令与参数或 URL、环境变量或请求头（已保存的值打码，留着即保留）、调用前是否批准、是否启用；保存写入 profile 补丁并重启生效；「内置插件」有搜索框与按来源分组的两列卡片。「更多 → 设置」或模型菜单的「管理模型…」进入；左侧分区：通用（新会话权限、语言、外观浅色 / 深色 / 跟随系统）、模型、预设（卡片，点击设为新会话默认）、内置插件（条目只读）。「模型」：新会话默认模型；提供方行（标题、类型、默认标记、密钥状态点、端点、模型数），点击展开编辑卡（同时只开一张）：API Key（只写、可显示）、Base URL（占位符为默认端点）、模型列表（ID、显示名、上下文、最大输出、输入模态勾选：文本 / 图像；「获取可用模型」打开可搜索的勾选列表，端点披露的模态随之带入，「恢复默认模型」）、测试连接、删除（确认框）、应用。「添加模型提供方」：「第三方模型提供方」从预置目录选择（OpenAI、Anthropic、DeepSeek、Google Gemini、OpenRouter；集成包随 pyharness-llm 安装），或「自定义模型 API」填写提供方 ID、显示名、API 协议（OpenAI Chat Completions / Responses / Anthropic Messages）、端点，至少一个模型。应用后立即生效，无需重启；密钥写入 profile 的 `credentials.yaml`，配置只记录引用名 |
+| 设置对话框 | 800 × 800、28px 圆角、layer-2 底色；左侧 188px 导航（40px 行）；MCP 服务器改在左侧栏「MCP」页管理；「内置插件」有搜索框与按来源分组的两列卡片。「更多 → 设置」或模型菜单的「管理模型…」进入；左侧分区：通用（新会话权限、语言、外观浅色 / 深色 / 跟随系统）、模型、预设（卡片，点击设为新会话默认）、内置插件（条目只读）。「模型」：新会话默认模型；提供方行（标题、类型、默认标记、密钥状态点、端点、模型数），点击展开编辑卡（同时只开一张）：API Key（只写、可显示）、Base URL（占位符为默认端点）、模型列表（ID、显示名、上下文、最大输出、输入模态勾选：文本 / 图像；「获取可用模型」打开可搜索的勾选列表，端点披露的模态随之带入，「恢复默认模型」）、测试连接、删除（确认框）、应用。「添加模型提供方」：「第三方模型提供方」从预置目录选择（OpenAI、Anthropic、DeepSeek、Google Gemini、OpenRouter；集成包随 pyharness-llm 安装），或「自定义模型 API」填写提供方 ID、显示名、API 协议（OpenAI Chat Completions / Responses / Anthropic Messages）、端点，至少一个模型。应用后立即生效，无需重启；密钥写入 profile 的 `credentials.yaml`，配置只记录引用名 |
 
 | 适配 | 行为 |
 |---|---|
@@ -94,7 +97,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | GET | `/sessions/{id}/changes` | | 各轮改动文件摘要（`GET /sessions/{id}` 也带 `changes`） |
 | GET | `/sessions/{id}/turns` | | 各轮记录：`stats`（步骤、token、墙钟时间）与 `records`（轨迹：user / step / tool / end）；`GET /sessions/{id}` 也带 `turns` 与 `context_window` |
 | GET | `/sessions/{id}/changes/{run}/diff?index=` | | 所列文件的 hunk，行带高亮 HTML；重启后 `available: false` |
-| GET | `/settings/mcp` | | MCP 服务器列表（env / headers 值打码）与连接状态 |
+| GET | `/settings/mcp` | | MCP 服务器列表（env / headers 值打码）与连接状态（MCP 页也用 `GET /config-center/mcp`，多带 `connectTimeout`） |
 | PUT | `/settings/mcp` | `{"servers": {name: server}}` | 整体替换 MCP 服务器配置；打码值保留原值；写入 profile 补丁，重启生效 |
 | POST | `/highlight` | `{"items": [{"code", "lang"?, "filename"?}]}` | 每项的 token span HTML（无匹配 lexer 时为空） |
 | GET | `/highlight.css` | | 浅色与深色主题的 token 配色 |

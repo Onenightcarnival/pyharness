@@ -14,3 +14,7 @@ patch:
   - id: s3
     name: pyharness-s3
     after: rdb
+  # Configuration center: the MCP page (connection test), user skills, the managed bun runtime.
+  - id: config-center
+    name: pyharness-config-center
+    after: s3

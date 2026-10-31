@@ -7,7 +7,7 @@
 | `pyharness-core` | — | `loader`、`lifecycle`、`profile`、`events` | 内核：容器、事件、组合、Loader、worker、supervisor、预检、CLI |
 | `pyharness-llm` | `llm` | `llm` | 模型提供方注册表；`resolve("provider:model")`；内置 `echo` |
 | `pyharness-tools` | `tools` | `tools` | 工具注册表、执行管线、审批闸门 |
-| `pyharness-mcp` | `mcp` | `mcp` | MCP 服务器的工具注册进 `ctx.tools`（stdio 或 HTTP / SSE），工具名加服务器前缀；连接失败不影响启动，`status()` 可查 |
+| `pyharness-mcp` | `mcp` | `mcp` | MCP 服务器的工具注册进 `ctx.tools`（stdio 或 HTTP / SSE），工具名加服务器前缀；连接失败不影响启动，`status()` 可查；stdio 命令为裸 `bun` / `bunx` 且配置中心装了受管 bun 时改走它（`managed_bun`）；`probe()` 给配置中心的连接测试 |
 | `pyharness-prompt` | `prompt` | `prompt` | 有序的系统提示词片段 |
 | `pyharness-ask-user` | `ask-user` | `askUser` | `ask_user_question` 工具：agent 提问（可带选项、多选、标题），运行以 LangGraph interrupt 暂停，Web UI 显示问题卡片；`POST /sessions/{id}/answers` 回答后续跑，工具返回 `{"answers": [{"id", "selected", "custom"?}]}`，问答结构与 dsh 一致 |
 | `pyharness-checkpoint-sqlite` | `checkpoint` | `checkpointer`、`store` | SQLite 持久化 |
@@ -31,7 +31,8 @@
 | `pyharness-memory` | `memory` | `memory` | agent 的职业履历记忆（对齐 dsh-memory）：`profile → work → project → lesson` 四层树，SQLite 存储（`<profile data>/toolkit/memory.sqlite`），每次改动记一条修订并保存整份快照（内容寻址去重）；`memory_get`（读一个节点：内容、祖先、分页子节点摘要）与 `memory_save`（一次原子应用 1–100 条带类型的改动，`stateToken` 并发校验，`ref` / `@ref` 批内引用）；提示词段 `plugin:memory`（order 155）；两者只在记忆页「允许 Agent 使用」开着时注册；`/api/memory` 路由；左侧栏「记忆」全页 |
 | `pyharness-rdb` | `rdb` | `rdb` | 关系数据库工作台（对齐 dsh-rdb）：SQLite（标准库）/ PostgreSQL 与 GaussDB（psycopg 3）/ MySQL 与 MariaDB（PyMySQL）；连接配置存 `<profile data>/toolkit/rdb.json`，密码存 profile 凭据库（`RDB_<ID>`）；多主机按 `targetSessionAttrs`（libpq 语义）挑节点；每个连接一个常驻驱动（空闲 10 分钟关闭）；`db_connections` / `db_schema` / `db_query`（单条只读语句，服务端分类拒绝写入）/ `db_explain` / `db_execute`（一个事务，仅对勾选「允许 Agent 写入」的连接，且须 `confirm=true`）；提示词段 `plugin:rdb`（order 153）；工具与提示词只在数据库页「允许 Agent 使用」开着时注册；`/api/rdb/*` 路由（连接、测试、schema / 表 / 列 / DDL、分页行、query、execute、网格改动预览与应用、CSV 导出）；左侧栏「数据库」全页 |
 | `pyharness-s3` | `s3` | `s3` | S3 兼容对象存储浏览器（对齐 dsh-s3）：boto3 客户端（path-style / virtual-host、`when_required` 校验和、3 次重试）；一个 profile 对应一个桶（endpoint、region、AK/SK、限定前缀），配置存 `<profile data>/toolkit/s3.json`，Secret Key 存 profile 凭据库（`S3_<ID>`），所有 key 相对前缀；`s3_buckets` / `s3_list`（按层级或递归、分页）/ `s3_stat` / `s3_get`（文本，二进制拒绝）/ `s3_put` / `s3_upload` / `s3_download` / `s3_copy` / `s3_presign` / `s3_mkdir` / `s3_delete`（前缀递归，须 `confirm=true`）；提示词段 `plugin:s3`（order 152）；工具只在 S3 页「允许 Agent 使用」开着时注册；`/api/s3/*` 路由（配置、测试、列表、stat、下载 / 内联预览、文本、流式上传、删除、文件夹、预签名、复制）；左侧栏「S3」全页 |
-| `pyharness-bundle-toolkit` | — | — | `toolkit` bundle：工具箱各模块（memory、rdb、s3）；`builtin: true`，每个 profile 必含、不可关闭、不可卸载；左侧栏入口可在设置 → 通用里隐藏 |
+| `pyharness-config-center` | `config-center` | `configCenter` | 配置中心（对齐 dsh-config-center）：左侧栏「MCP」全页（服务器列表与状态、编辑器、连接测试 `POST /api/config-center/mcp/test`（真正连上并列出工具）、启动等待 `connect_timeout`、粘贴 `mcpServers` JSON 导入；保存仍走 `PUT /api/settings/mcp`，重启生效）；左侧栏「技能」全页：`<profile data>/toolkit/skills/<name>/SKILL.md`（启用，`ctx.agentLoop.add_skills` 挂载为 `/skills/user/`）与 `disabled-skills/`（停用），ZIP 安装（根 SKILL.md、`<dir>/SKILL.md`、顶层 `*.md`；冲突时询问 / 跳过 / 覆盖）、启停（移动目录）、删除、文件预览、打开目录；设置 →「环境依赖」：受管 bun（固定版本，按发布的 `SHASUMS256.txt` 校验，装在 `<profile data>/toolkit/bun/`），MCP 服务器命令写裸 `bun` / `bunx` 时 `pyharness-mcp` 自动改用它并注入 `BUN_INSTALL` 等环境变量，PATH 不改 |
+| `pyharness-bundle-toolkit` | — | — | `toolkit` bundle：工具箱各模块（memory、rdb、s3、config-center）；`builtin: true`，每个 profile 必含、不可关闭、不可卸载；左侧栏入口可在设置 → 通用里隐藏 |
 
 条目 id 与配置：`packages/bundle-base/src/pyharness_bundle_base/bundle.yaml`。
 

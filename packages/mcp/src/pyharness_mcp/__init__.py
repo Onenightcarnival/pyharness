@@ -8,6 +8,9 @@
 | ``servers.<name>.prefix`` | tool names become ``<server>_<tool>`` (default) to keep servers apart        |
 | ``connect_timeout``    | seconds to list a server's tools before it is marked ``error``                   |
 
+A stdio server whose command is a bare ``bun`` / ``bunx`` runs through the bun runtime the configuration center installs
+(``<profile data>/toolkit/bun/``) when it exists; :func:`managed_bun` finds it.
+
 A server that fails to connect is reported in :meth:`MCPService.status` and skipped; the harness boots without it.
 Tools run through the ``tools/execute`` pipeline like any registered tool, so permission modes and approvals apply.
 Secrets in ``env`` and ``headers`` come from the profile configuration (``${env:VAR}`` interpolation keeps them out of files).
@@ -16,7 +19,10 @@ Secrets in ``env`` and ``headers`` come from the profile configuration (``${env:
 from __future__ import annotations
 
 import asyncio
+import os
 import re
+import sys
+from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -48,12 +54,31 @@ def slug(name: str) -> str:
     return re.sub(r"[^A-Za-z0-9_]+", "_", name).strip("_") or "server"
 
 
-def connection_of(cfg: ServerConfig) -> dict[str, Any]:
-    """The ``langchain-mcp-adapters`` connection for a server configuration."""
+def managed_bun(data_dir: str | os.PathLike[str] | None) -> tuple[Path, dict[str, str]] | None:
+    """The bun runtime installed by the configuration center (``<profile data>/toolkit/bun/bin/bun``) and its
+    environment, or ``None`` when it is not installed."""
+    if data_dir is None:
+        return None
+    root = Path(data_dir) / "toolkit" / "bun"
+    exe = root / "bin" / ("bun.exe" if sys.platform == "win32" else "bun")
+    if not exe.exists():
+        return None
+    return exe, {"BUN_INSTALL": str(root), "BUN_INSTALL_CACHE_DIR": str(root / "cache"), "NO_UPDATE_NOTIFIER": "1"}
+
+
+def connection_of(cfg: ServerConfig, data_dir: str | os.PathLike[str] | None = None) -> dict[str, Any]:
+    """The ``langchain-mcp-adapters`` connection for a server configuration. A bare ``bun`` / ``bunx`` command runs
+    through the managed bun under ``data_dir`` when that runtime is installed."""
     if cfg.command:
-        conn: dict[str, Any] = {"transport": "stdio", "command": cfg.command, "args": list(cfg.args)}
-        if cfg.env:
-            conn["env"] = dict(cfg.env)
+        command, env = cfg.command, dict(cfg.env)
+        bun = managed_bun(data_dir) if command.lower() in ("bun", "bunx", "bun.exe", "bunx.exe") else None
+        if bun is not None:
+            exe, bun_env = bun
+            command = str(exe.with_name(exe.name.replace("bun", "bunx", 1))) if command.lower().startswith("bunx") else str(exe)
+            env = {**bun_env, **env}
+        conn: dict[str, Any] = {"transport": "stdio", "command": command, "args": list(cfg.args)}
+        if env:
+            conn["env"] = env
         if cfg.cwd:
             conn["cwd"] = cfg.cwd
         return conn
@@ -105,8 +130,22 @@ class MCPService(Service):
     async def _load(self, name: str, cfg: ServerConfig) -> list[Any]:
         from langchain_mcp_adapters.client import MultiServerMCPClient
 
-        client = MultiServerMCPClient({name: connection_of(cfg)})
+        client = MultiServerMCPClient({name: connection_of(cfg, self.data_dir())})
         return list(await client.get_tools())
+
+    def data_dir(self) -> Path | None:
+        profile = self.ctx.get("profile", None)
+        return Path(profile.data) if profile is not None and hasattr(profile, "data") else None
+
+    async def probe(self, cfg: ServerConfig, timeout: float | None = None) -> dict[str, Any]:
+        """Connect to a server configuration without registering anything: ``{"ok", "tools": [names], "error"?}``."""
+        try:
+            tools = await asyncio.wait_for(self._load("probe", cfg), timeout or self.config.connect_timeout)
+            return {"ok": True, "tools": [t.name for t in tools]}
+        except TimeoutError:
+            return {"ok": False, "code": "timeout", "error": f"no MCP handshake within {timeout or self.config.connect_timeout:g} s"}
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "code": "error", "error": f"{type(exc).__name__}: {exc}"[:600]}
 
     # ------------------------------------------------------------------ views
     def status(self) -> dict[str, dict[str, Any]]:
@@ -124,4 +163,4 @@ class MCPService(Service):
         return out
 
 
-__all__ = ["Config", "MCPService", "ServerConfig", "connection_of", "slug"]
+__all__ = ["Config", "MCPService", "ServerConfig", "connection_of", "managed_bun", "slug"]

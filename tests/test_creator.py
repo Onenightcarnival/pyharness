@@ -78,15 +78,14 @@ async def test_creator_profile_mounts_skills_read_only(home):
     scripted.CALLS.clear()
     async with Harness(profile, patch=patch_for(replies)) as h:
         mounts = h.get("agentLoop").skills()
-        assert mounts == [
-            {
-                "label": "pyharness",
-                "path": str(SKILLS_DIR),
-                "mount": "/skills/pyharness/",
-                "owner": "plugin-manager",
-                "presets": ["creator"],
-            }
-        ]
+        assert {
+            "label": "pyharness",
+            "path": str(SKILLS_DIR),
+            "mount": "/skills/pyharness/",
+            "owner": "plugin-manager",
+            "presets": ["creator"],
+        } in mounts
+        assert [m["label"] for m in mounts] == ["pyharness", "user"] and mounts[1]["owner"] == "config-center"  # user skills: every preset
         assert h.get("agentLoop").config.default_preset == "creator"
         prompt = h.get("prompt").render("creator")
         assert "Extending this harness" not in prompt  # the skill catalog carries it in the creator preset
