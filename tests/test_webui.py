@@ -20,13 +20,13 @@ async def test_page_carries_the_boot_manifest_and_serves_client_modules(home):
     profile = Profile.init("web", home=str(home))
     async with Harness(profile, patch=[HTTP_OFF, UI_PLUGIN]) as h:
         webui = h.get("webui")
-        assert [c["entry"] for c in webui.clients()] == ["uiplugin"]
+        assert "uiplugin" in [c["entry"] for c in webui.clients()]  # beside built-in modules such as the terminal tab
         assert {s["name"] for s in webui.slots()} >= {"main", "sidebar.panellist", "rightbar.tabs", "settings.sections"}
         async with client(h) as c:
             page = (await c.get("/")).text
             boot = page.split("window.__PYH_BOOT__ = ", 1)[1].split(";</script>", 1)[0]
             manifest = json.loads(boot)
-            (plugin,) = manifest["plugins"]
+            plugin = next(p for p in manifest["plugins"] if p["id"] == "uiplugin")
             assert (
                 plugin["id"] == "uiplugin"
                 and plugin["url"].startswith("/plugins/uiplugin/client.js?rev=")
@@ -46,10 +46,11 @@ async def test_page_carries_the_boot_manifest_and_serves_client_modules(home):
         tool = next(t for t in h.get("tools").list() if t.name == "harness_inspect")
         ui = json.loads(tool.invoke({"topic": "ui"}))
         assert ui["clients"][0]["entry"] == "uiplugin" and any(s["name"] == "rightbar.tabs" for s in ui["slots"])
-    # Without the plugin the manifest is empty and the page still renders.
+    # Without the plugin its module leaves the manifest and the page still renders.
     async with Harness(profile, patch=[HTTP_OFF]) as h:
         async with client(h) as c:
-            assert '"plugins": []' in (await c.get("/")).text
+            page = (await c.get("/")).text
+            assert "window.__PYH_BOOT__ = " in page and '"id": "uiplugin"' not in page
 
 
 async def test_workspace_files_api(home, tmp_path):

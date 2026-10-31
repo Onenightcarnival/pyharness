@@ -24,6 +24,7 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 | `pyharness-mcp` | service | mcp | tools | yes | MCP servers as tools. |
 | `pyharness-plugin-manager` | function |  | tools, prompt, agentLoop | yes | ``plugin_manager`` tool, the plugin-authoring skills, and the short prompt section. |
 | `pyharness-prompt` | service | prompt |  | no | Ordered system-prompt sections. |
+| `pyharness-terminal` | service | terminal | tools, http | yes | Plugin that provides one service under ``key``. |
 | `pyharness-tools` | service | tools |  | no | Tool registry and the ``tools/execute`` → ``tools/result`` pipeline. |
 | `pyharness-web-tools` | service | web | tools | yes | Plugin that provides one service under ``key``. |
 | `pyharness-web-ui` | service | webui | http | yes | The Web UI page and the client-module registry. |
@@ -34,6 +35,6 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 
 | bundle | title | description | entries (patch op ids) |
 |---|---|---|---|
-| `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `mcp`, `ask-user`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `compaction`, `workspace-changes`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui` |
+| `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `mcp`, `ask-user`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `compaction`, `workspace-changes`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui`, `terminal` |
 | `creator` | Creator | New sessions start in the Creator preset (plugin-authoring skills, plugin manager and inspection tools). | `agent-loop` |
 | `web` | Web | web_search (DeepSeek native search; needs DEEPSEEK_API_KEY) and web_fetch tools for the agent. Preset; switch it off on the Plugins page. | `web-tools` |

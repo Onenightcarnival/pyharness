@@ -43,7 +43,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 审批 | 黄色审批卡片停靠在输入框上方；对应工具行标记待批准 |
 | 重启 | 输入框上方进度提示；完成后自动重连；续跑消息显示为系统分隔行，回滚时为警告色 |
 | 插件页 | 全局面板不显示会话顶栏（同 dsh）：页面自带标题、简介、刷新与「添加插件」（默认按 PyPI 包名安装，可带版本；或切到本地目录，输入路径或用系统对话框选择；安装 → 预检 → 空闲后重启）。只有装进 profile 的用户插件可操作：其 bundle 行有启用 / 停用开关与卸载按钮，其条目有启用 / 停用开关；随环境安装的内置 bundle（base、creator）及其条目标为「内置」，不可改动，API 对它们返回 409（命令行与 agent 工具不受此限制）。每个变更都走预检，失败时回滚并提示；通过后在 supervisor 下等待空闲重启，页面显示重启进度并自动重连。bundle 与条目卡片用 40px 着色图标块；状态标签只在非运行态显示；「客户端模块」列出各插件的浏览器模块与加载状态 |
-| 右侧栏 | 对齐 dsh：每个会话一组标签页，存于 `localStorage`（`pyh.rightbar.v1.<会话>`），刷新后恢复。标签条：带图标与关闭按钮的标签胶囊、「+」打开「开始」页、右端全屏切换与收起。「开始」页：罗盘标记与入口卡片（工作区文件、会话信息，插件注册的类型也可加卡片）；只有一个入口时直接打开该页。作为唯一标签的「开始」页不可关闭；关闭最后一个其它标签会一并收起右栏。文件 tab：根路径标签（目录弱化、末段高亮、过长左侧渐隐）、重新读取；目录树就地展开 / 折叠、目录优先、按类型着色的文件图标，轮次结束后自动刷新。点击文件打开预览 tab（同一路径只开一个）：路径头、渲染器菜单（Markdown / 代码 / 纯文本，图片直接显示）、换行开关、重新读取；二进制文件提示不支持，大文件截断提示。会话 tab：ID、工作区、预设、权限、模型、时间，复制 ID。面板可拖动调宽（280px 起，至多 70% 视口）；全屏形态覆盖整个窗口；窄屏自动全屏 |
+| 右侧栏 | 对齐 dsh：每个会话一组标签页，存于 `localStorage`（`pyh.rightbar.v1.<会话>`），刷新后恢复。标签条：带图标与关闭按钮的标签胶囊、「+」打开「开始」页、右端全屏切换与收起。「开始」页：罗盘标记与入口卡片（工作区文件、会话信息，插件注册的类型也可加卡片）；只有一个入口时直接打开该页。作为唯一标签的「开始」页不可关闭；关闭最后一个其它标签会一并收起右栏。文件 tab：根路径标签（目录弱化、末段高亮、过长左侧渐隐）、重新读取；目录树就地展开 / 折叠、目录优先、按类型着色的文件图标，轮次结束后自动刷新。点击文件打开预览 tab（同一路径只开一个）：路径头、渲染器菜单（Markdown / 代码 / 纯文本，图片直接显示）、换行开关、重新读取；二进制文件提示不支持，大文件截断提示。会话 tab：ID、工作区、预设、权限、模型、时间，复制 ID。终端 tab（`pyharness-terminal` 的浏览器模块）：在工作区里开一个交互式 shell，xterm.js（CDN）渲染，加载不到时退化为逐行终端，刷新后重新接上同一个 PTY（服务端保留回放缓冲）；后台任务 tab：agent 用 `run_in_background` 启动的命令及其日志，可停止。面板可拖动调宽（280px 起，至多 70% 视口）；全屏形态覆盖整个窗口；窄屏自动全屏 |
 | 插件槽位 | 页面在加载时读取 `window.__PYH_BOOT__` 的模块清单，依次加载各插件的 `client.js`；模块通过 `ctx.slots.register` 填入槽位：侧边栏面板行、「更多」菜单行、主区面板、输入框旁的停靠位、设置分区、右侧栏 tab。契约见 `pyharness_web_ui` 包文档与创造模式 skill 的 `references/ui-plugin.md` |
 | 模型菜单 | 输入框右下角的模型标签：按提供方分组的模型菜单；选择后写入会话（`PUT /sessions/{id}/model`），下一次请求生效；新会话在创建时带上选择；菜单底部「管理模型…」进入设置 |
 | 会话顶栏 | 两行（同 dsh）：标题行（标题、工作区与预设标签、右侧栏按钮）与视图页签行（对话 / 轨迹，下划线样式）；首页不显示 |
@@ -95,6 +95,10 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | POST | `/workspaces/pick` | `{"path"?: 提示语}` | 本机系统文件夹对话框；取消为 `{"path": null}`；`GET /workspaces` 的 `picker` 为 `native` 或 `browse` |
 | GET | `/sessions/{id}` | | 会话、运行状态、消息、待批准项 |
 | POST | `/sessions/{id}/messages` | `{"content", "images"?}` | SSE 运行事件；`images` 为 data URL，模型未声明图像输入时 422 |
+| GET | `/jobs` | | 后台任务列表（`session` 可筛选） |
+| GET | `/jobs/{id}` | `tail` | 一个后台任务与日志尾部 |
+| DELETE | `/jobs/{id}` | | 停止后台任务 |
+| GET / POST | `/terminals` | `{"workspace"?, "cols", "rows", "title"?}` | PTY 终端列表 / 新建；`POST /terminals/{id}/resize`、`DELETE /terminals/{id}`；WebSocket `/terminals/{id}/ws`：二进制帧为终端字节，文本帧为 JSON 控制（`resize`、`exit`） |
 | POST | `/sessions/{id}/answers` | `{"answers": [{"id", "selected", "custom"?}], "interrupt_id"?}` | 回答 agent 的 `ask_user_question`，SSE 续跑；没有待回答的问题 409，未知问题 id 422 |
 | POST | `/sessions/{id}/compact` | | 手动压缩：一轮 `compact` 类型的运行，SSE 带 `compact`（有历史被替换时）与 `done`；会话忙或等待审批时 409 |
 | GET | `/settings/compaction` | | 压缩配置：`auto`、`threshold_ratio`、`retain_ratio`、`default_context_window`、`summary_model` |

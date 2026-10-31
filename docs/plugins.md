@@ -20,6 +20,7 @@
 | `pyharness-http` | `http` | `http` | FastAPI 根应用 + uvicorn；`include_router`、`mount` |
 | `pyharness-api` | `api` | — | `/api`：REST + SSE |
 | `pyharness-web-ui` | `web-ui` | `webui` | `/`：Web 界面；`register_client(path, calls=)` 登记插件的浏览器模块，`/plugins/{entry}/client.js` 与 `/plugins/{entry}/call/{method}` |
+| `pyharness-terminal` | `terminal` | `terminal` | `bash` 工具：每个会话一个常驻 bash（工作目录与环境变量跨调用保留，从工作区根目录开始，stdin 为 /dev/null，超时则杀掉并重启）；`run_in_background` / `job_output` / `job_list` / `job_kill` 后台任务（输出写日志文件）；右侧栏「终端」tab 的 PTY（WebSocket `/api/terminals/{id}/ws`）与「后台任务」tab；`shell` 标签的工具在只读模式下不给 agent，`bash` 与 `run_in_background` 在工作区写入模式下需审批 |
 | `pyharness-inspect` | `inspect` | — | `harness_inspect` 工具 |
 | `pyharness-plugin-manager` | `plugin-manager` | — | `plugin_manager` 工具；插件编写 skills（`skills: true`）；三行提示词片段（`guidance`） |
 | `pyharness-plugin-manager` | `dev-context` | — | `pyharness-dev-context`：harness 位置提示词段 |

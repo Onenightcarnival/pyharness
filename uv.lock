@@ -26,6 +26,7 @@ members = [
     "pyharness-monorepo",
     "pyharness-plugin-manager",
     "pyharness-prompt",
+    "pyharness-terminal",
     "pyharness-tools",
     "pyharness-web-tools",
     "pyharness-web-ui",
@@ -1559,6 +1560,7 @@ dependencies = [
     { name = "pyharness-mcp" },
     { name = "pyharness-plugin-manager" },
     { name = "pyharness-prompt" },
+    { name = "pyharness-terminal" },
     { name = "pyharness-tools" },
     { name = "pyharness-web-ui" },
     { name = "pyharness-workspace" },
@@ -1581,6 +1583,7 @@ requires-dist = [
     { name = "pyharness-mcp", editable = "packages/mcp" },
     { name = "pyharness-plugin-manager", editable = "packages/plugin-manager" },
     { name = "pyharness-prompt", editable = "packages/prompt" },
+    { name = "pyharness-terminal", editable = "packages/terminal" },
     { name = "pyharness-tools", editable = "packages/tools" },
     { name = "pyharness-web-ui", editable = "packages/web-ui" },
     { name = "pyharness-workspace", editable = "packages/workspace" },
@@ -1797,6 +1800,7 @@ dependencies = [
     { name = "pyharness-mcp" },
     { name = "pyharness-plugin-manager" },
     { name = "pyharness-prompt" },
+    { name = "pyharness-terminal" },
     { name = "pyharness-tools" },
     { name = "pyharness-web-tools" },
     { name = "pyharness-web-ui" },
@@ -1832,6 +1836,7 @@ requires-dist = [
     { name = "pyharness-mcp", editable = "packages/mcp" },
     { name = "pyharness-plugin-manager", editable = "packages/plugin-manager" },
     { name = "pyharness-prompt", editable = "packages/prompt" },
+    { name = "pyharness-terminal", editable = "packages/terminal" },
     { name = "pyharness-tools", editable = "packages/tools" },
     { name = "pyharness-web-tools", editable = "packages/web-tools" },
     { name = "pyharness-web-ui", editable = "packages/web-ui" },
@@ -1875,6 +1880,31 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "pyharness-core", editable = "packages/core" }]
+
+[[package]]
+name = "pyharness-terminal"
+version = "0.1.0"
+source = { editable = "packages/terminal" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "langchain-core" },
+    { name = "langgraph" },
+    { name = "pyharness-core" },
+    { name = "pyharness-http" },
+    { name = "pyharness-tools" },
+    { name = "websockets" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = ">=0.115" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
+    { name = "pyharness-core", editable = "packages/core" },
+    { name = "pyharness-http", editable = "packages/http" },
+    { name = "pyharness-tools", editable = "packages/tools" },
+    { name = "websockets", specifier = ">=12" },
+]
 
 [[package]]
 name = "pyharness-tools"

@@ -65,3 +65,7 @@ patch:
     name: pyharness-api
   - id: web-ui
     name: pyharness-web-ui
+
+  # Persistent bash tool, background jobs and PTY terminals (right-sidebar tab): ctx.terminal.
+  - id: terminal
+    name: pyharness-terminal

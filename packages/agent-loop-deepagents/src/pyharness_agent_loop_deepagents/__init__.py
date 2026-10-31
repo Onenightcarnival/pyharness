@@ -9,7 +9,7 @@ one graph per combination.
 
 | permission mode     | effect                                                                  |
 |---------------------|-------------------------------------------------------------------------|
-| ``read-only``       | file writes denied, no ``execute`` tool; approvals as configured        |
+| ``read-only``       | file writes denied, no ``execute`` tool, tools tagged ``shell`` left out; approvals as configured |
 | ``workspace-write`` | writes inside the workspace; approvals as configured                    |
 | ``full-access``     | writes inside the workspace; no approval gates                          |
 
@@ -367,6 +367,9 @@ class DeepAgentsLoop(Service):
         keep = set(preset_cfg.tools) if preset_cfg.tools is not None else None
         drop = set(preset_cfg.exclude_tools)
         tools = [t for t in ctx.tools.list() if (keep is None or t.name in keep) and t.name not in drop]
+        if mode == "read-only":  # tools tagged `shell` (the persistent bash, background commands) stay out
+            shell_tools = {r.tool.name for r in ctx.tools.records() if "shell" in r.tags}
+            tools = [t for t in tools if t.name not in shell_tools]
         registry = {t.name: t for t in tools}
         subagents = [self._resolve_subagent(s, registry) for s in self.config.subagents]
         subagents += [self._resolve_subagent(s, registry) for s, _ in self._subagents]
