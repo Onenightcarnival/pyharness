@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "pyharness workspace: kernel and kernel plugins"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-agent", "pyharness-agent-loop-deepagents", "pyharness-api", "pyharness-ask-user", "pyharness-bundle-base", "pyharness-bundle-creator", "pyharness-bundle-toolkit", "pyharness-bundle-web", "pyharness-checkpoint-postgres", "pyharness-checkpoint-sqlite", "pyharness-compaction", "pyharness-config-center", "pyharness-core", "pyharness-http", "pyharness-inspect", "pyharness-llm", "pyharness-mcp", "pyharness-memory", "pyharness-otel", "pyharness-plugin-manager", "pyharness-terminal", "pyharness-prompt", "pyharness-rdb", "pyharness-s3", "pyharness-tools", "pyharness-web-tools", "pyharness-web-ui", "pyharness-workspace", "pyharness-workspace-changes"]
+dependencies = ["pyharness-agent", "pyharness-agent-loop-deepagents", "pyharness-api", "pyharness-ask-user", "pyharness-bundle-base", "pyharness-bundle-creator", "pyharness-bundle-toolkit", "pyharness-bundle-web", "pyharness-checkpoint-postgres", "pyharness-checkpoint-sqlite", "pyharness-compaction", "pyharness-config-center", "pyharness-core", "pyharness-http", "pyharness-inspect", "pyharness-llm", "pyharness-mcp", "pyharness-memory", "pyharness-otel", "pyharness-plugin-manager", "pyharness-terminal", "pyharness-prompt", "pyharness-rdb", "pyharness-s3", "pyharness-subscriptions", "pyharness-tools", "pyharness-web-tools", "pyharness-web-ui", "pyharness-workspace", "pyharness-workspace-changes"]
 
 [dependency-groups]
 dev = ["pytest>=8", "pytest-asyncio>=0.23", "httpx>=0.27", "pip", "ruff>=0.14"]
@@ -41,6 +41,7 @@ pyharness-plugin-manager = { workspace = true }
 pyharness-prompt = { workspace = true }
 pyharness-rdb = { workspace = true }
 pyharness-s3 = { workspace = true }
+pyharness-subscriptions = { workspace = true }
 pyharness-tools = { workspace = true }
 pyharness-web-ui = { workspace = true }
 pyharness-workspace = { workspace = true }

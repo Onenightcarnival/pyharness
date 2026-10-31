@@ -100,7 +100,7 @@ async def test_route_lifecycle_through_the_api(profile):
         async with client(h) as c:
             d = (await c.get("/api/settings/models")).json()
             assert d["default"] == "scripted:test" and d["routes"] == [] and d["editable"] is True
-            assert [c_["id"] for c_ in d["catalog"]] == [
+            assert [c_["id"] for c_ in d["catalog"] if c_["id"] != "subscription"] == [  # the toolkit registers `subscription`
                 "openai",
                 "anthropic",
                 "deepseek",

@@ -67,6 +67,7 @@ bundle 中条目的位置（`after` / `before` / `parent`）对应 mount 路径�
 | S3（dsh-toolkit s3） | 有：`pyharness-s3`，同样的 profile 模型、11 个工具、页面；boto3 而不是 AWS SDK for JS |
 | 配置中心（dsh-toolkit config-center） | 有：`pyharness-config-center`，MCP 页 + 连接测试 + JSON 导入、技能页（SKILL.md 包，挂载为 `/skills/user/`）、环境依赖页（受管 bun 替代 dsh 的受管 uv，覆盖 JS MCP 服务器） |
 | 可观测（dsh-toolkit otel） | 有：`pyharness-otel`，同样的 trace 结构与属性名、Langfuse 端点处理与测试流程；由本轮记录生成 span 而不是在调用链里实时打点，没有指标导出 |
+| AI 订阅（dsh-toolkit subscriptions） | 有：`pyharness-subscriptions`，四个提供方的登录、目录、用量、聊天与七个工具；未做多账号配额感知的池化路由与出站代理设置，每个提供方用默认账号 |
 | MCP 客户端 | 有：`pyharness-mcp`，stdio / HTTP / SSE，左侧栏 MCP 页配置；未做 MCP resources 与 prompts |
 | 轨迹视图 | 有：按轮次的记录表、时间概览、详情面板；dsh 的虚拟滚动、分页加载与完整输入输出检查未做（记录只存摘要尺寸） |
 | 每会话 agent preset（preset + isolate realm） | 预设是 `agent-loop` 的配置（工具子集、skills、提示词片段），每会话一张图；没有 realm 级的服务隔离 |

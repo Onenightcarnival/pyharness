@@ -22,3 +22,7 @@ patch:
   - id: otel
     name: pyharness-otel
     after: config-center
+  # AI subscriptions (Codex, ChatGPT, Antigravity, Grok) as model routes and tools: ctx.subscriptions.
+  - id: subscriptions
+    name: pyharness-subscriptions
+    after: otel

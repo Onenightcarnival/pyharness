@@ -32,6 +32,7 @@ members = [
     "pyharness-prompt",
     "pyharness-rdb",
     "pyharness-s3",
+    "pyharness-subscriptions",
     "pyharness-terminal",
     "pyharness-tools",
     "pyharness-web-tools",
@@ -2043,6 +2044,7 @@ dependencies = [
     { name = "pyharness-prompt" },
     { name = "pyharness-rdb" },
     { name = "pyharness-s3" },
+    { name = "pyharness-subscriptions" },
     { name = "pyharness-terminal" },
     { name = "pyharness-tools" },
     { name = "pyharness-web-tools" },
@@ -2085,6 +2087,7 @@ requires-dist = [
     { name = "pyharness-prompt", editable = "packages/prompt" },
     { name = "pyharness-rdb", editable = "packages/rdb" },
     { name = "pyharness-s3", editable = "packages/s3" },
+    { name = "pyharness-subscriptions", editable = "packages/subscriptions" },
     { name = "pyharness-terminal", editable = "packages/terminal" },
     { name = "pyharness-tools", editable = "packages/tools" },
     { name = "pyharness-web-tools", editable = "packages/web-tools" },
@@ -2213,6 +2216,39 @@ requires-dist = [
     { name = "pyharness-http", editable = "packages/http" },
     { name = "pyharness-prompt", editable = "packages/prompt" },
     { name = "pyharness-tools", editable = "packages/tools" },
+]
+
+[[package]]
+name = "pyharness-subscriptions"
+version = "0.1.0"
+source = { editable = "packages/subscriptions" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "langchain-core" },
+    { name = "langgraph" },
+    { name = "pydantic" },
+    { name = "pyharness-core" },
+    { name = "pyharness-http" },
+    { name = "pyharness-llm" },
+    { name = "pyharness-tools" },
+    { name = "pyharness-web-ui" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cryptography", specifier = ">=42" },
+    { name = "fastapi", specifier = ">=0.115" },
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
+    { name = "pydantic", specifier = ">=2" },
+    { name = "pyharness-core", editable = "packages/core" },
+    { name = "pyharness-http", editable = "packages/http" },
+    { name = "pyharness-llm", editable = "packages/llm" },
+    { name = "pyharness-tools", editable = "packages/tools" },
+    { name = "pyharness-web-ui", editable = "packages/web-ui" },
 ]
 
 [[package]]
