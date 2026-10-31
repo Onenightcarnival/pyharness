@@ -11,6 +11,10 @@ patch:
   - id: prompt
     name: pyharness-prompt
 
+  # MCP servers as tools: ctx.mcp; servers come from Settings → MCP or the profile patch.
+  - id: mcp
+    name: pyharness-mcp
+
   # Persistence: ctx.checkpointer, ctx.store. Postgres: patch id `checkpoint` (examples/patches/postgres.yaml).
   - id: checkpoint
     name: pyharness-checkpoint-sqlite

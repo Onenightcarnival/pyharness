@@ -45,7 +45,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 插件槽位 | 页面在加载时读取 `window.__PYH_BOOT__` 的模块清单，依次加载各插件的 `client.js`；模块通过 `ctx.slots.register` 填入槽位：侧边栏面板行、「更多」菜单行、主区面板、输入框旁的停靠位、设置分区、右侧栏 tab。契约见 `pyharness_web_ui` 包文档与创造模式 skill 的 `references/ui-plugin.md` |
 | 模型菜单 | 输入框右下角的模型标签：按提供方分组的模型菜单；选择后写入会话（`PUT /sessions/{id}/model`），下一次请求生效；新会话在创建时带上选择；菜单底部「管理模型…」进入设置 |
 | 会话顶栏 | 两行（同 dsh）：标题行（标题、工作区与预设标签、右侧栏按钮）与视图页签行（对话 / 轨迹，下划线样式）；首页不显示 |
-| 设置对话框 | 800 × 800、28px 圆角、layer-2 底色；左侧 188px 导航（40px 行）；「内置插件」有搜索框与按来源分组的两列卡片。「更多 → 设置」或模型菜单的「管理模型…」进入；左侧分区：通用（新会话权限、语言、外观浅色 / 深色 / 跟随系统）、模型、预设（卡片，点击设为新会话默认）、内置插件（条目只读）。「模型」：新会话默认模型；提供方行（标题、类型、默认标记、密钥状态点、端点、模型数），点击展开编辑卡（同时只开一张）：API Key（只写、可显示）、Base URL（占位符为默认端点）、模型列表（ID、显示名、上下文、最大输出、输入模态勾选：文本 / 图像；「获取可用模型」打开可搜索的勾选列表，端点披露的模态随之带入，「恢复默认模型」）、测试连接、删除（确认框）、应用。「添加模型提供方」：「第三方模型提供方」从预置目录选择（OpenAI、Anthropic、DeepSeek、Google Gemini、OpenRouter；集成包随 pyharness-llm 安装），或「自定义模型 API」填写提供方 ID、显示名、API 协议（OpenAI Chat Completions / Responses / Anthropic Messages）、端点，至少一个模型。应用后立即生效，无需重启；密钥写入 profile 的 `credentials.yaml`，配置只记录引用名 |
+| 设置对话框 | 800 × 800、28px 圆角、layer-2 底色；左侧 188px 导航（40px 行）；「MCP 服务器」页列出已配置的服务器（状态、工具数、错误），可添加 / 编辑 / 删除：名称、传输（stdio / HTTP / SSE）、命令与参数或 URL、环境变量或请求头（已保存的值打码，留着即保留）、调用前是否批准、是否启用；保存写入 profile 补丁并重启生效；「内置插件」有搜索框与按来源分组的两列卡片。「更多 → 设置」或模型菜单的「管理模型…」进入；左侧分区：通用（新会话权限、语言、外观浅色 / 深色 / 跟随系统）、模型、预设（卡片，点击设为新会话默认）、内置插件（条目只读）。「模型」：新会话默认模型；提供方行（标题、类型、默认标记、密钥状态点、端点、模型数），点击展开编辑卡（同时只开一张）：API Key（只写、可显示）、Base URL（占位符为默认端点）、模型列表（ID、显示名、上下文、最大输出、输入模态勾选：文本 / 图像；「获取可用模型」打开可搜索的勾选列表，端点披露的模态随之带入，「恢复默认模型」）、测试连接、删除（确认框）、应用。「添加模型提供方」：「第三方模型提供方」从预置目录选择（OpenAI、Anthropic、DeepSeek、Google Gemini、OpenRouter；集成包随 pyharness-llm 安装），或「自定义模型 API」填写提供方 ID、显示名、API 协议（OpenAI Chat Completions / Responses / Anthropic Messages）、端点，至少一个模型。应用后立即生效，无需重启；密钥写入 profile 的 `credentials.yaml`，配置只记录引用名 |
 
 | 适配 | 行为 |
 |---|---|
@@ -86,6 +86,8 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | GET | `/sessions/{id}/changes` | | 各轮改动文件摘要（`GET /sessions/{id}` 也带 `changes`） |
 | GET | `/sessions/{id}/turns` | | 各轮记录：`stats`（步骤、token、墙钟时间）与 `records`（轨迹：user / step / tool / end）；`GET /sessions/{id}` 也带 `turns` 与 `context_window` |
 | GET | `/sessions/{id}/changes/{run}/diff?index=` | | 所列文件的 hunk，行带高亮 HTML；重启后 `available: false` |
+| GET | `/settings/mcp` | | MCP 服务器列表（env / headers 值打码）与连接状态 |
+| PUT | `/settings/mcp` | `{"servers": {name: server}}` | 整体替换 MCP 服务器配置；打码值保留原值；写入 profile 补丁，重启生效 |
 | POST | `/highlight` | `{"items": [{"code", "lang"?, "filename"?}]}` | 每项的 token span HTML（无匹配 lexer 时为空） |
 | GET | `/highlight.css` | | 浅色与深色主题的 token 配色 |
 | POST | `/workspaces/pick` | `{"path"?: 提示语}` | 本机系统文件夹对话框；取消为 `{"path": null}`；`GET /workspaces` 的 `picker` 为 `native` 或 `browse` |

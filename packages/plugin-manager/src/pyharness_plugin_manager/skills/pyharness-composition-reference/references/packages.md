@@ -19,6 +19,7 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 | `pyharness-http` | service | http |  | yes | FastAPI root application and uvicorn server. |
 | `pyharness-inspect` | function |  | tools | yes | ``harness_inspect`` tool: read-only view of the running harness. |
 | `pyharness-llm` | service | llm |  | yes | Chat-model routes; resolves ``route:model`` specs. |
+| `pyharness-mcp` | service | mcp | tools | yes | MCP servers as tools. |
 | `pyharness-plugin-manager` | function |  | tools, prompt, agentLoop | yes | ``plugin_manager`` tool, the plugin-authoring skills, and the short prompt section. |
 | `pyharness-prompt` | service | prompt |  | no | Ordered system-prompt sections. |
 | `pyharness-tools` | service | tools |  | no | Tool registry and the ``tools/execute`` → ``tools/result`` pipeline. |
@@ -30,5 +31,5 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 
 | bundle | title | description | entries (patch op ids) |
 |---|---|---|---|
-| `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `workspace-changes`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui` |
+| `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `mcp`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `workspace-changes`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui` |
 | `creator` | Creator | New sessions start in the Creator preset (plugin-authoring skills, plugin manager and inspection tools). | `agent-loop` |

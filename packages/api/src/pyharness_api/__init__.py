@@ -35,6 +35,8 @@
 | GET    | ``/sessions/{id}/changes``   |                               | changed-file summaries per turn             |
 | GET    | ``/sessions/{id}/turns``     |                               | per-turn stats and trajectory records       |
 | GET    | ``/sessions/{id}/changes/{run}/diff`` | ``?index=``          | hunks of one listed file, lines highlighted |
+| GET    | ``/settings/mcp``            |                               | MCP servers (secrets masked) and status     |
+| PUT    | ``/settings/mcp``            | ``{"servers": {name: server}}`` | replace the MCP server list; restart scheduled |
 | POST   | ``/highlight``               | ``{"items": [{code, lang?, filename?}]}`` | Pygments token spans per item     |
 | GET    | ``/highlight.css``           |                               | token colors for light and dark themes      |
 | GET    | ``/models``                  |                               | selector directory: routes, models, default |
@@ -67,7 +69,7 @@ import json
 import mimetypes
 import re
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import StreamingResponse
@@ -133,6 +135,37 @@ class InstallBody(BaseModel):
 
 class EnabledBody(BaseModel):
     enabled: bool
+
+
+class MCPServerBody(BaseModel):
+    transport: Literal["stdio", "streamable_http", "sse"] | None = None
+    command: str | None = None
+    args: list[str] = Field(default_factory=list)
+    env: dict[str, str] = Field(default_factory=dict)
+    cwd: str | None = None
+    url: str | None = None
+    headers: dict[str, str] = Field(default_factory=dict)
+    enabled: bool = True
+    approval: bool | dict[str, Any] = False
+    prefix: bool = True
+
+    @model_validator(mode="after")
+    def one_transport(self) -> MCPServerBody:
+        if bool(self.command) == bool(self.url):
+            raise ValueError("a server needs exactly one of command (stdio) or url (streamable_http / sse)")
+        return self
+
+
+class MCPSettings(BaseModel):
+    servers: dict[str, MCPServerBody] = Field(default_factory=dict)
+
+    @field_validator("servers")
+    @classmethod
+    def names(cls, value: dict[str, MCPServerBody]) -> dict[str, MCPServerBody]:
+        for name in value:
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", name):
+                raise ValueError(f"server name {name!r}: letters, digits, - and _ only")
+        return value
 
 
 class HighlightItem(BaseModel):
@@ -566,6 +599,43 @@ def build_router(ctx: Any) -> APIRouter:
                     if side == "new" or line["kind"] == "del":
                         line["html"] = markup
         return diff
+
+    @router.get("/settings/mcp")
+    async def get_mcp_settings() -> dict[str, Any]:
+        """Configured MCP servers (env and header values masked) with their connection status."""
+        mcp = ctx.get("mcp", None)
+        if mcp is None:
+            raise HTTPException(503, "mcp plugin not mounted")
+        return {"servers": mcp.servers()}
+
+    @router.put("/settings/mcp")
+    async def put_mcp_settings(body: MCPSettings) -> dict[str, Any]:
+        """Replace the MCP server list in the profile patch; masked secrets keep their stored value. Restart to apply."""
+        mcp = ctx.get("mcp", None)
+        if mcp is None:
+            raise HTTPException(503, "mcp plugin not mounted")
+        from pyharness_mcp import MASK
+
+        current = mcp.config.servers
+        servers: dict[str, Any] = {}
+        for name, server in body.servers.items():
+            data = server.model_dump(exclude_none=True)
+            previous = current.get(name)
+            for secret in ("env", "headers"):
+                values = dict(data.get(secret) or {})
+                for key, value in list(values.items()):
+                    if value == MASK:
+                        kept = (getattr(previous, secret, None) or {}).get(key) if previous is not None else None
+                        if kept is None:
+                            raise HTTPException(422, f"{secret} {key} of server {name!r}: value required")
+                        values[key] = kept
+                if values:
+                    data[secret] = values
+                else:
+                    data.pop(secret, None)
+            servers[name] = data
+        result = await manage.set_entry_config(plugin_profile(), "mcp", {"servers": servers}, merge=False, preflight=False)
+        return applied(result, "MCP servers changed")
 
     @router.post("/highlight")
     async def highlight_code(body: HighlightRequest) -> dict[str, Any]:

@@ -7,6 +7,7 @@
 | `pyharness-core` | — | `loader`、`lifecycle`、`profile`、`events` | 内核：容器、事件、组合、Loader、worker、supervisor、预检、CLI |
 | `pyharness-llm` | `llm` | `llm` | 模型提供方注册表；`resolve("provider:model")`；内置 `echo` |
 | `pyharness-tools` | `tools` | `tools` | 工具注册表、执行管线、审批闸门 |
+| `pyharness-mcp` | `mcp` | `mcp` | MCP 服务器的工具注册进 `ctx.tools`（stdio 或 HTTP / SSE），工具名加服务器前缀；连接失败不影响启动，`status()` 可查 |
 | `pyharness-prompt` | `prompt` | `prompt` | 有序的系统提示词片段 |
 | `pyharness-checkpoint-sqlite` | `checkpoint` | `checkpointer`、`store` | SQLite 持久化 |
 | `pyharness-checkpoint-postgres` | `checkpoint` | `checkpointer`、`store` | Postgres 持久化；共享连接池 |
