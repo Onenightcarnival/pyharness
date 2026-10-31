@@ -28,10 +28,14 @@
 | `pyharness-bundle-creator` | — | — | `creator` bundle：`plugin-manager` 的 `skills: true`、`guidance: false` |
 | `pyharness-web-tools` | `web-tools` | `web` | `web_search`（DeepSeek 原生搜索：一次 Anthropic 格式的 Messages 调用带 `web_search_20250305` 服务端工具，返回回答与来源）与 `web_fetch`（HTTP 抓取，HTML 转成文本）；搜索密钥取 `DEEPSEEK_API_KEY` 凭据（环境或 profile 凭据库），缺失时工具返回说明而不是让轮次出错 |
 | `pyharness-bundle-web` | — | — | `web` bundle：上面两个工具；`optional: true`，默认开启，插件页可关闭 |
+| `pyharness-memory` | `memory` | `memory` | agent 的职业履历记忆（对齐 dsh-memory）：`profile → work → project → lesson` 四层树，SQLite 存储（`<profile data>/toolkit/memory.sqlite`），每次改动记一条修订并保存整份快照（内容寻址去重）；`memory_get`（读一个节点：内容、祖先、分页子节点摘要）与 `memory_save`（一次原子应用 1–100 条带类型的改动，`stateToken` 并发校验，`ref` / `@ref` 批内引用）；提示词段 `plugin:memory`（order 155）；两者只在记忆页「允许 Agent 使用」开着时注册；`/api/memory` 路由；左侧栏「记忆」全页 |
+| `pyharness-bundle-toolkit` | — | — | `toolkit` bundle：工具箱各模块（目前 memory）；`builtin: true`，每个 profile 必含、不可关闭、不可卸载；左侧栏入口可在设置 → 通用里隐藏 |
 
 条目 id 与配置：`packages/bundle-base/src/pyharness_bundle_base/bundle.yaml`。
 
 可选 bundle：bundle 定义里 `optional: true` 的 bundle 不必写进 profile 的 `bundles` 列表就会生效（排在显式列表之后），profile 清单的 `disabled` 列表把它关掉；插件页与 `PUT /plugins/bundles/{name}` 对这类 bundle 允许开关，不允许卸载。内置 bundle（`base`）仍然只读。
+
+内置 bundle：bundle 定义里 `builtin: true` 的 bundle（`toolkit`）随环境安装、每个 profile 必含（排在显式列表之后、可选 bundle 之前），`set_bundle_enabled(…, False)` 抛 `ConfigError`，插件页与 API 返回 409；要少看一个模块就隐藏它的左侧栏入口。
 
 ## 事件
 

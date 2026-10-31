@@ -14,6 +14,7 @@ members = [
     "pyharness-ask-user",
     "pyharness-bundle-base",
     "pyharness-bundle-creator",
+    "pyharness-bundle-toolkit",
     "pyharness-bundle-web",
     "pyharness-checkpoint-postgres",
     "pyharness-checkpoint-sqlite",
@@ -23,6 +24,7 @@ members = [
     "pyharness-inspect",
     "pyharness-llm",
     "pyharness-mcp",
+    "pyharness-memory",
     "pyharness-monorepo",
     "pyharness-plugin-manager",
     "pyharness-prompt",
@@ -1606,6 +1608,17 @@ requires-dist = [
 ]
 
 [[package]]
+name = "pyharness-bundle-toolkit"
+version = "0.1.0"
+source = { editable = "packages/bundle-toolkit" }
+dependencies = [
+    { name = "pyharness-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pyharness-core", editable = "packages/core" }]
+
+[[package]]
 name = "pyharness-bundle-web"
 version = "0.1.0"
 source = { editable = "packages/bundle-web" }
@@ -1779,6 +1792,33 @@ requires-dist = [
 ]
 
 [[package]]
+name = "pyharness-memory"
+version = "0.1.0"
+source = { editable = "packages/memory" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "langchain-core" },
+    { name = "langgraph" },
+    { name = "pydantic" },
+    { name = "pyharness-core" },
+    { name = "pyharness-http" },
+    { name = "pyharness-prompt" },
+    { name = "pyharness-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = ">=0.115" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
+    { name = "pydantic", specifier = ">=2" },
+    { name = "pyharness-core", editable = "packages/core" },
+    { name = "pyharness-http", editable = "packages/http" },
+    { name = "pyharness-prompt", editable = "packages/prompt" },
+    { name = "pyharness-tools", editable = "packages/tools" },
+]
+
+[[package]]
 name = "pyharness-monorepo"
 version = "0.1.0"
 source = { virtual = "." }
@@ -1789,6 +1829,7 @@ dependencies = [
     { name = "pyharness-ask-user" },
     { name = "pyharness-bundle-base" },
     { name = "pyharness-bundle-creator" },
+    { name = "pyharness-bundle-toolkit" },
     { name = "pyharness-bundle-web" },
     { name = "pyharness-checkpoint-postgres" },
     { name = "pyharness-checkpoint-sqlite" },
@@ -1798,6 +1839,7 @@ dependencies = [
     { name = "pyharness-inspect" },
     { name = "pyharness-llm" },
     { name = "pyharness-mcp" },
+    { name = "pyharness-memory" },
     { name = "pyharness-plugin-manager" },
     { name = "pyharness-prompt" },
     { name = "pyharness-terminal" },
@@ -1825,6 +1867,7 @@ requires-dist = [
     { name = "pyharness-ask-user", editable = "packages/ask-user" },
     { name = "pyharness-bundle-base", editable = "packages/bundle-base" },
     { name = "pyharness-bundle-creator", editable = "packages/bundle-creator" },
+    { name = "pyharness-bundle-toolkit", editable = "packages/bundle-toolkit" },
     { name = "pyharness-bundle-web", editable = "packages/bundle-web" },
     { name = "pyharness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
     { name = "pyharness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
@@ -1834,6 +1877,7 @@ requires-dist = [
     { name = "pyharness-inspect", editable = "packages/inspect" },
     { name = "pyharness-llm", editable = "packages/llm" },
     { name = "pyharness-mcp", editable = "packages/mcp" },
+    { name = "pyharness-memory", editable = "packages/memory" },
     { name = "pyharness-plugin-manager", editable = "packages/plugin-manager" },
     { name = "pyharness-prompt", editable = "packages/prompt" },
     { name = "pyharness-terminal", editable = "packages/terminal" },

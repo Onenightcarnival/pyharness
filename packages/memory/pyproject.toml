@@ -1,0 +1,17 @@
+[project]
+name = "pyharness-memory"
+version = "0.1.0"
+description = "pyharness plugin: layered career memory (profile, work, projects, lessons) with version history; memory_get / memory_save tools and the Memory page"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = ["pyharness-core", "pyharness-tools", "pyharness-prompt", "pyharness-http", "fastapi>=0.115", "langchain-core>=1.0", "langgraph>=1.0", "pydantic>=2"]
+
+[project.entry-points."pyharness.plugins"]
+pyharness-memory = "pyharness_memory:MemoryService"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyharness_memory"]

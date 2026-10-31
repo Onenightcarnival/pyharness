@@ -37,6 +37,7 @@ from importlib import metadata, util
 from pathlib import Path
 from typing import Any
 
+from .config import ConfigError
 from .plugin import BUNDLE_GROUP
 from .preflight import run_preflight
 from .profile import Profile
@@ -391,7 +392,11 @@ async def set_bundle_enabled(
         if enabled and bundle not in known:
             return {"application": "rejected", "error": f"bundle {bundle!r} is not installed"}
         txn = _Transaction(profile, site=False)
-        if not profile.set_bundle_enabled(bundle, enabled):
+        try:
+            changed = profile.set_bundle_enabled(bundle, enabled)
+        except ConfigError as exc:
+            return {"application": "rejected", "error": str(exc)}
+        if not changed:
             return {"application": "unchanged", "bundle": bundle, "enabled": enabled}
         report, failures = await _preflight(profile, baseline, preflight)
         if failures:

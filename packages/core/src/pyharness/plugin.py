@@ -212,6 +212,7 @@ class BundleInfo:
     version: str | None
     location: str | None
     optional: bool = False  # on unless the profile lists it under ``disabled``; the Web UI may toggle it
+    builtin: bool = False  # part of every profile (after its ``bundles``); cannot be disabled or uninstalled
 
 
 def load_bundle(name: str) -> BundleInfo:
@@ -251,4 +252,5 @@ def bundle_from_object(name: str, obj: Any, ep: metadata.EntryPoint | None = Non
         version=dist.version if dist else None,
         location=str(dist.locate_file("")) if dist else None,
         optional=bool(data.get("optional", False)),
+        builtin=bool(data.get("builtin", False)),
     )

@@ -49,7 +49,7 @@ SLOTS: list[dict[str, Any]] = [
     {
         "name": "sidebar.panellist",
         "kind": "list",
-        "entry": "{id, label, icon?, order?}; selecting it opens the `main` panel with the same key",
+        "entry": "{id, label, icon?, description?, order?}; selecting it opens the `main` panel with the same key; Settings → General lets the user hide entries",
         "props": {},
     },
     {"name": "sidebar.more", "kind": "list", "entry": "{id, label, icon?, order?, onPick()}; a row of the sidebar More menu", "props": {}},

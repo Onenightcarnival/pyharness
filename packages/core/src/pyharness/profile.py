@@ -110,33 +110,41 @@ class Profile:
         write_yaml(self.manifest_path, data)
 
     def bundles(self) -> list[str]:
-        """Enabled bundles in composition order: the manifest's ``bundles``, then the optional environment bundles
-        (``optional: true`` in their definition) not listed under ``disabled``."""
+        """Enabled bundles in composition order: the manifest's ``bundles``, then the built-in environment bundles
+        (``builtin: true``, always on), then the optional ones (``optional: true``) not listed under ``disabled``."""
         data = self.manifest()
         explicit = [str(b) for b in data.get("bundles", [])]
         disabled = {str(b) for b in data.get("disabled", [])}
-        return explicit + [b for b in self.optional_bundles() if b not in explicit and b not in disabled]
+        builtin = [b for b in self.builtin_bundles() if b not in explicit]
+        return explicit + builtin + [b for b in self.optional_bundles() if b not in explicit and b not in builtin and b not in disabled]
 
-    def optional_bundles(self) -> list[str]:
-        """Installed bundles declared ``optional: true``: on by default, switched off through ``disabled``."""
+    def _flagged_bundles(self, flag: str) -> list[str]:
         self.activate_site()
         from .plugin import bundle_entry_points
 
         names = []
         for name in sorted(bundle_entry_points()):
             try:
-                if load_bundle(name).optional:
+                if getattr(load_bundle(name), flag):
                     names.append(name)
             except Exception:  # noqa: BLE001 — a broken bundle is reported where it is loaded
                 continue
         return names
 
+    def optional_bundles(self) -> list[str]:
+        """Installed bundles declared ``optional: true``: on by default, switched off through ``disabled``."""
+        return self._flagged_bundles("optional")
+
+    def builtin_bundles(self) -> list[str]:
+        """Installed bundles declared ``builtin: true``: part of every profile, never switched off."""
+        return self._flagged_bundles("builtin")
+
     def bundle_meta(self, name: str) -> dict[str, Any]:
         try:
             info = load_bundle(name)
         except Exception as exc:  # noqa: BLE001
-            return {"title": name, "description": "", "optional": False, "error": f"{type(exc).__name__}: {exc}"}
-        return {"title": info.title, "description": info.description, "optional": info.optional}
+            return {"title": name, "description": "", "optional": False, "builtin": False, "error": f"{type(exc).__name__}: {exc}"}
+        return {"title": info.title, "description": info.description, "optional": info.optional, "builtin": info.builtin}
 
     def patch_ops_raw(self) -> list[dict[str, Any]]:
         data = load_yaml(self.patch_path, default=[]) or []
@@ -220,7 +228,10 @@ class Profile:
         self.save_patch(ops)
 
     def set_bundle_enabled(self, bundle: str, enabled: bool) -> bool:
-        """Enable or disable a bundle: optional bundles move in and out of ``disabled``, others in and out of ``bundles``."""
+        """Enable or disable a bundle: optional bundles move in and out of ``disabled``, others in and out of ``bundles``.
+        A built-in bundle (``builtin: true``) is always on: disabling it raises :class:`ConfigError`."""
+        if not enabled and bundle in self.builtin_bundles():
+            raise ConfigError(f"bundle {bundle!r} is built in and cannot be disabled")
         data = self.manifest()
         bundles = [str(b) for b in data.get("bundles", [])]
         disabled = [str(b) for b in data.get("disabled", [])]
@@ -253,7 +264,7 @@ class Profile:
 
     def installed_bundles(self) -> list[dict[str, Any]]:
         """Bundles of the profile site and the environment: ``enabled``, ``installed`` (``profile`` / ``environment``),
-        ``optional``, ``title``, ``description``."""
+        ``optional``, ``builtin``, ``title``, ``description``."""
         enabled = set(self.bundles())
         out = []
         seen: set[str] = set()

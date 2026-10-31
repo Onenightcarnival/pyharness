@@ -1,0 +1,8 @@
+title: Toolkit
+description: Built-in toolkit; sidebar entries can be hidden in Settings → General.
+builtin: true
+patch:
+  # Career memory (profile → work → project → lesson) with version history: ctx.memory, memory_get / memory_save, the Memory page.
+  - id: memory
+    name: pyharness-memory
+    after: web-ui
