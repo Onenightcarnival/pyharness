@@ -15,6 +15,10 @@ patch:
   - id: mcp
     name: pyharness-mcp
 
+  # ask_user_question: the agent pauses for the user's answer (question card in the Web UI).
+  - id: ask-user
+    name: pyharness-ask-user
+
   # Persistence: ctx.checkpointer, ctx.store. Postgres: patch id `checkpoint` (examples/patches/postgres.yaml).
   - id: checkpoint
     name: pyharness-checkpoint-sqlite

@@ -19,7 +19,16 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("PYTHONPATH", os.pathsep.join([str(TESTS), os.environ.get("PYTHONPATH", "")]))
     monkeypatch.delenv("PYH_MODEL", raising=False)
     (tmp_path / "workspace").mkdir()
-    return home
+    path_before = list(sys.path)
+    yield home
+    # Profile sites activated by this test leave sys.path and the module cache, so a later test's bundle of the
+    # same name resolves to its own site rather than to this test's (possibly removed) files.
+    sys.path[:] = path_before
+    prefix = str(tmp_path)
+    for name, module in list(sys.modules.items()):
+        file = getattr(module, "__file__", None)
+        if file and file.startswith(prefix):
+            del sys.modules[name]
 
 
 @pytest.fixture

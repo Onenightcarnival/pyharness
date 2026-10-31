@@ -57,6 +57,7 @@ bundle 中条目的位置（`after` / `before` / `parent`）对应 mount 路径�
 | 改动文件卡片与 review | 有：git 快照摘要、轮末卡片、右侧栏 diff tab（单栏 / 左右）；未做文件工具编辑的兜底捕获，非 git 工作区不记录 |
 | 轮次过程折叠 | 有：过程组 + 四档展示模式 + 收起时机；dsh 的滚动跟随与折叠动画未做 |
 | 会话统计 / token 用量 | 有：每轮 stats 持久化、统计条与弹层、每轮用量行、上下文占用圆环（需模型声明上下文窗口）；dsh 的 token-meter 做逐节点估算，pyharness 只按最近用量加估算 |
+| `ask_user_question`（`dsh-tool-ask-user` + `dsh-user-questions` + 问题卡片） | 有：`pyharness-ask-user`，同样的问题 / 答案结构（id、options、multi_select、selected、custom）；用 LangGraph interrupt 暂停，`POST /sessions/{id}/answers` 续跑；未做 dsh 的 timed 模式（超时后继续工作、稍后补答） |
 | Web 工具（`dsh-web` seam + `dsh-web-search-deepseek` / `dsh-web-fetch-http` + `dsh-tool-web`） | 有：`pyharness-web-tools` 的 `web_search`（只有 DeepSeek 原生搜索，同样的 Anthropic 格式请求；密钥取 `DEEPSEEK_API_KEY` 凭据）与 `web_fetch`（stdlib HTML → 文本，dsh 用 turndown 转 Markdown）；作为可选的 `web` bundle 预置，插件页可关闭；未做多 provider seam、搜索设置页与结果卡片 |
 | 上下文压缩（`dsh-compaction-basic` + `/compact`） | 有：`pyharness-compaction`，自动（阈值 / 保留比例）与 `/compact`，dsh 同款结构化检查点提示词；摘要调用用纯文本转写而非复用请求前缀缓存；未做工具结果裁剪与图片卸载（`dsh-compaction-tool-result-pruner` / `image-offload`） |
 | MCP 客户端 | 有：`pyharness-mcp`，stdio / HTTP / SSE，设置页配置；未做 MCP resources 与 prompts |

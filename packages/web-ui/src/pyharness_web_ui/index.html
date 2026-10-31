@@ -579,6 +579,22 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 .approval .description { margin: 0; color: var(--label-secondary); font-size: 13px; line-height: 20px; }
 .approval .command { color: var(--label-tertiary); font: 13px/20px var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .approval .actionRow { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 16px; }
+.approval[data-kind='question'] { border-color: var(--border-l3); }
+.approval[data-kind='question'] .strip { background: var(--layer-2); color: var(--label-secondary); }
+.question { display: flex; flex-direction: column; gap: 8px; padding: 6px 0 10px; border-bottom: 0.5px solid var(--border-l2); }
+.question:last-child { border-bottom: none; }
+.question .qhead { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--label-tertiary); }
+.question .qtext { font-size: 14px; line-height: 22px; color: var(--label-primary); }
+.question .qopts { display: flex; flex-direction: column; gap: 6px; }
+.question .qopt { display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border-l2); background: var(--layer-1); cursor: pointer; text-align: left; color: var(--label-primary); font-size: 13px; line-height: 20px; }
+.question .qopt:hover { border-color: var(--border-l3); background: var(--layer-2); }
+.question .qopt[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-tertiary, var(--layer-2)); }
+.question .qopt .mark { width: 16px; height: 16px; flex: none; margin-top: 2px; border-radius: 50%; border: 1.5px solid var(--border-l3); display: inline-flex; align-items: center; justify-content: center; }
+.question .qopt[data-multi] .mark { border-radius: 4px; }
+.question .qopt[aria-pressed='true'] .mark { border-color: var(--accent); background: var(--accent); color: #fff; }
+.question .qopt[aria-pressed='true'] .mark::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+.question .qopt .odesc { display: block; color: var(--label-tertiary); font-size: 12px; }
+.question .qcustom { width: 100%; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; height: 36px; padding: 0 14px; border: none; border-radius: var(--r-md); background: transparent; font-size: 14px; line-height: 22px; color: var(--label-primary); }
 .btn.sm { height: 28px; padding: 0 10px; border-radius: var(--r-sm); font-size: 12px; line-height: 18px; }
 .btn.primary { background: var(--primary-fill); color: var(--primary-label); }
@@ -1010,7 +1026,7 @@ const T = zh ? {
   newSession: '新会话', plugins: '插件', workspace: '会话', headline: '要做什么？', placeholder: '描述你想做的事…',
   placeholderBusy: 'agent 工作中…', collapse: '收起侧边栏', expand: '展开侧边栏', attach: '添加图片（也可粘贴或拖入）', send: '发送', stop: '停止',
   thinking: '思考中', thought: '思考过程', toolRunning: '运行中', copy: '复制', copied: '已复制', del: '删除会话', deleted: '会话已删除',
-  approvalStrip: '待批准', approve: '批准', reject: '拒绝', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
+  approvalStrip: '待批准', approve: '批准', reject: '拒绝', questionStrip: 'agent 有问题要问你', questionPending: '先回答上面的问题', questionTurn: '等待回答', submitAnswers: '提交回答', skipAll: '全部跳过', customAnswer: '其他…', customPlaceholder: '输入你的回答', chooseOne: '选一项', chooseMany: '可多选', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
   restarting: '重启中：应用插件变更…', restarted: (g) => `第 ${g} 代已启动`, rolledBack: (g) => `变更启动失败；第 ${g} 代运行上一份配置`, offline: '离线', online: '在线', gen: (g) => `第 ${g} 代`,
   unsupervised: '未托管', noSessions: '无会话', input: '输入', output: '输出', error: '错误', cancelled: '已停止', untitled: '未命名会话',
   tabMcp: 'MCP 服务器', mcpIntro: '把 MCP 服务器的工具交给 agent 使用。保存后重启生效；工具名以服务器名作前缀，权限模式与审批照常适用。', mcpAdd: '添加 MCP 服务器', mcpNone: '还没有配置 MCP 服务器', mcpName: '名称', mcpTransport: '传输', mcpCommand: '命令', mcpCommandHint: '可执行文件与参数，按空格分隔，如 npx -y @modelcontextprotocol/server-filesystem /path', mcpUrl: '端点 URL', mcpEnv: '环境变量', mcpHeaders: '请求头', mcpKvHint: '每行一个 KEY=VALUE；已保存的值显示为 ••••，留着即保留原值', mcpApproval: '调用前需要批准', mcpEnabled: '启用', mcpTools: (n) => `${n} 个工具`, mcpState: { connected: '已连接', error: '连接失败', disabled: '已停用', unknown: '未连接' }, edit: '编辑', mcpSaved: '已保存，重启后生效', mcpRemoveConfirm: (n) => `移除 MCP 服务器 ${n}？其工具在重启后不再可用。`, searchPlugins: '搜索插件', installTitle: '添加插件', installHint: '从 PyPI 按包名安装（可带版本，如 pyh-example==0.1.0），或安装本机的 bundle 目录。安装会先预检，通过后在空闲时重启生效。', srcPackage: 'PyPI 包', srcPath: '本地目录', packagePlaceholder: '包名，如 pyh-example 或 pyh-example==0.1.0', chooseDir: '选择目录…', install: '安装', installing: '安装中…', restartScheduled: '已保存，正在等待空闲后重启…', savedRestartRequired: '已保存，下次启动生效（当前未由 supervisor 管理）', uninstall: '卸载', uninstallConfirm: (n) => `卸载 bundle ${n}？其条目会从 profile 中移除，重启后生效。`, enablePlugin: '启用', disablePlugin: '停用', restartNow: '立即重启', restartRequested: '已请求重启，等待运行中的轮次结束', entriesOf: (n) => `${n} 个条目`, noMatches: '没有匹配的条目', pluginsTitle: '插件', pluginsIntro: '当前 profile 的插件组合。变更路径：agent 编写或安装 → 预检 → 重启生效。', addPlugin: '添加插件', gotIt: '知道了', addPluginHow: '两种方式：\n1. 在「创造」预设的会话里描述想要的能力，agent 会编写并安装插件；\n2. 在终端运行 pyh plugin install <bundle 目录或包名>，然后 pyh restart。',
@@ -1022,7 +1038,7 @@ const T = zh ? {
   newSession: 'New session', plugins: 'Plugins', workspace: 'Sessions', headline: 'What needs doing?', placeholder: 'Describe what you want to build…',
   placeholderBusy: 'The agent is working…', collapse: 'Collapse sidebar', expand: 'Expand sidebar', attach: 'Add images (paste or drop works too)', send: 'Send', stop: 'Stop',
   thinking: 'Thinking', thought: 'Thoughts', toolRunning: 'Running', copy: 'Copy', copied: 'Copied', del: 'Delete session', deleted: 'Session deleted',
-  approvalStrip: 'Awaiting approval', approve: 'Approve', reject: 'Reject', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
+  approvalStrip: 'Awaiting approval', approve: 'Approve', reject: 'Reject', questionStrip: 'The agent has a question for you', questionPending: 'Answer the question above first', questionTurn: 'Waiting for your answer', submitAnswers: 'Submit answers', skipAll: 'Skip all', customAnswer: 'Other…', customPlaceholder: 'Type your answer', chooseOne: 'Choose one', chooseMany: 'Choose any', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
   restarting: 'Restarting: applying plugin changes…', restarted: (g) => `Generation ${g} started`, rolledBack: (g) => `Change failed to boot; generation ${g} runs the previous configuration`, offline: 'Offline', online: 'Online', gen: (g) => `generation ${g}`,
   unsupervised: 'unsupervised', noSessions: 'No sessions', input: 'Input', output: 'Output', error: 'Error', cancelled: 'Stopped', untitled: 'Untitled session',
   tabMcp: 'MCP servers', mcpIntro: 'Give the agent the tools of MCP servers. Changes apply after a restart; tool names are prefixed with the server name, and permission modes and approvals apply as usual.', mcpAdd: 'Add MCP server', mcpNone: 'No MCP servers configured', mcpName: 'Name', mcpTransport: 'Transport', mcpCommand: 'Command', mcpCommandHint: 'Executable and arguments separated by spaces, e.g. npx -y @modelcontextprotocol/server-filesystem /path', mcpUrl: 'Endpoint URL', mcpEnv: 'Environment', mcpHeaders: 'Headers', mcpKvHint: 'One KEY=VALUE per line; stored values show as •••• and keep their value when left alone', mcpApproval: 'Ask before each call', mcpEnabled: 'Enabled', mcpTools: (n) => `${n} tools`, mcpState: { connected: 'Connected', error: 'Connection failed', disabled: 'Disabled', unknown: 'Not connected' }, edit: 'Edit', mcpSaved: 'Saved; applies after the restart', mcpRemoveConfirm: (n) => `Remove MCP server ${n}? Its tools go away after the restart.`, searchPlugins: 'Search plugins', installTitle: 'Add plugin', installHint: 'Install a package from PyPI by name (optionally with a version, e.g. pyh-example==0.1.0), or a bundle directory on this machine. The install is preflighted, then the harness restarts when idle.', srcPackage: 'PyPI package', srcPath: 'Local directory', packagePlaceholder: 'Package name, e.g. pyh-example or pyh-example==0.1.0', chooseDir: 'Choose folder…', install: 'Install', installing: 'Installing…', restartScheduled: 'Saved; restarting once idle…', savedRestartRequired: 'Saved; applies on the next start (no supervisor)', uninstall: 'Uninstall', uninstallConfirm: (n) => `Uninstall bundle ${n}? Its entries leave the profile after the restart.`, enablePlugin: 'Enable', disablePlugin: 'Disable', restartNow: 'Restart now', restartRequested: 'Restart requested; waiting for running turns to finish', entriesOf: (n) => `${n} entries`, noMatches: 'No matching entries', pluginsTitle: 'Plugins', pluginsIntro: 'Plugin composition of the current profile. Change path: agent writes or installs → preflight → restart.', addPlugin: 'Add plugin', gotIt: 'Got it', addPluginHow: 'Two ways:\n1. Describe the capability in a session with the Creator preset; the agent writes and installs the plugin.\n2. Run pyh plugin install <bundle directory or package> in a terminal, then pyh restart.',
@@ -1783,8 +1799,10 @@ async function attach() {
 /* ---------- approvals ---------- */
 function renderApproval(interrupts) {
   const box = $('approval'); box.innerHTML = '';
+  const questions = (interrupts || []).filter((i) => i.value && i.value.kind === 'ask_user');
   const reqs = (interrupts || []).flatMap((i) => (i.value && i.value.action_requests) || []);
-  state.pending = reqs.length > 0; updateComposer();
+  state.pending = reqs.length > 0 || questions.length > 0; state.pendingKind = questions.length ? 'ask_user' : reqs.length ? 'approval' : null; updateComposer();
+  if (questions.length) { renderQuestions(questions[0]); return; }
   // Calls under this decision: tool rows without a result.
   log().querySelectorAll('.tool .drow[data-state="running"], .tool .drow[data-state="waiting"]').forEach((row) => {
     row.dataset.state = reqs.length ? 'waiting' : 'running';
@@ -1802,6 +1820,31 @@ function renderApproval(interrupts) {
   card.querySelector('.primary').onclick = () => decide(reqs.map(() => ({ type: 'approve' })));
   box.appendChild(card);
   requestAnimationFrame(() => scrollToEnd(true));
+}
+function renderQuestions(interrupt) {
+  const box = $('approval'); const qs = interrupt.value.questions || [];
+  const picks = {}; const custom = {};
+  const card = document.createElement('div'); card.className = 'approval'; card.dataset.kind = 'question';
+  card.innerHTML = `<div class="strip">${icon('message')}<span>${esc(T.questionStrip)}</span></div><div class="body">${qs.map((q, qi) => `<div class="question" data-q="${qi}">${q.header ? `<div class="qhead">${esc(q.header)}</div>` : ''}<div class="qtext">${esc(q.question)}</div>${(q.options || []).length ? `<div class="qopts">${q.options.map((o, oi) => `<button type="button" class="qopt" data-opt="${oi}" ${q.multi_select ? 'data-multi' : ''} aria-pressed="false"><span class="mark"></span><span><span>${esc(o.label)}</span>${o.description ? `<span class="odesc">${esc(o.description)}</span>` : ''}</span></button>`).join('')}</div><span class="fieldHint">${esc(q.multi_select ? T.chooseMany : T.chooseOne)} · ${esc(T.customAnswer)}</span>` : ''}<input class="input qcustom" data-custom placeholder="${esc(T.customPlaceholder)}"></div>`).join('')}</div>
+    <div class="actionRow"><button class="btn outline" type="button" data-skip>${esc(T.skipAll)}</button><button class="btn primary" type="button" data-submit>${esc(T.submitAnswers)}</button></div>`;
+  card.onclick = (e) => {
+    const b = e.target.closest('.qopt'); if (!b) return;
+    const qi = Number(b.closest('.question').dataset.q); const label = qs[qi].options[Number(b.dataset.opt)].label;
+    const set = (picks[qi] ||= new Set());
+    if (qs[qi].multi_select) { if (set.has(label)) set.delete(label); else set.add(label); }
+    else { const on = set.has(label); set.clear(); if (!on) set.add(label); }
+    b.closest('.qopts').querySelectorAll('.qopt').forEach((x) => x.setAttribute('aria-pressed', set.has(qs[qi].options[Number(x.dataset.opt)].label)));
+  };
+  const answers = (skip) => qs.map((q, qi) => ({ id: q.id, selected: skip ? [] : [...(picks[qi] || [])], custom: skip ? undefined : (card.querySelector(`[data-q="${qi}"] [data-custom]`).value.trim() || undefined) }));
+  card.querySelector('[data-submit]').onclick = () => answer(interrupt.id, answers(false));
+  card.querySelector('[data-skip]').onclick = () => answer(interrupt.id, answers(true));
+  box.appendChild(card);
+  requestAnimationFrame(() => { scrollToEnd(true); card.querySelector('.qopt, [data-custom]')?.focus(); });
+}
+async function answer(interruptId, answers) {
+  renderApproval([]);
+  try { await consume(await api(`/sessions/${state.current}/answers`, { method: 'POST', body: JSON.stringify({ interrupt_id: interruptId, answers }) })); }
+  catch (err) { addLine(err.message, 'error'); updateComposer(); }
 }
 async function decide(decisions) {
   renderApproval([]);
@@ -1908,7 +1951,7 @@ $('composer').addEventListener('submit', async (e) => {
   if (state.streaming) { if (state.current) api(`/sessions/${state.current}/cancel`, { method: 'POST' }).catch(() => {}); return; }
   const text = input.value.trim(); const images = attachments.map((a) => a.url);
   if (!text && !images.length) return;
-  if (state.pending) { toast(T.approvalPending); return; }
+  if (state.pending) { toast(state.pendingKind === 'ask_user' ? T.questionPending : T.approvalPending); return; }
   if (!state.current) {
     let s;
     try { s = await json('/sessions', { method: 'POST', body: JSON.stringify({ title: (text || attachments[0].name).slice(0, 60), model: state.sessionModel, workspace: state.sessionWorkspace, mode: state.sessionMode, preset: state.sessionPreset }) }); } catch (err) { toast(err.message); return; }
@@ -2241,6 +2284,7 @@ function beginTurn(opts = {}) {
   curTurn = t; setProcessHead(t, 'running');
   return t;
 }
+function pendingKind() { return state.pendingKind || null; }
 function setProcessHead(t, state, record) {
   t.head.dataset.state = state;
   const lead = t.head.querySelector('.lead'); const label = t.head.querySelector('.label');
@@ -2248,7 +2292,7 @@ function setProcessHead(t, state, record) {
   else {
     const dur = record?.stats?.duration_ms; const steps = record?.stats?.steps;
     lead.innerHTML = icon(state === 'completed' ? 'check' : state === 'error' ? 'x-circle' : 'alert');
-    const text = state === 'completed' ? (dur != null ? T.doneIn(fmtDur(dur)) : T.doneLabel) : state === 'cancelled' ? T.cancelledTurn : state === 'interrupted' ? T.interruptedTurn : T.failedTurn;
+    const text = state === 'completed' ? (dur != null ? T.doneIn(fmtDur(dur)) : T.doneLabel) : state === 'cancelled' ? T.cancelledTurn : state === 'interrupted' ? (pendingKind() === 'ask_user' ? T.questionTurn : T.interruptedTurn) : T.failedTurn;
     label.textContent = text + (steps ? ` · ${T.stepsN(steps)}` : '');
   }
   t.process.toggleAttribute('data-empty', !t.body.children.length);

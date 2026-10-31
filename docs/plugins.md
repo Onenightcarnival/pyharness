@@ -9,6 +9,7 @@
 | `pyharness-tools` | `tools` | `tools` | 工具注册表、执行管线、审批闸门 |
 | `pyharness-mcp` | `mcp` | `mcp` | MCP 服务器的工具注册进 `ctx.tools`（stdio 或 HTTP / SSE），工具名加服务器前缀；连接失败不影响启动，`status()` 可查 |
 | `pyharness-prompt` | `prompt` | `prompt` | 有序的系统提示词片段 |
+| `pyharness-ask-user` | `ask-user` | `askUser` | `ask_user_question` 工具：agent 提问（可带选项、多选、标题），运行以 LangGraph interrupt 暂停，Web UI 显示问题卡片；`POST /sessions/{id}/answers` 回答后续跑，工具返回 `{"answers": [{"id", "selected", "custom"?}]}`，问答结构与 dsh 一致 |
 | `pyharness-checkpoint-sqlite` | `checkpoint` | `checkpointer`、`store` | SQLite 持久化 |
 | `pyharness-checkpoint-postgres` | `checkpoint` | `checkpointer`、`store` | Postgres 持久化；共享连接池 |
 | `pyharness-workspace` | `workspace` | `workspace`、`backend` | 工作区注册表：默认工作区、每会话工作区、最近列表、目录浏览；deepagents `FilesystemBackend` / `LocalShellBackend` |

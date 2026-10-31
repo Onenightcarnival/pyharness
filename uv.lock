@@ -11,6 +11,7 @@ members = [
     "pyharness-agent",
     "pyharness-agent-loop-deepagents",
     "pyharness-api",
+    "pyharness-ask-user",
     "pyharness-bundle-base",
     "pyharness-bundle-creator",
     "pyharness-bundle-web",
@@ -1521,6 +1522,25 @@ requires-dist = [
 ]
 
 [[package]]
+name = "pyharness-ask-user"
+version = "0.1.0"
+source = { editable = "packages/ask-user" }
+dependencies = [
+    { name = "langchain-core" },
+    { name = "langgraph" },
+    { name = "pyharness-core" },
+    { name = "pyharness-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
+    { name = "pyharness-core", editable = "packages/core" },
+    { name = "pyharness-tools", editable = "packages/tools" },
+]
+
+[[package]]
 name = "pyharness-bundle-base"
 version = "0.1.0"
 source = { editable = "packages/bundle-base" }
@@ -1528,6 +1548,7 @@ dependencies = [
     { name = "pyharness-agent" },
     { name = "pyharness-agent-loop-deepagents" },
     { name = "pyharness-api" },
+    { name = "pyharness-ask-user" },
     { name = "pyharness-checkpoint-postgres" },
     { name = "pyharness-checkpoint-sqlite" },
     { name = "pyharness-compaction" },
@@ -1549,6 +1570,7 @@ requires-dist = [
     { name = "pyharness-agent", editable = "packages/agent" },
     { name = "pyharness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
     { name = "pyharness-api", editable = "packages/api" },
+    { name = "pyharness-ask-user", editable = "packages/ask-user" },
     { name = "pyharness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
     { name = "pyharness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
     { name = "pyharness-compaction", editable = "packages/compaction" },
@@ -1761,6 +1783,7 @@ dependencies = [
     { name = "pyharness-agent" },
     { name = "pyharness-agent-loop-deepagents" },
     { name = "pyharness-api" },
+    { name = "pyharness-ask-user" },
     { name = "pyharness-bundle-base" },
     { name = "pyharness-bundle-creator" },
     { name = "pyharness-bundle-web" },
@@ -1795,6 +1818,7 @@ requires-dist = [
     { name = "pyharness-agent", editable = "packages/agent" },
     { name = "pyharness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
     { name = "pyharness-api", editable = "packages/api" },
+    { name = "pyharness-ask-user", editable = "packages/ask-user" },
     { name = "pyharness-bundle-base", editable = "packages/bundle-base" },
     { name = "pyharness-bundle-creator", editable = "packages/bundle-creator" },
     { name = "pyharness-bundle-web", editable = "packages/bundle-web" },

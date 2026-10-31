@@ -222,7 +222,7 @@ class RestartPending(RuntimeError):
 class Turn:
     session_id: str
     run_id: str
-    kind: str  # message | approval | continuation | compact
+    kind: str  # message | approval | answer | continuation | compact
     input: str | None
     outcome: str | None = None
     model: str | None = None  # route:model selected for the session; None: the default
@@ -589,6 +589,7 @@ class AgentService(Service):
         content: str | None = None,
         *,
         decisions: list[dict[str, Any]] | None = None,
+        resume: dict[str, Any] | None = None,
         kind: str | None = None,
         marker: dict[str, Any] | None = None,
         model: str | None = None,
@@ -601,6 +602,7 @@ class AgentService(Service):
         |--------------------------|-------------------------------------------------------------|
         | ``content``              | user message                                                |
         | ``decisions``            | answers to the pending approvals                            |
+        | ``resume``               | ``{interrupt_id: value}`` resuming other interrupts (``ask_user_question`` answers) |
         | ``content`` + ``marker`` | user-role message tagged ``additional_kwargs["pyharness"]`` |
 
         ``kind="compact"`` with ``marker={"kind": "command", "name": "compact"}`` runs a manual compaction: the
@@ -616,6 +618,11 @@ class AgentService(Service):
 
             payload: Any = Command(resume={"decisions": decisions})
             kind = kind or "approval"
+        elif resume is not None:
+            from langgraph.types import Command
+
+            payload = Command(resume=resume)
+            kind = kind or "answer"
         elif marker is not None:
             payload = {"messages": [HumanMessage(content=content or "", additional_kwargs={"pyharness": marker})]}
             kind = kind or "message"

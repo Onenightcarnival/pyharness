@@ -15,6 +15,7 @@
 | POST   | ``/sessions/{id}/messages``  | ``{"content", "images"?}``    | SSE run events; images: data URLs           |
 | POST   | ``/sessions/{id}/approvals`` | ``{"decisions": [decision]}`` | SSE run events                              |
 | POST   | ``/sessions/{id}/compact``   |                               | SSE of a manual compaction run (``compact``, ``done``) |
+| POST   | ``/sessions/{id}/answers``   | ``{"answers", "interrupt_id"?}`` | answer a pending ask_user_question; SSE of the resumed run |
 | POST   | ``/sessions/{id}/cancel``    |                               | ``{"cancelled"}``                           |
 | DELETE | ``/sessions/{id}``           |                               | ``{"deleted"}``                             |
 | GET    | ``/sessions/{id}/stream``    |                               | SSE of the running turn; 204 when idle      |
@@ -205,6 +206,13 @@ class NewMessage(BaseModel):
 
 class Approvals(BaseModel):
     decisions: list[dict[str, Any]]
+
+
+class QuestionAnswers(BaseModel):
+    """Answers to a pending ``ask_user_question`` interrupt: one per question (``id``, ``selected``, ``custom``?)."""
+
+    answers: list[dict[str, Any]]
+    interrupt_id: str | None = Field(None, description="Which pending interrupt; the only ask_user one when omitted.")
 
 
 class CompactionSettings(BaseModel):
@@ -712,6 +720,30 @@ def build_router(ctx: Any) -> APIRouter:
             raise HTTPException(409, "the session is waiting for approval decisions")
         try:
             handle = agents.start_run(session_id, "/compact", kind="compact", marker={"kind": "command", "name": "compact"})
+        except SessionBusy as exc:
+            raise HTTPException(409, str(exc)) from None
+        except RestartPending as exc:
+            raise HTTPException(503, str(exc), headers={"Retry-After": "2"}) from None
+        return _sse(handle.subscribe())
+
+    @router.post("/sessions/{session_id}/answers")
+    async def post_answers(session_id: str, body: QuestionAnswers) -> StreamingResponse:
+        """Answer the pending ``ask_user_question`` and resume the run (SSE like a message)."""
+        await require(session_id)
+        pending = [i for i in await agents.pending(session_id) if isinstance(i.get("value"), dict) and i["value"].get("kind") == "ask_user"]
+        if not pending:
+            raise HTTPException(409, "no question is waiting for an answer")
+        target = next((i for i in pending if body.interrupt_id in (None, i["id"])), None)
+        if target is None:
+            raise HTTPException(409, f"no pending question with interrupt id {body.interrupt_id!r}")
+        try:
+            from pyharness_ask_user import normalize_answers
+
+            answers = normalize_answers(target["value"].get("questions") or [], body.answers)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        try:
+            handle = agents.start_run(session_id, resume={target["id"]: {"answers": answers}})
         except SessionBusy as exc:
             raise HTTPException(409, str(exc)) from None
         except RestartPending as exc:

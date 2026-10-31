@@ -1,0 +1,17 @@
+[project]
+name = "pyharness-ask-user"
+version = "0.1.0"
+description = "pyharness plugin: ask_user_question tool — the agent pauses for the user's answer"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = ["pyharness-core", "pyharness-tools", "langchain-core>=1.0", "langgraph>=1.0"]
+
+[project.entry-points."pyharness.plugins"]
+pyharness-ask-user = "pyharness_ask_user:AskUserService"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyharness_ask_user"]
