@@ -88,3 +88,17 @@ async def test_workspace_files_api(home, tmp_path):
             (other / "note.md").write_text("n")
             d = (await c.get("/api/workspaces/files", params={"root": str(other)})).json()
             assert [e["name"] for e in d["entries"]] == ["note.md"]
+
+
+async def test_plugin_management_routes(home):
+    profile = Profile.init("web", home=str(home))
+    async with Harness(profile, patch=[HTTP_OFF]) as h:
+        async with client(h) as c:
+            r = await c.post("/api/plugins/install", json={"path": str(home / "missing")})
+            assert r.status_code == 422 and "does not exist" in r.json()["detail"]
+            assert (await c.post("/api/restart")).status_code == 409  # unsupervised test harness
+            r = await c.put("/api/plugins/entries/nope", json={"enabled": False})
+            assert r.status_code == 422
+            r = await c.put("/api/plugins/bundles/nope", json={"enabled": True})
+            assert r.status_code == 422
+            assert (await c.delete("/api/plugins/bundles/nope")).status_code == 422

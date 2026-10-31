@@ -4,6 +4,11 @@
 |--------|------------------------------|-------------------------------|---------------------------------------------|
 | GET    | ``/health``                  |                               | generation, restart state, model, workspace |
 | GET    | ``/plugins``                 |                               | loader entries, installed bundles           |
+| POST   | ``/plugins/install``         | ``{"path"}``                  | install a bundle directory; restart scheduled |
+| PUT    | ``/plugins/bundles/{name}``  | ``{"enabled"}``               | enable or disable a bundle                  |
+| DELETE | ``/plugins/bundles/{name}``  |                               | uninstall a bundle from the profile site    |
+| PUT    | ``/plugins/entries/{id}``    | ``{"enabled"}``               | enable or disable an entry                  |
+| POST   | ``/restart``                 |                               | restart after running turns (supervised)    |
 | GET    | ``/sessions``                |                               | sessions                                    |
 | POST   | ``/sessions``                | ``{"title"?, "model"?, "workspace"?, "mode"?, "preset"?}`` | session        |
 | GET    | ``/sessions/{id}``           |                               | session, busy, messages, pending approvals  |
@@ -68,6 +73,8 @@ from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from pyharness import manage
+
 name = "pyharness-api"
 inject = ["http", "agents", "llm"]
 
@@ -110,6 +117,14 @@ class AgentDefaults(BaseModel):
 IMAGE_DATA_URL = re.compile(r"^data:image/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$")
 MAX_IMAGES = 8
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
+
+
+class InstallBody(BaseModel):
+    path: str = Field(min_length=1, description="Directory of a bundle (pyproject.toml with a pyharness.bundles entry point).")
+
+
+class EnabledBody(BaseModel):
+    enabled: bool
 
 
 class HighlightItem(BaseModel):
@@ -208,6 +223,58 @@ def build_router(ctx: Any) -> APIRouter:
             if workspace is not None
             else None,
         }
+
+    def plugin_profile() -> Any:
+        profile = ctx.get("profile", None)
+        if profile is None:
+            raise HTTPException(409, "no profile: plugins are read-only in this harness")
+        return profile
+
+    def applied(result: dict[str, Any], reason: str) -> dict[str, Any]:
+        """Turn a manage result into the API answer: rejected → 422; saved → restart scheduled when supervised."""
+        if result.get("application") == "rejected":
+            raise HTTPException(422, result.get("error") or f"rejected at {result.get('stage')}")
+        if result.get("application") == "saved":
+            lifecycle = ctx.lifecycle
+            if lifecycle.supervised:
+                lifecycle.request_restart(reason)
+                result["application"] = "restart-scheduled"
+            else:
+                result["application"] = "saved-restart-required"
+        return result
+
+    @router.post("/plugins/install")
+    async def install_plugin(body: InstallBody) -> dict[str, Any]:
+        """Install a bundle directory into the profile site; preflight, then restart when supervised."""
+        profile = plugin_profile()
+        result = await manage.install_bundle(profile, body.path, baseline=ctx.loader.snapshot())
+        return applied(result, f"install bundle from {body.path}")
+
+    @router.delete("/plugins/bundles/{name}")
+    async def uninstall_plugin(name: str) -> dict[str, Any]:
+        profile = plugin_profile()
+        result = await manage.uninstall_bundle(profile, name, baseline=ctx.loader.snapshot())
+        return applied(result, f"uninstall bundle {name}")
+
+    @router.put("/plugins/bundles/{name}")
+    async def toggle_bundle(name: str, body: EnabledBody) -> dict[str, Any]:
+        profile = plugin_profile()
+        result = await manage.set_bundle_enabled(profile, name, body.enabled, baseline=ctx.loader.snapshot())
+        return applied(result, f"{'enable' if body.enabled else 'disable'} bundle {name}")
+
+    @router.put("/plugins/entries/{entry_id}")
+    async def toggle_entry(entry_id: str, body: EnabledBody) -> dict[str, Any]:
+        profile = plugin_profile()
+        result = await manage.set_entry_enabled(profile, entry_id, body.enabled, baseline=ctx.loader.snapshot())
+        return applied(result, f"{'enable' if body.enabled else 'disable'} entry {entry_id}")
+
+    @router.post("/restart")
+    async def restart_now() -> dict[str, Any]:
+        """Ask the supervisor for a restart once running turns finish (409 when unsupervised)."""
+        lifecycle = ctx.lifecycle
+        if not lifecycle.supervised:
+            raise HTTPException(409, "unsupervised harness: restart it yourself (pyh run supervises restarts)")
+        return {"restart_pending": lifecycle.request_restart("requested from the Web UI")}
 
     @router.get("/plugins")
     async def plugins() -> dict[str, Any]:

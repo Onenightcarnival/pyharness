@@ -594,6 +594,14 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 .pcardIcon { flex: none; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background: color-mix(in srgb, var(--info) 10%, transparent); color: var(--info); }
 .pcardIcon .ico { width: 18px; height: 18px; }
 .pcardMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.pcardActions { display: inline-flex; align-items: center; gap: 4px; flex: none; margin-left: auto; }
+.switch { position: relative; width: 36px; height: 20px; padding: 0; border: none; border-radius: 999px; background: var(--label-dimmed); flex: none; transition: background 0.15s var(--ease); }
+.switch[aria-checked='true'] { background: var(--info); }
+.switch:disabled { opacity: 0.5; cursor: default; }
+.switch .knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); transition: transform 0.15s var(--ease); }
+.switch[aria-checked='true'] .knob { transform: translateX(16px); }
+.installRow { display: flex; gap: 8px; align-items: center; margin: 8px 0 4px; }
+.installRow .input { flex: 1; min-width: 0; }
 .titleRow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
 .pcardTitle { font-size: 14px; line-height: 20px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pcardDesc { font-size: 13px; line-height: 18px; color: var(--label-tertiary); overflow-wrap: anywhere; }
@@ -985,7 +993,7 @@ const T = zh ? {
   approvalStrip: '待批准', approve: '批准', reject: '拒绝', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
   restarting: '重启中：应用插件变更…', restarted: (g) => `第 ${g} 代已启动`, rolledBack: (g) => `变更启动失败；第 ${g} 代运行上一份配置`, offline: '离线', online: '在线', gen: (g) => `第 ${g} 代`,
   unsupervised: '未托管', noSessions: '无会话', input: '输入', output: '输出', error: '错误', cancelled: '已停止', untitled: '未命名会话',
-  searchPlugins: '搜索插件', entriesOf: (n) => `${n} 个条目`, noMatches: '没有匹配的条目', pluginsTitle: '插件', pluginsIntro: '当前 profile 的插件组合。变更路径：agent 编写或安装 → 预检 → 重启生效。', addPlugin: '添加插件', gotIt: '知道了', addPluginHow: '两种方式：\n1. 在「创造」预设的会话里描述想要的能力，agent 会编写并安装插件；\n2. 在终端运行 pyh plugin install <bundle 目录或包名>，然后 pyh restart。',
+  searchPlugins: '搜索插件', installTitle: '添加插件', installHint: '输入 bundle 目录的绝对路径（含 pyproject.toml 与 pyharness.bundles 入口），或从本机选择目录。安装会先预检，通过后在空闲时重启生效。', chooseDir: '选择目录…', install: '安装', installing: '安装中…', restartScheduled: '已保存，正在等待空闲后重启…', savedRestartRequired: '已保存，下次启动生效（当前未由 supervisor 管理）', uninstall: '卸载', uninstallConfirm: (n) => `卸载 bundle ${n}？其条目会从 profile 中移除，重启后生效。`, enablePlugin: '启用', disablePlugin: '停用', restartNow: '立即重启', restartRequested: '已请求重启，等待运行中的轮次结束', entriesOf: (n) => `${n} 个条目`, noMatches: '没有匹配的条目', pluginsTitle: '插件', pluginsIntro: '当前 profile 的插件组合。变更路径：agent 编写或安装 → 预检 → 重启生效。', addPlugin: '添加插件', gotIt: '知道了', addPluginHow: '两种方式：\n1. 在「创造」预设的会话里描述想要的能力，agent 会编写并安装插件；\n2. 在终端运行 pyh plugin install <bundle 目录或包名>，然后 pyh restart。',
   bundles: '组合包', entries: '条目', clientModules: '客户端模块', running: '运行中', pending: '等待依赖', disabled: '已停用', failed: '失败', stopped: '已停止',
   enabled: '已启用', off: '未启用', fromEnv: '随环境安装', fromProfile: '装在本 profile',
   tip: '示例：<code>写一个插件，加一个返回当前时间的工具</code>', missing: '缺少服务', timeNow: '刚刚', min: '分钟', hour: '小时', day: '天',
@@ -997,7 +1005,7 @@ const T = zh ? {
   approvalStrip: 'Awaiting approval', approve: 'Approve', reject: 'Reject', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
   restarting: 'Restarting: applying plugin changes…', restarted: (g) => `Generation ${g} started`, rolledBack: (g) => `Change failed to boot; generation ${g} runs the previous configuration`, offline: 'Offline', online: 'Online', gen: (g) => `generation ${g}`,
   unsupervised: 'unsupervised', noSessions: 'No sessions', input: 'Input', output: 'Output', error: 'Error', cancelled: 'Stopped', untitled: 'Untitled session',
-  searchPlugins: 'Search plugins', entriesOf: (n) => `${n} entries`, noMatches: 'No matching entries', pluginsTitle: 'Plugins', pluginsIntro: 'Plugin composition of the current profile. Change path: agent writes or installs → preflight → restart.', addPlugin: 'Add plugin', gotIt: 'Got it', addPluginHow: 'Two ways:\n1. Describe the capability in a session with the Creator preset; the agent writes and installs the plugin.\n2. Run pyh plugin install <bundle directory or package> in a terminal, then pyh restart.',
+  searchPlugins: 'Search plugins', installTitle: 'Add plugin', installHint: 'Absolute path of a bundle directory (pyproject.toml with a pyharness.bundles entry point), or pick a folder. The install is preflighted, then the harness restarts when idle.', chooseDir: 'Choose folder…', install: 'Install', installing: 'Installing…', restartScheduled: 'Saved; restarting once idle…', savedRestartRequired: 'Saved; applies on the next start (no supervisor)', uninstall: 'Uninstall', uninstallConfirm: (n) => `Uninstall bundle ${n}? Its entries leave the profile after the restart.`, enablePlugin: 'Enable', disablePlugin: 'Disable', restartNow: 'Restart now', restartRequested: 'Restart requested; waiting for running turns to finish', entriesOf: (n) => `${n} entries`, noMatches: 'No matching entries', pluginsTitle: 'Plugins', pluginsIntro: 'Plugin composition of the current profile. Change path: agent writes or installs → preflight → restart.', addPlugin: 'Add plugin', gotIt: 'Got it', addPluginHow: 'Two ways:\n1. Describe the capability in a session with the Creator preset; the agent writes and installs the plugin.\n2. Run pyh plugin install <bundle directory or package> in a terminal, then pyh restart.',
   bundles: 'Bundles', entries: 'Entries', clientModules: 'Client modules', running: 'Running', pending: 'Pending', disabled: 'Disabled', failed: 'Failed', stopped: 'Stopped',
   enabled: 'Enabled', off: 'Off', fromEnv: 'installed with the environment', fromProfile: 'installed in this profile',
   tip: 'Example: <code>write a plugin that adds a tool returning the current time</code>', missing: 'missing', timeNow: 'now', min: 'm', hour: 'h', day: 'd',
@@ -1910,18 +1918,45 @@ function pluginSettingsMarkup(d, q) {
   const out = Object.entries(groups).map(([source, list]) => `<div class="pluginGroupHead">${esc(source || T.entries)}<small>${esc(T.entriesOf(list.length))}</small></div><div class="pluginGrid" style="margin-bottom:20px">${list.map(card).join('')}</div>`).join('');
   return out || `<p class="emptyNote">${esc(T.noMatches)}</p>`;
 }
+const switchHtml = (on, kind, id) => `<button type="button" class="switch" role="switch" aria-checked="${!!on}" data-toggle="${esc(kind)}:${esc(id)}" title="${esc(on ? T.disablePlugin : T.enablePlugin)}"><span class="knob"></span></button>`;
+async function applyPluginResult(promise, el) {
+  let r;
+  try { r = await promise; } catch (err) { toast(err.message); if (el) renderPluginsPanel(el); return null; }
+  if (r.application === 'restart-scheduled') { toast(T.restartScheduled); waitForRestart().then(() => { if (el && el.isConnected) renderPluginsPanel(el); }); }
+  else toast(T.savedRestartRequired);
+  if (el) renderPluginsPanel(el);
+  return r;
+}
+function installDialog(el) {
+  const m = modal(`<div class="modalHead">${esc(T.installTitle)}</div><div class="modalBody"><p>${esc(T.installHint)}</p><div class="installRow"><input class="input mono" data-path placeholder="/path/to/bundle" autocomplete="off"><button type="button" class="btn outline" data-pick>${icon('folder')}<span>${esc(T.chooseDir)}</span></button></div></div><div class="modalFoot"><span class="spacer"></span><button type="button" class="btn outline" data-no>${esc(T.cancel)}</button><button type="button" class="btn primary" data-yes>${esc(T.install)}</button></div>`);
+  const input = m.querySelector('[data-path]'); const yes = m.querySelector('[data-yes]');
+  const close = () => { m.remove(); document.removeEventListener('keydown', onKey, true); };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey, true);
+  m.querySelector('[data-no]').onclick = close; m.onclick = (e) => { if (e.target === m) close(); };
+  m.querySelector('[data-pick]').onclick = async () => { try { const r = await json('/workspaces/pick', { method: 'POST', body: JSON.stringify({}) }); if (r.path) input.value = r.path; } catch (err) { toast(err.message); } };
+  yes.onclick = async () => {
+    const path = input.value.trim(); if (!path) { input.focus(); return; }
+    yes.disabled = true; yes.innerHTML = `${icon('spinner', 'ico spin')}<span>${esc(T.installing)}</span>`;
+    const r = await applyPluginResult(json('/plugins/install', { method: 'POST', body: JSON.stringify({ path }) }), el);
+    if (r) close(); else { yes.disabled = false; yes.textContent = T.install; }
+  };
+  input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); yes.click(); } };
+  setTimeout(() => input.focus(), 0);
+}
 function entryCards(d) {
   return d.entries.map((e) => {
     const [tone, key] = STATE_TAG[e.state] || ['outline', e.state];
     const detail = e.state === 'pending' ? `${T.missing}: ${(e.missing || []).join(', ')}` : e.state === 'failed' ? e.error : (e.provides ? `ctx.${e.provides}` : '');
-    return `<div class="pcard"><span class="pcardIcon">${icon(entryGlyph(e))}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(e.id)}</span>${e.state === 'active' ? '' : `<span class="tag" data-tone="${tone}">${esc(T[key] || key)}</span>`}</span><span class="pcardDesc"><code>${esc(e.name || '')}</code>${e.source ? ' · ' + esc(e.source) : ''}${detail ? ' · ' + esc(detail) : ''}</span></span></div>`;
+    const toggle = e.source !== 'bundle:base' && !['http', 'api', 'web-ui'].includes(e.id) ? `<span class="pcardActions">${switchHtml(e.state !== 'disabled', 'entry', e.id)}</span>` : '';
+    return `<div class="pcard"><span class="pcardIcon">${icon(entryGlyph(e))}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(e.id)}</span>${e.state === 'active' ? '' : `<span class="tag" data-tone="${tone}">${esc(T[key] || key)}</span>`}</span><span class="pcardDesc"><code>${esc(e.name || '')}</code>${e.source ? ' · ' + esc(e.source) : ''}${detail ? ' · ' + esc(detail) : ''}</span></span>${toggle}</div>`;
   }).join('');
 }
 function showPlugins() { selectPanel('plugins'); }
 async function renderPluginsPanel(el) {
   const d = await loadPluginCount();
   if (!d) return;
-  const bundleCards = d.bundles.map((b) => `<div class="pcard"><span class="pcardIcon">${icon('box')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(b.bundle)}</span><span class="tag" data-tone="${b.enabled ? 'success' : 'outline'}">${esc(b.enabled ? T.enabled : T.off)}</span></span><span class="pcardDesc"><code>${esc(b.dist || '')}</code> ${esc(b.version || '')} · ${esc(b.installed === 'profile' ? T.fromProfile : T.fromEnv)}</span></span></div>`).join('');
+  const bundleCards = d.bundles.map((b) => `<div class="pcard"><span class="pcardIcon">${icon('box')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(b.bundle)}</span><span class="tag" data-tone="${b.enabled ? 'success' : 'outline'}">${esc(b.enabled ? T.enabled : T.off)}</span></span><span class="pcardDesc"><code>${esc(b.dist || '')}</code> ${esc(b.version || '')} · ${esc(b.installed === 'profile' ? T.fromProfile : T.fromEnv)}</span></span><span class="pcardActions">${b.bundle === 'base' ? '' : switchHtml(b.enabled, 'bundle', b.bundle)}${b.installed === 'profile' ? `<button type="button" class="iconButton" data-uninstall="${esc(b.bundle)}" title="${esc(T.uninstall)}">${icon('trash')}</button>` : ''}</span></div>`).join('');
   const entries = entryCards(d);
   const clients = (window.__PYH_BOOT__?.plugins || []).map((p) => { const st = moduleStatus[p.id]; return `<div class="pcard"><span class="pcardIcon">${icon('code')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(p.id)}</span><span class="tag" data-tone="${st?.ok ? 'success' : st ? 'danger' : 'outline'}">${esc(st?.ok ? T.running : st ? T.failed : T.pending)}</span></span><span class="pcardDesc"><code>${esc(p.url.split('?')[0])}</code>${p.calls?.length ? ' · ' + esc(p.calls.join(', ')) : ''}${st && !st.ok ? ' · ' + esc(st.error) : ''}</span></span></div>`; }).join('');
   el.innerHTML = `<div class="page">
@@ -1931,7 +1966,13 @@ async function renderPluginsPanel(el) {
     ${clients ? `<div class="group"><div class="groupHead"><h2 class="groupTitle">${esc(T.clientModules)}</h2><span class="groupMeta">${(window.__PYH_BOOT__?.plugins || []).length}</span></div><div class="cards">${clients}</div></div>` : ''}
     <div class="tip">${T.tip}</div></div>`;
   $('pluginsRefresh').onclick = () => renderPluginsPanel(el);
-  $('pluginsAdd').onclick = () => confirmDialog(T.addPluginHow, T.gotIt, T.addPlugin);
+  $('pluginsAdd').onclick = () => installDialog(el);
+  el.onclick = async (e) => {
+    const t = e.target.closest('[data-toggle]');
+    if (t) { const [kind, id] = t.dataset.toggle.split(/:(.*)/); const on = t.getAttribute('aria-checked') !== 'true'; t.disabled = true; await applyPluginResult(json(`/plugins/${kind === 'bundle' ? 'bundles' : 'entries'}/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify({ enabled: on }) }), el); return; }
+    const u = e.target.closest('[data-uninstall]');
+    if (u) { if (!(await confirmDialog(T.uninstallConfirm(u.dataset.uninstall), T.uninstall, T.installTitle))) return; await applyPluginResult(json(`/plugins/bundles/${encodeURIComponent(u.dataset.uninstall)}`, { method: 'DELETE' }), el); }
+  };
 }
 slotRegister('web-ui', { slot: 'main', key: 'plugins', label: T.pluginsTitle }, (el) => { renderPluginsPanel(el); return () => {}; });
 
