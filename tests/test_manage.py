@@ -121,3 +121,17 @@ async def test_read_only_actions_need_no_approval(profile):
         assert {"id": "plugin-manager", "name": "pyharness-plugin-manager", "state": "active", "source": "bundle:base"} in listing[
             "entries"
         ]
+
+
+def test_install_targets_are_classified():
+    assert manage.requirement_name("pyh-todo==0.1.0") == "pyh-todo"
+    assert manage.requirement_name("pyh_todo>=1,<2") == "pyh_todo"
+    assert manage.requirement_name("/plugins/todo") is None and manage.requirement_name("a b") is None
+    assert manage.looks_like_path("./plugins/todo") and manage.looks_like_path("~/x") and manage.looks_like_path("/tmp")
+    assert not manage.looks_like_path("pyh-todo") and not manage.looks_like_path("pyh-todo==0.1.0")
+
+
+async def test_install_package_rejects_a_bad_requirement(profile):
+    result = await manage.install_package(profile, "not a requirement")
+    assert result["application"] == "rejected" and result["stage"] == "install"
+    assert "not a package requirement" in result["error"]

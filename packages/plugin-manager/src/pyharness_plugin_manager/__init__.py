@@ -140,7 +140,7 @@ def apply(ctx: Any, config: Config) -> None:
         action                                              effect
         list                                                entries with state; installed bundles
         template target=<name> [variant=basic|tool-and-route|ui-panel] starter bundle files; variant default basic
-        install_bundle target=<dir>                         install a bundle from a workspace directory
+        install_bundle target=<dir | package>               install a bundle from a workspace directory, or a package from PyPI
         uninstall_bundle target=<bundle>                    remove an installed bundle
         set_bundle_enabled target=<bundle> enabled=<bool>   enable or disable a bundle
         set_plugin_enabled target=<entry id> enabled=<bool> enable or disable an entry
@@ -175,7 +175,10 @@ def apply(ctx: Any, config: Config) -> None:
             if not target:
                 return json.dumps({"error": "install_bundle: target=<directory> required"})
             path = resolve_path(target)
-            result = finish(await manage.install_bundle(profile, path, baseline=baseline), f"install bundle from {target}", session_id)
+            if manage.looks_like_path(target) or Path(str(path)).exists():
+                result = finish(await manage.install_bundle(profile, path, baseline=baseline), f"install bundle from {target}", session_id)
+            else:
+                result = finish(await manage.install_package(profile, target, baseline=baseline), f"install package {target}", session_id)
         elif action == "uninstall_bundle":
             if not target:
                 return json.dumps({"error": "uninstall_bundle: target=<bundle> required"})

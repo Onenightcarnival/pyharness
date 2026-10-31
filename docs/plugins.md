@@ -124,6 +124,8 @@ class MyLoop(Service):
 
 ## 第三方 bundle
 
+安装来源有两种：本地 bundle 目录（`pyh plugin install ./my-bundle`，Web 界面可用系统对话框选目录），或 PyPI 包（`pyh plugin install pyh-example==0.1.0`，`--index-url` 指定其他索引）。两种都装进 profile 的 `site/`，先预检再重启；包必须声明 `pyharness.bundles` 入口点，否则拒绝并回滚。
+
 | 部分 | 内容 |
 |---|---|
 | `pyproject.toml` | entry point `pyharness.plugins`（代码）、`pyharness.bundles`（bundle 文件） |

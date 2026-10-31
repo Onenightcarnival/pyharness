@@ -97,6 +97,10 @@ async def test_plugin_management_routes(home):
             r = await c.post("/api/plugins/install", json={"path": str(home / "missing")})
             assert r.status_code == 422 and "does not exist" in r.json()["detail"]
             assert (await c.post("/api/restart")).status_code == 409  # unsupervised test harness
+            assert (await c.post("/api/plugins/install", json={"path": "/x", "package": "y"})).status_code == 422
+            assert (await c.post("/api/plugins/install", json={})).status_code == 422
+            r = await c.post("/api/plugins/install", json={"package": "not a requirement"})
+            assert r.status_code == 422 and "not a package requirement" in r.json()["detail"]
             r = await c.put("/api/plugins/entries/nope", json={"enabled": False})
             assert r.status_code == 422
             r = await c.put("/api/plugins/bundles/nope", json={"enabled": True})

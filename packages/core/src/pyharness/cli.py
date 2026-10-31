@@ -78,7 +78,10 @@ def cmd_plugin(args: argparse.Namespace) -> int:
         _print({"bundles": profile.installed_bundles(), "entries": rows})
         return 0
     if action == "install":
-        result = asyncio.run(manage.install_bundle(profile, args.target, preflight=preflight))
+        if manage.looks_like_path(args.target):
+            result = asyncio.run(manage.install_bundle(profile, args.target, preflight=preflight))
+        else:
+            result = asyncio.run(manage.install_package(profile, args.target, index_url=args.index_url, preflight=preflight))
     elif action == "uninstall":
         result = asyncio.run(manage.uninstall_bundle(profile, args.target, preflight=preflight))
     elif action in ("enable", "disable"):
@@ -186,7 +189,8 @@ def build_parser() -> argparse.ArgumentParser:
         "action",
         choices=["list", "install", "uninstall", "enable", "disable", "enable-bundle", "disable-bundle"],
     )
-    p.add_argument("target", nargs="?", help="path (install), bundle name or entry id")
+    p.add_argument("target", nargs="?", help="bundle directory or package requirement (install), bundle name or entry id")
+    p.add_argument("--index-url", help="package index for install (default: PyPI)")
     p.add_argument("--no-preflight", action="store_true")
     p.set_defaults(func=cmd_plugin)
 

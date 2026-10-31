@@ -25,6 +25,10 @@ Read the references below and inspect the proposed or existing plugin against th
 5. In the new generation: `harness_inspect topic=plugins name=<entry id>` shows the entry `active`; exercise the capability (call the tool, request the route through the shell or ask the user); fix defects in the same plugin. A rollback marker in the continuation message means the generation failed to boot and the previous configuration runs: read `boot-error.json` in the profile's `runtime/` directory through `harness_inspect topic=overview` paths, fix, reinstall.
 6. Finish with the entry id, what was verified, and what was not. Do not add speculative features.
 
+## Install a published plugin
+
+`plugin_manager action=install_bundle target=<package requirement>` (for example `pyh-example` or `pyh-example==0.1.0`) installs a bundle from PyPI with its dependencies, then preflights like a directory install. The package must declare a `pyharness.bundles` entry point; otherwise the install is rejected and rolled back.
+
 ## Enable, disable, configure a shipped plugin
 
 `plugin_manager action=set_plugin_enabled target=<entry id> enabled=<bool>` toggles an entry; `set_bundle_enabled` toggles a bundle. Configuration of an existing entry changes through a bundle whose patch overrides that entry (`editing-pyharness-compositions` skill): `id`, `config`, `merge: true`.

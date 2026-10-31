@@ -3,7 +3,8 @@
 Each mutation is one transaction:
 
 1. snapshot: profile files; for install and uninstall also ``site/``
-2. change: install or remove a distribution, edit ``profile.yaml`` or the profile patch
+2. change: install (a local bundle directory, or a package from the index) or remove a distribution, edit
+   ``profile.yaml`` or the profile patch
 3. preflight the resulting configuration in a new interpreter
 4. result:
 
@@ -27,6 +28,7 @@ import contextlib
 import importlib
 import json
 import os
+import re
 import shutil
 import sys
 import time
@@ -259,30 +261,91 @@ async def install_bundle(
             dist = _dist_for_path(profile, source)
             if dist is None:
                 return _rejected("install", txn, error="installed distribution not found in the profile site")
-            dist_name, dist_version = dist.name, dist.version
-            bundles = _bundles_of(dist)
-            if not bundles:
-                return _rejected(
-                    "install",
-                    txn,
-                    error=f"{dist_name} declares no `{BUNDLE_GROUP}` entry point; a bundle must say how it is mounted",
-                )
-            _prune_stale_dist_infos(profile, dist)
-            unmet = unmet_requirements(dist)
-            if unmet:
-                code, deps_output = await _run(_installer(profile.site) + unmet)
-                if code != 0:
-                    return _rejected("dependencies", txn, error=deps_output[-4000:], unmet=unmet)
-            for bundle in bundles:
-                profile.set_bundle_enabled(bundle, True)
-            outcome = {"dist": dist_name, "version": dist_version, "bundles": bundles, "dependencies_installed": unmet}
-            report, failures = await _preflight(profile, baseline, preflight)
-            if failures:
-                return _rejected("preflight", txn, errors=failures, preflight=_compact(report or {}), **outcome)
-            return _saved(txn, report, **outcome)
+            return await _complete_install(profile, txn, dist, baseline=baseline, preflight=preflight, source=str(source))
         except BaseException:
             txn.rollback()
             raise
+
+
+REQUIREMENT_NAME = re.compile(r"^\s*([A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)")
+
+
+def requirement_name(requirement: str) -> str | None:
+    """Project name of a PEP 508 requirement (``pyh-todo==0.1.0`` → ``pyh-todo``); ``None`` when it is not one."""
+    match = REQUIREMENT_NAME.match(requirement)
+    if not match or any(ch in requirement for ch in " /\\"):
+        return None
+    return match.group(1)
+
+
+def looks_like_path(target: str) -> bool:
+    """Whether an install target names a directory rather than a package: a separator, ``~``, ``.`` or an existing path."""
+    return target.startswith(("/", ".", "~")) or "/" in target or "\\" in target or Path(target).expanduser().exists()
+
+
+async def install_package(
+    profile: Profile,
+    requirement: str,
+    *,
+    index_url: str | None = None,
+    baseline: list[dict[str, Any]] | None = None,
+    preflight: bool = True,
+) -> dict[str, Any]:
+    """Install a bundle from the package index (PyPI by default) into the profile site, dependencies included."""
+    name = requirement_name(requirement)
+    if name is None:
+        return {
+            "application": "rejected",
+            "stage": "install",
+            "error": f"{requirement!r} is not a package requirement (name, optionally with a version)",
+        }
+    async with _locked(profile):
+        profile.activate_site()
+        txn = _Transaction(profile, site=True)
+        try:
+            argv = _installer(profile.site) + ([f"--index-url={index_url}"] if index_url else []) + [requirement]
+            code, out = await _run(argv)
+            if code != 0:
+                return _rejected("install", txn, error=out[-4000:])
+            dist = _site_dists(profile).get(_norm(name))
+            if dist is None:
+                return _rejected("install", txn, error=f"{name} was not installed into the profile site")
+            return await _complete_install(profile, txn, dist, baseline=baseline, preflight=preflight, source=f"package:{requirement}")
+        except BaseException:
+            txn.rollback()
+            raise
+
+
+async def _complete_install(
+    profile: Profile,
+    txn: _Transaction,
+    dist: metadata.Distribution,
+    *,
+    baseline: list[dict[str, Any]] | None,
+    preflight: bool,
+    source: str,
+) -> dict[str, Any]:
+    dist_name, dist_version = dist.name, dist.version
+    bundles = _bundles_of(dist)
+    if not bundles:
+        return _rejected(
+            "install",
+            txn,
+            error=f"{dist_name} declares no `{BUNDLE_GROUP}` entry point; a bundle must say how it is mounted",
+        )
+    _prune_stale_dist_infos(profile, dist)
+    unmet = unmet_requirements(dist)
+    if unmet:
+        code, deps_output = await _run(_installer(profile.site) + unmet)
+        if code != 0:
+            return _rejected("dependencies", txn, error=deps_output[-4000:], unmet=unmet)
+    for bundle in bundles:
+        profile.set_bundle_enabled(bundle, True)
+    outcome = {"dist": dist_name, "version": dist_version, "bundles": bundles, "dependencies_installed": unmet, "source": source}
+    report, failures = await _preflight(profile, baseline, preflight)
+    if failures:
+        return _rejected("preflight", txn, errors=failures, preflight=_compact(report or {}), **outcome)
+    return _saved(txn, report, **outcome)
 
 
 async def uninstall_bundle(

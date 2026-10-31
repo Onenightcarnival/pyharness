@@ -4,7 +4,7 @@
 |--------|------------------------------|-------------------------------|---------------------------------------------|
 | GET    | ``/health``                  |                               | generation, restart state, model, workspace |
 | GET    | ``/plugins``                 |                               | loader entries, installed bundles           |
-| POST   | ``/plugins/install``         | ``{"path"}``                  | install a bundle directory; restart scheduled |
+| POST   | ``/plugins/install``         | ``{"path"} | {"package", "index_url"?}`` | install a bundle directory or a PyPI package; restart scheduled |
 | PUT    | ``/plugins/bundles/{name}``  | ``{"enabled"}``               | enable or disable a bundle                  |
 | DELETE | ``/plugins/bundles/{name}``  |                               | uninstall a bundle from the profile site    |
 | PUT    | ``/plugins/entries/{id}``    | ``{"enabled"}``               | enable or disable an entry                  |
@@ -120,7 +120,15 @@ MAX_IMAGE_BYTES = 8 * 1024 * 1024
 
 
 class InstallBody(BaseModel):
-    path: str = Field(min_length=1, description="Directory of a bundle (pyproject.toml with a pyharness.bundles entry point).")
+    path: str | None = Field(None, description="Directory of a bundle (pyproject.toml with a pyharness.bundles entry point).")
+    package: str | None = Field(None, description="Package requirement to install from the index, e.g. pyh-todo or pyh-todo==0.1.0.")
+    index_url: str | None = Field(None, description="Package index for `package`; PyPI when absent.")
+
+    @model_validator(mode="after")
+    def one_source(self) -> InstallBody:
+        if bool(self.path) == bool(self.package):
+            raise ValueError("give exactly one of path or package")
+        return self
 
 
 class EnabledBody(BaseModel):
@@ -247,8 +255,11 @@ def build_router(ctx: Any) -> APIRouter:
     async def install_plugin(body: InstallBody) -> dict[str, Any]:
         """Install a bundle directory into the profile site; preflight, then restart when supervised."""
         profile = plugin_profile()
-        result = await manage.install_bundle(profile, body.path, baseline=ctx.loader.snapshot())
-        return applied(result, f"install bundle from {body.path}")
+        if body.path:
+            result = await manage.install_bundle(profile, body.path, baseline=ctx.loader.snapshot())
+            return applied(result, f"install bundle from {body.path}")
+        result = await manage.install_package(profile, body.package or "", index_url=body.index_url, baseline=ctx.loader.snapshot())
+        return applied(result, f"install package {body.package}")
 
     @router.delete("/plugins/bundles/{name}")
     async def uninstall_plugin(name: str) -> dict[str, Any]:
