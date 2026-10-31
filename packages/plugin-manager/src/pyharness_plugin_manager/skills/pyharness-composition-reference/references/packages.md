@@ -24,6 +24,7 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 | `pyharness-llm` | service | llm |  | yes | Chat-model routes; resolves ``route:model`` specs. |
 | `pyharness-mcp` | service | mcp | tools | yes | MCP servers as tools. |
 | `pyharness-memory` | service | memory | tools, prompt, http | yes | Career memory: store, tools, prompt section, routes and the Memory page module. |
+| `pyharness-otel` | service | otel | http, webui | yes | Turn traces to an OTLP backend; the Observability settings page. |
 | `pyharness-plugin-manager` | function |  | tools, prompt, agentLoop | yes | ``plugin_manager`` tool, the plugin-authoring skills, and the short prompt section. |
 | `pyharness-prompt` | service | prompt |  | no | Ordered system-prompt sections. |
 | `pyharness-rdb` | service | rdb | tools, prompt, http | yes | Database workbench: profiles, connections, tools, routes and the Database page module. |
@@ -41,5 +42,5 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 |---|---|---|---|
 | `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `mcp`, `ask-user`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `compaction`, `workspace-changes`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui`, `terminal` |
 | `creator` | Creator | New sessions start in the Creator preset (plugin-authoring skills, plugin manager and inspection tools). | `agent-loop` |
-| `toolkit` | Toolkit | Built-in toolkit; sidebar entries can be hidden in Settings → General. | `memory`, `rdb`, `s3`, `config-center` |
+| `toolkit` | Toolkit | Built-in toolkit; sidebar entries can be hidden in Settings → General. | `memory`, `rdb`, `s3`, `config-center`, `otel` |
 | `web` | Web | web_search (DeepSeek native search; needs DEEPSEEK_API_KEY) and web_fetch tools for the agent. Preset; switch it off on the Plugins page. | `web-tools` |

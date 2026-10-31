@@ -18,3 +18,7 @@ patch:
   - id: config-center
     name: pyharness-config-center
     after: s3
+  # OpenTelemetry export of turns (Settings → Observability): ctx.otel.
+  - id: otel
+    name: pyharness-otel
+    after: config-center

@@ -42,6 +42,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | MCP 页 | `pyharness-config-center` 的浏览器模块，左侧栏「MCP」（替代原来设置里的 MCP 页签）：页头「导入 JSON」（Claude Desktop / Cursor 风格 `mcpServers`）与刷新；「连接设置」折叠区设启动等待秒数；左栏服务器列表（状态点：绿已连接 / 红失败、名称、命令或 URL、「已停用」标签），「＋ 添加」；右侧编辑卡：名称、连接方式（streamable HTTP / SSE / stdio）、stdio 的命令 / 参数（每行一个）/ 环境变量键值对 / 工作目录，HTTP 的地址 / 请求头键值对，调用前批准，启用开关；底部删除 / 测试连接（真实握手并列出工具名）/ 保存（写入 profile 补丁，重启后列表刷新） |
 | 技能页 | 左侧栏「技能」：页头刷新、打开目录、安装 ZIP（冲突时提示覆盖 / 跳过 / 取消）；左栏技能列表（版本、启停状态、描述），右侧详情：启用开关、打开目录、删除、描述、「技能信息」（路径与 frontmatter）、文件树与预览（256 KB 截断） |
 | 环境依赖 | 设置 →「环境依赖」（`settings.sections` 槽位）：bun / bunx 卡片（状态标签、已安装 / 提供版本、平台、可执行文件、数据目录、下载进度条、安装 / 修复 / 检测），安装中每 1.5 秒轮询 |
+| 可观测 | 设置 →「可观测」（`pyharness-otel`）：状态标签（上报中 / 未上报）、Endpoint、Public Key、Secret Key（已保存时留空保持）、启用上报、采集正文、高级设置（gzip、正文截断上限、单批 span 数）；「发送测试」「检查上报」「保存」；下方显示 trace 端点与本次运行的批次 / span 计数与最近一次结果 |
 | 斜杠命令 | 输入框里键入 `/` 弹出命令菜单（↑↓ 选择，Enter / Tab 执行，Esc 关闭）：`/compact`、`/new`、`/model`、`/mode`、`/files`、`/terminal`、`/jobs`、`/clear`、`/settings`、`/help`；命令不会变成模型消息。插件的浏览器模块用 `ctx.commands.register({ name, description, icon, order?, when?, run(args) })` 添加命令 |
 | @ 引用 | 键入 `@` 弹出工作区文件菜单（`GET /workspaces/search`，跳过隐藏目录与依赖目录；子串优先，其次子序列），选中插入 `@path`（含空格时 `@"path"`，目录以 `/` 结尾可继续下钻）。发送时 host 把能解析的引用展开成 `<attached-file path=…>`（文本，超长截断）或 `<attached-directory path=…>`（目录列表）附在消息后；气泡只显示原文与引用标签，点标签在右侧栏预览 |
 | agent 提问 | agent 调用 `ask_user_question` 时轮次暂停（过程头显示「等待回答」），输入框上方出现问题卡片：标题、问题、单选 / 多选选项、自由输入；「提交回答」或「全部跳过」后续跑，工具收到 `{"answers": [...]}` |
