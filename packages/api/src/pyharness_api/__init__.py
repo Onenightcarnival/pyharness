@@ -705,10 +705,11 @@ def build_router(ctx: Any) -> APIRouter:
                     422, f"model {spec} does not accept image input; choose a model with image input or edit its input types in Settings"
                 )
         content = body.content
+        refs: list[dict[str, Any]] = []
         workspaces = ctx.get("workspace", None)
         if workspaces is not None and hasattr(workspaces, "open") and "@" in content:
             try:
-                content, _refs = references.expand(content, workspaces.open(session.get("workspace")))
+                content, refs = references.expand(content, workspaces.open(session.get("workspace")))
             except Exception:  # noqa: BLE001 — a reference that cannot be read never blocks the message
                 ctx.logger.exception("expanding @references failed")
         try:
@@ -717,6 +718,8 @@ def build_router(ctx: Any) -> APIRouter:
             raise HTTPException(409, str(exc)) from None
         except RestartPending as exc:
             raise HTTPException(503, str(exc), headers={"Retry-After": "2"}) from None
+        if refs:  # tells the page which @references travelled with the message
+            await handle.publish({"type": "references", "refs": refs})
         return _sse(handle.subscribe())
 
     @router.post("/sessions/{session_id}/approvals")

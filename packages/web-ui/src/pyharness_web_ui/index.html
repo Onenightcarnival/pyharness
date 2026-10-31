@@ -1594,13 +1594,16 @@ function addUser(text, images) {
   }
   const { shown, refs } = splitAttachments(text);
   const b = document.createElement('div'); b.className = 'bubble'; b.textContent = shown; row.appendChild(b);
-  if (refs.length) {
-    const chips = document.createElement('div'); chips.className = 'refChips';
-    chips.innerHTML = refs.map((r) => `<button type="button" class="refChip" data-ref="${esc(r.path)}" data-kind="${r.kind}">${icon(r.kind === 'directory' ? 'folder' : 'file')}<span>${esc(r.path.replace(/^\//, ''))}</span></button>`).join('');
-    chips.onclick = (e) => { const c = e.target.closest('[data-ref]'); if (!c) return; if (c.dataset.kind === 'directory') rbOpenTab('files'); else rbOpenFile(c.dataset.ref); };
-    row.appendChild(chips);
-  }
+  attachRefs(row, refs);
   log().appendChild(row); return row;
+}
+function attachRefs(row, refs) {
+  if (!row || !refs || !refs.length) return;
+  row.querySelector('.refChips')?.remove();
+  const chips = document.createElement('div'); chips.className = 'refChips';
+  chips.innerHTML = refs.map((r) => `<button type="button" class="refChip" data-ref="${esc(r.path)}" data-kind="${r.kind}">${icon(r.kind === 'directory' ? 'folder' : 'file')}<span>${esc(r.path.replace(/^\//, ''))}</span></button>`).join('');
+  chips.onclick = (e) => { const c = e.target.closest('[data-ref]'); if (!c) return; if (c.dataset.kind === 'directory') rbOpenTab('files'); else rbOpenFile(c.dataset.ref); };
+  row.appendChild(chips);
 }
 function addImages(el, urls) {
   if (!urls || !urls.length) return;
@@ -1785,6 +1788,7 @@ async function consume(res) {
             finishTool(findTool(ev.id) || addTool({ id: ev.id, name: ev.name, args: {} }), ev);
             showRunning(true); scrollToEnd(); break;
           case 'compact': ai = null; reasoning = null; addCompact(ev, ev.summary); showRunning(true); scrollToEnd(); break;
+          case 'references': { const rows = log().querySelectorAll('.userRow'); attachRefs(rows[rows.length - 1], ev.refs); break; }
           case 'interrupt': renderApproval(ev.interrupts); break;
           case 'error': addLine(ev.message, 'error'); break;
           case 'done':

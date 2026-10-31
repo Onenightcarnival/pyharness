@@ -51,6 +51,8 @@ async def test_message_route_expands_references(home, tmp_path):
             sid = (await c.post("/api/sessions", json={})).json()["id"]
             events = sse_events((await c.post(f"/api/sessions/{sid}/messages", json={"content": "summarize @notes.md"})).text)
             assert events[-1]["outcome"] == "completed"
+            refs_event = next(e for e in events if e["type"] == "references")
+            assert refs_event["refs"] == [{"token": "@notes.md", "path": "/notes.md", "kind": "file", "chars": 18, "truncated": False}]
             human = next(m for call in scripted.CALLS if "messages" in call for m in call["messages"] if m[0] == "human")
             assert human[1].startswith('summarize @notes.md\n\n<attached-file path="/notes.md">\nremember the milk')
             turn = events[-1]["extras"]["turn"]
