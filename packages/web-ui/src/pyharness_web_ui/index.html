@@ -845,6 +845,15 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
     <symbol id="i-eye" viewBox="0 0 16 16"><path d="M1.75 8S4 3.75 8 3.75 14.25 8 14.25 8 12 12.25 8 12.25 1.75 8 1.75 8z"/><circle cx="8" cy="8" r="2"/></symbol>
     <symbol id="i-bulb" viewBox="0 0 16 16"><path d="M5.75 12.25h4.5M6.5 14.25h3M8 1.75a4.25 4.25 0 0 0-2.5 7.7c.5.36.75.9.75 1.5v.3h3.5v-.3c0-.6.25-1.14.75-1.5A4.25 4.25 0 0 0 8 1.75z"/></symbol>
     <symbol id="i-x" viewBox="0 0 16 16"><path d="m4.5 4.5 7 7M11.5 4.5l-7 7"/></symbol>
+    <symbol id="i-cpu" viewBox="0 0 16 16"><path d="M5.25 1.75v1.5M8 1.75v1.5M10.75 1.75v1.5M5.25 12.75v1.5M8 12.75v1.5M10.75 12.75v1.5M1.75 5.25h1.5M1.75 8h1.5M1.75 10.75h1.5M12.75 5.25h1.5M12.75 8h1.5M12.75 10.75h1.5"/><rect x="3.25" y="3.25" width="9.5" height="9.5" rx="1.5"/><rect x="6" y="6" width="4" height="4" rx=".75"/></symbol>
+    <symbol id="i-database" viewBox="0 0 16 16"><ellipse cx="8" cy="3.75" rx="5.25" ry="2"/><path d="M2.75 3.75v8.5c0 1.1 2.35 2 5.25 2s5.25-.9 5.25-2v-8.5M2.75 8c0 1.1 2.35 2 5.25 2s5.25-.9 5.25-2"/></symbol>
+    <symbol id="i-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M8 7.25v4M8 5v.1"/></symbol>
+    <symbol id="i-hash" viewBox="0 0 16 16"><path d="M6.25 2.25 4.75 13.75M11.25 2.25 9.75 13.75M2.75 6h11M2.25 10h11"/></symbol>
+    <symbol id="i-code" viewBox="0 0 16 16"><path d="m5 4.5-3.5 3.5L5 11.5M11 4.5l3.5 3.5-3.5 3.5M9.25 2.75l-2.5 10.5"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M1.75 8h12.5M8 1.75c1.9 2 2.85 4.1 2.85 6.25S9.9 12.25 8 14.25M8 1.75C6.1 3.75 5.15 5.85 5.15 8s.95 4.25 2.85 6.25"/></symbol>
+    <symbol id="i-message" viewBox="0 0 16 16"><path d="M2.25 3.75c0-.83.67-1.5 1.5-1.5h8.5c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5H6.5l-3.25 2.5v-2.5c-.55 0-1-.67-1-1.5z"/></symbol>
+    <symbol id="i-bot" viewBox="0 0 16 16"><rect x="2.75" y="5.25" width="10.5" height="8" rx="2"/><path d="M8 2.25v3M6 1.75h4M5.75 9h.5M9.75 9h.5M6 11.25h4"/></symbol>
+    <symbol id="i-user" viewBox="0 0 16 16"><circle cx="8" cy="5.25" r="2.75"/><path d="M2.75 14.25c.4-2.9 2.6-4.5 5.25-4.5s4.85 1.6 5.25 4.5"/></symbol>
     <symbol id="i-compass" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M10.6 5.4 9.2 9.2 5.4 10.6l1.4-3.8z"/></symbol>
     <symbol id="i-maximize" viewBox="0 0 16 16"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></symbol>
     <symbol id="i-minimize" viewBox="0 0 16 16"><path d="M6 2.5V6H2.5M10 2.5V6h3.5M2.5 10H6v3.5M13.5 10H10v3.5"/></symbol>
@@ -954,7 +963,7 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
     <div class="settingsBody">
       <div class="settingsNav" id="settingsNav" role="tablist">
         <button type="button" data-tab="general"><svg class="ico"><use href="#i-gear"/></svg><span data-i18n="tabGeneral"></span></button>
-        <button type="button" data-tab="models"><svg class="ico"><use href="#i-bulb"/></svg><span data-i18n="tabModels"></span></button>
+        <button type="button" data-tab="models"><svg class="ico"><use href="#i-cpu"/></svg><span data-i18n="tabModels"></span></button>
         <button type="button" data-tab="presets"><svg class="ico"><use href="#i-mode"/></svg><span data-i18n="tabPresets"></span></button>
         <button type="button" data-tab="plugins"><svg class="ico"><use href="#i-plug"/></svg><span data-i18n="tabPlugins"></span></button>
       </div>
@@ -1317,7 +1326,7 @@ function renderSessions() {
   }
   if (ungrouped.length) {
     const isFolded = folded.has('__ungrouped');
-    html.push(`<div class="projectRow" data-workspace="__ungrouped" ${isFolded ? 'data-folded' : ''} role="button" tabindex="0"><span class="folder">${icon('box')}</span>${icon('chev-down', 'ico fold')}<span class="name">${esc(T.ungrouped)}</span></div>`);
+    html.push(`<div class="projectRow" data-workspace="__ungrouped" ${isFolded ? 'data-folded' : ''} role="button" tabindex="0"><span class="folder">${icon('list')}</span>${icon('chev-down', 'ico fold')}<span class="name">${esc(T.ungrouped)}</span></div>`);
     if (!isFolded) html.push(ungrouped.map(sessionRowHtml).join(''));
   }
   box.innerHTML = html.join('');
@@ -1877,14 +1886,18 @@ $('composer').addEventListener('submit', async (e) => {
 /* ---------- plugins page ---------- */
 const STATE_TAG = { active: ['success', 'running'], pending: ['warning', 'pending'], disabled: ['quiet', 'disabled'], failed: ['danger', 'failed'], stopped: ['quiet', 'stopped'] };
 function entryGlyph(e) {
-  const n = e.name || '';
-  if (/llm/.test(n)) return 'bulb';
-  if (/tools|inspect/.test(n)) return 'tool';
-  if (/checkpoint|store/.test(n)) return 'box';
+  const n = `${e.name || ''} ${e.id || ''}`;
+  if (/llm/.test(n)) return 'cpu';
+  if (/inspect/.test(n)) return 'eye';
+  if (/tools/.test(n)) return 'tool';
+  if (/checkpoint|store|postgres|sqlite/.test(n)) return 'database';
+  if (/workspace-changes/.test(n)) return 'branch';
   if (/workspace/.test(n)) return 'folder';
-  if (/http|api|web-ui/.test(n)) return 'terminal';
+  if (/web-ui/.test(n)) return 'code';
+  if (/http|api/.test(n)) return 'globe';
+  if (/prompt|context/.test(n)) return 'message';
   if (/plugin-manager/.test(n)) return 'plug';
-  if (/agent/.test(n)) return 'branch';
+  if (/agent/.test(n)) return 'bot';
   return 'plug';
 }
 async function loadPluginCount() {
@@ -1910,7 +1923,7 @@ async function renderPluginsPanel(el) {
   if (!d) return;
   const bundleCards = d.bundles.map((b) => `<div class="pcard"><span class="pcardIcon">${icon('box')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(b.bundle)}</span><span class="tag" data-tone="${b.enabled ? 'success' : 'outline'}">${esc(b.enabled ? T.enabled : T.off)}</span></span><span class="pcardDesc"><code>${esc(b.dist || '')}</code> ${esc(b.version || '')} · ${esc(b.installed === 'profile' ? T.fromProfile : T.fromEnv)}</span></span></div>`).join('');
   const entries = entryCards(d);
-  const clients = (window.__PYH_BOOT__?.plugins || []).map((p) => { const st = moduleStatus[p.id]; return `<div class="pcard"><span class="pcardIcon">${icon('terminal')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(p.id)}</span><span class="tag" data-tone="${st?.ok ? 'success' : st ? 'danger' : 'outline'}">${esc(st?.ok ? T.running : st ? T.failed : T.pending)}</span></span><span class="pcardDesc"><code>${esc(p.url.split('?')[0])}</code>${p.calls?.length ? ' · ' + esc(p.calls.join(', ')) : ''}${st && !st.ok ? ' · ' + esc(st.error) : ''}</span></span></div>`; }).join('');
+  const clients = (window.__PYH_BOOT__?.plugins || []).map((p) => { const st = moduleStatus[p.id]; return `<div class="pcard"><span class="pcardIcon">${icon('code')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(p.id)}</span><span class="tag" data-tone="${st?.ok ? 'success' : st ? 'danger' : 'outline'}">${esc(st?.ok ? T.running : st ? T.failed : T.pending)}</span></span><span class="pcardDesc"><code>${esc(p.url.split('?')[0])}</code>${p.calls?.length ? ' · ' + esc(p.calls.join(', ')) : ''}${st && !st.ok ? ' · ' + esc(st.error) : ''}</span></span></div>`; }).join('');
   el.innerHTML = `<div class="page">
     <div class="pageHead"><div><h1 class="pageTitle">${esc(T.pluginsTitle)}</h1><p class="pageIntro">${esc(T.pluginsIntro)}</p></div><div class="headTools"><button type="button" class="iconButton" id="pluginsRefresh" title="${esc(T.refresh)}">${icon('refresh')}</button><button type="button" class="btn primary sm" id="pluginsAdd">${icon('plus')}<span>${esc(T.addPlugin)}</span></button></div></div>
     <div class="group"><div class="groupHead"><h2 class="groupTitle">${esc(T.bundles)}</h2><span class="groupMeta">${d.bundles.length}</span></div><div class="cards">${bundleCards}</div></div>
@@ -2164,7 +2177,7 @@ function collapsePending() { log().querySelectorAll('.turn[data-pending-collapse
 function turnUsageRow(st) {
   const wrap = document.createElement('div');
   const hit = st.input_tokens ? Math.round((st.cache_read_tokens / st.input_tokens) * 100) : 0;
-  wrap.innerHTML = `<button type="button" class="turnUsage" title="${esc(T.tokenUsage)}">${icon('list')}<span>↑ ${fmtNum(st.input_tokens)} ↓ ${fmtNum(st.output_tokens)}${st.cache_read_tokens ? ` · ${esc(T.cacheHit(hit))}` : ''} · ${esc(fmtDur(st.duration_ms))}</span></button><div class="turnUsageDetail">${[[T.uncachedInput, fmtNum(st.input_tokens - st.cache_read_tokens)], [T.cacheRead, fmtNum(st.cache_read_tokens)], [T.cacheWrite, fmtNum(st.cache_write_tokens)], [T.outputTokens, fmtNum(st.output_tokens)], [T.reasoningTokens, fmtNum(st.reasoning_tokens)], [T.llmTime, fmtDur(st.llm_ms)], [T.toolTime, fmtDur(st.tool_ms)], [T.ttft, st.ttft_steps ? fmtDur(st.ttft_ms / st.ttft_steps) : '—'], [T.tpsLabel, st.decode_ms ? T.tps(Math.round((st.decode_tokens / st.decode_ms) * 1000)) : '—']].map(([k, v]) => `<span>${esc(k)}</span><span>${esc(v)}</span>`).join('')}</div>`;
+  wrap.innerHTML = `<button type="button" class="turnUsage" title="${esc(T.tokenUsage)}">${icon('hash')}<span>↑ ${fmtNum(st.input_tokens)} ↓ ${fmtNum(st.output_tokens)}${st.cache_read_tokens ? ` · ${esc(T.cacheHit(hit))}` : ''} · ${esc(fmtDur(st.duration_ms))}</span></button><div class="turnUsageDetail">${[[T.uncachedInput, fmtNum(st.input_tokens - st.cache_read_tokens)], [T.cacheRead, fmtNum(st.cache_read_tokens)], [T.cacheWrite, fmtNum(st.cache_write_tokens)], [T.outputTokens, fmtNum(st.output_tokens)], [T.reasoningTokens, fmtNum(st.reasoning_tokens)], [T.llmTime, fmtDur(st.llm_ms)], [T.toolTime, fmtDur(st.tool_ms)], [T.ttft, st.ttft_steps ? fmtDur(st.ttft_ms / st.ttft_steps) : '—'], [T.tpsLabel, st.decode_ms ? T.tps(Math.round((st.decode_tokens / st.decode_ms) * 1000)) : '—']].map(([k, v]) => `<span>${esc(k)}</span><span>${esc(v)}</span>`).join('')}</div>`;
   wrap.querySelector('.turnUsage').onclick = () => wrap.querySelector('.turnUsageDetail').toggleAttribute('data-open');
   return wrap;
 }
@@ -2194,7 +2207,7 @@ function renderStats() {
   const a = sessionStats(); row.hidden = !a.turns; if (!a.turns) return;
   const total = a.input_tokens + a.output_tokens; const win = s.context_window; const used = a.last_input;
   if (uiPrefs.perfUsage === 'compact') { row.innerHTML = `<span class="statChip" data-static>${[a.tps != null ? T.tps(fmtNum(a.tps)) : '', a.cacheHit != null ? T.cacheHit(a.cacheHit) : ''].filter(Boolean).map(esc).join(' · ') || esc(T.turnsSteps(a.turns, a.steps))}</span>`; return; }
-  row.innerHTML = `<button type="button" class="statChip" data-stat="activity">${icon('zap')}<span>${esc(T.turnsSteps(a.turns, a.steps))}${a.tps != null ? ' · ' + esc(T.tps(fmtNum(a.tps))) : ''}</span></button><button type="button" class="statChip" data-stat="usage">${icon('list')}<span>${esc(T.tokensTotal(fmtNum(total)))}${a.cacheHit != null ? ' · ' + esc(T.cacheHit(a.cacheHit)) : ''}</span></button>${win && used ? `<button type="button" class="statChip" data-stat="context" title="${esc(T.contextUsage)}">${ringSvg(used / win)}<span>${Math.round((used / win) * 100)}%</span></button>` : ''}`;
+  row.innerHTML = `<button type="button" class="statChip" data-stat="activity">${icon('zap')}<span>${esc(T.turnsSteps(a.turns, a.steps))}${a.tps != null ? ' · ' + esc(T.tps(fmtNum(a.tps))) : ''}</span></button><button type="button" class="statChip" data-stat="usage">${icon('hash')}<span>${esc(T.tokensTotal(fmtNum(total)))}${a.cacheHit != null ? ' · ' + esc(T.cacheHit(a.cacheHit)) : ''}</span></button>${win && used ? `<button type="button" class="statChip" data-stat="context" title="${esc(T.contextUsage)}">${ringSvg(used / win)}<span>${Math.round((used / win) * 100)}%</span></button>` : ''}`;
   row.onclick = (e) => {
     const b = e.target.closest('[data-stat]'); if (!b) return;
     if (b.dataset.stat === 'activity') statPop(b, T.sessionStats, [[T.turnsSteps(a.turns, a.steps), fmtDur(a.duration_ms)], [T.llmTime, fmtDur(a.llm_ms)], [T.toolTime, fmtDur(a.tool_ms)], [T.ttftAvg, a.ttft_steps ? fmtDur(a.ttft_ms / a.ttft_steps) : '—'], [T.tpsLabel, a.tps != null ? T.tps(fmtNum(a.tps)) : '—']]);
@@ -2217,8 +2230,8 @@ function renderTrajectory() {
   const rowOf = (t, r, k) => {
     const sel = trajUi.selected && trajUi.selected.run === t.run_id && trajUi.selected.k === k;
     let ico = 'box', kind = '', desc = '', dur = '', tok = '', status = '';
-    if (r.t === 'user') { ico = 'pencil'; kind = T.recUser; desc = r.preview || T.chars(r.chars); }
-    else if (r.t === 'step') { ico = 'zap'; kind = T.recStep; desc = [r.tool_calls ? T.calls(r.tool_calls) : '', r.chars ? T.chars(r.chars) : ''].filter(Boolean).join(' · ') || '—'; dur = `${r.ttft_ms != null ? `${T.ttft} ${fmtDur(r.ttft_ms)} · ` : ''}${fmtDur(r.dur_ms)}`; tok = r.input_tokens != null ? `↑ ${fmtNum(r.input_tokens)} ↓ ${fmtNum(r.output_tokens)}` : ''; }
+    if (r.t === 'user') { ico = 'user'; kind = T.recUser; desc = r.preview || T.chars(r.chars); }
+    else if (r.t === 'step') { ico = 'cpu'; kind = T.recStep; desc = [r.tool_calls ? T.calls(r.tool_calls) : '', r.chars ? T.chars(r.chars) : ''].filter(Boolean).join(' · ') || '—'; dur = `${r.ttft_ms != null ? `${T.ttft} ${fmtDur(r.ttft_ms)} · ` : ''}${fmtDur(r.dur_ms)}`; tok = r.input_tokens != null ? `↑ ${fmtNum(r.input_tokens)} ↓ ${fmtNum(r.output_tokens)}` : ''; }
     else if (r.t === 'tool') { ico = toolGlyph(r.name || ''); kind = T.recTool; desc = r.name || ''; dur = r.dur_ms != null ? fmtDur(r.dur_ms) : ''; status = r.status || ''; tok = status && status !== 'success' ? status : ''; }
     else { ico = r.outcome === 'completed' ? 'check' : 'x-circle'; kind = T.recEnd; desc = T.outcome[r.outcome] || r.outcome; }
     if (q && !`${kind} ${desc} ${r.name || ''}`.toLowerCase().includes(q)) return '';
@@ -2272,7 +2285,7 @@ function addChangesCard(c) {
   const el = document.createElement('div'); el.className = 'turnTail'; el.dataset.run = c.run_id;
   const one = c.files.length === 1 && c.total === 1; const first = c.files[0];
   const rows = c.files.map((f, i) => `<button type="button" class="changesRow" data-open="${i}" ${i >= 4 ? 'hidden' : ''} title="${esc(f.display)}">${fileIcon(f.display.split('/').pop())}<span class="path">${esc(f.display)}</span>${statHtml(f)}</button>`).join('');
-  el.innerHTML = `<div class="changesCard"><button type="button" class="changesHead" data-open="0" title="${esc(one ? first.display : '')}"><span class="iconBox">${one ? fileIcon(first.display.split('/').pop()) : icon('terminal')}</span><span class="changesTitle">${esc(one ? T.editedOne(first.display.split('/').pop()) : T.editedMany(c.total))}</span>${one ? statHtml(first) : statHtml(c)}<span class="hint">${esc(T.previewInSidebar)}</span></button>${one ? '' : `<div class="changesRows">${rows}</div>${c.files.length > 4 ? `<button type="button" class="changesMore" data-more>${esc(T.showAll(c.files.length))}</button>` : ''}`}</div>`;
+  el.innerHTML = `<div class="changesCard"><button type="button" class="changesHead" data-open="0" title="${esc(one ? first.display : '')}"><span class="iconBox">${one ? fileIcon(first.display.split('/').pop()) : icon('branch')}</span><span class="changesTitle">${esc(one ? T.editedOne(first.display.split('/').pop()) : T.editedMany(c.total))}</span>${one ? statHtml(first) : statHtml(c)}<span class="hint">${esc(T.previewInSidebar)}</span></button>${one ? '' : `<div class="changesRows">${rows}</div>${c.files.length > 4 ? `<button type="button" class="changesMore" data-more>${esc(T.showAll(c.files.length))}</button>` : ''}`}</div>`;
   el.onclick = (e) => {
     const more = e.target.closest('[data-more]');
     if (more) { const expanded = more.dataset.open === '1'; el.querySelectorAll('.changesRow').forEach((r, i) => { r.hidden = expanded && i >= 4; }); more.dataset.open = expanded ? '0' : '1'; more.textContent = expanded ? T.showAll(c.files.length) : T.collapseRows; return; }
@@ -2554,7 +2567,7 @@ function infoTab(el, props) {
 slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'guide', label: T.start, icon: 'compass' }, guideTab);
 slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'files', label: T.tabFiles, icon: 'folder', iconClass: 'ft-folder', guide: { title: T.guideFiles, description: T.guideFilesDesc, order: 10 } }, filesTab);
 slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'preview', label: T.tabFiles, icon: 'file', contentId: (p) => p.path, title: (p) => String(p.path || '').split('/').pop() || '/' }, previewTab);
-slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'info', label: T.tabInfo, icon: 'eye', guide: { title: T.guideInfo, description: T.guideInfoDesc, order: 20 } }, infoTab);
+slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'info', label: T.tabInfo, icon: 'info', guide: { title: T.guideInfo, description: T.guideInfoDesc, order: 20 } }, infoTab);
 slotRegister('web-ui', { slot: 'rightbar.tabs', key: 'changes', label: T.changesTab, icon: 'branch', contentId: (p) => p.run, title: (p) => T.turnChanges((state.session?.changes || []).find((c) => c.run_id === p.run)?.seq ?? '?') }, changesTab);
 
 /* ---------- settings: models ---------- */
@@ -2628,7 +2641,7 @@ function routeRow(r) {
   const isDefault = (models.data.default || '').split(':')[0] === r.id;
   const meta = [r.effective_base_url || '', T.modelsCount(r.models.length)].filter(Boolean).map(esc).join(' · ');
   return `<button type="button" class="prow" data-route="${esc(r.id)}" aria-expanded="${open}">
-    <span class="pcardIcon">${icon('bulb')}</span>
+    <span class="pcardIcon">${icon('database')}</span>
     <span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(r.title)}</span><span class="tag" data-tone="outline">${esc(r.type)}</span>${r.id !== r.type ? `<span class="tag" data-tone="quiet"><code>${esc(r.id)}</code></span>` : ''}${isDefault ? `<span class="tag" data-tone="info">${esc(T.defaultTag)}</span>` : ''}${!r.type_info.installed ? `<span class="tag" data-tone="danger">${esc(T.notInstalledShort)}</span>` : ''}</span>
     <span class="pcardDesc"><span class="kdot" data-state="${keyState(r)}"></span>${meta}</span></span>
     ${icon(open ? 'chev-down' : 'chev-right', 'ico chevron')}
@@ -2642,7 +2655,7 @@ function renderModels() {
   view.innerHTML = `
     <h3 class="sectionTitle">${esc(T.modelsTitle)}</h3><p class="sectionIntro">${esc(T.settingsIntro)}</p>
     <div class="group">
-      <div class="statusCard"><span class="pcardIcon">${icon('bulb')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(T.defaultModel)}</span></span><span class="pcardDesc">${esc(T.defaultModelHint)}</span></span><div class="selectWrap"><select class="select" data-field="default" ${d.editable ? '' : 'disabled'}>${opts.join('')}</select>${icon('chev-down', 'ico chev')}</div></div>
+      <div class="statusCard"><span class="pcardIcon">${icon('cpu')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(T.defaultModel)}</span></span><span class="pcardDesc">${esc(T.defaultModelHint)}</span></span><div class="selectWrap"><select class="select" data-field="default" ${d.editable ? '' : 'disabled'}>${opts.join('')}</select>${icon('chev-down', 'ico chev')}</div></div>
       <div class="cards" data-field="rows">${d.routes.map(routeRow).join('')}</div>
       <div class="actionsRow" style="margin-top:10px"><button type="button" class="btn dashed" data-field="add" ${d.editable ? '' : 'disabled'} aria-expanded="${models.open === 'add'}">${icon('plus')}<span>${esc(T.addProvider)}</span></button>${d.editable ? '' : `<span class="fieldHint">${esc(T.readonly)}</span>`}</div>
       <div data-field="addSlot"></div>
