@@ -35,6 +35,8 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 图片输入 | 输入框的「+」按钮、粘贴、拖入：PNG / JPEG / GIF / WebP，最多 8 张，超过 2048px 的边在浏览器内缩放，压缩后 8 MB 以内；缩略图可移除；当前模型未勾选「图像」输入时拒绝并提示 |
 | 折叠行 | 推理内容、工具调用；展开为输入 / 输出卡片 |
 | 轮次过程折叠 | 对齐 dsh：每轮的推理与工具调用归入一个过程组，组头运行中显示「深度求索中，用时 Xs ···」，完成后显示「已完成，用时 X · N 步」（出错 / 已取消 / 等待审批），最终回复始终在组外可见。设置 → 通用「工作步骤展示」：简洁（收起并隐藏推理行）/ 标准 / 详细（收起，但工具行展开）/ 完全展开（不收起）；「工作步骤收起时机」：完成时 / 下一条消息时。偏好存于 `localStorage` |
+| 斜杠命令 | 输入框里键入 `/` 弹出命令菜单（↑↓ 选择，Enter / Tab 执行，Esc 关闭）：`/compact`、`/new`、`/model`、`/mode`、`/files`、`/terminal`、`/jobs`、`/clear`、`/settings`、`/help`；命令不会变成模型消息。插件的浏览器模块用 `ctx.commands.register({ name, description, icon, order?, when?, run(args) })` 添加命令 |
+| @ 引用 | 键入 `@` 弹出工作区文件菜单（`GET /workspaces/search`，跳过隐藏目录与依赖目录；子串优先，其次子序列），选中插入 `@path`（含空格时 `@"path"`，目录以 `/` 结尾可继续下钻）。发送时 host 把能解析的引用展开成 `<attached-file path=…>`（文本，超长截断）或 `<attached-directory path=…>`（目录列表）附在消息后；气泡只显示原文与引用标签，点标签在右侧栏预览 |
 | agent 提问 | agent 调用 `ask_user_question` 时轮次暂停（过程头显示「等待回答」），输入框上方出现问题卡片：标题、问题、单选 / 多选选项、自由输入；「提交回答」或「全部跳过」后续跑，工具收到 `{"answers": [...]}` |
 | 上下文压缩 | 上下文接近窗口（默认 80%）时，模型调用前自动把较早的历史换成一份结构化检查点（保留最近 16% 窗口的内容，不拆开工具调用与结果）；对话里显示「上下文已压缩」行，可展开摘要；输入框输入 `/compact` 手动压缩整段历史。运行事件 `compact`，轨迹里一条「压缩」记录。设置 → 通用里可关闭自动压缩、调阈值与保留比例、设未声明窗口模型的默认窗口 |
 | 性能与用量 | 每轮记录（`GET /sessions/{id}` 的 `turns`，`done` 事件的 `extras.turn`）：步骤数、工具调用数、token（输入 / 输出 / 缓存读写 / 推理）、模型用时、工具用时、首 token、解码用时。输入框下方的统计条：「N 轮 M 步 · tok/s」点开会话统计（模型用时、工具调用用时、TTFT 平均、TPS），「X tokens · 缓存命中」点开 token 用量明细；模型声明了上下文窗口时显示上下文占用圆环。每轮回复下方有可展开的用量行。设置「性能与用量」为简洁时只显示 tok/s 与缓存命中 |
@@ -94,7 +96,8 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | GET | `/highlight.css` | | 浅色与深色主题的 token 配色 |
 | POST | `/workspaces/pick` | `{"path"?: 提示语}` | 本机系统文件夹对话框；取消为 `{"path": null}`；`GET /workspaces` 的 `picker` 为 `native` 或 `browse` |
 | GET | `/sessions/{id}` | | 会话、运行状态、消息、待批准项 |
-| POST | `/sessions/{id}/messages` | `{"content", "images"?}` | SSE 运行事件；`images` 为 data URL，模型未声明图像输入时 422 |
+| POST | `/sessions/{id}/messages` | `{"content", "images"?}` | SSE 运行事件；`images` 为 data URL，模型未声明图像输入时 422；`@path` 引用展开成附件块 |
+| GET | `/workspaces/search` | `q`, `root`?, `limit`? | 工作区里匹配 `q` 的文件与目录（`@` 引用菜单用） |
 | GET | `/jobs` | | 后台任务列表（`session` 可筛选） |
 | GET | `/jobs/{id}` | `tail` | 一个后台任务与日志尾部 |
 | DELETE | `/jobs/{id}` | | 停止后台任务 |

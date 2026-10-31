@@ -579,6 +579,14 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 .approval .description { margin: 0; color: var(--label-secondary); font-size: 13px; line-height: 20px; }
 .approval .command { color: var(--label-tertiary); font: 13px/20px var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .approval .actionRow { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 16px; }
+.composerMenu { position: absolute; left: 8px; right: 8px; bottom: calc(100% + 8px); z-index: 46; max-height: 320px; overflow-y: auto; padding: 4px; border-radius: var(--r-lg); background: var(--menu-fill); backdrop-filter: var(--menu-blur); -webkit-backdrop-filter: var(--menu-blur); box-shadow: var(--elev-prominent); }
+.composerMenu .menuRow { width: 100%; }
+.composerMenu .menuRow .cmdName { font-family: var(--mono); font-size: 12px; color: var(--label-tertiary); margin-left: auto; padding-left: 12px; flex: none; }
+.composerMenu .menuRow[aria-selected='true'] { background: var(--nav-active, var(--layer-2)); }
+.composerMenu .menuEmpty { padding: 10px 12px; font-size: 13px; color: var(--label-tertiary); }
+.refChips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.refChip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font: 12px/18px var(--mono); color: var(--label-secondary); background: var(--layer-2); box-shadow: inset 0 0 0 0.5px var(--border-l2); cursor: pointer; }
+.refChip .ico { width: 12px; height: 12px; }
 .approval[data-kind='question'] { border-color: var(--border-l3); }
 .approval[data-kind='question'] .strip { background: var(--layer-2); color: var(--label-secondary); }
 .question { display: flex; flex-direction: column; gap: 8px; padding: 6px 0 10px; border-bottom: 0.5px solid var(--border-l2); }
@@ -1026,7 +1034,7 @@ const T = zh ? {
   newSession: '新会话', plugins: '插件', workspace: '会话', headline: '要做什么？', placeholder: '描述你想做的事…',
   placeholderBusy: 'agent 工作中…', collapse: '收起侧边栏', expand: '展开侧边栏', attach: '添加图片（也可粘贴或拖入）', send: '发送', stop: '停止',
   thinking: '思考中', thought: '思考过程', toolRunning: '运行中', copy: '复制', copied: '已复制', del: '删除会话', deleted: '会话已删除',
-  approvalStrip: '待批准', approve: '批准', reject: '拒绝', questionStrip: 'agent 有问题要问你', questionPending: '先回答上面的问题', questionTurn: '等待回答', submitAnswers: '提交回答', skipAll: '全部跳过', customAnswer: '其他…', customPlaceholder: '输入你的回答', chooseOne: '选一项', chooseMany: '可多选', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
+  approvalStrip: '待批准', approve: '批准', reject: '拒绝', cmdCompact: '压缩较早的对话历史', cmdHelp: '列出可用命令', cmdNew: '新建会话', cmdModel: '切换模型', cmdMode: '切换权限模式', cmdSettings: '打开设置', cmdFiles: '在右侧栏打开工作区文件', cmdTerminal: '在右侧栏打开终端', cmdJobs: '在右侧栏查看后台任务', cmdClear: '收起已完成的工作步骤', commandsTitle: '命令', referencesTitle: '文件', noCommands: '没有匹配的命令', noFiles: '没有匹配的文件', helpIntro: '可用命令：', refHint: '输入 @ 引用工作区文件，/ 使用命令', questionStrip: 'agent 有问题要问你', questionPending: '先回答上面的问题', questionTurn: '等待回答', submitAnswers: '提交回答', skipAll: '全部跳过', customAnswer: '其他…', customPlaceholder: '输入你的回答', chooseOne: '选一项', chooseMany: '可多选', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
   restarting: '重启中：应用插件变更…', restarted: (g) => `第 ${g} 代已启动`, rolledBack: (g) => `变更启动失败；第 ${g} 代运行上一份配置`, offline: '离线', online: '在线', gen: (g) => `第 ${g} 代`,
   unsupervised: '未托管', noSessions: '无会话', input: '输入', output: '输出', error: '错误', cancelled: '已停止', untitled: '未命名会话',
   tabMcp: 'MCP 服务器', mcpIntro: '把 MCP 服务器的工具交给 agent 使用。保存后重启生效；工具名以服务器名作前缀，权限模式与审批照常适用。', mcpAdd: '添加 MCP 服务器', mcpNone: '还没有配置 MCP 服务器', mcpName: '名称', mcpTransport: '传输', mcpCommand: '命令', mcpCommandHint: '可执行文件与参数，按空格分隔，如 npx -y @modelcontextprotocol/server-filesystem /path', mcpUrl: '端点 URL', mcpEnv: '环境变量', mcpHeaders: '请求头', mcpKvHint: '每行一个 KEY=VALUE；已保存的值显示为 ••••，留着即保留原值', mcpApproval: '调用前需要批准', mcpEnabled: '启用', mcpTools: (n) => `${n} 个工具`, mcpState: { connected: '已连接', error: '连接失败', disabled: '已停用', unknown: '未连接' }, edit: '编辑', mcpSaved: '已保存，重启后生效', mcpRemoveConfirm: (n) => `移除 MCP 服务器 ${n}？其工具在重启后不再可用。`, searchPlugins: '搜索插件', installTitle: '添加插件', installHint: '从 PyPI 按包名安装（可带版本，如 pyh-example==0.1.0），或安装本机的 bundle 目录。安装会先预检，通过后在空闲时重启生效。', srcPackage: 'PyPI 包', srcPath: '本地目录', packagePlaceholder: '包名，如 pyh-example 或 pyh-example==0.1.0', chooseDir: '选择目录…', install: '安装', installing: '安装中…', restartScheduled: '已保存，正在等待空闲后重启…', savedRestartRequired: '已保存，下次启动生效（当前未由 supervisor 管理）', uninstall: '卸载', uninstallConfirm: (n) => `卸载 bundle ${n}？其条目会从 profile 中移除，重启后生效。`, enablePlugin: '启用', disablePlugin: '停用', restartNow: '立即重启', restartRequested: '已请求重启，等待运行中的轮次结束', entriesOf: (n) => `${n} 个条目`, noMatches: '没有匹配的条目', pluginsTitle: '插件', pluginsIntro: '当前 profile 的插件组合。变更路径：agent 编写或安装 → 预检 → 重启生效。', addPlugin: '添加插件', gotIt: '知道了', addPluginHow: '两种方式：\n1. 在「创造」预设的会话里描述想要的能力，agent 会编写并安装插件；\n2. 在终端运行 pyh plugin install <bundle 目录或包名>，然后 pyh restart。',
@@ -1038,7 +1046,7 @@ const T = zh ? {
   newSession: 'New session', plugins: 'Plugins', workspace: 'Sessions', headline: 'What needs doing?', placeholder: 'Describe what you want to build…',
   placeholderBusy: 'The agent is working…', collapse: 'Collapse sidebar', expand: 'Expand sidebar', attach: 'Add images (paste or drop works too)', send: 'Send', stop: 'Stop',
   thinking: 'Thinking', thought: 'Thoughts', toolRunning: 'Running', copy: 'Copy', copied: 'Copied', del: 'Delete session', deleted: 'Session deleted',
-  approvalStrip: 'Awaiting approval', approve: 'Approve', reject: 'Reject', questionStrip: 'The agent has a question for you', questionPending: 'Answer the question above first', questionTurn: 'Waiting for your answer', submitAnswers: 'Submit answers', skipAll: 'Skip all', customAnswer: 'Other…', customPlaceholder: 'Type your answer', chooseOne: 'Choose one', chooseMany: 'Choose any', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
+  approvalStrip: 'Awaiting approval', approve: 'Approve', reject: 'Reject', cmdCompact: 'Compact older conversation history', cmdHelp: 'List available commands', cmdNew: 'Start a new session', cmdModel: 'Choose the model', cmdMode: 'Choose the permission mode', cmdSettings: 'Open settings', cmdFiles: 'Open workspace files in the sidebar', cmdTerminal: 'Open a terminal in the sidebar', cmdJobs: 'Show background jobs in the sidebar', cmdClear: 'Collapse finished work details', commandsTitle: 'Commands', referencesTitle: 'Files', noCommands: 'No matching commands', noFiles: 'No matching files', helpIntro: 'Available commands:', refHint: 'Type @ to reference a workspace file, / for commands', questionStrip: 'The agent has a question for you', questionPending: 'Answer the question above first', questionTurn: 'Waiting for your answer', submitAnswers: 'Submit answers', skipAll: 'Skip all', customAnswer: 'Other…', customPlaceholder: 'Type your answer', chooseOne: 'Choose one', chooseMany: 'Choose any', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
   restarting: 'Restarting: applying plugin changes…', restarted: (g) => `Generation ${g} started`, rolledBack: (g) => `Change failed to boot; generation ${g} runs the previous configuration`, offline: 'Offline', online: 'Online', gen: (g) => `generation ${g}`,
   unsupervised: 'unsupervised', noSessions: 'No sessions', input: 'Input', output: 'Output', error: 'Error', cancelled: 'Stopped', untitled: 'Untitled session',
   tabMcp: 'MCP servers', mcpIntro: 'Give the agent the tools of MCP servers. Changes apply after a restart; tool names are prefixed with the server name, and permission modes and approvals apply as usual.', mcpAdd: 'Add MCP server', mcpNone: 'No MCP servers configured', mcpName: 'Name', mcpTransport: 'Transport', mcpCommand: 'Command', mcpCommandHint: 'Executable and arguments separated by spaces, e.g. npx -y @modelcontextprotocol/server-filesystem /path', mcpUrl: 'Endpoint URL', mcpEnv: 'Environment', mcpHeaders: 'Headers', mcpKvHint: 'One KEY=VALUE per line; stored values show as •••• and keep their value when left alone', mcpApproval: 'Ask before each call', mcpEnabled: 'Enabled', mcpTools: (n) => `${n} tools`, mcpState: { connected: 'Connected', error: 'Connection failed', disabled: 'Disabled', unknown: 'Not connected' }, edit: 'Edit', mcpSaved: 'Saved; applies after the restart', mcpRemoveConfirm: (n) => `Remove MCP server ${n}? Its tools go away after the restart.`, searchPlugins: 'Search plugins', installTitle: 'Add plugin', installHint: 'Install a package from PyPI by name (optionally with a version, e.g. pyh-example==0.1.0), or a bundle directory on this machine. The install is preflighted, then the harness restarts when idle.', srcPackage: 'PyPI package', srcPath: 'Local directory', packagePlaceholder: 'Package name, e.g. pyh-example or pyh-example==0.1.0', chooseDir: 'Choose folder…', install: 'Install', installing: 'Installing…', restartScheduled: 'Saved; restarting once idle…', savedRestartRequired: 'Saved; applies on the next start (no supervisor)', uninstall: 'Uninstall', uninstallConfirm: (n) => `Uninstall bundle ${n}? Its entries leave the profile after the restart.`, enablePlugin: 'Enable', disablePlugin: 'Disable', restartNow: 'Restart now', restartRequested: 'Restart requested; waiting for running turns to finish', entriesOf: (n) => `${n} entries`, noMatches: 'No matching entries', pluginsTitle: 'Plugins', pluginsIntro: 'Plugin composition of the current profile. Change path: agent writes or installs → preflight → restart.', addPlugin: 'Add plugin', gotIt: 'Got it', addPluginHow: 'Two ways:\n1. Describe the capability in a session with the Creator preset; the agent writes and installs the plugin.\n2. Run pyh plugin install <bundle directory or package> in a terminal, then pyh restart.',
@@ -1188,6 +1196,7 @@ function pluginContext(id) {
   return {
     entry: id, locale: zh ? 'zh' : 'en', theme: () => document.documentElement.dataset.theme,
     slots: { register: (spec, mount) => keep(slotRegister(id, spec, mount)), list: slotList },
+    commands: { register: (spec) => keep(registerCommand(id, spec)), list: () => commandList().map((c) => ({ name: c.name, description: c.description, owner: c.owner })) },
     api: json, host: { call: (method, args) => hostCall(id, method, args) },
     rightbar: { openTab: (kind, opts) => rbOpenTab(kind, opts), openFile: (path, params) => rbOpenFile(path, params), close: (tabId) => rbCloseTab(tabId), isExpanded: () => rightbar.open, toggle: () => { rightbar.open = !rightbar.open; saveRightbar(); renderRightbar(); } },
     on: (name, fn) => keep(onPlugin(name, fn)), effect: (fn) => keep(fn),
@@ -1571,6 +1580,11 @@ function scrollToEnd(force) {
   const el = $('scroll');
   if (force || el.scrollHeight - el.scrollTop - el.clientHeight < 160) el.scrollTop = el.scrollHeight;
 }
+const ATTACHMENT_RE = /\n*<attached-(file|directory)\b([^>]*)>[\s\S]*?<\/attached-(?:file|directory)>/g;
+function splitAttachments(text) {
+  const refs = []; const shown = (text || '').replace(ATTACHMENT_RE, (_, kind, attrs) => { const m = /path="([^"]*)"/.exec(attrs); if (m) refs.push({ path: m[1], kind }); return ''; }).replace(/\s+$/, '');
+  return { shown, refs };
+}
 function addUser(text, images) {
   const row = document.createElement('div'); row.className = 'userRow';
   if (images && images.length) {
@@ -1578,7 +1592,14 @@ function addUser(text, images) {
     for (const url of images) { const img = document.createElement('img'); img.src = url; img.alt = ''; grid.appendChild(img); }
     row.appendChild(grid);
   }
-  const b = document.createElement('div'); b.className = 'bubble'; b.textContent = text || ''; row.appendChild(b);
+  const { shown, refs } = splitAttachments(text);
+  const b = document.createElement('div'); b.className = 'bubble'; b.textContent = shown; row.appendChild(b);
+  if (refs.length) {
+    const chips = document.createElement('div'); chips.className = 'refChips';
+    chips.innerHTML = refs.map((r) => `<button type="button" class="refChip" data-ref="${esc(r.path)}" data-kind="${r.kind}">${icon(r.kind === 'directory' ? 'folder' : 'file')}<span>${esc(r.path.replace(/^\//, ''))}</span></button>`).join('');
+    chips.onclick = (e) => { const c = e.target.closest('[data-ref]'); if (!c) return; if (c.dataset.kind === 'directory') rbOpenTab('files'); else rbOpenFile(c.dataset.ref); };
+    row.appendChild(chips);
+  }
   log().appendChild(row); return row;
 }
 function addImages(el, urls) {
@@ -1960,27 +1981,105 @@ $('composer').addEventListener('submit', async (e) => {
     setPhase('active'); setConvView('chat'); renderDock(); renderRightbar(); renderStats(); emitPlugin('session', s); refreshSessions();
   }
   input.value = ''; autosize(); attachments.length = 0; renderAttachments();
-  const cmd = !images.length && /^\/(\w+)\s*$/.exec(text);
-  if (cmd) { await runCommand(cmd[1].toLowerCase()); return; }
+  cmenuClose();
+  const cmd = !images.length && /^\/([a-z0-9_-]+)(?:\s+([\s\S]*))?$/i.exec(text);
+  if (cmd) { await runCommand(cmd[1].toLowerCase(), (cmd[2] || '').trim()); return; }
   addUser(text, images); scrollToEnd(true);
   try { await consume(await api(`/sessions/${state.current}/messages`, { method: 'POST', body: JSON.stringify({ content: text, images }) })); }
   catch (err) { addLine(err.status === 409 ? T.busy : err.message, 'error'); state.streaming = false; updateComposer(); }
 });
 /* ---------- slash commands ---------- */
-const commands = {
-  compact: async () => {
-    const before = (state.session?.turns || []).length;
-    try { await consume(await api(`/sessions/${state.current}/compact`, { method: 'POST' })); }
-    catch (err) { addLine(err.status === 409 ? T.busy : err.message, 'error'); state.streaming = false; updateComposer(); return; }
-    const turn = (state.session?.turns || [])[before];
-    if (turn && !(turn.stats?.compactions > 0) && turn.outcome === 'completed') toast(T.compactNothing);
-  },
-};
-async function runCommand(name) {
-  const run = commands[name];
-  if (!run) { toast(T.unknownCommand(name)); return; }
-  await run();
+const commands = {};
+function registerCommand(owner, spec) {
+  const name = String(spec.name || '').toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  if (!name || typeof spec.run !== 'function') throw new Error('registerCommand({ name, run }) needs a name and a run function');
+  commands[name] = { ...spec, name, owner };
+  return () => { if (commands[name]?.owner === owner) delete commands[name]; };
 }
+function commandList() { return Object.values(commands).filter((c) => !c.when || c.when()).sort((a, b) => (a.order ?? 50) - (b.order ?? 50) || a.name.localeCompare(b.name)); }
+async function runCommand(name, args) {
+  const cmd = commands[name];
+  if (!cmd || (cmd.when && !cmd.when())) { toast(T.unknownCommand(name)); return; }
+  try { await cmd.run(args || ''); } catch (err) { toast(err.message); }
+}
+registerCommand('web-ui', { name: 'compact', description: T.cmdCompact, icon: 'box', order: 10, when: () => !!state.current, run: async () => {
+  const before = (state.session?.turns || []).length;
+  try { await consume(await api(`/sessions/${state.current}/compact`, { method: 'POST' })); }
+  catch (err) { addLine(err.status === 409 ? T.busy : err.message, 'error'); state.streaming = false; updateComposer(); return; }
+  const turn = (state.session?.turns || [])[before];
+  if (turn && !(turn.stats?.compactions > 0) && turn.outcome === 'completed') toast(T.compactNothing);
+} });
+registerCommand('web-ui', { name: 'new', description: T.cmdNew, icon: 'plus-circle', order: 20, run: () => newSession() });
+registerCommand('web-ui', { name: 'model', description: T.cmdModel, icon: 'cpu', order: 30, run: () => $('modelChip').click() });
+registerCommand('web-ui', { name: 'mode', description: T.cmdMode, icon: 'pencil', order: 31, run: () => $('modeChip').click() });
+registerCommand('web-ui', { name: 'files', description: T.cmdFiles, icon: 'folder', order: 40, when: () => !!state.current, run: () => rbOpenTab('files') });
+registerCommand('web-ui', { name: 'terminal', description: T.cmdTerminal, icon: 'terminal', order: 41, when: () => !!state.current && !!rbType('terminal'), run: () => rbOpenTab('terminal') });
+registerCommand('web-ui', { name: 'jobs', description: T.cmdJobs, icon: 'zap', order: 42, when: () => !!state.current && !!rbType('jobs'), run: () => rbOpenTab('jobs') });
+registerCommand('web-ui', { name: 'clear', description: T.cmdClear, icon: 'minimize', order: 50, when: () => !!state.current, run: () => log().querySelectorAll('.turn .process[data-open]').forEach((p) => p.removeAttribute('data-open')) });
+registerCommand('web-ui', { name: 'settings', description: T.cmdSettings, icon: 'gear', order: 60, run: () => showSettings('general') });
+registerCommand('web-ui', { name: 'help', description: T.cmdHelp, icon: 'info', order: 90, run: () => { if (!state.current) { toast(commandList().map((c) => '/' + c.name).join('  ')); return; } const el = addLine(''); el.innerHTML = `<span>${esc(T.helpIntro)} ${commandList().map((c) => `<code>/${esc(c.name)}</code> ${esc(c.description || '')}`).join(' · ')}</span>`; scrollToEnd(true); } });
+
+/* ---------- composer menu: / commands and @ references ---------- */
+const cmenu = { el: null, mode: null, items: [], index: 0, token: null, timer: null, seq: 0 };
+function cmenuClose() { if (cmenu.el) { cmenu.el.remove(); cmenu.el = null; } cmenu.mode = null; cmenu.items = []; cmenu.token = null; }
+function cmenuToken() {
+  const pos = input.selectionStart ?? input.value.length; const before = input.value.slice(0, pos);
+  const cmd = /^\/([a-z0-9_-]*)$/i.exec(before);
+  if (cmd) return { mode: 'cmd', query: cmd[1], start: 0, end: pos };
+  const ref = /(?:^|[\s(\[{,，、])@(?:"([^"\n]*)|([^\s"@]*))$/.exec(before);
+  if (ref) { const query = ref[1] ?? ref[2] ?? ''; const at = before.lastIndexOf('@'); return { mode: 'ref', query, start: at, end: pos, quoted: ref[1] != null }; }
+  return null;
+}
+function cmenuRender() {
+  if (!cmenu.el) { cmenu.el = document.createElement('div'); cmenu.el.className = 'composerMenu'; cmenu.el.setAttribute('role', 'listbox'); $('composer').appendChild(cmenu.el); cmenu.el.onmousedown = (e) => e.preventDefault(); cmenu.el.onclick = (e) => { const r = e.target.closest('[data-i]'); if (r) cmenuAccept(Number(r.dataset.i)); }; }
+  const items = cmenu.items;
+  cmenu.el.innerHTML = `<div class="menuGroup">${esc(cmenu.mode === 'cmd' ? T.commandsTitle : T.referencesTitle)}</div>` + (items.length ? items.map((it, i) => cmenu.mode === 'cmd'
+    ? `<button type="button" class="menuRow" role="option" aria-selected="${i === cmenu.index}" data-i="${i}">${icon(it.icon || 'box', 'ico lead')}<span class="menuMain"><span class="menuTitle">${esc(it.description || it.name)}</span></span><span class="cmdName">/${esc(it.name)}</span></button>`
+    : `<button type="button" class="menuRow" role="option" aria-selected="${i === cmenu.index}" data-i="${i}">${icon(it.dir ? 'folder' : 'file', `ico lead ${it.dir ? 'ft-folder' : ''}`)}<span class="menuMain"><span class="menuTitle">${esc(it.name)}</span><span class="menuDesc">${esc(it.path)}</span></span></button>`).join('') : `<div class="menuEmpty">${esc(cmenu.mode === 'cmd' ? T.noCommands : T.noFiles)}</div>`);
+  cmenu.el.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+}
+function cmenuUpdate() {
+  if (state.streaming) { cmenuClose(); return; }
+  const tok = cmenuToken();
+  if (!tok) { cmenuClose(); return; }
+  cmenu.token = tok;
+  if (tok.mode === 'cmd') {
+    const q = tok.query.toLowerCase();
+    cmenu.mode = 'cmd'; cmenu.items = commandList().filter((c) => !q || c.name.startsWith(q) || c.name.includes(q) || (c.description || '').toLowerCase().includes(q)); cmenu.index = 0; cmenuRender(); return;
+  }
+  if (!state.current && !state.sessionWorkspace && !state.session) { cmenuClose(); return; }
+  cmenu.mode = 'ref'; if (!cmenu.el) { cmenu.items = []; cmenuRender(); }
+  clearTimeout(cmenu.timer);
+  cmenu.timer = setTimeout(async () => {
+    const seq = ++cmenu.seq; const root = state.session?.workspace || state.sessionWorkspace || '';
+    let entries = [];
+    try { entries = (await json(`/workspaces/search?q=${encodeURIComponent(tok.query)}${root ? '&root=' + encodeURIComponent(root) : ''}&limit=30`)).entries; } catch { entries = []; }
+    if (seq !== cmenu.seq || cmenu.mode !== 'ref') return;
+    cmenu.items = entries; cmenu.index = 0; cmenuRender();
+  }, 120);
+}
+function cmenuAccept(i) {
+  const it = cmenu.items[i ?? cmenu.index]; const tok = cmenu.token; if (!it || !tok) { cmenuClose(); return; }
+  if (cmenu.mode === 'cmd') {
+    cmenuClose(); input.value = input.value.slice(tok.end); autosize(); updateComposer();
+    if (!input.value.trim()) { runCommand(it.name, ''); return; }
+    input.value = `/${it.name} ` + input.value.trimStart(); input.focus(); return;
+  }
+  const path = it.path.replace(/^\//, ''); const text = /\s/.test(path) ? `@"${path}"` : `@${path}`;
+  const after = input.value.slice(tok.end);
+  input.value = input.value.slice(0, tok.start) + text + (it.dir ? '' : ' ') + after;
+  const caret = tok.start + text.length + (it.dir ? 0 : 1); input.setSelectionRange(caret, caret); input.focus(); autosize(); updateComposer();
+  if (it.dir) cmenuUpdate(); else cmenuClose();
+}
+input.addEventListener('keydown', (e) => {
+  if (!cmenu.el) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const n = cmenu.items.length; if (!n) return; cmenu.index = (cmenu.index + (e.key === 'ArrowDown' ? 1 : n - 1)) % n; cmenuRender(); }
+  else if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Tab') { if (cmenu.items.length) { e.preventDefault(); e.stopImmediatePropagation(); cmenuAccept(); } else if (cmenu.mode === 'ref') cmenuClose(); }
+  else if (e.key === 'Escape') { e.preventDefault(); cmenuClose(); }
+}, true);
+input.addEventListener('input', cmenuUpdate);
+input.addEventListener('click', cmenuUpdate);
+document.addEventListener('mousedown', (e) => { if (cmenu.el && !e.target.closest('#composer')) cmenuClose(); }, true);
 
 /* ---------- plugins page ---------- */
 const STATE_TAG = { active: ['success', 'running'], pending: ['warning', 'pending'], disabled: ['quiet', 'disabled'], failed: ['danger', 'failed'], stopped: ['quiet', 'stopped'] };

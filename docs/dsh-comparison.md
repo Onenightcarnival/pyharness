@@ -57,6 +57,7 @@ bundle 中条目的位置（`after` / `before` / `parent`）对应 mount 路径�
 | 改动文件卡片与 review | 有：git 快照摘要、轮末卡片、右侧栏 diff tab（单栏 / 左右）；未做文件工具编辑的兜底捕获，非 git 工作区不记录 |
 | 轮次过程折叠 | 有：过程组 + 四档展示模式 + 收起时机；dsh 的滚动跟随与折叠动画未做 |
 | 会话统计 / token 用量 | 有：每轮 stats 持久化、统计条与弹层、每轮用量行、上下文占用圆环（需模型声明上下文窗口）；dsh 的 token-meter 做逐节点估算，pyharness 只按最近用量加估算 |
+| 斜杠命令（`dsh-commands` + `dsh-client-ui-commands`）与 `@` 引用（`dsh-client-ui-reference` + `dsh-file-references`） | 有：页面侧命令注册表（内置 compact / new / model / mode / files / terminal / jobs / clear / settings / help，插件 `ctx.commands.register`）与 `/` 菜单；`@` 文件菜单（`/workspaces/search`）与 host 侧展开成附件块；未做 dsh 的 host 命令注册表与会话日志记录、`@session` 引用、原子引用胶囊 |
 | 常驻 shell（`dsh-tool-bash-persistent` + `dsh-terminals`）、后台任务（`dsh-tool-jobs` + `dsh-api-job-controller`）、终端 tab（`dsh-api-terminal-controller`） | 有：`pyharness-terminal`，`bash` 每会话常驻（管道 + 结束标记，不用 tmux）、`run_in_background` / `job_output` / `job_list` / `job_kill`、PTY 终端 WebSocket；dsh 的沙箱策略（`dsh-bash-sandbox`）与 headless xterm 回放未做（这里保留字节缓冲） |
 | `ask_user_question`（`dsh-tool-ask-user` + `dsh-user-questions` + 问题卡片） | 有：`pyharness-ask-user`，同样的问题 / 答案结构（id、options、multi_select、selected、custom）；用 LangGraph interrupt 暂停，`POST /sessions/{id}/answers` 续跑；未做 dsh 的 timed 模式（超时后继续工作、稍后补答） |
 | Web 工具（`dsh-web` seam + `dsh-web-search-deepseek` / `dsh-web-fetch-http` + `dsh-tool-web`） | 有：`pyharness-web-tools` 的 `web_search`（只有 DeepSeek 原生搜索，同样的 Anthropic 格式请求；密钥取 `DEEPSEEK_API_KEY` 凭据）与 `web_fetch`（stdlib HTML → 文本，dsh 用 turndown 转 Markdown）；作为可选的 `web` bundle 预置，插件页可关闭；未做多 provider seam、搜索设置页与结果卡片 |

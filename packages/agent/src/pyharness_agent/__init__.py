@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import time
 import uuid
 from collections.abc import AsyncIterator
@@ -44,6 +45,7 @@ from pydantic import BaseModel, Field
 from pyharness import Service
 
 NAMESPACE = ("pyharness", "sessions")
+_ATTACHMENT = re.compile(r"\n*<attached-(?:file|directory)\b[^>]*>.*?</attached-(?:file|directory)>", re.S)
 TURNS = ("pyharness", "turns")  # + (session_id,): one record per turn — stats and trajectory
 
 
@@ -81,7 +83,8 @@ class TurnRecorder:
             "compactions": 0,
         }
         if turn.input is not None:
-            self.records.append({"t": "user", "at": self.started, "chars": len(turn.input), "kind": turn.kind, "preview": turn.input[:160]})
+            shown = _ATTACHMENT.sub("", turn.input).rstrip()  # @references travel as attachment blocks; the record keeps the typed text
+            self.records.append({"t": "user", "at": self.started, "chars": len(turn.input), "kind": turn.kind, "preview": shown[:160]})
 
     def observe_event(self, event: dict[str, Any]) -> None:
         now = time.time()

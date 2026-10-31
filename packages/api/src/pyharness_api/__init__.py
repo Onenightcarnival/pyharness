@@ -12,7 +12,8 @@
 | GET    | ``/sessions``                |                               | sessions                                    |
 | POST   | ``/sessions``                | ``{"title"?, "model"?, "workspace"?, "mode"?, "preset"?}`` | session        |
 | GET    | ``/sessions/{id}``           |                               | session, busy, messages, pending approvals  |
-| POST   | ``/sessions/{id}/messages``  | ``{"content", "images"?}``    | SSE run events; images: data URLs           |
+| POST   | ``/sessions/{id}/messages``  | ``{"content", "images"?}``    | SSE run events; images: data URLs; ``@path`` references expand (:mod:`.references`) |
+| GET    | ``/workspaces/search``       | ``q``, ``root``?              | workspace paths matching ``q`` for ``@`` references |
 | POST   | ``/sessions/{id}/approvals`` | ``{"decisions": [decision]}`` | SSE run events                              |
 | POST   | ``/sessions/{id}/compact``   |                               | SSE of a manual compaction run (``compact``, ``done``) |
 | POST   | ``/sessions/{id}/answers``   | ``{"answers", "interrupt_id"?}`` | answer a pending ask_user_question; SSE of the resumed run |
@@ -78,6 +79,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from pyharness import manage
+
+from . import references
 
 name = "pyharness-api"
 inject = ["http", "agents", "llm"]
@@ -516,6 +519,18 @@ def build_router(ctx: Any) -> APIRouter:
             raise HTTPException(403, str(exc)) from None
         return {"root": str(ws.root), "path": "/" + real.relative_to(ws.root).as_posix() if real != ws.root else "/", "entries": entries}
 
+    @router.get("/workspaces/search")
+    async def search_files(q: str = "", root: str | None = None, limit: int = 50) -> dict[str, Any]:
+        """Files and directories of a workspace matching ``q`` (for ``@`` references); hidden and dependency directories skipped."""
+        workspaces = ctx.get("workspace", None)
+        if workspaces is None or not hasattr(workspaces, "open"):
+            raise HTTPException(503, "workspace registry unavailable")
+        try:
+            ws = workspaces.open(root)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        return {"entries": await asyncio.to_thread(references.search, ws.root, q, max(1, min(limit, 200)))}
+
     @router.get("/workspaces/file")
     async def read_file(path: str, root: str | None = None, limit: int = 512 * 1024) -> dict[str, Any]:
         """Text of a file inside a workspace, up to ``limit`` bytes; binary files report ``binary``."""
@@ -689,8 +704,15 @@ def build_router(ctx: Any) -> APIRouter:
                 raise HTTPException(
                     422, f"model {spec} does not accept image input; choose a model with image input or edit its input types in Settings"
                 )
+        content = body.content
+        workspaces = ctx.get("workspace", None)
+        if workspaces is not None and hasattr(workspaces, "open") and "@" in content:
+            try:
+                content, _refs = references.expand(content, workspaces.open(session.get("workspace")))
+            except Exception:  # noqa: BLE001 — a reference that cannot be read never blocks the message
+                ctx.logger.exception("expanding @references failed")
         try:
-            handle = agents.start_run(session_id, body.content, images=body.images or None)
+            handle = agents.start_run(session_id, content, images=body.images or None)
         except SessionBusy as exc:
             raise HTTPException(409, str(exc)) from None
         except RestartPending as exc:
