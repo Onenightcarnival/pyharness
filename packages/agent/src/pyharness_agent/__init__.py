@@ -21,6 +21,10 @@ list them under ``images``; an AI message with image blocks emits ``image`` even
 |----------------------|----------|----------------------------------------|
 | ``agent/turn-start`` | parallel | ``(turn: Turn)``                       |
 | ``agent/turn-end``   | parallel | ``(turn: Turn)``; ``turn.outcome`` set; ``turn.extras`` reaches the ``done`` event as ``extras`` |
+
+Turn records: every turn is recorded in ``ctx.store`` (``("pyharness", "turns", session_id)``, key run id) with
+``stats`` (steps, tool calls, token usage, llm/tool/ttft/decode wall time, duration) and ``records`` (the trajectory:
+user, step, tool, end). ``turns(session_id)`` lists them; ``done`` carries the new one as ``extras.turn``.
 """
 
 from __future__ import annotations
@@ -39,6 +43,144 @@ from pydantic import BaseModel, Field
 from pyharness import Service
 
 NAMESPACE = ("pyharness", "sessions")
+TURNS = ("pyharness", "turns")  # + (session_id,): one record per turn — stats and trajectory
+
+
+class TurnRecorder:
+    """Timing, token usage and a compact trajectory of one turn, from the run events and graph updates.
+
+    Records: ``user`` (input), ``step`` (one model call: ttft, duration, tokens, text size, tool calls),
+    ``tool`` (call → result: duration, status, sizes), ``end`` (outcome). Stats sum the steps and tools.
+    """
+
+    def __init__(self, turn: Turn) -> None:
+        self.turn = turn
+        self.started = time.time()
+        self.step_start = self.started
+        self.first_token: float | None = None
+        self.records: list[dict[str, Any]] = []
+        self.tools: dict[str, dict[str, Any]] = {}
+        self.stats: dict[str, Any] = {
+            "steps": 0,
+            "tool_calls": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_tokens": 0,
+            "cache_write_tokens": 0,
+            "reasoning_tokens": 0,
+            "usage_steps": 0,
+            "last_input_tokens": None,
+            "llm_ms": 0,
+            "tool_ms": 0,
+            "ttft_ms": 0,
+            "ttft_steps": 0,
+            "decode_ms": 0,
+            "decode_tokens": 0,
+            "duration_ms": 0,
+        }
+        if turn.input is not None:
+            self.records.append({"t": "user", "at": self.started, "chars": len(turn.input), "kind": turn.kind, "preview": turn.input[:160]})
+
+    def observe_event(self, event: dict[str, Any]) -> None:
+        now = time.time()
+        kind = event.get("type")
+        if kind in ("reasoning", "token") and self.first_token is None:
+            self.first_token = now
+        elif kind == "tool_call":
+            record = {
+                "t": "tool",
+                "id": event.get("id"),
+                "name": event.get("name"),
+                "at": now,
+                "args_chars": len(json.dumps(event.get("args", {}), ensure_ascii=False)),
+            }
+            self.records.append(record)
+            if event.get("id"):
+                self.tools[event["id"]] = record
+            self.stats["tool_calls"] += 1
+        elif kind == "tool_result":
+            record = self.tools.pop(event.get("id"), None)
+            if record is not None:
+                record["dur_ms"] = round((now - record["at"]) * 1000)
+                record["status"] = event.get("status")
+                record["result_chars"] = len(event.get("content") or "")
+                self.stats["tool_ms"] += record["dur_ms"]
+            self.step_start = now
+            self.first_token = None
+
+    def observe_update(self, chunk: Any) -> None:
+        now = time.time()
+        for node, update in (chunk or {}).items():
+            if node != "model":
+                continue
+            for message in _iter_messages(update):
+                if not isinstance(message, AIMessage):
+                    continue
+                st = self.stats
+                st["steps"] += 1
+                dur = round((now - self.step_start) * 1000)
+                st["llm_ms"] += dur
+                record: dict[str, Any] = {
+                    "t": "step",
+                    "at": self.step_start,
+                    "dur_ms": dur,
+                    "chars": len(_text(message.content)),
+                    "tool_calls": len(message.tool_calls or []),
+                }
+                if self.first_token is not None:
+                    record["ttft_ms"] = round((self.first_token - self.step_start) * 1000)
+                    st["ttft_ms"] += record["ttft_ms"]
+                    st["ttft_steps"] += 1
+                usage = getattr(message, "usage_metadata", None) or {}
+                if isinstance(usage, dict) and usage.get("output_tokens") is not None:
+                    inp = int(usage.get("input_tokens") or 0)
+                    out = int(usage.get("output_tokens") or 0)
+                    details_in = usage.get("input_token_details") or {}
+                    details_out = usage.get("output_token_details") or {}
+                    cache_read = int(details_in.get("cache_read") or 0)
+                    cache_write = int(details_in.get("cache_creation") or 0)
+                    reasoning = int(details_out.get("reasoning") or 0)
+                    record.update(
+                        {
+                            "input_tokens": inp,
+                            "output_tokens": out,
+                            "cache_read_tokens": cache_read,
+                            "cache_write_tokens": cache_write,
+                            "reasoning_tokens": reasoning,
+                        }
+                    )
+                    st["input_tokens"] += inp
+                    st["output_tokens"] += out
+                    st["cache_read_tokens"] += cache_read
+                    st["cache_write_tokens"] += cache_write
+                    st["reasoning_tokens"] += reasoning
+                    st["usage_steps"] += 1
+                    st["last_input_tokens"] = inp
+                    if self.first_token is not None:
+                        st["decode_ms"] += round((now - self.first_token) * 1000)
+                        st["decode_tokens"] += out
+                self.records.append(record)
+                self.step_start = now
+                self.first_token = None
+
+    def finish(self, outcome: str, after: int) -> dict[str, Any]:
+        now = time.time()
+        self.stats["duration_ms"] = round((now - self.started) * 1000)
+        for record in self.tools.values():  # calls without a result (interrupted, cancelled)
+            record.setdefault("status", "pending")
+        self.records.append({"t": "end", "at": now, "outcome": outcome})
+        return {
+            "run_id": self.turn.run_id,
+            "session_id": self.turn.session_id,
+            "kind": self.turn.kind,
+            "model": self.turn.model,
+            "at": self.started,
+            "after": after,
+            "outcome": outcome,
+            "stats": dict(self.stats),
+            "records": self.records,
+        }
+
 
 DEFAULT_RESUME = (
     "[pyharness] Restarted into generation {generation}.\n"
@@ -234,6 +376,7 @@ class AgentService(Service):
         self.graph: Any = None
         self._graphs: dict[tuple[str | None, str, str], Any] = {}
         self._runs: dict[str, RunHandle] = {}
+        self._turn_seq: dict[str, int] = {}
         self._tasks: set[asyncio.Task[Any]] = set()
 
     async def start(self) -> None:
@@ -358,6 +501,17 @@ class AgentService(Service):
             record["title"] = title_hint.strip().splitlines()[0][: self.config.title_chars] if title_hint.strip() else None
         await self.ctx.store.aput(NAMESPACE, session_id, record)
 
+    async def turns(self, session_id: str) -> list[dict[str, Any]]:
+        """Per-turn records (stats and trajectory), oldest first."""
+        items = await self.ctx.store.asearch(TURNS + (session_id,), limit=10000)
+        return sorted((dict(i.value) for i in items), key=lambda t: t.get("seq", 0))
+
+    async def _next_turn_seq(self, session_id: str) -> int:
+        if session_id not in self._turn_seq:
+            self._turn_seq[session_id] = len(await self.turns(session_id))
+        self._turn_seq[session_id] += 1
+        return self._turn_seq[session_id]
+
     async def messages(self, session_id: str) -> list[dict[str, Any]]:
         state = await self._require_graph().aget_state(self._config(session_id))
         return [serialize_message(m) for m in (state.values or {}).get("messages", [])]
@@ -389,6 +543,9 @@ class AgentService(Service):
         if await self.get_session(session_id) is None:
             return False
         await self.ctx.store.adelete(NAMESPACE, session_id)
+        for item in await self.ctx.store.asearch(TURNS + (session_id,), limit=10000):
+            await self.ctx.store.adelete(TURNS + (session_id,), item.key)
+        self._turn_seq.pop(session_id, None)
         checkpointer = self.ctx.get("checkpointer", None)
         if checkpointer is not None and hasattr(checkpointer, "adelete_thread"):
             await checkpointer.adelete_thread(session_id)
@@ -444,6 +601,7 @@ class AgentService(Service):
         session_id = handle.session_id
         lifecycle = self.ctx.lifecycle
         turn = Turn(session_id=session_id, run_id=handle.id, kind=handle.kind, input=handle.input)
+        recorder = TurnRecorder(turn)
         outcome = "completed"
         async with lifecycle.hold(f"run:{session_id}", session=session_id):
             try:
@@ -454,7 +612,10 @@ class AgentService(Service):
                 graph = await self.graph_for(record)
                 await self.ctx.parallel("agent/turn-start", turn)
                 async for mode, chunk in graph.astream(payload, self._config(session_id, model), stream_mode=["messages", "updates"]):
+                    if mode == "updates":
+                        recorder.observe_update(chunk)
                     for event in self._translate(mode, chunk):
+                        recorder.observe_event(event)
                         await handle.publish(event)
                 interrupts = await self.pending(session_id)
                 if interrupts:
@@ -468,6 +629,13 @@ class AgentService(Service):
                 await handle.publish({"type": "error", "message": f"{type(exc).__name__}: {exc}"})
             finally:
                 turn.outcome = outcome
+                try:
+                    record = recorder.finish(outcome, len(await self.messages(session_id)))
+                    record["seq"] = await self._next_turn_seq(session_id)
+                    await self.ctx.store.aput(TURNS + (session_id,), handle.id, record)
+                    turn.extras["turn"] = record
+                except Exception:  # pragma: no cover
+                    self.ctx.logger.exception("turn record failed")
                 try:
                     await self._touch(session_id, handle.input if handle.kind == "message" else None)
                     await self.ctx.parallel("agent/turn-end", turn)

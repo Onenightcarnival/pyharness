@@ -156,8 +156,8 @@ async def test_route_lifecycle_through_the_api(profile):
                         "title": "Alt",
                         "type": "scripted",
                         "models": [
-                            {"id": "m1", "name": "Model one", "spec": "alt:m1", "input": ["text", "image"]},
-                            {"id": "m2", "name": "m2", "spec": "alt:m2", "input": ["text"]},
+                            {"id": "m1", "name": "Model one", "spec": "alt:m1", "input": ["text", "image"], "context_window": None},
+                            {"id": "m2", "name": "m2", "spec": "alt:m2", "input": ["text"], "context_window": None},
                         ],
                     }
                 ],

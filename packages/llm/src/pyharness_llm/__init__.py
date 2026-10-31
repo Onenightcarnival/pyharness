@@ -379,6 +379,15 @@ class LLMService(Service):
         entry = next((m for m in cfg.models if m.id == model), None)
         return "image" in entry.input if entry is not None else None
 
+    def context_window(self, spec: str | None) -> int | None:
+        """Declared context window of the model of ``spec``; ``None`` when unknown."""
+        route, model = split_spec(spec or self.config.default)
+        cfg = self.config.providers.get(route)
+        if cfg is None:
+            return None
+        entry = next((m for m in cfg.models if m.id == model), None)
+        return entry.context_window if entry is not None else None
+
     def options_for(self, route: str, model: str | None = None, **overrides: Any) -> dict[str, Any]:
         """Keyword arguments for ``route``: global, route, model, then ``overrides``; credential resolved."""
         cfg = self.route(route)
@@ -486,7 +495,10 @@ class LLMService(Service):
         """Selector view: routes with their model catalogs and the default spec."""
         groups = []
         for route, cfg in self.config.providers.items():
-            models = [{"id": m.id, "name": m.name or m.id, "spec": f"{route}:{m.id}", "input": list(m.input)} for m in cfg.models]
+            models = [
+                {"id": m.id, "name": m.name or m.id, "spec": f"{route}:{m.id}", "input": list(m.input), "context_window": m.context_window}
+                for m in cfg.models
+            ]
             if models:
                 groups.append({"id": route, "title": self.describe_route(route)["title"], "type": self.route_type(route), "models": models})
         default_route, default_model = split_spec(self.config.default)

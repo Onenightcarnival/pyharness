@@ -105,7 +105,20 @@ async def test_non_git_workspace_records_nothing(home, tmp_path):
         async with client(h) as c:
             s = (await c.post("/api/sessions", json={})).json()
             events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
-            assert events[-1]["outcome"] == "completed" and events[-1]["extras"] == {}
+            assert events[-1]["outcome"] == "completed" and "changes" not in events[-1]["extras"]
+            turn = events[-1]["extras"]["turn"]
+            assert (
+                turn["stats"]["steps"] == 2
+                and turn["stats"]["tool_calls"] == 1
+                and [r["t"] for r in turn["records"]] == ["user", "step", "tool", "step", "end"]
+            )
+            assert (
+                turn["records"][2]["name"] == "write_file"
+                and turn["records"][2]["status"] == "success"
+                and turn["records"][2]["dur_ms"] >= 0
+            )
+            assert (await c.get(f"/api/sessions/{s['id']}/turns")).json()["turns"][0]["seq"] == 1
+            assert (await c.get(f"/api/sessions/{s['id']}")).json()["turns"][0]["after"] == 4
             assert (await c.get(f"/api/sessions/{s['id']}")).json()["changes"] == []
             assert (plain / "x.txt").read_text() == "x"
 

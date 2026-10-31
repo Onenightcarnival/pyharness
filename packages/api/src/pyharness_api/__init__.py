@@ -28,6 +28,7 @@
 | GET    | ``/workspaces/file``         | ``?path=&root=&limit=``       | text of a file inside a workspace           |
 | GET    | ``/workspaces/file/raw``     | ``?path=&root=``              | bytes of a file inside a workspace (images) |
 | GET    | ``/sessions/{id}/changes``   |                               | changed-file summaries per turn             |
+| GET    | ``/sessions/{id}/turns``     |                               | per-turn stats and trajectory records       |
 | GET    | ``/sessions/{id}/changes/{run}/diff`` | ``?index=``          | hunks of one listed file, lines highlighted |
 | POST   | ``/highlight``               | ``{"items": [{code, lang?, filename?}]}`` | Pygments token spans per item     |
 | GET    | ``/highlight.css``           |                               | token colors for light and dark themes      |
@@ -420,13 +421,22 @@ def build_router(ctx: Any) -> APIRouter:
     async def get_session(session_id: str) -> dict[str, Any]:
         session = await require(session_id)
         changes = ctx.get("workspaceChanges", None)
+        llm = ctx.get("llm", None)
         return {
             **session,
             "busy": agents.busy(session_id),
             "messages": await agents.messages(session_id),
             "pending": await agents.pending(session_id),
             "changes": await changes.summaries(session_id) if changes is not None else [],
+            "turns": await agents.turns(session_id),
+            "context_window": llm.context_window(session.get("model")) if llm is not None and hasattr(llm, "context_window") else None,
         }
+
+    @router.get("/sessions/{session_id}/turns")
+    async def session_turns(session_id: str) -> dict[str, Any]:
+        """Per-turn records: stats (steps, tokens, wall time) and the trajectory (user, step, tool, end)."""
+        await require(session_id)
+        return {"turns": await agents.turns(session_id)}
 
     @router.get("/sessions/{session_id}/changes")
     async def session_changes(session_id: str) -> dict[str, Any]:

@@ -227,6 +227,71 @@ table.diff tr.k-del td.no, table.diff td.no.k-del { background: color-mix(in srg
 table.diff tr.k-del .sign, table.diff td.k-del .sign { color: var(--error); }
 table.diff td.k-empty { background: color-mix(in srgb, var(--label-primary) 3%, transparent); }
 table.diff tr.hunk td { padding: 3px 12px; background: color-mix(in srgb, var(--info) 8%, transparent); color: var(--label-tertiary); font-size: 11px; white-space: nowrap; }
+.turn { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.process { display: flex; flex-direction: column; min-width: 0; }
+.process[data-empty] { display: none; }
+.processHead { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0; border: none; background: none; color: var(--label-tertiary); font-size: 13px; text-align: left; }
+.processHead .lead { display: inline-flex; width: 16px; height: 16px; align-items: center; justify-content: center; flex: none; }
+.processHead .ico { width: 14px; height: 14px; }
+.processHead .chev { opacity: 0; transition: transform 0.15s var(--ease); }
+.process:hover .processHead .chev, .process[data-open] .processHead .chev { opacity: 1; }
+.process[data-open] .processHead .chev { transform: rotate(90deg); }
+.processHead[data-state='running'] { color: var(--deep-diving); }
+.processHead[data-state='error'] .lead { color: var(--error); }
+.processHead[data-state='interrupted'] .lead { color: var(--warn); }
+.processBody { display: none; flex-direction: column; gap: 4px; }
+.process[data-open] .processBody { display: flex; }
+html[data-work='compact'] .processBody .reasoning { display: none; }
+.turnUsage { display: inline-flex; align-items: center; gap: 8px; height: 20px; padding: 0; border: none; background: none; color: var(--label-caption); font: 11px/16px var(--mono); text-align: left; }
+.turnUsage .ico { width: 12px; height: 12px; }
+.turnUsageDetail { display: none; grid-template-columns: auto 1fr; gap: 2px 14px; padding: 4px 0 6px; font: 11px/16px var(--mono); color: var(--label-tertiary); }
+.turnUsageDetail[data-open] { display: grid; }
+.statsRow { position: relative; width: 100%; max-width: calc(var(--chat-width) + 32px); display: flex; align-items: center; gap: 4px; min-height: 26px; padding: 4px 6px 0; }
+.statsRow[hidden] { display: none; }
+.statChip { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border: none; border-radius: 999px; background: transparent; color: var(--label-tertiary); font-size: 11px; line-height: 1; white-space: nowrap; }
+.statChip .ico { width: 12px; height: 12px; }
+.statChip .ring { width: 14px; height: 14px; }
+.statChip[data-static] { cursor: default; }
+.statPop { top: auto; bottom: calc(100% + 6px); left: 4px; right: auto; min-width: 230px; padding: 8px 6px; }
+.statPop .kv { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 4px 8px; font-size: 12px; color: var(--label-secondary); }
+.statPop .kv b { font: 12px var(--mono); font-weight: 500; color: var(--label-primary); }
+.viewTabs { display: inline-flex; gap: 2px; padding: 2px; margin-left: 8px; border-radius: var(--r-md); background: color-mix(in srgb, var(--label-primary) 5%, transparent); }
+.viewTabs[hidden] { display: none; }
+.viewTab { height: 24px; padding: 0 10px; border: none; border-radius: 6px; background: transparent; color: var(--label-tertiary); font-size: 12px; }
+.viewTab[aria-selected='true'] { background: var(--bg-base); color: var(--label-primary); box-shadow: 0 0 0 0.5px var(--border-l3); }
+.trajectory { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.trajectory[hidden] { display: none; }
+.trajBar { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-bottom: 0.5px solid var(--border-l2); }
+.trajBar .trajTitle { font-size: 13px; font-weight: 500; }
+.trajBar .input { width: 220px; height: 28px; font-size: 12px; }
+.trajBar .spacer { flex: 1; }
+.trajOverview { flex: none; display: flex; flex-direction: column; gap: 4px; max-height: 120px; overflow: auto; padding: 8px 16px; border-bottom: 0.5px solid var(--border-l2); }
+.trajTrack { display: flex; align-items: center; gap: 8px; height: 18px; border: none; background: none; padding: 0; color: var(--label-tertiary); font: 11px var(--mono); text-align: left; }
+.trajTrack .lbl { width: 56px; flex: none; }
+.trajTrack .bar { flex: 1; position: relative; height: 8px; border-radius: 4px; overflow: hidden; background: color-mix(in srgb, var(--label-primary) 6%, transparent); }
+.trajTrack .seg { position: absolute; top: 0; bottom: 0; min-width: 2px; }
+.trajTrack .seg.llm { background: var(--info); }
+.trajTrack .seg.tool { background: var(--warn); }
+.trajTrack .dur { width: 56px; flex: none; text-align: right; }
+.trajMain { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; }
+.trajList { min-width: 0; overflow: auto; padding: 6px 0 80px; }
+.trajInspector { min-width: 0; overflow: auto; padding: 12px 14px 80px; border-left: 0.5px solid var(--border-l2); font-size: 12px; }
+.trajInspector .kvTable { padding: 0; }
+.trajInspector .inspTitle { font-size: 13px; font-weight: 500; margin: 0 0 8px; }
+.trajTurnHead { display: flex; align-items: center; gap: 6px; width: 100%; height: 32px; padding: 0 16px; border: none; background: transparent; color: var(--label-primary); font-size: 13px; font-weight: 500; text-align: left; }
+.trajTurnHead .chev { width: 12px; height: 12px; transition: transform 0.15s var(--ease); color: var(--label-tertiary); }
+.trajTurn[data-open] .trajTurnHead .chev { transform: rotate(90deg); }
+.trajTurnHead .meta { margin-left: auto; font: 11px var(--mono); font-weight: 400; color: var(--label-tertiary); white-space: nowrap; }
+.trajTurn:not([data-open]) .trajRows { display: none; }
+.trajRow { display: grid; grid-template-columns: 14px 44px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; width: 100%; height: 28px; padding: 0 16px 0 34px; border: none; background: transparent; color: var(--label-secondary); font-size: 12px; text-align: left; }
+.trajRow .ico { width: 14px; height: 14px; color: var(--label-tertiary); }
+.trajRow .kind { color: var(--label-tertiary); }
+.trajRow .desc { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--label-primary); }
+.trajRow .dur, .trajRow .tok { font: 11px var(--mono); color: var(--label-tertiary); white-space: nowrap; }
+.trajRow[aria-selected='true'] { background: var(--hover); }
+.trajRow[data-status='error'] .desc { color: var(--error); }
+.trajEmpty { padding: 40px 16px; text-align: center; color: var(--label-tertiary); font-size: 13px; }
+@media (max-width: 900px) { .trajMain { grid-template-columns: minmax(0, 1fr); } .trajInspector { display: none; } }
 .mainSlot { flex: 1; min-height: 0; overflow: auto; }
 .dock { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
 .dock:empty { display: none; }
@@ -669,6 +734,10 @@ table.diff tr.hunk td { padding: 3px 12px; background: color-mix(in srgb, var(--
   .rbAdd:hover, .rbChip .close:hover { background: var(--hover); color: var(--label-primary); }
   .guideCard:hover { background: var(--hover); }
   .changesHead:hover, .changesRow:hover, .changesMore:hover { background: var(--hover); }
+  .processHead:hover { color: var(--label-secondary); }
+  .statChip:not([data-static]):hover { background: var(--hover); color: var(--label-secondary); }
+  .trajRow:hover, .trajTurnHead:hover, .trajTrack:hover { background: var(--hover); }
+  .turnUsage:hover { color: var(--label-tertiary); }
   .themeCard:hover { background: var(--hover-solid); }
   .prow:hover { background: var(--hover); }
   .menuRow:hover { background: var(--hover); }
@@ -786,6 +855,7 @@ table.diff tr.hunk td { padding: 3px 12px; background: color-mix(in srgb, var(--
       <button class="iconButton openSidebar" id="expand" data-i18n-title="expand"><svg class="ico"><use href="#i-panel"/></svg></button>
       <span class="crumb" id="crumb"></span>
       <span class="crumbTags" id="crumbTags"></span>
+      <span class="viewTabs" id="viewTabs" hidden><button type="button" class="viewTab" data-view="chat" aria-selected="true"></button><button type="button" class="viewTab" data-view="trajectory"></button></span>
       <span class="spacer"></span>
       <button class="iconButton" id="rbExpand" data-i18n-title="rightbarOpen" hidden><svg class="ico" style="transform:scaleX(-1)"><use href="#i-panel"/></svg></button>
     </div>
@@ -878,7 +948,7 @@ const T = zh ? {
 };
 Object.assign(T, zh ? {
   settings: '设置', settingsIntro: '保存后立即生效，无需重启；密钥写入 profile 的凭据文件，配置文件只记录引用名。',
-  rightbarOpen: '打开右侧栏', rightbarClose: '收起右侧栏', tabFiles: '文件', tabInfo: '会话', start: '开始', newTab: '新标签页', closeTab: '关闭', fullscreen: '全屏', exitFullscreen: '退出全屏', reload: '重新读取', reading: '读取中…', emptyDir: '空目录', guideFiles: '工作区文件', guideFilesDesc: '浏览此会话工作区中的文件', guideInfo: '会话信息', guideInfoDesc: '工作区、预设、权限与模型', unsupported: '此文件类型不支持预览', truncatedNote: '文件过大，只显示开头部分', retry: '重试', wrap: '自动换行', renderer: { markdown: 'Markdown', code: '代码', plain: '纯文本', image: '图片' }, noTabType: (k) => `没有名为 ${k} 的右侧栏标签类型`, noSession: '先打开或新建一个会话', up: '上级', loadFailed: (id, m) => `插件 ${id} 加载失败：${m}`, binaryFile: '二进制文件，不预览', truncated: '已截断', editedOne: (name) => `已编辑 ${name}`, editedMany: (n) => `改动了 ${n} 个文件`, showAll: (n) => `显示全部 ${n} 个文件`, collapseRows: '收起', binary: '二进制', previewInSidebar: '在侧边栏预览', changesTab: '改动', turnChanges: (seq) => `第 ${seq} 轮改动`, changesGone: '这轮改动的摘要已不可用', diffGone: 'harness 重启后，这轮的对比不再可用', fileAdded: '本轮新建的文件', fileDeleted: '本轮删除的文件', noTextChanges: '两侧内容相同', diffOversized: '文件过大，未保留对比', unified: '单栏', split: '左右对比', openFile: '在侧边栏打开文件',
+  rightbarOpen: '打开右侧栏', rightbarClose: '收起右侧栏', tabFiles: '文件', tabInfo: '会话', start: '开始', newTab: '新标签页', closeTab: '关闭', fullscreen: '全屏', exitFullscreen: '退出全屏', reload: '重新读取', reading: '读取中…', emptyDir: '空目录', guideFiles: '工作区文件', guideFilesDesc: '浏览此会话工作区中的文件', guideInfo: '会话信息', guideInfoDesc: '工作区、预设、权限与模型', unsupported: '此文件类型不支持预览', truncatedNote: '文件过大，只显示开头部分', retry: '重试', wrap: '自动换行', renderer: { markdown: 'Markdown', code: '代码', plain: '纯文本', image: '图片' }, noTabType: (k) => `没有名为 ${k} 的右侧栏标签类型`, noSession: '先打开或新建一个会话', up: '上级', loadFailed: (id, m) => `插件 ${id} 加载失败：${m}`, binaryFile: '二进制文件，不预览', truncated: '已截断', workDetails: '工作步骤展示', workDetailsHint: '选择工具调用过程显示的详细程度', wdCompact: '简洁', wdStandard: '标准', wdDetailed: '详细', wdFull: '完全展开', collapseWhen: '工作步骤收起时机', collapseWhenHint: '选择何时自动收起工作步骤', cwCompletion: '完成时', cwNext: '下一条消息时', perfUsage: '性能与用量', perfUsageHint: '选择性能与用量信息展示的详细程度', puDetailed: '详细', puCompact: '简洁', working: (d) => `深度求索中，用时 ${d} ···`, doneIn: (d) => `已完成，用时 ${d}`, doneLabel: '已完成', stepsN: (n) => `${n} 步`, failedTurn: '出错', cancelledTurn: '已取消', interruptedTurn: '等待审批', sessionStats: '会话统计', turnsSteps: (t, s) => `${t} 轮 ${s} 步`, tps: (v) => `${v} tok/s`, cacheHit: (p) => `缓存命中 ${p}%`, llmTime: '模型用时', toolTime: '工具调用用时', ttftAvg: '首 token 平均（TTFT）', tpsLabel: '输出速度（TPS）', tokensTotal: (n) => `${n} tokens`, tokenUsage: 'Token 用量', uncachedInput: '未缓存输入', cacheRead: '缓存读取', cacheWrite: '缓存写入', outputTokens: '输出', reasoningTokens: '推理', contextUsage: '上下文占用', viewChat: '对话', viewTrajectory: '轨迹', trajTitle: '运行轨迹', trajSearch: '搜索轨迹', collapseTurns: '收起所有轮次', expandTurns: '展开所有轮次', trajEmpty: '还没有记录', turnN: (n) => `第 ${n} 轮`, recUser: '用户', recStep: '模型', recTool: '工具', recEnd: '结束', inspector: '详情', ttft: 'TTFT', decoding: '解码', calls: (n) => `${n} 次调用`, durationLabel: '耗时', startLabel: '开始', outcomeLabel: '结果', tokensIn: '输入', tokensOut: '输出', chars: (n) => `${n} 字符`, pickRecord: '选择一条记录查看详情', outcome: { completed: '已完成', error: '出错', cancelled: '已取消', interrupted: '等待审批' }, editedOne: (name) => `已编辑 ${name}`, editedMany: (n) => `改动了 ${n} 个文件`, showAll: (n) => `显示全部 ${n} 个文件`, collapseRows: '收起', binary: '二进制', previewInSidebar: '在侧边栏预览', changesTab: '改动', turnChanges: (seq) => `第 ${seq} 轮改动`, changesGone: '这轮改动的摘要已不可用', diffGone: 'harness 重启后，这轮的对比不再可用', fileAdded: '本轮新建的文件', fileDeleted: '本轮删除的文件', noTextChanges: '两侧内容相同', diffOversized: '文件过大，未保留对比', unified: '单栏', split: '左右对比', openFile: '在侧边栏打开文件',
   workspaces: '工作区', addWorkspace: '添加工作区', more: '更多', searchSessions: '搜索会话', searchPlaceholder: '搜索会话名称', viewOptions: '视图选项', groupBy: '分组', groupWorkspace: '按工作区', groupNone: '单一列表', orderBy: '排序', orderUpdated: '最近更新', orderCreated: '创建时间', ungrouped: '未分组',
   wsActions: (n) => `工作区「${n}」的操作`, newSessionIn: (n) => `在「${n}」新建会话`, renameWorkspace: '重命名', deleteWorkspace: '删除工作区', deleteWorkspaceText: (n) => `将「${n}」从工作区列表移除。文件夹与会话记录保留，其会话将显示在「未分组」下。`, renameWorkspaceTitle: '重命名工作区', renameLabel: '重命名', cannotDeleteDefault: '默认工作区不可删除',
   sessionActions: '会话操作', renameSession: '重命名', copyId: '复制会话 ID', deleteSession: '删除会话', deleteSessionText: (t) => `删除「${t}」？会话记录将一并删除，不可恢复。`, renameSessionTitle: '重命名会话', noMatch_: '没有匹配的会话', close: '关闭', tabGeneral: '通用', tabModels: '模型', tabPresets: '预设', tabPlugins: '内置插件', appearance: '外观', appearanceHint: '跟随系统或固定明暗。', themeLight: '浅色', themeDark: '深色', themeSystem: '跟随系统', language: '语言', languageHint: '跟随浏览器语言。', builtin: '内置', presetsIntro: '选择 agent 的工具与工作方式。标准模式做日常任务，创造模式扩展 harness。', newTaskDefault: '新会话默认', pluginsTabIntro: '当前 profile 的条目与状态；安装与启停在侧边栏的插件页。', refresh: '刷新', theme: '主题',
@@ -900,7 +970,7 @@ Object.assign(T, zh ? {
   defaultTag: '默认', selectModel: '选择模型', manageModels: '管理模型…', noModels: '没有可用模型；先在设置里添加提供方。', modelSelected: (n) => `已切换到 ${n}`, modelsCount: (n) => `${n} 个模型`, readonly: '无 profile：设置只读。', showKey: '显示 / 隐藏密钥',
 } : {
   settings: 'Settings', settingsIntro: 'Changes apply at once, without a restart; keys go to the profile credential file and the configuration keeps only the reference name.',
-  rightbarOpen: 'Open right sidebar', rightbarClose: 'Collapse right sidebar', tabFiles: 'Files', tabInfo: 'Session', start: 'Start', newTab: 'New tab', closeTab: 'Close', fullscreen: 'Fullscreen', exitFullscreen: 'Exit fullscreen', reload: 'Read again', reading: 'Reading…', emptyDir: 'Empty directory', guideFiles: 'Workspace files', guideFilesDesc: "Browse files in this session's workspace", guideInfo: 'Session info', guideInfoDesc: 'Workspace, preset, permissions and model', unsupported: 'No preview for this file type', truncatedNote: 'Large file; only the beginning is shown', retry: 'Retry', wrap: 'Wrap lines', renderer: { markdown: 'Markdown', code: 'Code', plain: 'Plain text', image: 'Image' }, noTabType: (k) => `no right-sidebar tab type ${k}`, noSession: 'Open or start a session first', up: 'Up', loadFailed: (id, m) => `Plugin ${id} failed to load: ${m}`, binaryFile: 'Binary file; no preview', truncated: 'truncated', editedOne: (name) => `Edited ${name}`, editedMany: (n) => `Changed ${n} files`, showAll: (n) => `Show all ${n} files`, collapseRows: 'Collapse', binary: 'binary', previewInSidebar: 'Preview in sidebar', changesTab: 'Changes', turnChanges: (seq) => `Turn ${seq} changes`, changesGone: 'The summary of this turn is no longer available', diffGone: 'This diff is no longer available after a harness restart', fileAdded: 'File added in this turn', fileDeleted: 'File deleted in this turn', noTextChanges: 'Both sides are identical', diffOversized: 'File too large; no diff kept', unified: 'Unified', split: 'Side by side', openFile: 'Open the file in the sidebar',
+  rightbarOpen: 'Open right sidebar', rightbarClose: 'Collapse right sidebar', tabFiles: 'Files', tabInfo: 'Session', start: 'Start', newTab: 'New tab', closeTab: 'Close', fullscreen: 'Fullscreen', exitFullscreen: 'Exit fullscreen', reload: 'Read again', reading: 'Reading…', emptyDir: 'Empty directory', guideFiles: 'Workspace files', guideFilesDesc: "Browse files in this session's workspace", guideInfo: 'Session info', guideInfoDesc: 'Workspace, preset, permissions and model', unsupported: 'No preview for this file type', truncatedNote: 'Large file; only the beginning is shown', retry: 'Retry', wrap: 'Wrap lines', renderer: { markdown: 'Markdown', code: 'Code', plain: 'Plain text', image: 'Image' }, noTabType: (k) => `no right-sidebar tab type ${k}`, noSession: 'Open or start a session first', up: 'Up', loadFailed: (id, m) => `Plugin ${id} failed to load: ${m}`, binaryFile: 'Binary file; no preview', truncated: 'truncated', workDetails: 'Work details', workDetailsHint: 'How much detail to show for tool calls', wdCompact: 'Compact', wdStandard: 'Standard', wdDetailed: 'Detailed', wdFull: 'Fully expanded', collapseWhen: 'When to collapse work details', collapseWhenHint: 'When to collapse work details automatically', cwCompletion: 'On completion', cwNext: 'On next message', perfUsage: 'Performance & usage', perfUsageHint: 'How much performance and usage information to show', puDetailed: 'Detailed', puCompact: 'Compact', working: (d) => `Working for ${d} ···`, doneIn: (d) => `Done in ${d}`, doneLabel: 'Done', stepsN: (n) => `${n} steps`, failedTurn: 'Failed', cancelledTurn: 'Cancelled', interruptedTurn: 'Waiting for approval', sessionStats: 'Session stats', turnsSteps: (t, s) => `${t} turns ${s} steps`, tps: (v) => `${v} tok/s`, cacheHit: (p) => `Cache hit ${p}%`, llmTime: 'Model time', toolTime: 'Tool time', ttftAvg: 'Avg time to first token (TTFT)', tpsLabel: 'Output speed (TPS)', tokensTotal: (n) => `${n} tokens`, tokenUsage: 'Token usage', uncachedInput: 'Uncached input', cacheRead: 'Cache read', cacheWrite: 'Cache write', outputTokens: 'Output', reasoningTokens: 'Reasoning', contextUsage: 'Context usage', viewChat: 'Chat', viewTrajectory: 'Trajectory', trajTitle: 'Trajectory', trajSearch: 'Search trajectory', collapseTurns: 'Collapse turns', expandTurns: 'Expand turns', trajEmpty: 'No records yet', turnN: (n) => `Turn ${n}`, recUser: 'User', recStep: 'Model', recTool: 'Tool', recEnd: 'End', inspector: 'Details', ttft: 'TTFT', decoding: 'Decoding', calls: (n) => `${n} calls`, durationLabel: 'Duration', startLabel: 'Start', outcomeLabel: 'Outcome', tokensIn: 'Input', tokensOut: 'Output', chars: (n) => `${n} chars`, pickRecord: 'Select a record to inspect', outcome: { completed: 'Completed', error: 'Failed', cancelled: 'Cancelled', interrupted: 'Waiting for approval' }, editedOne: (name) => `Edited ${name}`, editedMany: (n) => `Changed ${n} files`, showAll: (n) => `Show all ${n} files`, collapseRows: 'Collapse', binary: 'binary', previewInSidebar: 'Preview in sidebar', changesTab: 'Changes', turnChanges: (seq) => `Turn ${seq} changes`, changesGone: 'The summary of this turn is no longer available', diffGone: 'This diff is no longer available after a harness restart', fileAdded: 'File added in this turn', fileDeleted: 'File deleted in this turn', noTextChanges: 'Both sides are identical', diffOversized: 'File too large; no diff kept', unified: 'Unified', split: 'Side by side', openFile: 'Open the file in the sidebar',
   workspaces: 'Workspaces', addWorkspace: 'Add workspace', more: 'More', searchSessions: 'Search sessions', searchPlaceholder: 'Search session names', viewOptions: 'View options', groupBy: 'Group by', groupWorkspace: 'Workspace', groupNone: 'In one list', orderBy: 'Order by', orderUpdated: 'Last updated', orderCreated: 'Created', ungrouped: 'Ungrouped',
   wsActions: (n) => `Workspace actions for ${n}`, newSessionIn: (n) => `New session in ${n}`, renameWorkspace: 'Rename', deleteWorkspace: 'Delete workspace', deleteWorkspaceText: (n) => `This removes "${n}" from the workspace list. The folder and session logs will be kept. Its sessions will appear under Ungrouped.`, renameWorkspaceTitle: 'Rename workspace', renameLabel: 'Rename', cannotDeleteDefault: 'The default workspace cannot be deleted',
   sessionActions: 'Session actions', renameSession: 'Rename', copyId: 'Copy session ID', deleteSession: 'Delete session', deleteSessionText: (t) => `Delete "${t}"? Its history is deleted and cannot be restored.`, renameSessionTitle: 'Rename session', noMatch_: 'No matching sessions', close: 'Close', tabGeneral: 'General', tabModels: 'Models', tabPresets: 'Agent presets', tabPlugins: 'Built-in plugins', appearance: 'Appearance', appearanceHint: 'Follow the system or pin light or dark.', themeLight: 'Light', themeDark: 'Dark', themeSystem: 'System', language: 'Language', languageHint: 'Follows the browser language.', builtin: 'Built-in', presetsIntro: "Choose the agent's tools and how it works. Standard for everyday tasks, Creator to extend the harness.", newTaskDefault: 'New task default', pluginsTabIntro: 'Entries of the current profile with their state; install and toggle on the sidebar Plugins page.', refresh: 'Refresh', theme: 'Theme',
@@ -1353,6 +1423,7 @@ function setView(view, key) {
   $('panelSlots').querySelectorAll('[data-panel]').forEach((b) => { if (b.dataset.panel === state.panel) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   $('topBar').toggleAttribute('data-bordered', view !== 'chat' || $('chatView').dataset.phase !== 'hero');
   $('rbExpand').hidden = view !== 'chat' || !state.current || rightbar.open;
+  $('viewTabs').hidden = view !== 'chat' || !state.current; if (view === 'chat' && state.current && state.convView === 'trajectory') { $('scroll').hidden = true; $('trajectoryView').hidden = false; } if ($('statsRow')) $('statsRow').hidden = view !== 'chat' || $('statsRow').dataset.empty === '1';
 }
 function selectPanel(key) {
   if (key === 'conversation') { if (state.current) openSession(state.current); else newSession(); return; }
@@ -1375,7 +1446,7 @@ function renderDock() {
 onSlot('conversation.composer.dock', renderDock);
 function newSession() {
   state.current = null; state.run = null; state.session = null; state.sessionModel = null; state.sessionMode = null; state.sessionPreset = null; closeModelMenu(); renderModelChip(); renderSessionChips();
-  setView('chat'); $('log').innerHTML = ''; $('approval').innerHTML = ''; renderDock(); renderRightbar(); emitPlugin('session', null);
+  setView('chat'); $('log').innerHTML = ''; $('approval').innerHTML = ''; curTurn = null; renderDock(); renderRightbar(); emitPlugin('session', null); setConvView('chat'); renderStats();
   $('crumb').textContent = '';
   setPhase('hero'); refreshSessions(); updateComposer(); $('input').focus();
 }
@@ -1386,8 +1457,8 @@ async function openSession(id) {
   if (state.current !== id) return;
   $('crumb').textContent = s.title || T.untitled;
   state.session = s; state.sessionModel = s.model || null; renderModelChip(); renderSessionChips(); renderDock(); renderRightbar(); emitPlugin('session', s);
-  setPhase('active'); $('rbExpand').hidden = rightbar.open;
-  renderHistory(s.messages, s.changes);
+  setPhase('active'); $('rbExpand').hidden = rightbar.open; setConvView('chat'); renderStats();
+  renderHistory(s.messages, s.changes, s.turns);
   renderApproval(s.pending || []);
   refreshSessions();
   scrollToEnd(true);
@@ -1452,7 +1523,7 @@ function addTool(call) {
   el.querySelector('.summary').textContent = argSummary(call.name, call.args);
   el.querySelector('[data-in]').textContent = JSON.stringify(call.args ?? {}, null, 2);
   el.querySelector('.drow').onclick = () => el.toggleAttribute('data-open');
-  log().appendChild(el); return el;
+  mountRow(el); return el;
 }
 function finishTool(el, result) {
   if (!el) return;
@@ -1474,7 +1545,7 @@ function addReasoning(text) {
   el.querySelector('.drow').onclick = () => el.toggleAttribute('data-open');
   el._raw = text || '';
   el.querySelector('.reasoningBody').innerHTML = markdown(el._raw);
-  log().appendChild(el); return el;
+  mountRow(el); return el;
 }
 function addAI(text) {
   const el = document.createElement('div'); el.className = 'aiBlock';
@@ -1482,7 +1553,7 @@ function addAI(text) {
   el._raw = text || '';
   el.querySelector('.md').innerHTML = markdown(el._raw);
   el.querySelector('.action').onclick = (e) => copyText(el._raw, e.currentTarget);
-  log().appendChild(el); return el;
+  mountRow(el); return el;
 }
 function markLast() {
   log().querySelectorAll('.aiBlock[data-last]').forEach((x) => x.removeAttribute('data-last'));
@@ -1502,13 +1573,16 @@ function addSystem(marker) {
   if (marker.rollback_error) el.title = marker.rollback_error;
   log().appendChild(el); return el;
 }
-function renderHistory(messages, changes) {
-  log().innerHTML = '';
-  const cards = {};
+function renderHistory(messages, changes, turns) {
+  log().innerHTML = ''; curTurn = null;
+  const cards = {}; const byAfter = {};
   for (const c of changes || []) (cards[c.after] ||= []).push(c);
+  for (const t of turns || []) byAfter[t.after] = t;
+  const closeTurn = (i) => { if (curTurn) { const rec = byAfter[i]; endTurn(rec ? rec.outcome : 'completed', rec, { collapseNow: true }); } };
   messages.forEach((m, i) => {
+    if (m.role === 'human') { closeTurn(i); }
     if (m.role === 'human' && m.harness) addSystem(m.harness);
-    else if (m.role === 'human') addUser(m.content, m.images);
+    else if (m.role === 'human') { addUser(m.content, m.images); beginTurn({ startedAt: (byAfter[i + 1]?.at || 0) * 1000 || Date.now() }); }
     else if (m.role === 'ai') {
       if (m.reasoning) addReasoning(m.reasoning);
       if (m.content || (m.images && m.images.length)) addImages(addAI(m.content), m.images);
@@ -1517,10 +1591,12 @@ function renderHistory(messages, changes) {
       const el = findTool(m.tool_call_id) || addTool({ id: m.tool_call_id, name: m.name || 'tool', args: {} });
       finishTool(el, m);
     }
-    for (const c of cards[i + 1] || []) addChangesCard(c);
+    for (const c of cards[i + 1] || []) { closeTurnFor(i + 1, byAfter); addChangesCard(c); }
   });
+  closeTurn(messages.length);
   markLast(); highlightBlocks(log());
 }
+function closeTurnFor(after, byAfter) { if (curTurn) { const rec = byAfter[after]; endTurn(rec ? rec.outcome : 'completed', rec, { collapseNow: true }); } }
 
 /* ---------- running indicator ---------- */
 let runningEl = null;
@@ -1535,9 +1611,10 @@ function showRunning(on) {
 /* ---------- streaming ---------- */
 async function consume(res) {
   state.streaming = true; updateComposer();
+  collapsePending(); beginTurn({ live: true });
   showRunning(true); scrollToEnd(true);
   const reader = res.body.getReader(); const dec = new TextDecoder();
-  let buf = '', ai = null, reasoning = null, restart = false, frame = 0, queuedChanges = null;
+  let buf = '', ai = null, reasoning = null, restart = false, frame = 0, queuedChanges = null, queuedTurn = null;
   const repaint = () => {
     if (frame) return;
     frame = requestAnimationFrame(() => {
@@ -1581,6 +1658,8 @@ async function consume(res) {
           case 'done':
             restart = ev.restart_pending;
             if (ev.extras?.changes) { queuedChanges = ev.extras.changes; if (state.session) (state.session.changes ||= []).push(ev.extras.changes); }
+            if (ev.extras?.turn && state.session) (state.session.turns ||= []).push(ev.extras.turn);
+            queuedTurn = { outcome: ev.outcome, record: ev.extras?.turn || null };
             if (ev.outcome === 'cancelled') addLine(T.cancelled);
             break;
         }
@@ -1593,8 +1672,9 @@ async function consume(res) {
     if (ai) ai.querySelector('.md').innerHTML = markdown(ai._raw);
     if (reasoning) reasoning.querySelector('.reasoningBody').innerHTML = markdown(reasoning._raw);
     showRunning(false);
+    endTurn(queuedTurn ? queuedTurn.outcome : 'completed', queuedTurn?.record || null);
     if (queuedChanges) { addChangesCard(queuedChanges); queuedChanges = null; scrollToEnd(); }
-    markLast(); highlightBlocks(log());
+    markLast(); highlightBlocks(log()); renderStats(); if (state.convView === 'trajectory') renderTrajectory();
     state.streaming = false; updateComposer(); refreshSessions();
     if (restart) waitForRestart();
   }
@@ -1960,6 +2040,139 @@ for (const [id, fn] of [['heroWorkspace', openWorkspaceMenu], ['modeChip', openM
   $(id).onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn($(id)); } };
 }
 
+/* ---------- display preferences, turn groups, session stats, trajectory ---------- */
+const uiPrefs = (() => { const d = { workDetails: 'standard', collapseWhen: 'completion', perfUsage: 'detailed' }; try { return { ...d, ...JSON.parse(localStorage.getItem('pyh-ui') || '{}') }; } catch { return d; } })();
+function applyPrefs() { document.documentElement.dataset.work = uiPrefs.workDetails; document.documentElement.dataset.perf = uiPrefs.perfUsage; }
+function savePrefs() { try { localStorage.setItem('pyh-ui', JSON.stringify(uiPrefs)); } catch { /* no storage */ } applyPrefs(); renderStats(); }
+applyPrefs();
+const fmtNum = (n) => (n == null ? '—' : Number(n).toLocaleString());
+function fmtDur(ms) { if (ms == null || !isFinite(ms)) return '—'; if (ms < 1000) return `${Math.round(ms)}ms`; if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`; const m = Math.floor(ms / 60000); const sec = Math.round((ms % 60000) / 1000); return `${m}m ${sec}s`; }
+let curTurn = null;
+function mountRow(el) { (curTurn ? curTurn.body : log()).appendChild(el); }
+function beginTurn(opts = {}) {
+  endTurn('completed', null, { collapseNow: true });
+  const el = document.createElement('div'); el.className = 'turn';
+  el.innerHTML = `<div class="process" data-open data-empty><button type="button" class="processHead" data-state="running"><span class="lead"></span><span class="label"></span>${icon('chev-right', 'ico chev')}</button><div class="processBody"></div></div>`;
+  log().appendChild(el);
+  const t = { el, process: el.querySelector('.process'), body: el.querySelector('.processBody'), head: el.querySelector('.processHead'), startedAt: opts.startedAt || Date.now(), timer: null };
+  t.head.onclick = () => t.process.toggleAttribute('data-open');
+  if (opts.live) t.timer = setInterval(() => { if (t.head.dataset.state === 'running') setProcessHead(t, 'running'); }, 1000);
+  curTurn = t; setProcessHead(t, 'running');
+  return t;
+}
+function setProcessHead(t, state, record) {
+  t.head.dataset.state = state;
+  const lead = t.head.querySelector('.lead'); const label = t.head.querySelector('.label');
+  if (state === 'running') { lead.innerHTML = icon('spinner', 'ico spin'); label.innerHTML = `<span class="shimmer">${esc(T.working(fmtDur(Date.now() - t.startedAt)))}</span>`; }
+  else {
+    const dur = record?.stats?.duration_ms; const steps = record?.stats?.steps;
+    lead.innerHTML = icon(state === 'completed' ? 'check' : state === 'error' ? 'x-circle' : 'alert');
+    const text = state === 'completed' ? (dur != null ? T.doneIn(fmtDur(dur)) : T.doneLabel) : state === 'cancelled' ? T.cancelledTurn : state === 'interrupted' ? T.interruptedTurn : T.failedTurn;
+    label.textContent = text + (steps ? ` · ${T.stepsN(steps)}` : '');
+  }
+  t.process.toggleAttribute('data-empty', !t.body.children.length);
+}
+function endTurn(outcome, record, opts = {}) {
+  const t = curTurn; if (!t) return; curTurn = null;
+  if (t.timer) clearInterval(t.timer);
+  const last = t.body.lastElementChild;
+  if (last && last.classList.contains('aiBlock')) t.el.appendChild(last);
+  setProcessHead(t, outcome || 'completed', record);
+  if (uiPrefs.workDetails === 'detailed') t.body.querySelectorAll('.tool').forEach((x) => x.setAttribute('data-open', ''));
+  const collapse = uiPrefs.workDetails !== 'full' && (opts.collapseNow || uiPrefs.collapseWhen === 'completion');
+  if (collapse) t.process.removeAttribute('data-open'); else if (uiPrefs.workDetails !== 'full') t.el.dataset.pendingCollapse = '';
+  if (record?.stats?.usage_steps && uiPrefs.perfUsage === 'detailed') t.el.appendChild(turnUsageRow(record.stats));
+}
+function collapsePending() { log().querySelectorAll('.turn[data-pending-collapse]').forEach((el) => { el.querySelector('.process')?.removeAttribute('data-open'); delete el.dataset.pendingCollapse; }); }
+function turnUsageRow(st) {
+  const wrap = document.createElement('div');
+  const hit = st.input_tokens ? Math.round((st.cache_read_tokens / st.input_tokens) * 100) : 0;
+  wrap.innerHTML = `<button type="button" class="turnUsage" title="${esc(T.tokenUsage)}">${icon('list')}<span>↑ ${fmtNum(st.input_tokens)} ↓ ${fmtNum(st.output_tokens)}${st.cache_read_tokens ? ` · ${esc(T.cacheHit(hit))}` : ''} · ${esc(fmtDur(st.duration_ms))}</span></button><div class="turnUsageDetail">${[[T.uncachedInput, fmtNum(st.input_tokens - st.cache_read_tokens)], [T.cacheRead, fmtNum(st.cache_read_tokens)], [T.cacheWrite, fmtNum(st.cache_write_tokens)], [T.outputTokens, fmtNum(st.output_tokens)], [T.reasoningTokens, fmtNum(st.reasoning_tokens)], [T.llmTime, fmtDur(st.llm_ms)], [T.toolTime, fmtDur(st.tool_ms)], [T.ttft, st.ttft_steps ? fmtDur(st.ttft_ms / st.ttft_steps) : '—'], [T.tpsLabel, st.decode_ms ? T.tps(Math.round((st.decode_tokens / st.decode_ms) * 1000)) : '—']].map(([k, v]) => `<span>${esc(k)}</span><span>${esc(v)}</span>`).join('')}</div>`;
+  wrap.querySelector('.turnUsage').onclick = () => wrap.querySelector('.turnUsageDetail').toggleAttribute('data-open');
+  return wrap;
+}
+function sessionStats() {
+  const turns = state.session?.turns || []; const keys = ['steps', 'tool_calls', 'input_tokens', 'output_tokens', 'cache_read_tokens', 'cache_write_tokens', 'reasoning_tokens', 'usage_steps', 'llm_ms', 'tool_ms', 'ttft_ms', 'ttft_steps', 'decode_ms', 'decode_tokens', 'duration_ms'];
+  const a = Object.fromEntries(keys.map((k) => [k, 0])); a.turns = turns.length; a.last_input = null;
+  for (const t of turns) { for (const k of keys) a[k] += Number(t.stats?.[k]) || 0; if (t.stats?.last_input_tokens != null) a.last_input = t.stats.last_input_tokens; }
+  a.tps = a.decode_ms ? Math.round((a.decode_tokens / a.decode_ms) * 1000) : null;
+  a.cacheHit = a.input_tokens ? Math.round((a.cache_read_tokens / a.input_tokens) * 100) : null;
+  return a;
+}
+function ringSvg(p) { const r = 5.5; const c = 2 * Math.PI * r; return `<svg class="ring" viewBox="0 0 16 16"><circle cx="8" cy="8" r="${r}" fill="none" stroke="var(--border-l4)" stroke-width="2"/><circle cx="8" cy="8" r="${r}" fill="none" stroke="${p > 0.9 ? 'var(--error)' : p > 0.7 ? 'var(--warn)' : 'var(--info)'}" stroke-width="2" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - Math.min(1, p))}" transform="rotate(-90 8 8)"/></svg>`; }
+let statPopEl = null;
+function statPopClose() { if (statPopEl) { statPopEl.remove(); statPopEl = null; document.removeEventListener('mousedown', statPopOutside, true); } }
+function statPopOutside(e) { if (statPopEl && !statPopEl.contains(e.target)) statPopClose(); }
+function statPop(anchor, title, rows) {
+  if (statPopEl && statPopEl.dataset.for === anchor.dataset.stat) { statPopClose(); return; }
+  statPopClose();
+  statPopEl = document.createElement('div'); statPopEl.className = 'menu statPop'; statPopEl.dataset.for = anchor.dataset.stat;
+  statPopEl.innerHTML = `<div class="menuGroup">${esc(title)}</div>${rows.map(([k, v]) => `<div class="kv"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}`;
+  anchor.parentElement.appendChild(statPopEl); statPopEl.style.left = `${anchor.offsetLeft}px`;
+  document.addEventListener('mousedown', statPopOutside, true);
+}
+function renderStats() {
+  const row = $('statsRow'); if (!row) return; statPopClose();
+  const s = state.session; if (!s || !state.current || state.view !== 'chat') { row.hidden = true; return; }
+  const a = sessionStats(); row.hidden = !a.turns; if (!a.turns) return;
+  const total = a.input_tokens + a.output_tokens; const win = s.context_window; const used = a.last_input;
+  if (uiPrefs.perfUsage === 'compact') { row.innerHTML = `<span class="statChip" data-static>${[a.tps != null ? T.tps(fmtNum(a.tps)) : '', a.cacheHit != null ? T.cacheHit(a.cacheHit) : ''].filter(Boolean).map(esc).join(' · ') || esc(T.turnsSteps(a.turns, a.steps))}</span>`; return; }
+  row.innerHTML = `<button type="button" class="statChip" data-stat="activity">${icon('zap')}<span>${esc(T.turnsSteps(a.turns, a.steps))}${a.tps != null ? ' · ' + esc(T.tps(fmtNum(a.tps))) : ''}</span></button><button type="button" class="statChip" data-stat="usage">${icon('list')}<span>${esc(T.tokensTotal(fmtNum(total)))}${a.cacheHit != null ? ' · ' + esc(T.cacheHit(a.cacheHit)) : ''}</span></button>${win && used ? `<button type="button" class="statChip" data-stat="context" title="${esc(T.contextUsage)}">${ringSvg(used / win)}<span>${Math.round((used / win) * 100)}%</span></button>` : ''}`;
+  row.onclick = (e) => {
+    const b = e.target.closest('[data-stat]'); if (!b) return;
+    if (b.dataset.stat === 'activity') statPop(b, T.sessionStats, [[T.turnsSteps(a.turns, a.steps), fmtDur(a.duration_ms)], [T.llmTime, fmtDur(a.llm_ms)], [T.toolTime, fmtDur(a.tool_ms)], [T.ttftAvg, a.ttft_steps ? fmtDur(a.ttft_ms / a.ttft_steps) : '—'], [T.tpsLabel, a.tps != null ? T.tps(fmtNum(a.tps)) : '—']]);
+    else if (b.dataset.stat === 'usage') statPop(b, T.tokenUsage, [[T.uncachedInput, fmtNum(a.input_tokens - a.cache_read_tokens)], [T.cacheRead, fmtNum(a.cache_read_tokens)], [T.cacheWrite, fmtNum(a.cache_write_tokens)], [T.outputTokens, fmtNum(a.output_tokens)], [T.reasoningTokens, fmtNum(a.reasoning_tokens)]]);
+    else statPop(b, T.contextUsage, [[T.tokensIn, `${fmtNum(used)} / ${fmtNum(win)}`]]);
+  };
+}
+function setConvView(view) {
+  state.convView = view;
+  const tabs = $('viewTabs'); tabs.hidden = !state.current || state.view !== 'chat';
+  tabs.querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-selected', b.dataset.view === view));
+  $('scroll').hidden = view !== 'chat'; $('trajectoryView').hidden = view !== 'trajectory';
+  if (view === 'trajectory') renderTrajectory();
+}
+const trajUi = { closed: {}, selected: null, query: '' };
+function renderTrajectory() {
+  const v = $('trajectoryView'); const turns = state.session?.turns || []; const q = trajUi.query.trim().toLowerCase();
+  const steps = turns.reduce((n, t) => n + (t.stats?.steps || 0), 0); const total = turns.reduce((n, t) => n + (t.stats?.duration_ms || 0), 0);
+  const allOpen = turns.every((t) => !trajUi.closed[t.run_id]);
+  const rowOf = (t, r, k) => {
+    const sel = trajUi.selected && trajUi.selected.run === t.run_id && trajUi.selected.k === k;
+    let ico = 'box', kind = '', desc = '', dur = '', tok = '', status = '';
+    if (r.t === 'user') { ico = 'pencil'; kind = T.recUser; desc = r.preview || T.chars(r.chars); }
+    else if (r.t === 'step') { ico = 'zap'; kind = T.recStep; desc = [r.tool_calls ? T.calls(r.tool_calls) : '', r.chars ? T.chars(r.chars) : ''].filter(Boolean).join(' · ') || '—'; dur = `${r.ttft_ms != null ? `${T.ttft} ${fmtDur(r.ttft_ms)} · ` : ''}${fmtDur(r.dur_ms)}`; tok = r.input_tokens != null ? `↑ ${fmtNum(r.input_tokens)} ↓ ${fmtNum(r.output_tokens)}` : ''; }
+    else if (r.t === 'tool') { ico = toolGlyph(r.name || ''); kind = T.recTool; desc = r.name || ''; dur = r.dur_ms != null ? fmtDur(r.dur_ms) : ''; status = r.status || ''; tok = status && status !== 'success' ? status : ''; }
+    else { ico = r.outcome === 'completed' ? 'check' : 'x-circle'; kind = T.recEnd; desc = T.outcome[r.outcome] || r.outcome; }
+    if (q && !`${kind} ${desc} ${r.name || ''}`.toLowerCase().includes(q)) return '';
+    return `<button type="button" class="trajRow" data-run="${esc(t.run_id)}" data-k="${k}" aria-selected="${sel}" data-status="${esc(status)}">${icon(ico)}<span class="kind">${esc(kind)}</span><span class="desc" title="${esc(desc)}">${esc(desc)}</span><span class="dur">${esc(dur)}</span><span class="tok">${esc(tok)}</span></button>`;
+  };
+  const track = (t) => { const d = Math.max(1, t.stats?.duration_ms || 1); const segs = (t.records || []).filter((r) => r.t === 'step' || r.t === 'tool').map((r) => `<span class="seg ${r.t === 'step' ? 'llm' : 'tool'}" style="left:${(((r.at - t.at) * 1000) / d) * 100}%;width:${((r.dur_ms || 0) / d) * 100}%" title="${esc(r.t === 'step' ? T.recStep : r.name || T.recTool)} · ${esc(fmtDur(r.dur_ms))}"></span>`).join(''); return `<button type="button" class="trajTrack" data-track="${esc(t.run_id)}"><span class="lbl">${esc(T.turnN(t.seq))}</span><span class="bar">${segs}</span><span class="dur">${esc(fmtDur(t.stats?.duration_ms))}</span></button>`; };
+  const block = (t) => { const st = t.stats || {}; const rows = (t.records || []).map((r, k) => rowOf(t, r, k)).join(''); if (q && !rows) return ''; return `<div class="trajTurn" data-turn="${esc(t.run_id)}" ${trajUi.closed[t.run_id] ? '' : 'data-open'}><button type="button" class="trajTurnHead" data-toggle="${esc(t.run_id)}">${icon('chev-right', 'ico chev')}<span>${esc(T.turnN(t.seq))}</span><span class="meta">${esc(T.outcome[t.outcome] || t.outcome)} · ${esc(fmtDur(st.duration_ms))} · ${esc(T.stepsN(st.steps || 0))}${st.usage_steps ? ` · ↑ ${fmtNum(st.input_tokens)} ↓ ${fmtNum(st.output_tokens)}` : ''}</span></button><div class="trajRows">${rows}</div></div>`; };
+  v.innerHTML = `<div class="trajBar"><span class="trajTitle">${esc(T.trajTitle)}</span><input class="input" data-q placeholder="${esc(T.trajSearch)}" value="${esc(trajUi.query)}"><span class="spacer"></span><span class="fieldHint">${esc(T.turnsSteps(turns.length, steps))} · ${esc(fmtDur(total))}</span><button type="button" class="btn outline sm" data-toggle-all>${esc(allOpen ? T.collapseTurns : T.expandTurns)}</button></div>${turns.length ? `<div class="trajOverview">${turns.map(track).join('')}</div>` : ''}<div class="trajMain"><div class="trajList">${turns.map(block).join('') || `<div class="trajEmpty">${esc(T.trajEmpty)}</div>`}</div><div class="trajInspector" data-inspector>${trajInspector(turns)}</div></div>`;
+  const qEl = v.querySelector('[data-q]'); qEl.oninput = () => { trajUi.query = qEl.value; const pos = qEl.selectionStart; renderTrajectory(); const n = v.querySelector('[data-q]'); n.focus(); n.setSelectionRange(pos, pos); };
+  v.querySelector('[data-toggle-all]').onclick = () => { for (const t of turns) trajUi.closed[t.run_id] = allOpen; renderTrajectory(); };
+  v.onclick = (e) => {
+    const tg = e.target.closest('[data-toggle]'); if (tg) { trajUi.closed[tg.dataset.toggle] = !trajUi.closed[tg.dataset.toggle]; renderTrajectory(); return; }
+    const tr = e.target.closest('[data-track]'); if (tr) { trajUi.closed[tr.dataset.track] = false; renderTrajectory(); v.querySelector(`[data-turn="${CSS.escape(tr.dataset.track)}"]`)?.scrollIntoView({ block: 'start' }); return; }
+    const r = e.target.closest('.trajRow'); if (r) { trajUi.selected = { run: r.dataset.run, k: Number(r.dataset.k) }; v.querySelectorAll('.trajRow').forEach((x) => x.setAttribute('aria-selected', x === r)); v.querySelector('[data-inspector]').innerHTML = trajInspector(turns); }
+  };
+}
+function trajInspector(turns) {
+  const sel = trajUi.selected; const t = sel && turns.find((x) => x.run_id === sel.run); const r = t && (t.records || [])[sel.k];
+  if (!r) return `<div class="rbEmpty" style="padding:0">${esc(T.pickRecord)}</div>`;
+  const time = (v) => new Date(v * 1000).toLocaleTimeString();
+  const rows = [[T.startLabel, time(r.at)]];
+  if (r.t === 'user') rows.push([T.recUser, r.preview || ''], [T.chars(r.chars), r.kind || '']);
+  if (r.t === 'step') rows.push([T.durationLabel, fmtDur(r.dur_ms)], [T.ttft, r.ttft_ms != null ? fmtDur(r.ttft_ms) : '—'], [T.decoding, r.ttft_ms != null ? fmtDur(r.dur_ms - r.ttft_ms) : '—'], [T.tokensIn, fmtNum(r.input_tokens)], [T.tokensOut, fmtNum(r.output_tokens)], [T.cacheRead, fmtNum(r.cache_read_tokens)], [T.reasoningTokens, fmtNum(r.reasoning_tokens)], [T.calls(r.tool_calls || 0), T.chars(r.chars || 0)]);
+  if (r.t === 'tool') rows.push([T.recTool, r.name || ''], [T.outcomeLabel, r.status || ''], [T.durationLabel, fmtDur(r.dur_ms)], [T.input, T.chars(r.args_chars || 0)], [T.output, T.chars(r.result_chars || 0)]);
+  if (r.t === 'end') rows.push([T.outcomeLabel, T.outcome[r.outcome] || r.outcome], [T.durationLabel, fmtDur(t.stats?.duration_ms)], [T.recStep, fmtDur(t.stats?.llm_ms)], [T.recTool, fmtDur(t.stats?.tool_ms)]);
+  return `<p class="inspTitle">${esc(T.turnN(t.seq))} · ${esc(r.t === 'user' ? T.recUser : r.t === 'step' ? T.recStep : r.t === 'tool' ? T.recTool : T.recEnd)}</p><dl class="kvTable">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v == null ? '' : String(v))}</dd>`).join('')}</dl>`;
+}
+$('viewTabs').onclick = (e) => { const b = e.target.closest('[data-view]'); if (b) setConvView(b.dataset.view); };
+$('viewTabs').querySelector('[data-view="chat"]').textContent = T.viewChat; $('viewTabs').querySelector('[data-view="trajectory"]').textContent = T.viewTrajectory;
+{ const traj = document.createElement('section'); traj.className = 'trajectory'; traj.id = 'trajectoryView'; traj.hidden = true; $('scroll').after(traj); const sr = document.createElement('div'); sr.className = 'statsRow'; sr.id = 'statsRow'; sr.hidden = true; $('composer').after(sr); }
+
 /* ---------- syntax highlighting (server-side Pygments) and changed-file cards ---------- */
 async function highlightBlocks(root) {
   const blocks = [...root.querySelectorAll('.codeBlock:not([data-hl]) pre code')];
@@ -2302,6 +2515,7 @@ function generalMarkup() {
   return `<h3 class="sectionTitle">${esc(T.tabGeneral)}</h3><p class="sectionIntro">${esc(T.settingsIntro)}</p>
     <div class="srow"><div class="main"><div class="title">${esc(T.defaultMode)}</div><div class="desc">${esc(T.modeDesc[a.default_mode] || '')}</div></div><div class="ctl"><div class="selectWrap"><select class="select" data-field="defaultMode">${modes}</select>${icon('chev-down', 'ico chev')}</div></div></div>
     <div class="srow"><div class="main"><div class="title">${esc(T.language)}</div><div class="desc">${esc(T.languageHint)}</div></div><div class="ctl"><span class="tag" data-tone="outline">${zh ? '中文' : 'English'}</span></div></div>
+    ${[['workDetails', T.workDetails, T.workDetailsHint, [['compact', T.wdCompact], ['standard', T.wdStandard], ['detailed', T.wdDetailed], ['full', T.wdFull]]], ['collapseWhen', T.collapseWhen, T.collapseWhenHint, [['completion', T.cwCompletion], ['next', T.cwNext]]], ['perfUsage', T.perfUsage, T.perfUsageHint, [['detailed', T.puDetailed], ['compact', T.puCompact]]]].map(([key, title, hint, opts]) => `<div class="srow"><div class="main"><div class="title">${esc(title)}</div><div class="desc">${esc(hint)}</div></div><div class="ctl"><div class="selectWrap"><select class="select" data-pref="${key}">${opts.map(([v, l]) => `<option value="${v}" ${uiPrefs[key] === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>${icon('chev-down', 'ico chev')}</div></div></div>`).join('')}
     <div class="srow" style="flex-direction:column;align-items:stretch"><div class="main"><div class="title">${esc(T.appearance)}</div><div class="desc">${esc(T.appearanceHint)}</div></div>
       <div class="themeCards" data-field="themeCards">${[['light', 'sun', T.themeLight], ['dark', 'moon', T.themeDark], ['system', 'panel', T.themeSystem]].map(([id, ic, label]) => `<button type="button" class="themeCard" data-theme-choice="${id}" aria-pressed="${theme === id}">${icon(ic)}<span>${esc(label)}</span></button>`).join('')}</div></div>`;
 }
@@ -2311,6 +2525,7 @@ function bindGeneral() {
     try { const r = await json('/settings/agent', { method: 'PUT', body: JSON.stringify({ default_mode: e.target.value }) }); state.agent = { ...state.agent, ...r }; renderSessionChips(); toast(T.applied); content.innerHTML = generalMarkup(); bindGeneral(); } catch (err) { toast(err.message); }
   };
   content.querySelector('[data-field="themeCards"]').onclick = (e) => { const c = e.target.closest('[data-theme-choice]'); if (!c) return; setTheme(c.dataset.themeChoice); content.innerHTML = generalMarkup(); bindGeneral(); };
+  content.querySelectorAll('[data-pref]').forEach((sel) => { sel.onchange = () => { uiPrefs[sel.dataset.pref] = sel.value; savePrefs(); }; });
 }
 function presetsMarkup() {
   const a = state.agent; if (!a) return '';
