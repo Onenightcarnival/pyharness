@@ -102,7 +102,11 @@ async def test_plugin_management_routes(home):
             r = await c.post("/api/plugins/install", json={"package": "not a requirement"})
             assert r.status_code == 422 and "not a package requirement" in r.json()["detail"]
             r = await c.put("/api/plugins/entries/nope", json={"enabled": False})
-            assert r.status_code == 422
-            r = await c.put("/api/plugins/bundles/nope", json={"enabled": True})
-            assert r.status_code == 422
-            assert (await c.delete("/api/plugins/bundles/nope")).status_code == 422
+            assert r.status_code == 409  # unknown entries are not user plugins either
+            # Built-in bundles and their entries are read-only through the Web API.
+            assert (await c.put("/api/plugins/bundles/base", json={"enabled": False})).status_code == 409
+            assert (await c.delete("/api/plugins/bundles/base")).status_code == 409
+            r = await c.put("/api/plugins/entries/llm", json={"enabled": False})
+            assert r.status_code == 409 and "built in" in r.json()["detail"]
+            assert (await c.put("/api/plugins/bundles/nope", json={"enabled": True})).status_code == 409
+            assert (await c.delete("/api/plugins/bundles/nope")).status_code == 409

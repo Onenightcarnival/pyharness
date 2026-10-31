@@ -1952,7 +1952,8 @@ function entryCards(d) {
   return d.entries.map((e) => {
     const [tone, key] = STATE_TAG[e.state] || ['outline', e.state];
     const detail = e.state === 'pending' ? `${T.missing}: ${(e.missing || []).join(', ')}` : e.state === 'failed' ? e.error : (e.provides ? `ctx.${e.provides}` : '');
-    const toggle = e.source !== 'bundle:base' && !['http', 'api', 'web-ui'].includes(e.id) ? `<span class="pcardActions">${switchHtml(e.state !== 'disabled', 'entry', e.id)}</span>` : '';
+    const userBundles = new Set((d.bundles || []).filter((b) => b.installed === 'profile').map((b) => `bundle:${b.bundle}`));
+    const toggle = userBundles.has(e.source) ? `<span class="pcardActions">${switchHtml(e.state !== 'disabled', 'entry', e.id)}</span>` : '';
     return `<div class="pcard"><span class="pcardIcon">${icon(entryGlyph(e))}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(e.id)}</span>${e.state === 'active' ? '' : `<span class="tag" data-tone="${tone}">${esc(T[key] || key)}</span>`}</span><span class="pcardDesc"><code>${esc(e.name || '')}</code>${e.source ? ' · ' + esc(e.source) : ''}${detail ? ' · ' + esc(detail) : ''}</span></span>${toggle}</div>`;
   }).join('');
 }
@@ -1960,7 +1961,7 @@ function showPlugins() { selectPanel('plugins'); }
 async function renderPluginsPanel(el) {
   const d = await loadPluginCount();
   if (!d) return;
-  const bundleCards = d.bundles.map((b) => `<div class="pcard"><span class="pcardIcon">${icon('box')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(b.bundle)}</span><span class="tag" data-tone="${b.enabled ? 'success' : 'outline'}">${esc(b.enabled ? T.enabled : T.off)}</span></span><span class="pcardDesc"><code>${esc(b.dist || '')}</code> ${esc(b.version || '')} · ${esc(b.installed === 'profile' ? T.fromProfile : T.fromEnv)}</span></span><span class="pcardActions">${b.bundle === 'base' ? '' : switchHtml(b.enabled, 'bundle', b.bundle)}${b.installed === 'profile' ? `<button type="button" class="iconButton" data-uninstall="${esc(b.bundle)}" title="${esc(T.uninstall)}">${icon('trash')}</button>` : ''}</span></div>`).join('');
+  const bundleCards = d.bundles.map((b) => `<div class="pcard"><span class="pcardIcon">${icon('box')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(b.bundle)}</span><span class="tag" data-tone="${b.enabled ? 'success' : 'outline'}">${esc(b.enabled ? T.enabled : T.off)}</span></span><span class="pcardDesc"><code>${esc(b.dist || '')}</code> ${esc(b.version || '')} · ${esc(b.installed === 'profile' ? T.fromProfile : T.fromEnv)}</span></span><span class="pcardActions">${b.installed === 'profile' ? `${switchHtml(b.enabled, 'bundle', b.bundle)}<button type="button" class="iconButton" data-uninstall="${esc(b.bundle)}" title="${esc(T.uninstall)}">${icon('trash')}</button>` : `<span class="tag" data-tone="quiet">${esc(T.builtin)}</span>`}</span></div>`).join('');
   const entries = entryCards(d);
   const clients = (window.__PYH_BOOT__?.plugins || []).map((p) => { const st = moduleStatus[p.id]; return `<div class="pcard"><span class="pcardIcon">${icon('code')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(p.id)}</span><span class="tag" data-tone="${st?.ok ? 'success' : st ? 'danger' : 'outline'}">${esc(st?.ok ? T.running : st ? T.failed : T.pending)}</span></span><span class="pcardDesc"><code>${esc(p.url.split('?')[0])}</code>${p.calls?.length ? ' · ' + esc(p.calls.join(', ')) : ''}${st && !st.ok ? ' · ' + esc(st.error) : ''}</span></span></div>`; }).join('');
   el.innerHTML = `<div class="page">

@@ -5,9 +5,9 @@
 | GET    | ``/health``                  |                               | generation, restart state, model, workspace |
 | GET    | ``/plugins``                 |                               | loader entries, installed bundles           |
 | POST   | ``/plugins/install``         | ``{"path"} | {"package", "index_url"?}`` | install a bundle directory or a PyPI package; restart scheduled |
-| PUT    | ``/plugins/bundles/{name}``  | ``{"enabled"}``               | enable or disable a bundle                  |
-| DELETE | ``/plugins/bundles/{name}``  |                               | uninstall a bundle from the profile site    |
-| PUT    | ``/plugins/entries/{id}``    | ``{"enabled"}``               | enable or disable an entry                  |
+| PUT    | ``/plugins/bundles/{name}``  | ``{"enabled"}``               | enable or disable a profile-installed bundle (built-in: 409) |
+| DELETE | ``/plugins/bundles/{name}``  |                               | uninstall a profile-installed bundle (built-in: 409) |
+| PUT    | ``/plugins/entries/{id}``    | ``{"enabled"}``               | enable or disable an entry of a profile-installed bundle (built-in: 409) |
 | POST   | ``/restart``                 |                               | restart after running turns (supervised)    |
 | GET    | ``/sessions``                |                               | sessions                                    |
 | POST   | ``/sessions``                | ``{"title"?, "model"?, "workspace"?, "mode"?, "preset"?}`` | session        |
@@ -261,21 +261,40 @@ def build_router(ctx: Any) -> APIRouter:
         result = await manage.install_package(profile, body.package or "", index_url=body.index_url, baseline=ctx.loader.snapshot())
         return applied(result, f"install package {body.package}")
 
+    def user_bundles(profile: Any) -> set[str]:
+        """Bundles installed into the profile site: the only ones the Web UI may toggle or remove."""
+        return {b["bundle"] for b in profile.installed_bundles() if b.get("installed") == "profile"}
+
+    def require_user_bundle(profile: Any, name: str) -> None:
+        if name not in user_bundles(profile):
+            raise HTTPException(
+                409,
+                f"bundle {name!r} is built in (installed with the environment); only plugins installed into the profile can be changed here",
+            )
+
     @router.delete("/plugins/bundles/{name}")
     async def uninstall_plugin(name: str) -> dict[str, Any]:
         profile = plugin_profile()
+        require_user_bundle(profile, name)
         result = await manage.uninstall_bundle(profile, name, baseline=ctx.loader.snapshot())
         return applied(result, f"uninstall bundle {name}")
 
     @router.put("/plugins/bundles/{name}")
     async def toggle_bundle(name: str, body: EnabledBody) -> dict[str, Any]:
         profile = plugin_profile()
+        require_user_bundle(profile, name)
         result = await manage.set_bundle_enabled(profile, name, body.enabled, baseline=ctx.loader.snapshot())
         return applied(result, f"{'enable' if body.enabled else 'disable'} bundle {name}")
 
     @router.put("/plugins/entries/{entry_id}")
     async def toggle_entry(entry_id: str, body: EnabledBody) -> dict[str, Any]:
         profile = plugin_profile()
+        entry = next((e for e in ctx.loader.snapshot() if e.get("id") == entry_id), None)
+        source = str((entry or {}).get("source") or "")
+        if entry is None or not source.startswith("bundle:") or source[len("bundle:") :] not in user_bundles(profile):
+            raise HTTPException(
+                409, f"entry {entry_id!r} is built in; only entries of plugins installed into the profile can be changed here"
+            )
         result = await manage.set_entry_enabled(profile, entry_id, body.enabled, baseline=ctx.loader.snapshot())
         return applied(result, f"{'enable' if body.enabled else 'disable'} entry {entry_id}")
 
