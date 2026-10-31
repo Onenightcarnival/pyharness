@@ -1,0 +1,8 @@
+title: Web
+description: web_search (DeepSeek native search; needs DEEPSEEK_API_KEY) and web_fetch tools for the agent. Preset; switch it off on the Plugins page.
+optional: true
+patch:
+  # Web tools: ctx.web. Search key: the DEEPSEEK_API_KEY credential (Settings → Models, DeepSeek route) or the environment.
+  - id: web-tools
+    name: pyharness-web-tools
+    after: mcp

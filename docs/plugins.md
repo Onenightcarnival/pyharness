@@ -24,8 +24,12 @@
 | `pyharness-plugin-manager` | `dev-context` | — | `pyharness-dev-context`：harness 位置提示词段 |
 | `pyharness-bundle-base` | — | — | `base` bundle：以上条目的组合 |
 | `pyharness-bundle-creator` | — | — | `creator` bundle：`plugin-manager` 的 `skills: true`、`guidance: false` |
+| `pyharness-web-tools` | `web-tools` | `web` | `web_search`（DeepSeek 原生搜索：一次 Anthropic 格式的 Messages 调用带 `web_search_20250305` 服务端工具，返回回答与来源）与 `web_fetch`（HTTP 抓取，HTML 转成文本）；搜索密钥取 `DEEPSEEK_API_KEY` 凭据（环境或 profile 凭据库），缺失时工具返回说明而不是让轮次出错 |
+| `pyharness-bundle-web` | — | — | `web` bundle：上面两个工具；`optional: true`，默认开启，插件页可关闭 |
 
 条目 id 与配置：`packages/bundle-base/src/pyharness_bundle_base/bundle.yaml`。
+
+可选 bundle：bundle 定义里 `optional: true` 的 bundle 不必写进 profile 的 `bundles` 列表就会生效（排在显式列表之后），profile 清单的 `disabled` 列表把它关掉；插件页与 `PUT /plugins/bundles/{name}` 对这类 bundle 允许开关，不允许卸载。内置 bundle（`base`）仍然只读。
 
 ## 事件
 

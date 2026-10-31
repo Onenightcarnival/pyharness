@@ -56,7 +56,7 @@ def test_templates_render_without_tokens():
 
 async def test_creator_profile_mounts_skills_read_only(home):
     profile = Profile.init("creator", template="creator", home=str(home))
-    assert profile.bundles() == ["base", "creator"]
+    assert profile.bundles() == ["base", "creator", "web"]  # web: optional preset, on by default
     replies = [
         {
             "content": "",

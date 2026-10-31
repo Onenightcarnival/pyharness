@@ -65,8 +65,8 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | GET | `/health` | | 代、重启状态、模型、工作区 |
 | GET | `/plugins` | | Loader 条目、已安装 bundle |
 | POST | `/plugins/install` | `{"path"}` 或 `{"package", "index_url"?}` | 安装 bundle 目录或 PyPI 包到 profile site；预检失败 422；成功后 `restart-scheduled`（supervised）或 `saved-restart-required` |
-| PUT | `/plugins/bundles/{name}` | `{"enabled"}` | 启用 / 停用 bundle |
-| DELETE | `/plugins/bundles/{name}` | | 卸载 bundle |
+| PUT | `/plugins/bundles/{name}` | `{"enabled"}` | 启用 / 停用 bundle：装在 profile 里的，或 `optional: true` 的预置 bundle；内置 bundle 409 |
+| DELETE | `/plugins/bundles/{name}` | | 卸载装在 profile 里的 bundle；其他 409 |
 | PUT | `/plugins/entries/{id}` | `{"enabled"}` | 启用 / 停用条目 |
 | POST | `/restart` | | 请求重启（运行中的轮次结束后）；未受 supervisor 管理时 409 |
 | GET | `/sessions` | | 会话列表 |

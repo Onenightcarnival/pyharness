@@ -1,0 +1,17 @@
+[project]
+name = "pyharness-web-tools"
+version = "0.1.0"
+description = "pyharness plugin: web_search through DeepSeek native search and web_fetch"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = ["pyharness-core", "pyharness-tools", "httpx>=0.27", "langchain-core>=1.0"]
+
+[project.entry-points."pyharness.plugins"]
+pyharness-web-tools = "pyharness_web_tools:WebToolsService"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyharness_web_tools"]

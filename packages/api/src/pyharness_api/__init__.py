@@ -5,7 +5,7 @@
 | GET    | ``/health``                  |                               | generation, restart state, model, workspace |
 | GET    | ``/plugins``                 |                               | loader entries, installed bundles           |
 | POST   | ``/plugins/install``         | ``{"path"} | {"package", "index_url"?}`` | install a bundle directory or a PyPI package; restart scheduled |
-| PUT    | ``/plugins/bundles/{name}``  | ``{"enabled"}``               | enable or disable a profile-installed bundle (built-in: 409) |
+| PUT    | ``/plugins/bundles/{name}``  | ``{"enabled"}``               | enable or disable a profile-installed or optional bundle (built-in: 409) |
 | DELETE | ``/plugins/bundles/{name}``  |                               | uninstall a profile-installed bundle (built-in: 409) |
 | PUT    | ``/plugins/entries/{id}``    | ``{"enabled"}``               | enable or disable an entry of a profile-installed bundle (built-in: 409) |
 | POST   | ``/restart``                 |                               | restart after running turns (supervised)    |
@@ -306,14 +306,21 @@ def build_router(ctx: Any) -> APIRouter:
         return applied(result, f"install package {body.package}")
 
     def user_bundles(profile: Any) -> set[str]:
-        """Bundles installed into the profile site: the only ones the Web UI may toggle or remove."""
+        """Bundles installed into the profile site: the only ones the Web UI may remove."""
         return {b["bundle"] for b in profile.installed_bundles() if b.get("installed") == "profile"}
 
-    def require_user_bundle(profile: Any, name: str) -> None:
-        if name not in user_bundles(profile):
+    def switchable_bundles(profile: Any) -> set[str]:
+        """Profile-installed bundles plus optional environment bundles (``optional: true``): the ones the Web UI may toggle."""
+        return {b["bundle"] for b in profile.installed_bundles() if b.get("installed") == "profile" or b.get("optional")}
+
+    def require_user_bundle(profile: Any, name: str, *, toggle: bool = False) -> None:
+        allowed = switchable_bundles(profile) if toggle else user_bundles(profile)
+        if name not in allowed:
             raise HTTPException(
                 409,
-                f"bundle {name!r} is built in (installed with the environment); only plugins installed into the profile can be changed here",
+                f"bundle {name!r} is built in (installed with the environment); only plugins installed into the profile"
+                + (" and optional presets" if toggle else "")
+                + " can be changed here",
             )
 
     @router.delete("/plugins/bundles/{name}")
@@ -326,7 +333,7 @@ def build_router(ctx: Any) -> APIRouter:
     @router.put("/plugins/bundles/{name}")
     async def toggle_bundle(name: str, body: EnabledBody) -> dict[str, Any]:
         profile = plugin_profile()
-        require_user_bundle(profile, name)
+        require_user_bundle(profile, name, toggle=True)
         result = await manage.set_bundle_enabled(profile, name, body.enabled, baseline=ctx.loader.snapshot())
         return applied(result, f"{'enable' if body.enabled else 'disable'} bundle {name}")
 

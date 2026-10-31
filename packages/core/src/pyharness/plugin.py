@@ -211,6 +211,7 @@ class BundleInfo:
     dist: str | None
     version: str | None
     location: str | None
+    optional: bool = False  # on unless the profile lists it under ``disabled``; the Web UI may toggle it
 
 
 def load_bundle(name: str) -> BundleInfo:
@@ -249,4 +250,5 @@ def bundle_from_object(name: str, obj: Any, ep: metadata.EntryPoint | None = Non
         dist=dist.name if dist else None,
         version=dist.version if dist else None,
         location=str(dist.locate_file("")) if dist else None,
+        optional=bool(data.get("optional", False)),
     )

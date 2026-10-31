@@ -13,6 +13,7 @@ members = [
     "pyharness-api",
     "pyharness-bundle-base",
     "pyharness-bundle-creator",
+    "pyharness-bundle-web",
     "pyharness-checkpoint-postgres",
     "pyharness-checkpoint-sqlite",
     "pyharness-compaction",
@@ -25,6 +26,7 @@ members = [
     "pyharness-plugin-manager",
     "pyharness-prompt",
     "pyharness-tools",
+    "pyharness-web-tools",
     "pyharness-web-ui",
     "pyharness-workspace",
     "pyharness-workspace-changes",
@@ -1579,6 +1581,21 @@ requires-dist = [
 ]
 
 [[package]]
+name = "pyharness-bundle-web"
+version = "0.1.0"
+source = { editable = "packages/bundle-web" }
+dependencies = [
+    { name = "pyharness-core" },
+    { name = "pyharness-web-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pyharness-core", editable = "packages/core" },
+    { name = "pyharness-web-tools", editable = "packages/web-tools" },
+]
+
+[[package]]
 name = "pyharness-checkpoint-postgres"
 version = "0.1.0"
 source = { editable = "packages/checkpoint-postgres" }
@@ -1746,6 +1763,7 @@ dependencies = [
     { name = "pyharness-api" },
     { name = "pyharness-bundle-base" },
     { name = "pyharness-bundle-creator" },
+    { name = "pyharness-bundle-web" },
     { name = "pyharness-checkpoint-postgres" },
     { name = "pyharness-checkpoint-sqlite" },
     { name = "pyharness-compaction" },
@@ -1757,6 +1775,7 @@ dependencies = [
     { name = "pyharness-plugin-manager" },
     { name = "pyharness-prompt" },
     { name = "pyharness-tools" },
+    { name = "pyharness-web-tools" },
     { name = "pyharness-web-ui" },
     { name = "pyharness-workspace" },
     { name = "pyharness-workspace-changes" },
@@ -1778,6 +1797,7 @@ requires-dist = [
     { name = "pyharness-api", editable = "packages/api" },
     { name = "pyharness-bundle-base", editable = "packages/bundle-base" },
     { name = "pyharness-bundle-creator", editable = "packages/bundle-creator" },
+    { name = "pyharness-bundle-web", editable = "packages/bundle-web" },
     { name = "pyharness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
     { name = "pyharness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
     { name = "pyharness-compaction", editable = "packages/compaction" },
@@ -1789,6 +1809,7 @@ requires-dist = [
     { name = "pyharness-plugin-manager", editable = "packages/plugin-manager" },
     { name = "pyharness-prompt", editable = "packages/prompt" },
     { name = "pyharness-tools", editable = "packages/tools" },
+    { name = "pyharness-web-tools", editable = "packages/web-tools" },
     { name = "pyharness-web-ui", editable = "packages/web-ui" },
     { name = "pyharness-workspace", editable = "packages/workspace" },
     { name = "pyharness-workspace-changes", editable = "packages/workspace-changes" },
@@ -1846,6 +1867,25 @@ requires-dist = [
     { name = "langchain", specifier = ">=1.0" },
     { name = "langchain-core", specifier = ">=1.0" },
     { name = "pyharness-core", editable = "packages/core" },
+]
+
+[[package]]
+name = "pyharness-web-tools"
+version = "0.1.0"
+source = { editable = "packages/web-tools" }
+dependencies = [
+    { name = "httpx" },
+    { name = "langchain-core" },
+    { name = "pyharness-core" },
+    { name = "pyharness-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "pyharness-core", editable = "packages/core" },
+    { name = "pyharness-tools", editable = "packages/tools" },
 ]
 
 [[package]]

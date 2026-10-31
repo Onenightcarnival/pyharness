@@ -24,6 +24,7 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 | `pyharness-plugin-manager` | function |  | tools, prompt, agentLoop | yes | ``plugin_manager`` tool, the plugin-authoring skills, and the short prompt section. |
 | `pyharness-prompt` | service | prompt |  | no | Ordered system-prompt sections. |
 | `pyharness-tools` | service | tools |  | no | Tool registry and the ``tools/execute`` → ``tools/result`` pipeline. |
+| `pyharness-web-tools` | service | web | tools | yes | Plugin that provides one service under ``key``. |
 | `pyharness-web-ui` | service | webui | http | yes | The Web UI page and the client-module registry. |
 | `pyharness-workspace` | function |  | tools | yes | Workspace provider: ``ctx.workspace`` (the workspace registry) and ``ctx.backend`` (the default deepagents backend). |
 | `pyharness-workspace-changes` | service | workspaceChanges | agents, workspace, store | yes | Per-turn changed-file summaries and diffs. |
@@ -34,3 +35,4 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 |---|---|---|---|
 | `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `mcp`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `compaction`, `workspace-changes`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui` |
 | `creator` | Creator | New sessions start in the Creator preset (plugin-authoring skills, plugin manager and inspection tools). | `agent-loop` |
+| `web` | Web | web_search (DeepSeek native search; needs DEEPSEEK_API_KEY) and web_fetch tools for the agent. Preset; switch it off on the Plugins page. | `web-tools` |
