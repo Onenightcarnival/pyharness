@@ -29,7 +29,8 @@
 | `pyharness-web-tools` | `web-tools` | `web` | `web_search`（DeepSeek 原生搜索：一次 Anthropic 格式的 Messages 调用带 `web_search_20250305` 服务端工具，返回回答与来源）与 `web_fetch`（HTTP 抓取，HTML 转成文本）；搜索密钥取 `DEEPSEEK_API_KEY` 凭据（环境或 profile 凭据库），缺失时工具返回说明而不是让轮次出错 |
 | `pyharness-bundle-web` | — | — | `web` bundle：上面两个工具；`optional: true`，默认开启，插件页可关闭 |
 | `pyharness-memory` | `memory` | `memory` | agent 的职业履历记忆（对齐 dsh-memory）：`profile → work → project → lesson` 四层树，SQLite 存储（`<profile data>/toolkit/memory.sqlite`），每次改动记一条修订并保存整份快照（内容寻址去重）；`memory_get`（读一个节点：内容、祖先、分页子节点摘要）与 `memory_save`（一次原子应用 1–100 条带类型的改动，`stateToken` 并发校验，`ref` / `@ref` 批内引用）；提示词段 `plugin:memory`（order 155）；两者只在记忆页「允许 Agent 使用」开着时注册；`/api/memory` 路由；左侧栏「记忆」全页 |
-| `pyharness-bundle-toolkit` | — | — | `toolkit` bundle：工具箱各模块（目前 memory）；`builtin: true`，每个 profile 必含、不可关闭、不可卸载；左侧栏入口可在设置 → 通用里隐藏 |
+| `pyharness-rdb` | `rdb` | `rdb` | 关系数据库工作台（对齐 dsh-rdb）：SQLite（标准库）/ PostgreSQL 与 GaussDB（psycopg 3）/ MySQL 与 MariaDB（PyMySQL）；连接配置存 `<profile data>/toolkit/rdb.json`，密码存 profile 凭据库（`rdb:<id>`）；多主机按 `targetSessionAttrs`（libpq 语义）挑节点；每个连接一个常驻驱动（空闲 10 分钟关闭）；`db_connections` / `db_schema` / `db_query`（单条只读语句，服务端分类拒绝写入）/ `db_explain` / `db_execute`（一个事务，仅对勾选「允许 Agent 写入」的连接，且须 `confirm=true`）；提示词段 `plugin:rdb`（order 153）；工具与提示词只在数据库页「允许 Agent 使用」开着时注册；`/api/rdb/*` 路由（连接、测试、schema / 表 / 列 / DDL、分页行、query、execute、网格改动预览与应用、CSV 导出）；左侧栏「数据库」全页 |
+| `pyharness-bundle-toolkit` | — | — | `toolkit` bundle：工具箱各模块（memory、rdb）；`builtin: true`，每个 profile 必含、不可关闭、不可卸载；左侧栏入口可在设置 → 通用里隐藏 |
 
 条目 id 与配置：`packages/bundle-base/src/pyharness_bundle_base/bundle.yaml`。
 

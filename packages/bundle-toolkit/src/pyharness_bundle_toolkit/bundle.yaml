@@ -6,3 +6,7 @@ patch:
   - id: memory
     name: pyharness-memory
     after: web-ui
+  # Relational databases (SQLite / PostgreSQL / GaussDB / MySQL): ctx.rdb, db_* tools, the Database page.
+  - id: rdb
+    name: pyharness-rdb
+    after: memory
