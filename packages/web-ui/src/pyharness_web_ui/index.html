@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>pyharness</title>
+<title>PyHarness</title>
 <style>
 /* Design tokens: DeepSeek Harness Web theme. Neutral-bluish scale, 0.5px hairlines,
    radius ladder 4–28, soft elevation. Token names: local to this page. */
@@ -538,6 +538,7 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 /* composer */
 .composerSeat { flex: none; position: relative; bottom: auto; display: flex; flex-direction: column; align-items: center; padding: 0 16px 12px; background: linear-gradient(180deg, color-mix(in srgb, var(--bg-base) 0%, transparent) 0, var(--bg-base) 36px); }
 .conversation[data-phase='hero'] .composerSeat { position: static; background: none; padding: 0; }
+.conversation[data-phase='hero'] .card { max-width: none; }
 #approval { width: 100%; display: flex; flex-direction: column; align-items: center; }
 .conversation[data-phase='hero'] .hero .composerSlot { display: contents; }
 .notice { width: 100%; max-width: calc(var(--chat-width) + 32px); margin-bottom: 6px; padding: 4px 8px; border-radius: var(--r-md); background: var(--hover); color: var(--label-secondary); font-size: 12px; line-height: 18px; display: flex; align-items: center; gap: 6px; }
@@ -868,7 +869,7 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
     <symbol id="i-sliders" viewBox="0 0 16 16"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/><circle cx="6" cy="4.5" r="1.4" fill="var(--sidebar-fill)"/><circle cx="10.5" cy="8" r="1.4" fill="var(--sidebar-fill)"/><circle cx="5" cy="11.5" r="1.4" fill="var(--sidebar-fill)"/></symbol>
     <symbol id="i-spinner" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.75" opacity=".25"/><path d="M8 2.25a5.75 5.75 0 0 1 5.75 5.75"/></symbol>
     <!-- Mark: four plugin tiles. -->
-    <symbol id="i-mark" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="8.5" height="8.5" rx="2.6" fill="currentColor" stroke="none"/><rect x="13" y="2.5" width="8.5" height="8.5" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="13" width="8.5" height="8.5" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="13" width="8.5" height="8.5" rx="2.6" fill="var(--info)" stroke="none"/></symbol>
+    <symbol id="i-mark" viewBox="0 0 24 24"><path fill="#4B8BBE" stroke="none" fill-rule="evenodd" d="M11.9 1.6c-5.1 0-4.8 2.2-4.8 2.2v2.3h4.9v.7H5.2S1.9 6.4 1.9 11.9c0 5.5 2.9 5.3 2.9 5.3h1.7v-2.5s-.1-2.9 2.8-2.9h4.9s2.7.1 2.7-2.6V4.2s.4-2.6-5-2.6zm-2.7 1.5a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8z"/><path fill="#FFD43B" stroke="none" fill-rule="evenodd" d="M12.1 22.4c5.1 0 4.8-2.2 4.8-2.2v-2.3H12v-.7h6.8s3.3.4 3.3-5.1-2.9-5.3-2.9-5.3h-1.7v2.5s.1 2.9-2.8 2.9H9.8s-2.7-.1-2.7 2.6v4.4s-.4 2.6 5 2.6zm2.7-1.5a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8z"/></symbol>
   </defs>
 </svg>
 
@@ -876,7 +877,7 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
   <div class="scrim" id="scrim"></div>
   <aside class="sidebar" id="sidebar">
     <div class="logoRow" id="logoRow">
-      <span class="brand"><svg class="brandMark"><use href="#i-mark"/></svg><span class="brandName">pyharness</span><span class="buildBadge" id="genBadge">gen –</span></span>
+      <span class="brand"><svg class="brandMark"><use href="#i-mark"/></svg><span class="brandName">PyHarness</span></span>
       <button class="iconButton collapseSidebar" id="collapse" data-i18n-title="collapse"><svg class="ico"><use href="#i-panel"/></svg></button>
     </div>
     <button class="newSession" id="newSession" data-i18n-title="newSession"><svg class="ico"><use href="#i-plus-circle"/></svg><span data-i18n="newSession"></span></button>
@@ -913,7 +914,7 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
     <div class="conversation" id="chatView" data-phase="hero">
       <div class="scrollBody" id="scroll">
         <div class="hero" id="hero">
-          <div class="headline"><svg class="heroMark"><use href="#i-mark"/></svg><span data-i18n="headline"></span><span class="previewBadge" id="heroBadge">preview</span></div>
+          <div class="headline"><svg class="heroMark"><use href="#i-mark"/></svg><span data-i18n="headline"></span></div>
           <div class="workspaceRow"><span class="chip" id="heroWorkspace" role="button" tabindex="0"><svg class="ico"><use href="#i-folder"/></svg><span class="label">workspace</span><svg class="ico chev"><use href="#i-chev-down"/></svg></span><span class="chip" id="heroPreset" role="button" tabindex="0"><svg class="ico"><use href="#i-mode"/></svg><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span></div>
           <div class="composerSlot" id="heroComposer"></div>
         </div>
@@ -1263,8 +1264,6 @@ async function refreshHealth() {
   try {
     const h = await json('/health');
     state.health = h; state.generation = h.generation; emitPlugin('health', h);
-    $('genBadge').textContent = `gen ${h.generation}`;
-    $('heroBadge').textContent = `gen ${h.generation}`;
     $('profileName').textContent = h.profile || 'pyharness';
     $('profileMeta').innerHTML = `<span class="dot" data-state="${h.restart_pending ? 'warn' : 'on'}"></span>`;
     renderModelChip(); renderSessionChips();
