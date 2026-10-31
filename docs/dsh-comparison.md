@@ -56,7 +56,8 @@ bundle 中条目的位置（`after` / `before` / `parent`）对应 mount 路径�
 | 代码高亮 | dsh 用 Shiki（浏览器端 TextMate grammar）；pyharness 用服务端 Pygments，回复定稿后高亮 |
 | 改动文件卡片与 review | 有：git 快照摘要、轮末卡片、右侧栏 diff tab（单栏 / 左右）；未做文件工具编辑的兜底捕获，非 git 工作区不记录 |
 | 轮次过程折叠 | 有：过程组 + 四档展示模式 + 收起时机；dsh 的滚动跟随与折叠动画未做 |
-| 会话统计 / token 用量 | 有：每轮 stats 持久化、统计条与弹层、每轮用量行、上下文占用圆环（需模型声明上下文窗口）；dsh 的 token-meter 启发式估算与压缩未做 |
+| 会话统计 / token 用量 | 有：每轮 stats 持久化、统计条与弹层、每轮用量行、上下文占用圆环（需模型声明上下文窗口）；dsh 的 token-meter 做逐节点估算，pyharness 只按最近用量加估算 |
+| 上下文压缩（`dsh-compaction-basic` + `/compact`） | 有：`pyharness-compaction`，自动（阈值 / 保留比例）与 `/compact`，dsh 同款结构化检查点提示词；摘要调用用纯文本转写而非复用请求前缀缓存；未做工具结果裁剪与图片卸载（`dsh-compaction-tool-result-pruner` / `image-offload`） |
 | MCP 客户端 | 有：`pyharness-mcp`，stdio / HTTP / SSE，设置页配置；未做 MCP resources 与 prompts |
 | 轨迹视图 | 有：按轮次的记录表、时间概览、详情面板；dsh 的虚拟滚动、分页加载与完整输入输出检查未做（记录只存摘要尺寸） |
 | 每会话 agent preset（preset + isolate realm） | 预设是 `agent-loop` 的配置（工具子集、skills、提示词片段），每会话一张图；没有 realm 级的服务隔离 |

@@ -15,6 +15,7 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 | `pyharness-api` | function |  | http, agents, llm | yes | REST and SSE API over ``ctx.agents``, under ``/api`` on ``ctx.http``. |
 | `pyharness-checkpoint-postgres` | function |  |  | yes | Persistence provider on PostgreSQL: ``ctx.checkpointer`` and ``ctx.store``. |
 | `pyharness-checkpoint-sqlite` | function |  |  | yes | Persistence provider on SQLite: ``ctx.checkpointer`` and ``ctx.store``. |
+| `pyharness-compaction` | service | compaction | agentLoop, llm | yes | Plugin that provides one service under ``key``. |
 | `pyharness-dev-context` | function |  | prompt | yes | Prompt section ``dev-context``: where this harness runs. |
 | `pyharness-http` | service | http |  | yes | FastAPI root application and uvicorn server. |
 | `pyharness-inspect` | function |  | tools | yes | ``harness_inspect`` tool: read-only view of the running harness. |
@@ -31,5 +32,5 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 
 | bundle | title | description | entries (patch op ids) |
 |---|---|---|---|
-| `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `mcp`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `workspace-changes`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui` |
+| `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `mcp`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `compaction`, `workspace-changes`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui` |
 | `creator` | Creator | New sessions start in the Creator preset (plugin-authoring skills, plugin manager and inspection tools). | `agent-loop` |

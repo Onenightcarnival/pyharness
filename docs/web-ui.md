@@ -35,6 +35,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 图片输入 | 输入框的「+」按钮、粘贴、拖入：PNG / JPEG / GIF / WebP，最多 8 张，超过 2048px 的边在浏览器内缩放，压缩后 8 MB 以内；缩略图可移除；当前模型未勾选「图像」输入时拒绝并提示 |
 | 折叠行 | 推理内容、工具调用；展开为输入 / 输出卡片 |
 | 轮次过程折叠 | 对齐 dsh：每轮的推理与工具调用归入一个过程组，组头运行中显示「深度求索中，用时 Xs ···」，完成后显示「已完成，用时 X · N 步」（出错 / 已取消 / 等待审批），最终回复始终在组外可见。设置 → 通用「工作步骤展示」：简洁（收起并隐藏推理行）/ 标准 / 详细（收起，但工具行展开）/ 完全展开（不收起）；「工作步骤收起时机」：完成时 / 下一条消息时。偏好存于 `localStorage` |
+| 上下文压缩 | 上下文接近窗口（默认 80%）时，模型调用前自动把较早的历史换成一份结构化检查点（保留最近 16% 窗口的内容，不拆开工具调用与结果）；对话里显示「上下文已压缩」行，可展开摘要；输入框输入 `/compact` 手动压缩整段历史。运行事件 `compact`，轨迹里一条「压缩」记录。设置 → 通用里可关闭自动压缩、调阈值与保留比例、设未声明窗口模型的默认窗口 |
 | 性能与用量 | 每轮记录（`GET /sessions/{id}` 的 `turns`，`done` 事件的 `extras.turn`）：步骤数、工具调用数、token（输入 / 输出 / 缓存读写 / 推理）、模型用时、工具用时、首 token、解码用时。输入框下方的统计条：「N 轮 M 步 · tok/s」点开会话统计（模型用时、工具调用用时、TTFT 平均、TPS），「X tokens · 缓存命中」点开 token 用量明细；模型声明了上下文窗口时显示上下文占用圆环。每轮回复下方有可展开的用量行。设置「性能与用量」为简洁时只显示 tok/s 与缓存命中 |
 | 轨迹视图 | 顶栏「对话 / 轨迹」切换。轨迹：搜索、收起 / 展开所有轮次、总计；时间概览按轮次画出模型（蓝）与工具（黄）时间段；记录表按轮次列出用户、模型步骤（TTFT、耗时、token）、工具调用（耗时、状态）、结束；点击记录在右侧查看详情 |
 | 运行中 | 「思考中」闪光；停止按钮取消当前轮 |
@@ -93,6 +94,9 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | POST | `/workspaces/pick` | `{"path"?: 提示语}` | 本机系统文件夹对话框；取消为 `{"path": null}`；`GET /workspaces` 的 `picker` 为 `native` 或 `browse` |
 | GET | `/sessions/{id}` | | 会话、运行状态、消息、待批准项 |
 | POST | `/sessions/{id}/messages` | `{"content", "images"?}` | SSE 运行事件；`images` 为 data URL，模型未声明图像输入时 422 |
+| POST | `/sessions/{id}/compact` | | 手动压缩：一轮 `compact` 类型的运行，SSE 带 `compact`（有历史被替换时）与 `done`；会话忙或等待审批时 409 |
+| GET | `/settings/compaction` | | 压缩配置：`auto`、`threshold_ratio`、`retain_ratio`、`default_context_window`、`summary_model` |
+| PUT | `/settings/compaction` | 同上（可只给部分字段） | 立即生效并写入 profile 补丁；不重启 |
 | POST | `/sessions/{id}/approvals` | `{"decisions": [{"type": "approve" \| "reject"}]}` | SSE 运行事件 |
 | POST | `/sessions/{id}/cancel` | | `{"cancelled"}` |
 | DELETE | `/sessions/{id}` | | `{"deleted"}` |

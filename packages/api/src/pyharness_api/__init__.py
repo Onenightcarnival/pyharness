@@ -14,6 +14,7 @@
 | GET    | ``/sessions/{id}``           |                               | session, busy, messages, pending approvals  |
 | POST   | ``/sessions/{id}/messages``  | ``{"content", "images"?}``    | SSE run events; images: data URLs           |
 | POST   | ``/sessions/{id}/approvals`` | ``{"decisions": [decision]}`` | SSE run events                              |
+| POST   | ``/sessions/{id}/compact``   |                               | SSE of a manual compaction run (``compact``, ``done``) |
 | POST   | ``/sessions/{id}/cancel``    |                               | ``{"cancelled"}``                           |
 | DELETE | ``/sessions/{id}``           |                               | ``{"deleted"}``                             |
 | GET    | ``/sessions/{id}/stream``    |                               | SSE of the running turn; 204 when idle      |
@@ -204,6 +205,16 @@ class NewMessage(BaseModel):
 
 class Approvals(BaseModel):
     decisions: list[dict[str, Any]]
+
+
+class CompactionSettings(BaseModel):
+    """Fields of the compaction plugin's configuration; ``None`` keeps the saved value."""
+
+    auto: bool | None = None
+    threshold_ratio: float | None = Field(None, gt=0, le=1)
+    retain_ratio: float | None = Field(None, ge=0, lt=1)
+    default_context_window: int | None = Field(None, gt=0)
+    summary_model: str | None = None
 
 
 class RouteSettings(BaseModel):
@@ -684,6 +695,22 @@ def build_router(ctx: Any) -> APIRouter:
             raise HTTPException(503, str(exc), headers={"Retry-After": "2"}) from None
         return _sse(handle.subscribe())
 
+    @router.post("/sessions/{session_id}/compact")
+    async def post_compact(session_id: str) -> StreamingResponse:
+        """Manual compaction: a run of kind ``compact`` whose stream carries ``compact`` (when history was replaced) and ``done``."""
+        await require(session_id)
+        if ctx.get("compaction", None) is None:
+            raise HTTPException(503, "compaction plugin unavailable")
+        if await agents.pending(session_id):
+            raise HTTPException(409, "the session is waiting for approval decisions")
+        try:
+            handle = agents.start_run(session_id, "/compact", kind="compact", marker={"kind": "command", "name": "compact"})
+        except SessionBusy as exc:
+            raise HTTPException(409, str(exc)) from None
+        except RestartPending as exc:
+            raise HTTPException(503, str(exc), headers={"Retry-After": "2"}) from None
+        return _sse(handle.subscribe())
+
     @router.post("/sessions/{session_id}/cancel")
     async def cancel(session_id: str) -> dict[str, Any]:
         await require(session_id)
@@ -762,6 +789,30 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
             raise HTTPException(422, str(exc)) from None
         await manage.set_entry_config(profile(), "agent-loop", defaults, merge=True, preflight=False)
         return {**defaults, "presets": loop.presets(), "modes": loop.modes()}
+
+    def compaction_service() -> Any:
+        service = ctx.get("compaction", None)
+        if service is None:
+            raise HTTPException(503, "compaction plugin unavailable")
+        return service
+
+    @router.get("/settings/compaction")
+    async def get_compaction_settings() -> dict[str, Any]:
+        return compaction_service().settings()
+
+    @router.put("/settings/compaction")
+    async def put_compaction_settings(body: CompactionSettings) -> dict[str, Any]:
+        """Apply in place (the next model call uses the new values) and persist in the profile patch."""
+        service = compaction_service()
+        fields = {k: v for k, v in body.model_dump().items() if v is not None}
+        if "summary_model" in body.model_fields_set:
+            fields["summary_model"] = body.summary_model or None
+        try:
+            settings = service.update(**fields)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        await manage.set_entry_config(profile(), "compaction", fields, merge=True, preflight=False)
+        return {"application": "applied", **settings}
 
     @router.get("/settings/models")
     async def get_model_settings() -> dict[str, Any]:

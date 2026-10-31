@@ -15,6 +15,7 @@ members = [
     "pyharness-bundle-creator",
     "pyharness-checkpoint-postgres",
     "pyharness-checkpoint-sqlite",
+    "pyharness-compaction",
     "pyharness-core",
     "pyharness-http",
     "pyharness-inspect",
@@ -1527,6 +1528,7 @@ dependencies = [
     { name = "pyharness-api" },
     { name = "pyharness-checkpoint-postgres" },
     { name = "pyharness-checkpoint-sqlite" },
+    { name = "pyharness-compaction" },
     { name = "pyharness-core" },
     { name = "pyharness-http" },
     { name = "pyharness-inspect" },
@@ -1547,6 +1549,7 @@ requires-dist = [
     { name = "pyharness-api", editable = "packages/api" },
     { name = "pyharness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
     { name = "pyharness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
+    { name = "pyharness-compaction", editable = "packages/compaction" },
     { name = "pyharness-core", editable = "packages/core" },
     { name = "pyharness-http", editable = "packages/http" },
     { name = "pyharness-inspect", editable = "packages/inspect" },
@@ -1609,6 +1612,29 @@ requires-dist = [
     { name = "aiosqlite" },
     { name = "langgraph-checkpoint-sqlite", specifier = ">=3" },
     { name = "pyharness-core", editable = "packages/core" },
+]
+
+[[package]]
+name = "pyharness-compaction"
+version = "0.1.0"
+source = { editable = "packages/compaction" }
+dependencies = [
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "langgraph" },
+    { name = "pyharness-agent-loop-deepagents" },
+    { name = "pyharness-core" },
+    { name = "pyharness-llm" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "langchain", specifier = ">=1.0" },
+    { name = "langchain-core", specifier = ">=1.0" },
+    { name = "langgraph", specifier = ">=1.0" },
+    { name = "pyharness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
+    { name = "pyharness-core", editable = "packages/core" },
+    { name = "pyharness-llm", editable = "packages/llm" },
 ]
 
 [[package]]
@@ -1722,6 +1748,7 @@ dependencies = [
     { name = "pyharness-bundle-creator" },
     { name = "pyharness-checkpoint-postgres" },
     { name = "pyharness-checkpoint-sqlite" },
+    { name = "pyharness-compaction" },
     { name = "pyharness-core" },
     { name = "pyharness-http" },
     { name = "pyharness-inspect" },
@@ -1753,6 +1780,7 @@ requires-dist = [
     { name = "pyharness-bundle-creator", editable = "packages/bundle-creator" },
     { name = "pyharness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
     { name = "pyharness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
+    { name = "pyharness-compaction", editable = "packages/compaction" },
     { name = "pyharness-core", editable = "packages/core" },
     { name = "pyharness-http", editable = "packages/http" },
     { name = "pyharness-inspect", editable = "packages/inspect" },

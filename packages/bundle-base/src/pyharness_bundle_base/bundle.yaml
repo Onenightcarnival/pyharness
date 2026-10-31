@@ -35,6 +35,10 @@ patch:
   - id: agents
     name: pyharness-agent
 
+  # Context compaction: ctx.compaction; automatic under pressure, /compact on demand.
+  - id: compaction
+    name: pyharness-compaction
+
   # Changed files per turn, from git work-tree snapshots: ctx.workspaceChanges.
   - id: workspace-changes
     name: pyharness-workspace-changes

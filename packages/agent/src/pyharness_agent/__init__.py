@@ -11,8 +11,9 @@
 | model      | ``session.model`` (``route:model``) reaches the loop as ``configurable.model_spec``    |
 | graph      | one graph per (``workspace``, ``mode``, ``preset``) of the session, built on first use |
 
-Run events: ``reasoning``, ``token``, ``image``, ``tool_call``, ``tool_result``, ``interrupt``, ``error``,
-``done``.
+Run events: ``reasoning``, ``token``, ``image``, ``tool_call``, ``tool_result``, ``compact``, ``interrupt``,
+``error``, ``done``. ``compact``: a compaction checkpoint replaced older history (``removed``, ``before_tokens``,
+``after_tokens``, ``trigger``, ``summary``).
 
 Images: a user message carries ``image_url`` content blocks (data URLs) beside its text; serialized messages
 list them under ``images``; an AI message with image blocks emits ``image`` events and lists them likewise.
@@ -23,8 +24,8 @@ list them under ``images``; an AI message with image blocks emits ``image`` even
 | ``agent/turn-end``   | parallel | ``(turn: Turn)``; ``turn.outcome`` set; ``turn.extras`` reaches the ``done`` event as ``extras`` |
 
 Turn records: every turn is recorded in ``ctx.store`` (``("pyharness", "turns", session_id)``, key run id) with
-``stats`` (steps, tool calls, token usage, llm/tool/ttft/decode wall time, duration) and ``records`` (the trajectory:
-user, step, tool, end). ``turns(session_id)`` lists them; ``done`` carries the new one as ``extras.turn``.
+``stats`` (steps, tool calls, token usage, llm/tool/ttft/decode wall time, duration, compactions) and ``records``
+(the trajectory: user, step, tool, compact, end). ``turns(session_id)`` lists them; ``done`` carries the new one as ``extras.turn``.
 """
 
 from __future__ import annotations
@@ -77,6 +78,7 @@ class TurnRecorder:
             "decode_ms": 0,
             "decode_tokens": 0,
             "duration_ms": 0,
+            "compactions": 0,
         }
         if turn.input is not None:
             self.records.append({"t": "user", "at": self.started, "chars": len(turn.input), "kind": turn.kind, "preview": turn.input[:160]})
@@ -107,6 +109,18 @@ class TurnRecorder:
                 self.stats["tool_ms"] += record["dur_ms"]
             self.step_start = now
             self.first_token = None
+        elif kind == "compact":
+            self.records.append(
+                {
+                    "t": "compact",
+                    "at": now,
+                    "trigger": event.get("trigger"),
+                    "removed": event.get("removed"),
+                    "before_tokens": event.get("before_tokens"),
+                    "after_tokens": event.get("after_tokens"),
+                }
+            )
+            self.stats["compactions"] += 1
 
     def observe_update(self, chunk: Any) -> None:
         now = time.time()
@@ -208,7 +222,7 @@ class RestartPending(RuntimeError):
 class Turn:
     session_id: str
     run_id: str
-    kind: str  # message | approval | continuation
+    kind: str  # message | approval | continuation | compact
     input: str | None
     outcome: str | None = None
     model: str | None = None  # route:model selected for the session; None: the default
@@ -355,6 +369,18 @@ def serialize_message(message: BaseMessage) -> dict[str, Any]:
     return data
 
 
+def _checkpoint(message: BaseMessage) -> dict[str, Any] | None:
+    """Marker of a compaction checkpoint message (``{"kind": "compact-checkpoint", ...}``), else ``None``."""
+    marker = (getattr(message, "additional_kwargs", None) or {}).get("pyharness")
+    return marker if isinstance(marker, dict) and marker.get("kind") == "compact-checkpoint" else None
+
+
+def _summary(content: Any) -> str:
+    text = _text(content)
+    start, end = text.find("<compacted-summary>"), text.rfind("</compacted-summary>")
+    return text[start + len("<compacted-summary>") : end].strip() if 0 <= start < end else text
+
+
 def _jsonable(value: Any) -> Any:
     try:
         json.dumps(value)
@@ -416,6 +442,10 @@ class AgentService(Service):
         if self.graph is None:
             raise RuntimeError("agent graph unavailable before app/ready")
         return self.graph
+
+    def config_for(self, session_id: str, model: str | None = None) -> dict[str, Any]:
+        """LangGraph config of the session's thread (``model`` selects the model spec of the call)."""
+        return self._config(session_id, model)
 
     def _config(self, session_id: str, model: str | None = None) -> dict[str, Any]:
         limit = getattr(self.ctx.get("agentLoop"), "recursion_limit", 200)
@@ -572,6 +602,9 @@ class AgentService(Service):
         | ``content``              | user message                                                |
         | ``decisions``            | answers to the pending approvals                            |
         | ``content`` + ``marker`` | user-role message tagged ``additional_kwargs["pyharness"]`` |
+
+        ``kind="compact"`` with ``marker={"kind": "command", "name": "compact"}`` runs a manual compaction: the
+        compaction middleware replaces the history with a checkpoint and ends the run without a model call.
         """
         self._require_graph()
         if self.busy(session_id):
@@ -670,6 +703,9 @@ class AgentService(Service):
             if node == "__interrupt__":
                 continue
             for message in _iter_messages(update):
+                if isinstance(message, HumanMessage) and _checkpoint(message):
+                    out.append({"type": "compact", **_checkpoint(message), "summary": _summary(message.content)})
+                    continue
                 if isinstance(message, AIMessage):
                     for url in _images(message.content):
                         out.append({"type": "image", "url": url})
