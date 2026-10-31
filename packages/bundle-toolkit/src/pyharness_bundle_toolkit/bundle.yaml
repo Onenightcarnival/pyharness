@@ -10,3 +10,7 @@ patch:
   - id: rdb
     name: pyharness-rdb
     after: memory
+  # S3-compatible object storage: ctx.s3, s3_* tools, the S3 page.
+  - id: s3
+    name: pyharness-s3
+    after: rdb

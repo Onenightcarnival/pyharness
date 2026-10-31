@@ -1,0 +1,17 @@
+[project]
+name = "pyharness-s3"
+version = "0.1.0"
+description = "pyharness plugin: S3-compatible object storage browser (MinIO / OSS / COS / R2 / AWS) with s3_* tools and the S3 page"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = ["pyharness-core", "pyharness-tools", "pyharness-prompt", "pyharness-http", "fastapi>=0.115", "langchain-core>=1.0", "pydantic>=2", "boto3>=1.34"]
+
+[project.entry-points."pyharness.plugins"]
+pyharness-s3 = "pyharness_s3:S3Service"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyharness_s3"]

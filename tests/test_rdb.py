@@ -166,7 +166,7 @@ def test_profile_store(tmp_path):
     assert (
         b["name"] == "app@db1.example.com" and b["port"] == 5432 and b["host"] == "db1.example.com, db2.example.com" and "password" not in b
     )
-    assert creds.get(f"rdb:{b['id']}") == "s3cret" and store.password(b["id"]) == "s3cret"
+    assert creds.get(f"RDB_{b['id'].upper()}") == "s3cret" and store.password(b["id"]) == "s3cret"
     c = store.create({"kind": "sqlite", "file": "/tmp/other/x.sqlite"})
     assert c["name"] == "x.sqlite 2"
     for payload, msg in [
@@ -182,10 +182,10 @@ def test_profile_store(tmp_path):
         with pytest.raises(StoreError, match=msg):
             store.create(payload)
     b2 = store.update(b["id"], {"name": "prod", "password": ""})
-    assert b2["name"] == "prod" and creds.get(f"rdb:{b['id']}") == "s3cret" and b2["updatedAt"] >= b["updatedAt"]
+    assert b2["name"] == "prod" and creds.get(f"RDB_{b['id'].upper()}") == "s3cret" and b2["updatedAt"] >= b["updatedAt"]
     assert store.find("PROD")["id"] == b["id"] and store.find(a["id"])["kind"] == "sqlite" and store.find("nope") is None
     store.delete(b["id"])
-    assert creds.get(f"rdb:{b['id']}") is None and len(store.profiles()) == 2
+    assert creds.get(f"RDB_{b['id'].upper()}") is None and len(store.profiles()) == 2
     with pytest.raises(StoreError, match="not found"):
         store.delete(b["id"])
     assert store.set_settings(agentTools=True) == {"agentTools": True}

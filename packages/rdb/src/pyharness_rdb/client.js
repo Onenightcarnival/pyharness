@@ -428,7 +428,7 @@ window.__PyhModules__.load({
               const sel = ta.value.substring(ta.selectionStart, ta.selectionEnd).trim(); const sql = sel || ta.value.trim(); if (!sql) return;
               if (!looksReadOnly(sql) && !(await confirmSql(t.confirmTitle, t.confirmWrite(firstWord(sql)), sql, t.confirmOk))) return;
               runBtn.disabled = true; runBtn.lastChild.textContent = t.running;
-              try { sqlState.result = (await call("/query", { method: "POST", body: JSON.stringify({ id: p.id, sql, maxRows: 1000 }) })).result; sqlState.ran = sql; drawResult(); }
+              try { sqlState.result = (await call("/query", { method: "POST", body: JSON.stringify({ id: p.id, sql, maxRows: 1000 }) })).result; sqlState.ran = sql; if (st.banner && st.banner.kind === "error") setBanner(null); drawResult(); }
               catch (err) { setBanner("error", t.sqlError(err.message)); }
               runBtn.disabled = false; runBtn.lastChild.textContent = t.run;
             }

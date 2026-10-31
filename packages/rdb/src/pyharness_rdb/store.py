@@ -1,5 +1,5 @@
 """Connection profiles (``<profile data>/toolkit/rdb.json``) and the agent-access setting; passwords live in the
-profile credential store under ``rdb:<id>``."""
+profile credential store under ``RDB_<ID>``."""
 
 from __future__ import annotations
 
@@ -36,6 +36,11 @@ SUMMARY_FIELDS = (
 
 class StoreError(ValueError):
     pass
+
+
+def ref(pid: str) -> str:
+    """Credential-store reference of a profile's secret (references are upper-case identifiers)."""
+    return f"RDB_{pid.upper()}"
 
 
 def validate(profile: dict[str, Any]) -> None:
@@ -151,7 +156,7 @@ class ProfileStore:
         return None
 
     def password(self, pid: str) -> str:
-        return self.credentials.get(f"rdb:{pid}") or ""
+        return self.credentials.get(ref(pid)) or ""
 
     @staticmethod
     def summary(profile: dict[str, Any]) -> dict[str, Any]:
@@ -209,7 +214,7 @@ class ProfileStore:
             profile["updatedAt"] = now
             data["profiles"].append(profile)
             if profile["kind"] != "sqlite":
-                self.credentials.set(f"rdb:{profile['id']}", str(payload.get("password") or ""))
+                self.credentials.set(ref(profile["id"]), str(payload.get("password") or ""))
             self._write(data)
             return self.summary(profile)
 
@@ -226,7 +231,7 @@ class ProfileStore:
             profile["name"] = unique_name(profile["name"] or default_name(profile), [p["name"] for p in data["profiles"] if p["id"] != pid])
             data["profiles"] = [profile if p["id"] == pid else p for p in data["profiles"]]
             if payload.get("password"):
-                self.credentials.set(f"rdb:{pid}", str(payload["password"]))
+                self.credentials.set(ref(pid), str(payload["password"]))
             self._write(data)
             return self.summary(profile)
 
@@ -238,6 +243,6 @@ class ProfileStore:
             data["profiles"] = [p for p in data["profiles"] if p["id"] != pid]
             self._write(data)
             try:
-                self.credentials.delete(f"rdb:{pid}")
+                self.credentials.delete(ref(pid))
             except Exception:  # noqa: BLE001
                 pass
