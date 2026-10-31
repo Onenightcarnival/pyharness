@@ -279,10 +279,10 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 .statPop .menuGroup { padding: 0 8px 6px; font-size: 12px; }
 .statPop .kv { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 4px 8px; font-size: 12px; color: var(--label-secondary); }
 .statPop .kv b { font: 12px var(--mono); font-weight: 500; color: var(--label-primary); }
-.viewTabs { display: inline-flex; align-items: flex-end; gap: 24px; height: 30px; margin-left: 16px; }
+.viewTabs { display: flex; align-items: flex-start; gap: 32px; min-height: 25px; margin: 10px 0 0 8px; }
 .viewTabs[hidden] { display: none; }
-.viewTab { position: relative; height: 30px; padding: 0 0 8px; border: none; border-radius: 0; background: transparent; color: var(--label-tertiary); font-size: 13px; font-weight: 500; line-height: 16px; }
-.viewTab::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: transparent; }
+.viewTab { position: relative; height: 25px; padding: 0 0 9px; border: none; border-radius: 0; background: transparent; color: var(--label-tertiary); font-size: 13px; font-weight: 500; line-height: 16px; }
+.viewTab::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: 2px; background: transparent; }
 .viewTab[aria-selected='true'] { color: var(--info); }
 .viewTab[aria-selected='true']::after { background: var(--info); }
 .trajectory { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
@@ -396,7 +396,10 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 .dot[data-state='warn'] { background: var(--warn); }
 
 /* ---------- header ---------- */
-.topBar { flex: none; display: flex; align-items: center; gap: 8px; min-height: 50px; padding: 10px 20px 10px 16px; }
+.topBar { flex: none; display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 10px 28px 10px 20px; }
+.topBar > .titleRow { display: flex; align-items: center; gap: 8px; min-height: 30px; flex-wrap: nowrap; }
+.topBar[data-tabs] { padding-bottom: 0; }
+.topBar[data-panel] { display: none; }
 .topBar[data-bordered] { border-bottom: 0.5px solid var(--border-l3); }
 .topBar .crumb { min-width: 0; max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 4px 8px; font-size: 14px; line-height: 20px; font-weight: 500; }
 .topBar .spacer { flex: 1; }
@@ -576,17 +579,19 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 /* plugins page */
 .page { flex: 1; min-height: 0; overflow-y: auto; padding: 0 32px 48px; }
 .page > * { max-width: 960px; margin-left: auto; margin-right: auto; }
-.pageHead { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 0 8px; }
+.pageHead { display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 28px 0 8px; }
+.pageHead > div:first-child { flex: 1 1 auto; min-width: 0; }
+.pageHead .headTools { flex: none; padding-top: 2px; }
 .pageTitle { margin: 0; font-size: 20px; line-height: 28px; font-weight: 500; }
 .pageIntro { margin: 4px 0 0; font-size: 13px; line-height: 20px; color: var(--label-secondary); max-width: 640px; }
 .group { display: flex; flex-direction: column; gap: 8px; margin-top: 32px; }
 .groupHead { display: flex; align-items: center; gap: 8px; }
-.groupTitle { flex: 1; margin: 0; font-size: 14px; line-height: 22px; font-weight: 500; }
+.groupTitle { flex: 1; margin: 0; font-size: 15px; line-height: 22px; font-weight: 500; }
 .groupMeta { font-size: 13px; color: var(--label-tertiary); }
 .cards { display: flex; flex-direction: column; gap: 2px; }
-.pcard { display: flex; align-items: center; gap: 14px; padding: 8px; margin: 0 -8px; border-radius: var(--r-xl); }
-.pcardIcon { flex: none; width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; border: 0.5px solid var(--border-l3); border-radius: var(--r-lg); color: var(--label-secondary); }
-.pcardIcon .ico { width: 20px; height: 20px; }
+.pcard { display: flex; align-items: center; gap: 20px; padding: 10px 8px; margin: 0 -8px; border-radius: var(--r-xl); }
+.pcardIcon { flex: none; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background: color-mix(in srgb, var(--info) 10%, transparent); color: var(--info); }
+.pcardIcon .ico { width: 18px; height: 18px; }
 .pcardMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .titleRow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
 .pcardTitle { font-size: 14px; line-height: 20px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -695,14 +700,25 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 #modelChip .chev { color: var(--label-caption); }
 
 /* settings dialog */
-.settingsCard { width: min(1000px, 100%); height: min(720px, 100%); display: flex; flex-direction: column; overflow: hidden; border-radius: var(--r-panel); background: var(--bg-layer-1); box-shadow: var(--elev-prominent); }
-.settingsHead { display: flex; align-items: center; gap: 8px; padding: 14px 16px 10px 20px; }
+.settingsCard { width: min(800px, 100%); height: min(800px, 100%); display: flex; flex-direction: column; overflow: hidden; border-radius: var(--r-panel); background: var(--bg-layer-2); box-shadow: var(--elev-prominent); }
+.settingsHead { display: flex; align-items: center; gap: 8px; padding: 22px 14px 14px 24px; }
 .settingsHead h2 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 500; }
 .settingsBody { flex: 1; min-height: 0; display: flex; }
-.settingsNav { flex: none; width: 200px; display: flex; flex-direction: column; gap: 2px; padding: 4px 12px 12px; }
-.settingsNav button { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px; border: none; border-radius: var(--r-md); background: transparent; color: var(--label-primary); font-size: 13px; text-align: left; }
+.settingsNav { flex: none; width: 188px; display: flex; flex-direction: column; gap: 4px; padding: 0 12px 12px; }
+.settingsNav button { display: flex; align-items: center; gap: 8px; height: 40px; padding: 9px 16px 9px 12px; border: none; border-radius: var(--r-md); background: transparent; color: var(--label-primary); font-size: 14px; line-height: 22px; text-align: left; }
 .settingsNav button[aria-current='page'] { background: var(--nav-active); }
-.settingsContent { flex: 1; min-width: 0; overflow-y: auto; padding: 4px 28px 32px 20px; }
+.settingsContent { flex: 1; min-width: 0; overflow-y: auto; padding: 0 29px 32px 24px; }
+.pluginSearch { position: relative; margin: 0 0 16px; }
+.pluginSearch .ico { position: absolute; left: 12px; top: 10px; width: 16px; height: 16px; color: var(--label-tertiary); pointer-events: none; }
+.pluginSearch .input { height: 36px; padding-left: 36px; }
+.pluginGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.pluginCard { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 12px 14px; border: 0.5px solid var(--border-l2); border-radius: var(--r-lg); background: var(--bg-layer-1); }
+.pluginCard .titleRow { gap: 6px; flex-wrap: nowrap; }
+.pluginCard .pcardTitle { flex: 1; min-width: 0; font-size: 14px; line-height: 20px; }
+.pluginCard .pcardDesc { font-size: 12px; line-height: 16px; }
+.pluginGroupHead { margin: 4px 0 10px; font-size: 14px; line-height: 22px; color: var(--label-primary); }
+.pluginGroupHead small { display: block; font-size: 12px; line-height: 16px; color: var(--label-tertiary); }
+@media (max-width: 760px) { .pluginGrid { grid-template-columns: minmax(0, 1fr); } }
 .settingsContent .group:first-child { margin-top: 0; }
 .settingsContent .sectionTitle { margin: 4px 0 2px; font-size: 16px; line-height: 24px; font-weight: 500; }
 .settingsContent .sectionIntro { margin: 0 0 18px; font-size: 13px; line-height: 20px; color: var(--label-secondary); }
@@ -786,6 +802,7 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
   .scrim { position: fixed; inset: 0; z-index: 30; background: rgba(0, 0, 0, 0.24); }
   .frame[data-drawer] .scrim { display: block; }
   .openSidebar { display: inline-flex !important; }
+  .topBar[data-panel] { display: flex; }
   .collapseSidebar { display: none; }
   .conversation { --chat-width: calc(100% - 32px); }
   .column { padding-left: 0; padding-right: 0; }
@@ -880,12 +897,14 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 
   <main class="center" id="center">
     <div class="topBar" id="topBar">
-      <button class="iconButton openSidebar" id="expand" data-i18n-title="expand"><svg class="ico"><use href="#i-panel"/></svg></button>
-      <span class="crumb" id="crumb"></span>
-      <span class="crumbTags" id="crumbTags"></span>
+      <div class="titleRow">
+        <button class="iconButton openSidebar" id="expand" data-i18n-title="expand"><svg class="ico"><use href="#i-panel"/></svg></button>
+        <span class="crumb" id="crumb"></span>
+        <span class="crumbTags" id="crumbTags"></span>
+        <span class="spacer"></span>
+        <button class="iconButton" id="rbExpand" data-i18n-title="rightbarOpen" hidden><svg class="ico" style="transform:scaleX(-1)"><use href="#i-panel"/></svg></button>
+      </div>
       <span class="viewTabs" id="viewTabs" hidden><button type="button" class="viewTab" data-view="chat" aria-selected="true"></button><button type="button" class="viewTab" data-view="trajectory"></button></span>
-      <span class="spacer"></span>
-      <button class="iconButton" id="rbExpand" data-i18n-title="rightbarOpen" hidden><svg class="ico" style="transform:scaleX(-1)"><use href="#i-panel"/></svg></button>
     </div>
 
     <section class="page" id="pluginsView" hidden></section>
@@ -956,7 +975,7 @@ const T = zh ? {
   approvalStrip: '待批准', approve: '批准', reject: '拒绝', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
   restarting: '重启中：应用插件变更…', restarted: (g) => `第 ${g} 代已启动`, rolledBack: (g) => `变更启动失败；第 ${g} 代运行上一份配置`, offline: '离线', online: '在线', gen: (g) => `第 ${g} 代`,
   unsupervised: '未托管', noSessions: '无会话', input: '输入', output: '输出', error: '错误', cancelled: '已停止', untitled: '未命名会话',
-  pluginsTitle: '插件', pluginsIntro: '当前 profile 的插件组合。变更路径：agent 编写或安装 → 预检 → 重启生效。',
+  searchPlugins: '搜索插件', entriesOf: (n) => `${n} 个条目`, noMatches: '没有匹配的条目', pluginsTitle: '插件', pluginsIntro: '当前 profile 的插件组合。变更路径：agent 编写或安装 → 预检 → 重启生效。', addPlugin: '添加插件', gotIt: '知道了', addPluginHow: '两种方式：\n1. 在「创造」预设的会话里描述想要的能力，agent 会编写并安装插件；\n2. 在终端运行 pyh plugin install <bundle 目录或包名>，然后 pyh restart。',
   bundles: '组合包', entries: '条目', clientModules: '客户端模块', running: '运行中', pending: '等待依赖', disabled: '已停用', failed: '失败', stopped: '已停止',
   enabled: '已启用', off: '未启用', fromEnv: '随环境安装', fromProfile: '装在本 profile',
   tip: '示例：<code>写一个插件，加一个返回当前时间的工具</code>', missing: '缺少服务', timeNow: '刚刚', min: '分钟', hour: '小时', day: '天',
@@ -968,7 +987,7 @@ const T = zh ? {
   approvalStrip: 'Awaiting approval', approve: 'Approve', reject: 'Reject', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
   restarting: 'Restarting: applying plugin changes…', restarted: (g) => `Generation ${g} started`, rolledBack: (g) => `Change failed to boot; generation ${g} runs the previous configuration`, offline: 'Offline', online: 'Online', gen: (g) => `generation ${g}`,
   unsupervised: 'unsupervised', noSessions: 'No sessions', input: 'Input', output: 'Output', error: 'Error', cancelled: 'Stopped', untitled: 'Untitled session',
-  pluginsTitle: 'Plugins', pluginsIntro: 'Plugin composition of the current profile. Change path: agent writes or installs → preflight → restart.',
+  searchPlugins: 'Search plugins', entriesOf: (n) => `${n} entries`, noMatches: 'No matching entries', pluginsTitle: 'Plugins', pluginsIntro: 'Plugin composition of the current profile. Change path: agent writes or installs → preflight → restart.', addPlugin: 'Add plugin', gotIt: 'Got it', addPluginHow: 'Two ways:\n1. Describe the capability in a session with the Creator preset; the agent writes and installs the plugin.\n2. Run pyh plugin install <bundle directory or package> in a terminal, then pyh restart.',
   bundles: 'Bundles', entries: 'Entries', clientModules: 'Client modules', running: 'Running', pending: 'Pending', disabled: 'Disabled', failed: 'Failed', stopped: 'Stopped',
   enabled: 'Enabled', off: 'Off', fromEnv: 'installed with the environment', fromProfile: 'installed in this profile',
   tip: 'Example: <code>write a plugin that adds a tool returning the current time</code>', missing: 'missing', timeNow: 'now', min: 'm', hour: 'h', day: 'd',
@@ -1388,9 +1407,9 @@ $('searchInput').oninput = (e) => { sessionQuery = e.target.value; renderSession
 $('searchInput').onkeydown = (e) => { if (e.key === 'Escape') $('searchToggle').click(); };
 $('viewOptions').onclick = () => {
   const group = sidebarView.group || 'workspace'; const order = sidebarView.order || 'updated';
-  const row = (id, label, checked) => `<button type="button" class="menuRow" role="menuitemradio" aria-checked="${checked}" data-pick="${id}">${icon('check', 'ico check')}<span class="label">${esc(label)}</span></button>`;
+  const row = (id, label, checked, lead) => `<button type="button" class="menuRow" role="menuitemradio" aria-checked="${checked}" data-pick="${id}">${icon(lead, 'ico lead')}${icon('check', 'ico check')}<span class="label">${esc(label)}</span></button>`;
   openRowMenu($('viewOptions'), [], () => {});
-  rowMenu.innerHTML = `<div class="menuGroup">${esc(T.groupBy)}</div>${row('group:workspace', T.groupWorkspace, group === 'workspace')}${row('group:none', T.groupNone, group === 'none')}<div class="menuGroup">${esc(T.orderBy)}</div>${row('order:updated', T.orderUpdated, order === 'updated')}${row('order:created', T.orderCreated, order === 'created')}`;
+  rowMenu.innerHTML = `<div class="menuGroup">${esc(T.groupBy)}</div>${row('group:workspace', T.groupWorkspace, group === 'workspace', 'folder')}${row('group:none', T.groupNone, group === 'none', 'list')}<div class="menuGroup">${esc(T.orderBy)}</div>${row('order:updated', T.orderUpdated, order === 'updated', 'refresh')}${row('order:created', T.orderCreated, order === 'created', 'plus-circle')}`;
   rowMenu.onclick = (e) => { const pick = e.target.closest('[data-pick]')?.dataset.pick; if (!pick) return; const [k, v] = pick.split(':'); sidebarView[k] = v; saveSidebarView(); closeRowMenu(); renderSessions(); };
 };
 $('sessions').addEventListener('keydown', (e) => { const row = e.target.closest('.sessionRow'); if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openSession(row.dataset.id); } });
@@ -1450,8 +1469,9 @@ function setView(view, key) {
   if (state.panel === 'plugins') $('navPlugins').setAttribute('aria-current', 'page'); else $('navPlugins').removeAttribute('aria-current');
   $('panelSlots').querySelectorAll('[data-panel]').forEach((b) => { if (b.dataset.panel === state.panel) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   $('topBar').toggleAttribute('data-bordered', view !== 'chat' || $('chatView').dataset.phase !== 'hero');
+  $('topBar').toggleAttribute('data-panel', view !== 'chat');
   $('rbExpand').hidden = view !== 'chat' || !state.current || rightbar.open;
-  $('viewTabs').hidden = view !== 'chat' || !state.current; if (view === 'chat' && state.current && state.convView === 'trajectory') { $('scroll').hidden = true; $('trajectoryView').hidden = false; } if ($('statsRow')) $('statsRow').hidden = view !== 'chat' || $('statsRow').dataset.empty === '1';
+  $('viewTabs').hidden = view !== 'chat' || !state.current; $('topBar').toggleAttribute('data-tabs', !$('viewTabs').hidden); if (view === 'chat' && state.current && state.convView === 'trajectory') { $('scroll').hidden = true; $('trajectoryView').hidden = false; } if ($('statsRow')) $('statsRow').hidden = view !== 'chat' || $('statsRow').dataset.empty === '1';
 }
 function selectPanel(key) {
   if (key === 'conversation') { if (state.current) openSession(state.current); else newSession(); return; }
@@ -1871,11 +1891,18 @@ function entryGlyph(e) {
 async function loadPluginCount() {
   try { const d = await json('/plugins'); $('pluginCount').textContent = d.entries.filter((e) => e.state === 'active').length; return d; } catch { return null; }
 }
+function pluginSettingsMarkup(d, q) {
+  const groups = {};
+  for (const e of d.entries) { if (q && !`${e.id} ${e.name || ''} ${e.provides || ''}`.toLowerCase().includes(q)) continue; (groups[e.source || ''] ||= []).push(e); }
+  const card = (e) => { const [tone, key] = STATE_TAG[e.state] || ['outline', e.state]; const detail = e.state === 'pending' ? `${T.missing}: ${(e.missing || []).join(', ')}` : e.state === 'failed' ? e.error : (e.provides ? `ctx.${e.provides}` : ''); return `<div class="pluginCard"><span class="titleRow"><span class="pcardTitle">${esc(e.id)}</span>${e.state === 'active' ? '' : `<span class="tag" data-tone="${tone}">${esc(T[key] || key)}</span>`}</span><span class="pcardDesc"><code>${esc(e.name || '')}</code>${detail ? ' · ' + esc(detail) : ''}</span></div>`; };
+  const out = Object.entries(groups).map(([source, list]) => `<div class="pluginGroupHead">${esc(source || T.entries)}<small>${esc(T.entriesOf(list.length))}</small></div><div class="pluginGrid" style="margin-bottom:20px">${list.map(card).join('')}</div>`).join('');
+  return out || `<p class="emptyNote">${esc(T.noMatches)}</p>`;
+}
 function entryCards(d) {
   return d.entries.map((e) => {
     const [tone, key] = STATE_TAG[e.state] || ['outline', e.state];
     const detail = e.state === 'pending' ? `${T.missing}: ${(e.missing || []).join(', ')}` : e.state === 'failed' ? e.error : (e.provides ? `ctx.${e.provides}` : '');
-    return `<div class="pcard"><span class="pcardIcon">${icon(entryGlyph(e))}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(e.id)}</span><span class="tag" data-tone="${tone}">${esc(T[key] || key)}</span></span><span class="pcardDesc"><code>${esc(e.name || '')}</code>${e.source ? ' · ' + esc(e.source) : ''}${detail ? ' · ' + esc(detail) : ''}</span></span></div>`;
+    return `<div class="pcard"><span class="pcardIcon">${icon(entryGlyph(e))}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(e.id)}</span>${e.state === 'active' ? '' : `<span class="tag" data-tone="${tone}">${esc(T[key] || key)}</span>`}</span><span class="pcardDesc"><code>${esc(e.name || '')}</code>${e.source ? ' · ' + esc(e.source) : ''}${detail ? ' · ' + esc(detail) : ''}</span></span></div>`;
   }).join('');
 }
 function showPlugins() { selectPanel('plugins'); }
@@ -1886,12 +1913,13 @@ async function renderPluginsPanel(el) {
   const entries = entryCards(d);
   const clients = (window.__PYH_BOOT__?.plugins || []).map((p) => { const st = moduleStatus[p.id]; return `<div class="pcard"><span class="pcardIcon">${icon('terminal')}</span><span class="pcardMain"><span class="titleRow"><span class="pcardTitle">${esc(p.id)}</span><span class="tag" data-tone="${st?.ok ? 'success' : st ? 'danger' : 'outline'}">${esc(st?.ok ? T.running : st ? T.failed : T.pending)}</span></span><span class="pcardDesc"><code>${esc(p.url.split('?')[0])}</code>${p.calls?.length ? ' · ' + esc(p.calls.join(', ')) : ''}${st && !st.ok ? ' · ' + esc(st.error) : ''}</span></span></div>`; }).join('');
   el.innerHTML = `<div class="page">
-    <div class="pageHead"><div><h1 class="pageTitle">${esc(T.pluginsTitle)}</h1><p class="pageIntro">${esc(T.pluginsIntro)}</p></div><div class="headTools"><button type="button" class="iconButton" id="pluginsRefresh" title="${esc(T.refresh)}">${icon('refresh')}</button></div></div>
+    <div class="pageHead"><div><h1 class="pageTitle">${esc(T.pluginsTitle)}</h1><p class="pageIntro">${esc(T.pluginsIntro)}</p></div><div class="headTools"><button type="button" class="iconButton" id="pluginsRefresh" title="${esc(T.refresh)}">${icon('refresh')}</button><button type="button" class="btn primary sm" id="pluginsAdd">${icon('plus')}<span>${esc(T.addPlugin)}</span></button></div></div>
     <div class="group"><div class="groupHead"><h2 class="groupTitle">${esc(T.bundles)}</h2><span class="groupMeta">${d.bundles.length}</span></div><div class="cards">${bundleCards}</div></div>
     <div class="group"><div class="groupHead"><h2 class="groupTitle">${esc(T.entries)}</h2><span class="groupMeta">${d.entries.length}</span></div><div class="cards">${entries}</div></div>
     ${clients ? `<div class="group"><div class="groupHead"><h2 class="groupTitle">${esc(T.clientModules)}</h2><span class="groupMeta">${(window.__PYH_BOOT__?.plugins || []).length}</span></div><div class="cards">${clients}</div></div>` : ''}
     <div class="tip">${T.tip}</div></div>`;
   $('pluginsRefresh').onclick = () => renderPluginsPanel(el);
+  $('pluginsAdd').onclick = () => confirmDialog(T.addPluginHow, T.gotIt, T.addPlugin);
 }
 slotRegister('web-ui', { slot: 'main', key: 'plugins', label: T.pluginsTitle }, (el) => { renderPluginsPanel(el); return () => {}; });
 
@@ -2177,7 +2205,7 @@ function renderStats() {
 }
 function setConvView(view) {
   state.convView = view;
-  const tabs = $('viewTabs'); tabs.hidden = !state.current || state.view !== 'chat';
+  const tabs = $('viewTabs'); tabs.hidden = !state.current || state.view !== 'chat'; $('topBar').toggleAttribute('data-tabs', !tabs.hidden);
   tabs.querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-selected', b.dataset.view === view));
   $('scroll').hidden = view !== 'chat'; $('trajectoryView').hidden = view !== 'trajectory';
   if (view === 'trajectory') renderTrajectory();
@@ -2551,7 +2579,7 @@ async function showSettings(tab) {
   if (settingsUi.tab === 'models') await loadModels();
   else if (settingsUi.tab === 'general') { content.innerHTML = generalMarkup(); bindGeneral(); }
   else if (settingsUi.tab === 'presets') { content.innerHTML = presetsMarkup(); bindPresets(); }
-  else if (settingsUi.tab === 'plugins') { content.innerHTML = `<h3 class="sectionTitle">${esc(T.tabPlugins)}</h3><p class="sectionIntro">${esc(T.pluginsTabIntro)}</p>`; const d = await loadPluginCount(); if (d) content.innerHTML += `<div class="cards">${entryCards(d)}</div>`; }
+  else if (settingsUi.tab === 'plugins') { content.innerHTML = `<h3 class="sectionTitle">${esc(T.tabPlugins)}</h3><p class="sectionIntro">${esc(T.pluginsTabIntro)}</p>`; const d = await loadPluginCount(); if (d) { content.insertAdjacentHTML('beforeend', `<div class="pluginSearch">${icon('search')}<input class="input" data-plugin-q placeholder="${esc(T.searchPlugins)}"></div><div data-plugin-list></div>`); const draw = (q) => { content.querySelector('[data-plugin-list]').innerHTML = pluginSettingsMarkup(d, q); }; draw(''); content.querySelector('[data-plugin-q]').oninput = (e) => draw(e.target.value.trim().toLowerCase()); } }
   else { const entry = slotGet('settings.sections', settingsUi.tab); if (entry) { content.innerHTML = `<h3 class="sectionTitle">${esc(entry.label || entry.key)}</h3><div data-section></div>`; settingsUi.dispose = mountEntry(entry, content.querySelector('[data-section]'), {}); } }
 }
 function renderSettingsNav() {
