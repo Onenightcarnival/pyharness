@@ -44,7 +44,12 @@ class FakeS3:
             else:
                 body = self.objects[k][0]
                 contents.append(
-                    {"Key": k, "Size": len(body), "LastModified": dt.datetime(2026, 1, 2, 3, 4, 5, tzinfo=dt.UTC), "ETag": '"e"'}
+                    {
+                        "Key": k,
+                        "Size": len(body),
+                        "LastModified": dt.datetime(2026, 1, 2, 3, 4, 5, tzinfo=dt.UTC),
+                        "ETag": '"e"',
+                    }
                 )
             i += 1
         out = {"Contents": contents, "CommonPrefixes": prefixes, "IsTruncated": i < len(keys)}
@@ -170,7 +175,9 @@ def test_store(tmp_path):
         with pytest.raises(StoreError, match=msg.replace("(", "\\(").replace(")", "\\)")):
             store.create(payload)
     a2 = store.update(a["id"], {"name": "prod", "secretAccessKey": ""})
-    assert a2["name"] == "prod" and creds.get(f"S3_{a['id'].upper()}") == "s3cr3t" and store.find("PROD")["id"] == a["id"]
+    assert (
+        a2["name"] == "prod" and creds.get(f"S3_{a['id'].upper()}") == "s3cr3t" and store.find("PROD")["id"] == a["id"]
+    )
     store.delete(a["id"])
     assert creds.get(f"S3_{a['id'].upper()}") is None and len(store.profiles()) == 1
 
@@ -186,7 +193,9 @@ def test_bucket_operations(tmp_path):
     b = eng.Bucket(fake, {"bucket": "bk", "prefix": "team/"})
     assert b.test()["ok"] is True
     page = b.list("")
-    assert page["folders"] == ["docs/"] and [o["key"] for o in page["objects"]] == ["a.txt"] and page["truncated"] is False
+    assert (
+        page["folders"] == ["docs/"] and [o["key"] for o in page["objects"]] == ["a.txt"] and page["truncated"] is False
+    )
     assert [o["key"] for o in b.walk("docs/")] == ["docs/b.md", "docs/img.png"]
     small = b.list("", None, 1)
     assert small["truncated"] is True and small["nextToken"]
@@ -213,18 +222,30 @@ def test_bucket_operations(tmp_path):
         b.copy("a2.txt", "a2.txt")
     src = tmp_path / "up.bin"
     src.write_bytes(b"\x00" * 10)
-    assert b.upload_file(str(src), "bin/up.bin") == {"size": 10} and fake.objects["team/bin/up.bin"][1] == "application/octet-stream"
-    assert b.download_file("docs/b.md", str(tmp_path / "out" / "b.md")) == {"size": 3} and (tmp_path / "out" / "b.md").read_text() == "# b"
+    assert (
+        b.upload_file(str(src), "bin/up.bin") == {"size": 10}
+        and fake.objects["team/bin/up.bin"][1] == "application/octet-stream"
+    )
+    assert (
+        b.download_file("docs/b.md", str(tmp_path / "out" / "b.md")) == {"size": 3}
+        and (tmp_path / "out" / "b.md").read_text() == "# b"
+    )
     url = b.presign("docs/b.md", 99999999)["url"]
     assert url.endswith("team/docs/b.md?m=get_object&exp=604800")
     fake.objects["team/docs/locked.txt"] = (b"x", "text/plain")
     r = b.delete(["docs/", "a2.txt", ""])
-    assert r["deleted"] == 4 and r["errors"] == [{"key": "docs/locked.txt", "error": "AccessDenied locked"}]  # the folder marker counts
+    assert r["deleted"] == 4 and r["errors"] == [
+        {"key": "docs/locked.txt", "error": "AccessDenied locked"}
+    ]  # the folder marker counts
     assert set(fake.objects) == {"team/docs/locked.txt", "other/x", "team/new/c.json", "team/empty/", "team/bin/up.bin"}
     fake.fail_batch = True
     r = b.delete(["new/c.json"])
     assert r["deleted"] == 1 and "team/new/c.json" not in fake.objects
-    assert eng.human(1536) == "1.5 KiB" and eng.human(5) == "5 B" and eng.guess_mime("x.PARQUET") == "application/vnd.apache.parquet"
+    assert (
+        eng.human(1536) == "1.5 KiB"
+        and eng.human(5) == "5 B"
+        and eng.guess_mime("x.PARQUET") == "application/vnd.apache.parquet"
+    )
 
 
 async def test_tools_and_routes(home, tmp_path):
@@ -236,10 +257,14 @@ async def test_tools_and_routes(home, tmp_path):
         "logs/2.log": (b"l2", "text/plain"),
         "pic.png": (b"\x89PNG\r\n\x1a\n", "image/png"),
     }
-    async with Harness(profile, patch=[HTTP_OFF, {"id": "s3", "config": {"path": str(tmp_path / "s3.json")}, "merge": True}]) as h:
+    async with Harness(
+        profile, patch=[HTTP_OFF, {"id": "s3", "config": {"path": str(tmp_path / "s3.json")}, "merge": True}]
+    ) as h:
         s3: S3Service = h.get("s3")
         s3.make_client = lambda profile, secret: fake
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=30) as c:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=30
+        ) as c:
             r = await c.post(
                 "/api/s3/profiles",
                 json={
@@ -279,15 +304,19 @@ async def test_tools_and_routes(home, tmp_path):
             assert (await c.post("/api/s3/folder", json={"id": pid, "key": "new-dir/"})).json() == {
                 "ok": True
             } and "new-dir/" in fake.objects
-            assert (await c.post("/api/s3/copy", json={"id": pid, "from": "a.txt", "to": "b.txt", "move": True})).json() == {
-                "ok": True
-            } and "a.txt" not in fake.objects
+            assert (
+                await c.post("/api/s3/copy", json={"id": pid, "from": "a.txt", "to": "b.txt", "move": True})
+            ).json() == {"ok": True} and "a.txt" not in fake.objects
             r = await c.post("/api/s3/presign", json={"id": pid, "key": "b.txt", "expiresIn": 60})
             assert r.json()["url"].endswith("b.txt?m=get_object&exp=60") and r.json()["expiresAt"].endswith("Z")
             r = await c.post("/api/s3/delete", json={"id": pid, "keys": ["logs/", "new-dir/"]})
-            assert r.json()["result"] == {"deleted": 4, "errors": []} and not any(k.startswith("logs/") for k in fake.objects)
+            assert r.json()["result"] == {"deleted": 4, "errors": []} and not any(
+                k.startswith("logs/") for k in fake.objects
+            )
             assert (await c.post("/api/s3/delete", json={"id": pid, "keys": []})).status_code == 400
-            assert (await c.post("/api/s3/settings", json={"agentTools": True})).json()["settings"]["agentTools"] is True
+            assert (await c.post("/api/s3/settings", json={"agentTools": True})).json()["settings"][
+                "agentTools"
+            ] is True
             tools = {t.name: t for t in h.get("tools").list()}
             assert {
                 "s3_buckets",
@@ -303,40 +332,55 @@ async def test_tools_and_routes(home, tmp_path):
                 "s3_delete",
             } <= set(tools)
             assert "S3 object storage browser" in h.get("prompt").render()
-            assert tools["s3_buckets"].invoke({}).splitlines()[2] == "demo | demo-bucket | http://127.0.0.1:9000 | us-east-1 | /"
+            assert (
+                tools["s3_buckets"].invoke({}).splitlines()[2]
+                == "demo | demo-bucket | http://127.0.0.1:9000 | us-east-1 | /"
+            )
             out = await tools["s3_list"].ainvoke({"profile": "demo"})
             assert out.splitlines()[0] == "prefix: /" and "  b.txt" in out and "pic.png" in out
             out = await tools["s3_list"].ainvoke({"profile": "demo", "recursive": True, "max": 1})
             assert out.splitlines()[-1] == "… truncated at max; raise max or narrow the prefix"
             assert (await tools["s3_get"].ainvoke({"profile": "demo", "key": "b.txt"})) == "hello world"
-            assert (await tools["s3_get"].ainvoke({"profile": "demo", "key": "pic.png"})).startswith("read failed: object is binary")
+            assert (await tools["s3_get"].ainvoke({"profile": "demo", "key": "pic.png"})).startswith(
+                "read failed: object is binary"
+            )
             assert (
                 await tools["s3_put"].ainvoke({"profile": "demo", "key": "notes/n.md", "content": "# hi"})
             ) == "wrote notes/n.md (4 bytes)"
-            assert (await tools["s3_stat"].ainvoke({"profile": "demo", "key": "notes/n.md"})).splitlines()[1] == "size: 4 B (4 bytes)"
+            assert (await tools["s3_stat"].ainvoke({"profile": "demo", "key": "notes/n.md"})).splitlines()[
+                1
+            ] == "size: 4 B (4 bytes)"
             assert (
                 await tools["s3_copy"].ainvoke({"profile": "demo", "from": "notes/n.md", "to": "notes/m.md"})
             ) == "copied notes/n.md → notes/m.md"
             assert (await tools["s3_presign"].ainvoke({"profile": "demo", "key": "b.txt", "method": "PUT"})).startswith(
                 "https://signed.example/demo-bucket/b.txt?m=put_object&exp=3600\n(expires "
             )
-            assert (await tools["s3_mkdir"].ainvoke({"profile": "demo", "key": "backups/2026"})) == "created folder backups/2026"
-            assert (await tools["s3_delete"].ainvoke({"profile": "demo", "keys": ["notes/"], "confirm": False})).startswith(
-                "delete failed: refused"
-            )
+            assert (
+                await tools["s3_mkdir"].ainvoke({"profile": "demo", "key": "backups/2026"})
+            ) == "created folder backups/2026"
+            assert (
+                await tools["s3_delete"].ainvoke({"profile": "demo", "keys": ["notes/"], "confirm": False})
+            ).startswith("delete failed: refused")
             assert (
                 await tools["s3_delete"].ainvoke({"profile": "demo", "keys": ["notes/"], "confirm": True})
             ) == "deleted 3 object(s)"  # two objects and the folder marker
-            assert (await tools["s3_list"].ainvoke({"profile": "nope"})).startswith("list failed: unknown bucket profile")
+            assert (await tools["s3_list"].ainvoke({"profile": "nope"})).startswith(
+                "list failed: unknown bucket profile"
+            )
             local = tmp_path / "local.txt"
             local.write_text("local")
             assert (
                 await tools["s3_upload"].ainvoke({"profile": "demo", "localPath": str(local), "key": "l.txt"})
             ) == f"uploaded {local} → l.txt (5 B)"
             assert (
-                await tools["s3_download"].ainvoke({"profile": "demo", "key": "l.txt", "localPath": str(tmp_path / "d" / "l.txt")})
+                await tools["s3_download"].ainvoke(
+                    {"profile": "demo", "key": "l.txt", "localPath": str(tmp_path / "d" / "l.txt")}
+                )
             ) == f"downloaded l.txt → {tmp_path / 'd' / 'l.txt'} (5 B)"
-            assert (await c.post("/api/s3/settings", json={"agentTools": False})).json()["settings"]["agentTools"] is False
+            assert (await c.post("/api/s3/settings", json={"agentTools": False})).json()["settings"][
+                "agentTools"
+            ] is False
             assert not any(t.name.startswith("s3_") for t in h.get("tools").list())
             assert (await c.delete(f"/api/s3/profiles?id={pid}")).json() == {"ok": True}
         assert any(cl["entry"] == "s3" for cl in h.get("webui").clients())

@@ -63,7 +63,9 @@ async def test_workspace_registry(profile, tmp_path, home):
         # Recent: the default first, then remembered ones by last use.
         await ws.remember(str(other))
         recent = await ws.recent()
-        assert recent[0]["default"] is True and recent[1]["root"] == str(other.resolve()) and recent[1]["exists"] is True
+        assert (
+            recent[0]["default"] is True and recent[1]["root"] == str(other.resolve()) and recent[1]["exists"] is True
+        )
         assert await ws.forget(str(other)) is True and len(await ws.recent()) == 1
 
 
@@ -77,7 +79,11 @@ async def test_presets_select_tools_skills_and_prompt_sections(profile):
         agents = h.get("agents")
         async with client(h) as c:
             standard = (await c.post("/api/sessions", json={})).json()
-            assert (standard["preset"], standard["mode"], standard["workspace"]) == ("standard", "workspace-write", None)
+            assert (standard["preset"], standard["mode"], standard["workspace"]) == (
+                "standard",
+                "workspace-write",
+                None,
+            )
             creator = (await c.post("/api/sessions", json={"preset": "creator"})).json()
             assert creator["preset"] == "creator"
             assert (await c.post("/api/sessions", json={"preset": "nope"})).status_code == 422
@@ -91,7 +97,10 @@ async def test_presets_select_tools_skills_and_prompt_sections(profile):
         await agents.start_run(creator["id"], "y").wait()
         prompts = [c["messages"][0][1] for c in scripted.CALLS if "messages" in c]
         assert "Agent preset: Standard" in prompts[0] and "Extending this harness" in prompts[0]
-        assert "Agent preset: Creator" in prompts[1] and "/skills/pyharness/pyharness-plugin-development/SKILL.md" in prompts[1]
+        assert (
+            "Agent preset: Creator" in prompts[1]
+            and "/skills/pyharness/pyharness-plugin-development/SKILL.md" in prompts[1]
+        )
         assert "/skills/pyharness/" not in prompts[0]  # the user skills mount (config-center) is in every preset
         # Tool sets per graph: the standard graph has no plugin_manager tool.
         standard_graph = await agents.graph_for(standard)
@@ -102,10 +111,24 @@ async def test_presets_select_tools_skills_and_prompt_sections(profile):
 
 
 async def test_modes_gate_writes_shell_and_approvals(profile, tmp_path):
-    write = {"content": "", "tool_calls": [{"name": "write_file", "args": {"file_path": "/note.md", "content": "hi"}, "id": "w1"}]}
+    write = {
+        "content": "",
+        "tool_calls": [{"name": "write_file", "args": {"file_path": "/note.md", "content": "hi"}, "id": "w1"}],
+    }
     # One scripted model instance serves both sessions: replies are consumed in order across them.
-    replies = [write, {"content": "", "tool_calls": [{"name": "danger", "args": {"target": "x"}, "id": "d1"}]}, write, {"content": "done"}]
-    extra = [{"id": "workspace", "config": {"root": str(tmp_path / "ws"), "shell": True, "shell_approval": True}, "merge": True}]
+    replies = [
+        write,
+        {"content": "", "tool_calls": [{"name": "danger", "args": {"target": "x"}, "id": "d1"}]},
+        write,
+        {"content": "done"},
+    ]
+    extra = [
+        {
+            "id": "workspace",
+            "config": {"root": str(tmp_path / "ws"), "shell": True, "shell_approval": True},
+            "merge": True,
+        }
+    ]
     async with Harness(profile, patch=patch(replies, extra)) as h:
         agents = h.get("agents")
         async with client(h) as c:
@@ -125,7 +148,9 @@ async def test_modes_gate_writes_shell_and_approvals(profile, tmp_path):
             assert events[-1]["outcome"] == "completed"  # no approval gate in full access
 
             # Switching an existing session's mode applies to the next run.
-            assert (await c.put(f"/api/sessions/{full['id']}/mode", json={"mode": "read-only"})).json()["mode"] == "read-only"
+            assert (await c.put(f"/api/sessions/{full['id']}/mode", json={"mode": "read-only"})).json()[
+                "mode"
+            ] == "read-only"
             assert (await c.put(f"/api/sessions/{full['id']}/mode", json={"mode": "nope"})).status_code == 422
         # Graphs are cached per (workspace, mode, preset): both sessions are read-only now and share one graph.
         ro_graph = await agents.graph_for(await agents.get_session(ro["id"]))
@@ -137,7 +162,12 @@ async def test_session_workspace_is_used_by_file_tools(profile, tmp_path):
     other = tmp_path / "other"
     other.mkdir()
     replies = [
-        {"content": "", "tool_calls": [{"name": "write_file", "args": {"file_path": "/from-agent.txt", "content": "x"}, "id": "w1"}]},
+        {
+            "content": "",
+            "tool_calls": [
+                {"name": "write_file", "args": {"file_path": "/from-agent.txt", "content": "x"}, "id": "w1"}
+            ],
+        },
         {"content": "ok"},
     ]
     async with Harness(profile, patch=patch(replies)) as h:
@@ -160,7 +190,9 @@ async def test_session_workspace_is_used_by_file_tools(profile, tmp_path):
 async def test_agent_defaults_persist(profile):
     async with Harness(profile, patch=patch([])) as h:
         async with client(h) as c:
-            r = (await c.put("/api/settings/agent", json={"default_preset": "creator", "default_mode": "read-only"})).json()
+            r = (
+                await c.put("/api/settings/agent", json={"default_preset": "creator", "default_mode": "read-only"})
+            ).json()
             assert r["default_preset"] == "creator" and r["default_mode"] == "read-only"
             s = (await c.post("/api/sessions", json={})).json()
             assert (s["preset"], s["mode"]) == ("creator", "read-only")

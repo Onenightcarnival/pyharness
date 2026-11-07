@@ -82,7 +82,9 @@ class HttpService(Service):
         before = len(self.app.router.routes)
         self.app.include_router(router, prefix=prefix, **kwargs)
         added = self.app.router.routes[before:]
-        self._contributions.append({"kind": "router", "prefix": prefix, "owner": self.caller.entry_id, "routes": len(added)})
+        self._contributions.append(
+            {"kind": "router", "prefix": prefix, "owner": self.caller.entry_id, "routes": len(added)}
+        )
         return self.caller.on_dispose(lambda: self._remove(added))
 
     def mount(self, path: str, app: Any, name: str | None = None) -> Callable[[], Any]:
@@ -90,7 +92,9 @@ class HttpService(Service):
         before = len(self.app.router.routes)
         self.app.mount(path, app, name=name)
         added = self.app.router.routes[before:]
-        self._contributions.append({"kind": "mount", "prefix": path, "owner": self.caller.entry_id, "routes": len(added)})
+        self._contributions.append(
+            {"kind": "mount", "prefix": path, "owner": self.caller.entry_id, "routes": len(added)}
+        )
         return self.caller.on_dispose(lambda: self._remove(added))
 
     def _remove(self, routes: list[Any]) -> None:
@@ -109,7 +113,12 @@ class HttpService(Service):
                     context = getattr(route, "include_context", None)
                     walk(included.routes, prefix + (getattr(context, "prefix", "") or ""))
                     continue
-                out.append({"path": prefix + getattr(route, "path", "?"), "methods": sorted(getattr(route, "methods", None) or [])})
+                out.append(
+                    {
+                        "path": prefix + getattr(route, "path", "?"),
+                        "methods": sorted(getattr(route, "methods", None) or []),
+                    }
+                )
 
         walk(self.app.router.routes, "")
         return out

@@ -2,9 +2,9 @@
 
 | config                 | meaning                                                                          |
 |------------------------|----------------------------------------------------------------------------------|
-| ``servers.<name>``     | one server: ``command`` + ``args`` (+ ``env``, ``cwd``) for stdio, or ``url`` (+ ``headers``) for ``streamable_http`` / ``sse`` |
+| ``servers.<name>``     | stdio: ``command``, ``args``, ``env``, ``cwd``; HTTP / SSE transports: ``url``, ``headers`` |
 | ``servers.<name>.enabled`` | ``false`` keeps the server configured but unconnected                         |
-| ``servers.<name>.approval`` | approval gate for every tool of the server (``true`` or a LangChain ``InterruptOnConfig``) |
+| ``servers.<name>.approval`` | gate for every tool of the server: ``true`` or a LangChain ``InterruptOnConfig`` |
 | ``servers.<name>.prefix`` | tool names become ``<server>_<tool>`` (default) to keep servers apart        |
 | ``connect_timeout``    | seconds to list a server's tools before it is marked ``error``                   |
 
@@ -13,7 +13,8 @@ A stdio server whose command is a bare ``bun`` / ``bunx`` runs through the bun r
 
 A server that fails to connect is reported in :meth:`MCPService.status` and skipped; the harness boots without it.
 Tools run through the ``tools/execute`` pipeline like any registered tool, so permission modes and approvals apply.
-Secrets in ``env`` and ``headers`` come from the profile configuration (``${env:VAR}`` interpolation keeps them out of files).
+Secrets in ``env`` and ``headers`` come from the profile configuration (``${env:VAR}`` interpolation keeps them out of
+files).
 """
 
 from __future__ import annotations
@@ -47,7 +48,9 @@ class ServerConfig(BaseModel):
 
 class Config(BaseModel):
     servers: dict[str, ServerConfig] = Field(default_factory=dict)
-    connect_timeout: float = Field(20.0, description="Seconds to connect and list tools before a server counts as failed.")
+    connect_timeout: float = Field(
+        20.0, description="Seconds to connect and list tools before a server counts as failed."
+    )
 
 
 def slug(name: str) -> str:
@@ -74,7 +77,11 @@ def connection_of(cfg: ServerConfig, data_dir: str | os.PathLike[str] | None = N
         bun = managed_bun(data_dir) if command.lower() in ("bun", "bunx", "bun.exe", "bunx.exe") else None
         if bun is not None:
             exe, bun_env = bun
-            command = str(exe.with_name(exe.name.replace("bun", "bunx", 1))) if command.lower().startswith("bunx") else str(exe)
+            command = (
+                str(exe.with_name(exe.name.replace("bun", "bunx", 1)))
+                if command.lower().startswith("bunx")
+                else str(exe)
+            )
             env = {**bun_env, **env}
         conn: dict[str, Any] = {"transport": "stdio", "command": command, "args": list(cfg.args)}
         if env:
@@ -143,7 +150,11 @@ class MCPService(Service):
             tools = await asyncio.wait_for(self._load("probe", cfg), timeout or self.config.connect_timeout)
             return {"ok": True, "tools": [t.name for t in tools]}
         except TimeoutError:
-            return {"ok": False, "code": "timeout", "error": f"no MCP handshake within {timeout or self.config.connect_timeout:g} s"}
+            return {
+                "ok": False,
+                "code": "timeout",
+                "error": f"no MCP handshake within {timeout or self.config.connect_timeout:g} s",
+            }
         except Exception as exc:  # noqa: BLE001
             return {"ok": False, "code": "error", "error": f"{type(exc).__name__}: {exc}"[:600]}
 
@@ -159,7 +170,10 @@ class MCPService(Service):
             data = cfg.model_dump()
             data["env"] = {k: MASK for k in cfg.env}
             data["headers"] = {k: MASK for k in cfg.headers}
-            out[name] = {**data, **self._status.get(name, {"state": "disabled" if not cfg.enabled else "unknown", "tools": []})}
+            out[name] = {
+                **data,
+                **self._status.get(name, {"state": "disabled" if not cfg.enabled else "unknown", "tools": []}),
+            }
         return out
 
 

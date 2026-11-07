@@ -78,7 +78,12 @@ def describe(text: str) -> tuple[str, str, dict[str, Any]]:
     if not description:
         body = FRONTMATTER_RE.sub("", text, count=1)
         description = next(
-            (line.strip() for line in body.splitlines() if line.strip() and not line.startswith("#") and not line.startswith("---")), ""
+            (
+                line.strip()
+                for line in body.splitlines()
+                if line.strip() and not line.startswith("#") and not line.startswith("---")
+            ),
+            "",
         )
     version = fm.get("version")
     if version is None and isinstance(fm.get("metadata"), dict):
@@ -107,7 +112,13 @@ class SkillStore:
                 except OSError:
                     continue
                 description, version, _ = describe(text)
-                out[entry.name] = {"name": entry.name, "description": description, "version": version, "kind": "bundle", "enabled": enabled}
+                out[entry.name] = {
+                    "name": entry.name,
+                    "description": description,
+                    "version": version,
+                    "kind": "bundle",
+                    "enabled": enabled,
+                }
         return out
 
     def list(self) -> list[dict[str, Any]]:
@@ -134,7 +145,9 @@ class SkillStore:
             rel_dir = Path(dirpath).relative_to(path)
             if len(rel_dir.parts) >= WALK_DEPTH:
                 dirnames[:] = []
-            dirnames[:] = sorted(d for d in dirnames if d not in (".git", "node_modules") and not (Path(dirpath) / d).is_symlink())
+            dirnames[:] = sorted(
+                d for d in dirnames if d not in (".git", "node_modules") and not (Path(dirpath) / d).is_symlink()
+            )
             for fn in sorted(filenames):
                 fp = Path(dirpath) / fn
                 if fp.is_symlink():
@@ -168,7 +181,11 @@ class SkillStore:
             data = f.read(PREVIEW_LIMIT + 1)
         if b"\0" in data:
             raise SkillError("binary file cannot be previewed")
-        return {"text": data[:PREVIEW_LIMIT].decode("utf-8", "replace"), "size": size, "truncated": size > PREVIEW_LIMIT}
+        return {
+            "text": data[:PREVIEW_LIMIT].decode("utf-8", "replace"),
+            "size": size,
+            "truncated": size > PREVIEW_LIMIT,
+        }
 
     # ------------------------------------------------------------------ writes
     def set_enabled(self, name: str, enabled: bool) -> None:
@@ -196,7 +213,8 @@ class SkillStore:
         return any((root / name).is_dir() for root in (self.enabled_dir, self.disabled_dir))
 
     def install_zip(self, data: bytes, filename: str, policy: str = "ask") -> dict[str, Any]:
-        """Install the skills of a ZIP: a root ``SKILL.md`` (one skill named after the file), ``<dir>/SKILL.md`` bundles,
+        """Install the skills of a ZIP: a root ``SKILL.md`` (one skill named after the file), ``<dir>/SKILL.md``
+        bundles,
         and top-level ``*.md`` files (each becomes ``<name>/SKILL.md``). ``policy``: ask (report conflicts, write
         nothing), skip (keep existing), replace (overwrite and enable)."""
         if len(data) > ZIP_LIMIT:
@@ -258,7 +276,11 @@ class SkillStore:
                 target = self.enabled_dir / skill
                 backup = None
                 if skill in conflicts:
-                    old = (self.enabled_dir / skill) if (self.enabled_dir / skill).exists() else (self.disabled_dir / skill)
+                    old = (
+                        (self.enabled_dir / skill)
+                        if (self.enabled_dir / skill).exists()
+                        else (self.disabled_dir / skill)
+                    )
                     backup = old.with_name(f".{skill}.backup")
                     if backup.exists():
                         shutil.rmtree(backup)

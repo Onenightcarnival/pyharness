@@ -11,7 +11,12 @@ from pyharness_plugin_manager.reference import PACKAGES_MD, render_packages
 from pyharness import Harness, Profile
 from testkit import scripted
 
-SKILLS = {"pyharness-plugin-development", "editing-pyharness-compositions", "pyharness-composition-reference", "agent-experience"}
+SKILLS = {
+    "pyharness-plugin-development",
+    "editing-pyharness-compositions",
+    "pyharness-composition-reference",
+    "agent-experience",
+}
 
 
 def patch_for(replies):
@@ -47,7 +52,9 @@ def test_templates_render_without_tokens():
     for variant in template_variants():
         files = render_template("My Audit", variant)
         assert "pyproject.toml" in files and "pyh_my_audit/__init__.py" in files and "pyh_my_audit/bundle.yaml" in files
-        assert not any("__" + t for t in ("DIST", "MODULE", "BUNDLE", "TITLE") if any(f"__{t}__" in v for v in files.values()))
+        assert not any(
+            "__" + t for t in ("DIST", "MODULE", "BUNDLE", "TITLE") if any(f"__{t}__" in v for v in files.values())
+        )
         assert 'pyh-my-audit = "pyh_my_audit"' in files["pyproject.toml"]
     assert 'id: "my-audit"' in render_template("My Audit", "ui-panel")["pyh_my_audit/client.js"]
     with pytest.raises(ValueError):
@@ -70,9 +77,14 @@ async def test_creator_profile_mounts_skills_read_only(home):
         },
         {
             "content": "",
-            "tool_calls": [{"name": "write_file", "args": {"file_path": "/skills/pyharness/x.md", "content": "x"}, "id": "w1"}],
+            "tool_calls": [
+                {"name": "write_file", "args": {"file_path": "/skills/pyharness/x.md", "content": "x"}, "id": "w1"}
+            ],
         },
-        {"content": "", "tool_calls": [{"name": "write_file", "args": {"file_path": "/note.md", "content": "ok"}, "id": "w2"}]},
+        {
+            "content": "",
+            "tool_calls": [{"name": "write_file", "args": {"file_path": "/note.md", "content": "ok"}, "id": "w2"}],
+        },
         {"content": "done"},
     ]
     scripted.CALLS.clear()
@@ -85,7 +97,9 @@ async def test_creator_profile_mounts_skills_read_only(home):
             "owner": "plugin-manager",
             "presets": ["creator"],
         } in mounts
-        assert [m["label"] for m in mounts] == ["pyharness", "user"] and mounts[1]["owner"] == "config-center"  # user skills: every preset
+        assert [m["label"] for m in mounts] == ["pyharness", "user"] and mounts[1][
+            "owner"
+        ] == "config-center"  # user skills: every preset
         assert h.get("agentLoop").config.default_preset == "creator"
         prompt = h.get("prompt").render("creator")
         assert "Extending this harness" not in prompt  # the skill catalog carries it in the creator preset
@@ -94,7 +108,9 @@ async def test_creator_profile_mounts_skills_read_only(home):
         session = await agents.create_session()
         events = await agents.start_run(session["id"], "go").wait()
         results = {e["id"]: e for e in events if e["type"] == "tool_result"}
-        assert results["r1"]["status"] == "success" and "plugin_manager action=install_bundle" in results["r1"]["content"]
+        assert (
+            results["r1"]["status"] == "success" and "plugin_manager action=install_bundle" in results["r1"]["content"]
+        )
         assert results["w1"]["status"] == "error" and "denied" in results["w1"]["content"]
         assert results["w2"]["status"] == "success"  # the workspace itself stays writable
         system = next(c for c in scripted.CALLS if "messages" in c)["messages"][0][1]

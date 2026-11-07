@@ -50,7 +50,10 @@ def thinking_config(model: str, effort: str | None, max_tokens: int | None) -> d
         return {"includeThoughts": False, "thinkingBudget": 0}
     allowed = efforts_for(model)
     if allowed and effort not in allowed:
-        raise LlmError("UNSUPPORTED_REASONING_EFFORT", f"{model} does not support reasoning effort {effort!r}; one of {', '.join(allowed)}")
+        raise LlmError(
+            "UNSUPPORTED_REASONING_EFFORT",
+            f"{model} does not support reasoning effort {effort!r}; one of {', '.join(allowed)}",
+        )
     if re.match(r"gemini-3\.1-flash(-lite)?-image", m):
         return {"thinkingLevel": effort.upper(), "includeThoughts": True}
     if m == "gemini-3.7-flash-tiered":
@@ -86,7 +89,11 @@ def _resolve_refs(schema: Any, root: dict[str, Any], seen: tuple[str, ...] = ())
                 target = target[part]
             merged = {**_resolve_refs(target, root, (*seen, ref)), **{k: v for k, v in schema.items() if k != "$ref"}}
             return merged
-        return {k: _resolve_refs(v, root, seen) for k, v in schema.items() if k not in ("$schema", "$id", "$defs", "definitions")}
+        return {
+            k: _resolve_refs(v, root, seen)
+            for k, v in schema.items()
+            if k not in ("$schema", "$id", "$defs", "definitions")
+        }
     if isinstance(schema, list):
         return [_resolve_refs(v, root, seen) for v in schema]
     return schema
@@ -100,7 +107,8 @@ def gemini_schema(parameters: dict[str, Any]) -> dict[str, Any]:
 
 
 def simple_schema(schema: Any) -> Any:
-    """The reduced schema Claude / gpt-oss models accept: type, description, properties, required, items, string enums."""
+    """The reduced schema Claude / gpt-oss models accept: type, description, properties, required, items,
+    string enums."""
     if not isinstance(schema, dict):
         return schema
     s = copy.deepcopy(schema)
@@ -125,7 +133,11 @@ def simple_schema(schema: Any) -> Any:
                     if base.get("type") != other.get("type"):
                         base = {k: v for k, v in base.items() if k != "type"}
                         break
-                s = {**base, **{k: v for k, v in s.items() if k not in ("type",)}, **({"type": base["type"]} if "type" in base else {})}
+                s = {
+                    **base,
+                    **{k: v for k, v in s.items() if k not in ("type",)},
+                    **({"type": base["type"]} if "type" in base else {}),
+                }
     t = s.get("type")
     if isinstance(t, list):
         t = [x for x in t if x != "null"]
@@ -210,7 +222,9 @@ def to_contents(messages: list[BaseMessage], model: str) -> tuple[str | None, li
             for i, call in enumerate(message.tool_calls or []):
                 cid = str(call.get("id") or "")
                 call_names[cid] = str(call.get("name") or "")
-                part: dict[str, Any] = {"functionCall": {"id": cid, "name": call.get("name"), "args": call.get("args") or {}}}
+                part: dict[str, Any] = {
+                    "functionCall": {"id": cid, "name": call.get("name"), "args": call.get("args") or {}}
+                }
                 if gemini3 and i == 0:
                     part["thoughtSignature"] = "skip_thought_signature_validator"
                 parts.append(part)
@@ -247,7 +261,9 @@ def build_request(
     image_model = "-image" in model.lower()
     if tools and not image_model:
         request["tools"] = [{"functionDeclarations": function_declarations(tools, model)}]
-        request["toolConfig"] = {"functionCallingConfig": {"mode": "VALIDATED" if model.lower().startswith("claude-") else "AUTO"}}
+        request["toolConfig"] = {
+            "functionCallingConfig": {"mode": "VALIDATED" if model.lower().startswith("claude-") else "AUTO"}
+        }
     generation: dict[str, Any] = {}
     if image_model:
         generation["responseModalities"] = ["TEXT", "IMAGE"]

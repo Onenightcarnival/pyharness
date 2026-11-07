@@ -51,7 +51,9 @@ class ScriptedModel(BaseChatModel):
             extra = {"reasoning_content": reply["reasoning"]} if reply.get("reasoning") else {}
             content: Any = reply.get("content", "")
             if reply.get("images"):
-                content = [{"type": "text", "text": content}] + [{"type": "image_url", "image_url": {"url": u}} for u in reply["images"]]
+                content = [{"type": "text", "text": content}] + [
+                    {"type": "image_url", "image_url": {"url": u}} for u in reply["images"]
+                ]
             message = AIMessage(content=content, tool_calls=reply.get("tool_calls", []), additional_kwargs=extra)
         else:
             message = AIMessage(content="(script exhausted)")

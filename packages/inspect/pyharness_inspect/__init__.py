@@ -47,7 +47,17 @@ def _methods(obj: Any, detail: bool) -> list[dict[str, Any]]:
     cls = type(obj)
     out = []
     for attr in sorted(dir(cls)):
-        if attr.startswith("_") or attr in {"ctx", "config", "caller", "start", "stop", "key", "name", "inject", "Config"}:
+        if attr.startswith("_") or attr in {
+            "ctx",
+            "config",
+            "caller",
+            "start",
+            "stop",
+            "key",
+            "name",
+            "inject",
+            "Config",
+        }:
             continue
         member = getattr(cls, attr, None)
         if member is None or not callable(member) or _inspect.isclass(member):
@@ -107,7 +117,14 @@ class Inspector:
         for key, (value, owner, _scope) in sorted(visible.items()):
             value = unwrap(value)
             doc = _inspect.getdoc(type(value)) or ""
-            rows.append({"key": key, "owner": owner, "type": type(value).__qualname__, "doc": doc.splitlines()[0] if doc else ""})
+            rows.append(
+                {
+                    "key": key,
+                    "owner": owner,
+                    "type": type(value).__qualname__,
+                    "doc": doc.splitlines()[0] if doc else "",
+                }
+            )
         return rows
 
     def events(self, name: str | None) -> Any:
@@ -134,19 +151,32 @@ class Inspector:
         if name:
             match = [r for r in rows if r["id"] == name or r.get("name") == name]
             return match or {"error": f"no entry {name!r}"}
-        return [{k: r.get(k) for k in ("id", "name", "state", "kind", "provides", "inject", "missing", "error") if r.get(k)} for r in rows]
+        return [
+            {k: r.get(k) for k in ("id", "name", "state", "kind", "provides", "inject", "missing", "error") if r.get(k)}
+            for r in rows
+        ]
 
     def config(self, name: str | None) -> Any:
         loader = self.ctx.loader
         if not name:
             return [
-                {"id": rt.entry.id, "name": rt.entry.name, "state": rt.state.value, "has_schema": bool(rt.spec and rt.spec.config_model)}
+                {
+                    "id": rt.entry.id,
+                    "name": rt.entry.name,
+                    "state": rt.state.value,
+                    "has_schema": bool(rt.spec and rt.spec.config_model),
+                }
                 for rt in loader.runtimes
             ]
         rt = loader.get(name)
         if rt is None:
             return {"error": f"no entry {name!r}; name: entry id"}
-        data: dict[str, Any] = {"id": rt.entry.id, "name": rt.entry.name, "state": rt.state.value, "raw_config": rt.entry.config or {}}
+        data: dict[str, Any] = {
+            "id": rt.entry.id,
+            "name": rt.entry.name,
+            "state": rt.state.value,
+            "raw_config": rt.entry.config or {},
+        }
         if rt.spec is not None:
             data["schema"] = rt.spec.config_schema()
             data["package_dir"] = rt.spec.package_dir
@@ -195,7 +225,10 @@ class Inspector:
         return {
             "slots": slots,
             "clients": webui.clients(),
-            "contract": "ctx.webui.register_client(path, calls={...}); the page: window.__PyhModules__.load({id, factory(require) { return { apply(ctx) {...} } }})",
+            "contract": (
+                "ctx.webui.register_client(path, calls={...}); "
+                "the page: window.__PyhModules__.load({id, factory(require) { return { apply(ctx) {...} } }})"
+            ),
         }
 
     def overview(self, name: str | None) -> Any:
@@ -229,3 +262,6 @@ def apply(ctx: Any, config: Config) -> None:
         return text
 
     ctx.tools.register(StructuredTool.from_function(harness_inspect, name="harness_inspect"))
+
+
+__all__ = ["Config", "Inspector", "REDACTED", "Topic", "apply", "inject", "name"]

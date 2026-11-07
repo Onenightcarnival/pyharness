@@ -20,9 +20,9 @@ def test_connection_and_slug():
         "env": {"A": "1"},
     }
     assert connection_of(ServerConfig(url="http://x/mcp")) == {"transport": "streamable_http", "url": "http://x/mcp"}
-    assert connection_of(ServerConfig(url="http://x/sse", transport="sse", headers={"Authorization": "t"}))["headers"] == {
-        "Authorization": "t"
-    }
+    assert connection_of(ServerConfig(url="http://x/sse", transport="sse", headers={"Authorization": "t"}))[
+        "headers"
+    ] == {"Authorization": "t"}
     assert slug("my server-1") == "my_server_1"
 
 
@@ -63,14 +63,30 @@ async def test_mcp_settings_api_round_trip(home):
     async with Harness(profile, patch=[{"id": "http", "config": {"serve": False}}]) as h:
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t") as c:
             assert (await c.get("/api/settings/mcp")).json() == {"servers": {}}
-            body = {"servers": {"demo": {"command": sys.executable, "args": [str(SERVER)], "env": {"TOKEN": "secret"}, "approval": True}}}
+            body = {
+                "servers": {
+                    "demo": {
+                        "command": sys.executable,
+                        "args": [str(SERVER)],
+                        "env": {"TOKEN": "secret"},
+                        "approval": True,
+                    }
+                }
+            }
             r = await c.put("/api/settings/mcp", json=body)
             assert r.status_code == 200 and r.json()["application"] == "saved-restart-required"
-            assert (await c.put("/api/settings/mcp", json={"servers": {"bad name": {"url": "http://x"}}})).status_code == 422
-            assert (await c.put("/api/settings/mcp", json={"servers": {"x": {"command": "a", "url": "http://x"}}})).status_code == 422
+            assert (
+                await c.put("/api/settings/mcp", json={"servers": {"bad name": {"url": "http://x"}}})
+            ).status_code == 422
+            assert (
+                await c.put("/api/settings/mcp", json={"servers": {"x": {"command": "a", "url": "http://x"}}})
+            ).status_code == 422
     ops = yaml.safe_load(Path(profile.patch_path).read_text())
     op = next(o for o in ops if o["id"] == "mcp")
-    assert op["config"]["servers"]["demo"]["env"] == {"TOKEN": "secret"} and op["config"]["servers"]["demo"]["approval"] is True
+    assert (
+        op["config"]["servers"]["demo"]["env"] == {"TOKEN": "secret"}
+        and op["config"]["servers"]["demo"]["approval"] is True
+    )
     # The next generation connects the server, masks the secret and keeps it when the UI sends the mask back.
     async with Harness(profile, patch=[{"id": "http", "config": {"serve": False}}], generation=2) as h2:
         view = h2.get("mcp").servers()
@@ -78,7 +94,9 @@ async def test_mcp_settings_api_round_trip(home):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h2.get("http").app), base_url="http://t") as c:
             r = await c.put(
                 "/api/settings/mcp",
-                json={"servers": {"demo": {"command": sys.executable, "args": [str(SERVER)], "env": {"TOKEN": "••••"}}}},
+                json={
+                    "servers": {"demo": {"command": sys.executable, "args": [str(SERVER)], "env": {"TOKEN": "••••"}}}
+                },
             )
             assert r.status_code == 200
     ops = yaml.safe_load(Path(profile.patch_path).read_text())

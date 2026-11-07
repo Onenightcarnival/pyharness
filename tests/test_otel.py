@@ -1,4 +1,6 @@
-"""OpenTelemetry export: endpoint normalization, the turn trace built from a scripted run, the settings and test routes."""
+"""OpenTelemetry export: endpoint normalization, the turn trace built from a scripted run, the settings and test
+routes.
+"""
 
 from __future__ import annotations
 
@@ -15,12 +17,24 @@ from testkit import scripted
 
 def test_endpoint_helpers():
     assert normalize_endpoint("cloud.langfuse.com") == "https://cloud.langfuse.com/api/public/otel"
-    assert normalize_endpoint("https://cloud.langfuse.com/api/public/otel/") == "https://cloud.langfuse.com/api/public/otel"
+    assert (
+        normalize_endpoint("https://cloud.langfuse.com/api/public/otel/")
+        == "https://cloud.langfuse.com/api/public/otel"
+    )
     assert normalize_endpoint("https://collector.example:4318") == "https://collector.example:4318"
-    assert normalize_endpoint("https://gateway.example/lf", langfuse_hint=True) == "https://gateway.example/lf/api/public/otel"
-    assert normalize_endpoint("https://x.example/v1/traces") == "https://x.example/v1/traces" and normalize_endpoint("") == ""
+    assert (
+        normalize_endpoint("https://gateway.example/lf", langfuse_hint=True)
+        == "https://gateway.example/lf/api/public/otel"
+    )
+    assert (
+        normalize_endpoint("https://x.example/v1/traces") == "https://x.example/v1/traces"
+        and normalize_endpoint("") == ""
+    )
     assert signal_url("https://x.example/v1/traces", "metrics") == "https://x.example/v1/metrics"
-    assert signal_url("https://cloud.langfuse.com/api/public/otel", "traces") == "https://cloud.langfuse.com/api/public/otel/v1/traces"
+    assert (
+        signal_url("https://cloud.langfuse.com/api/public/otel", "traces")
+        == "https://cloud.langfuse.com/api/public/otel/v1/traces"
+    )
 
 
 async def test_turn_trace_and_routes(home):
@@ -40,7 +54,12 @@ async def test_turn_trace_and_routes(home):
         extra=[
             {
                 "id": "otel",
-                "config": {"enabled": True, "endpoint": "https://collector.example", "public_key": "pk", "trace_export_interval_ms": 200},
+                "config": {
+                    "enabled": True,
+                    "endpoint": "https://collector.example",
+                    "public_key": "pk",
+                    "trace_export_interval_ms": 200,
+                },
                 "merge": True,
             }
         ],
@@ -63,7 +82,8 @@ async def test_turn_trace_and_routes(home):
         exporter = exporters[-1]
         spans = {s.name: s for s in exporter.get_finished_spans()}
         assert (
-            set(spans) == {"enter_ai_application_system", "invoke_agent standard", "react step", "chat test", "execute_tool shout"}
+            set(spans)
+            == {"enter_ai_application_system", "invoke_agent standard", "react step", "chat test", "execute_tool shout"}
             or "react step" in spans
         )
         entry, agent = spans["enter_ai_application_system"], spans["invoke_agent standard"]
@@ -95,10 +115,15 @@ async def test_turn_trace_and_routes(home):
         )
         assert json.loads(llms[0].attributes["gen_ai.output.messages"])[0]["parts"][0]["type"] == "tool_call"
         assert "gen_ai.system_instructions" in llms[0].attributes and "gen_ai.tool.definitions" in llms[0].attributes
-        assert all(s.end_time >= s.start_time for s in exporter.get_finished_spans()) and entry.start_time <= steps[0].start_time
+        assert (
+            all(s.end_time >= s.start_time for s in exporter.get_finished_spans())
+            and entry.start_time <= steps[0].start_time
+        )
         st = otel.status()
         assert st["exportedSpans"] >= 7 and st["lastExportOk"] is True and st["secretKeySet"] is False
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=60) as c:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=60
+        ) as c:
             assert (await c.get("/api/otel/status")).json()["enabled"] is True
             r = await c.put(
                 "/api/otel/settings",
@@ -135,9 +160,16 @@ async def test_turn_trace_and_routes(home):
             r = await c.post("/api/otel/test", json={"endpoint": "https://collector.example", "publicKey": "pk"})
             exporter = exporters[-1]
             assert (
-                r.status_code == 200 and r.json()["ok"] is True and len(r.json()["traceIds"]) == 3 and "Tests passed" in r.json()["message"]
+                r.status_code == 200
+                and r.json()["ok"] is True
+                and len(r.json()["traceIds"]) == 3
+                and "Tests passed" in r.json()["message"]
             )
             names = {s.name for s in exporter.get_finished_spans()}
-            assert {"pyharness-otel connection test", "pyharness-otel payload test", "enter_ai_application_system"} <= names
+            assert {
+                "pyharness-otel connection test",
+                "pyharness-otel payload test",
+                "enter_ai_application_system",
+            } <= names
             assert (await c.post("/api/otel/verify", json={})).status_code == 409
         assert any(cl["entry"] == "otel" for cl in h.get("webui").clients())

@@ -125,17 +125,23 @@ def test_bun_manager_install_with_mocked_release(tmp_path, monkeypatch):
     (data_dir / "toolkit" / "bun").symlink_to(tmp_path / "bun")
     conn = connection_of(ServerConfig(command="bunx", args=["-y", "server"], env={"A": "1"}), data_dir)
     managed = data_dir / "toolkit" / "bun"
-    assert conn["command"] == str(managed / "bin" / "bunx") and conn["env"]["A"] == "1" and conn["env"]["BUN_INSTALL"] == str(managed)
-    assert connection_of(ServerConfig(command="bun", args=[]), data_dir)["command"] == str(managed / "bin" / "bun")
-    assert connection_of(ServerConfig(command="npx", args=[]), data_dir)["command"] == "npx" and "env" not in connection_of(
-        ServerConfig(command="npx"), data_dir
+    assert (
+        conn["command"] == str(managed / "bin" / "bunx")
+        and conn["env"]["A"] == "1"
+        and conn["env"]["BUN_INSTALL"] == str(managed)
     )
+    assert connection_of(ServerConfig(command="bun", args=[]), data_dir)["command"] == str(managed / "bin" / "bun")
+    assert connection_of(ServerConfig(command="npx", args=[]), data_dir)[
+        "command"
+    ] == "npx" and "env" not in connection_of(ServerConfig(command="npx"), data_dir)
     assert connection_of(ServerConfig(command="bun"), None)["command"] == "bun"
     # A checksum mismatch leaves the installed version alone.
     monkeypatch.setattr(bun, "fetch", lambda url, on_progress=None: b"garbage")
     bun.install()
     bun.wait()
-    assert bun.status()["error"] == "bun checksum verification failed. Try again." and bun.status()["version"] == "9.9.9"
+    assert (
+        bun.status()["error"] == "bun checksum verification failed. Try again." and bun.status()["version"] == "9.9.9"
+    )
 
 
 async def test_routes(home, tmp_path):
@@ -148,21 +154,37 @@ async def test_routes(home, tmp_path):
     async with Harness(profile, patch=[HTTP_OFF, mcp_patch]) as h:
         center: ConfigCenterService = h.get("configCenter")
         assert center.skills is not None and any(s["label"] == "user" for s in h.get("agentLoop").skills())
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=90) as c:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=90
+        ) as c:
             d = (await c.get("/api/config-center/mcp")).json()
             assert d["servers"]["demo"]["state"] == "connected" and d["connectTimeout"] == 60
-            r = await c.post("/api/config-center/mcp/test", json={"server": {"command": sys.executable, "args": [str(MCP_SERVER)]}})
+            r = await c.post(
+                "/api/config-center/mcp/test", json={"server": {"command": sys.executable, "args": [str(MCP_SERVER)]}}
+            )
             assert r.json()["result"] == {"ok": True, "tools": ["add"]}
-            r = await c.post("/api/config-center/mcp/test", json={"server": {"command": "/nonexistent/mcp"}, "timeout": 10})
+            r = await c.post(
+                "/api/config-center/mcp/test", json={"server": {"command": "/nonexistent/mcp"}, "timeout": 10}
+            )
             assert r.json()["result"]["ok"] is False and r.json()["result"]["error"]
             assert (await c.post("/api/config-center/mcp/test", json={"server": {}})).status_code == 400
             assert (await c.put("/api/config-center/mcp/timeout", json={"connectTimeout": 0})).status_code == 400
             r = await c.put("/api/config-center/mcp/timeout", json={"connectTimeout": 45})
-            assert r.json()["connectTimeout"] == 45 and (await c.get("/api/config-center/mcp")).json()["connectTimeout"] == 45
+            assert (
+                r.json()["connectTimeout"] == 45
+                and (await c.get("/api/config-center/mcp")).json()["connectTimeout"] == 45
+            )
             # skills
-            assert (await c.get("/api/config-center/skills")).json() == {"directory": str(center.skills.enabled_dir), "skills": []}
-            z = base64.b64encode(make_zip({"SKILL.md": SKILL.format(name="demo-skill", desc="A demo").encode()})).decode()
-            r = await c.post("/api/config-center/skills/install", json={"filename": "demo-skill.zip", "data": z, "policy": "ask"})
+            assert (await c.get("/api/config-center/skills")).json() == {
+                "directory": str(center.skills.enabled_dir),
+                "skills": [],
+            }
+            z = base64.b64encode(
+                make_zip({"SKILL.md": SKILL.format(name="demo-skill", desc="A demo").encode()})
+            ).decode()
+            r = await c.post(
+                "/api/config-center/skills/install", json={"filename": "demo-skill.zip", "data": z, "policy": "ask"}
+            )
             assert r.json() == {"installed": ["demo-skill"], "skipped": [], "conflicts": []}
             d = (await c.get("/api/config-center/skills/detail", params={"name": "demo-skill"})).json()
             assert d["enabled"] is True and d["files"] == [
@@ -178,7 +200,9 @@ async def test_routes(home, tmp_path):
             assert (await c.post("/api/config-center/skills", json={"name": "demo-skill"})).status_code == 400
             assert (await c.get("/api/config-center/skills/detail", params={"name": "nope"})).status_code == 400
             assert (
-                await c.post("/api/config-center/skills/install", json={"filename": "x.zip", "data": "!!", "policy": "ask"})
+                await c.post(
+                    "/api/config-center/skills/install", json={"filename": "x.zip", "data": "!!", "policy": "ask"}
+                )
             ).status_code == 400
             assert (await c.delete("/api/config-center/skills", params={"name": "demo-skill"})).json()["skills"] == []
             # environment

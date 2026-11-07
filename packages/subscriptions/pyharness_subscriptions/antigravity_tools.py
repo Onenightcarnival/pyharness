@@ -57,7 +57,9 @@ def make_tools(provider: AntigravityProvider, service: Any) -> list[Any]:
                 session,
                 "generateContent",
                 request(
-                    session, SEARCH_MODEL, {"contents": [{"role": "user", "parts": [{"text": query}]}], "tools": [{"googleSearch": {}}]}
+                    session,
+                    SEARCH_MODEL,
+                    {"contents": [{"role": "user", "parts": [{"text": query}]}], "tools": [{"googleSearch": {}}]},
                 ),
                 timeout=60,
             )
@@ -76,14 +78,20 @@ def make_tools(provider: AntigravityProvider, service: Any) -> list[Any]:
                 raw_sources.append({"url": web.get("uri"), "title": web.get("title")})
         sources = dedupe_sources(raw_sources, limit=8)
         if not sources:
-            return "Error: Antigravity returned no grounded web sources; search may be unavailable for this account or model"
+            return (
+                "Error: Antigravity returned no grounded web sources; "
+                "search may be unavailable for this account or model"
+            )
         content = "\n".join(texts)
         truncated = len(content) > 64 * 1024
         return format_search(content[: 64 * 1024], sources, truncated)
 
     @tool(
         "antigravity_image_generate",
-        description="Generate or edit an image with Gemini 3.1 Flash Image through the Antigravity subscription. Saves the images and returns their paths and preview URLs.",
+        description=(
+            "Generate or edit an image with Gemini 3.1 Flash Image through the Antigravity subscription. "
+            "Saves the images and returns their paths and preview URLs."
+        ),
         args_schema=ImageArgs,
     )
     async def antigravity_image_generate(
@@ -118,7 +126,11 @@ def make_tools(provider: AntigravityProvider, service: Any) -> list[Any]:
                 inline = part.get("inlineData") if isinstance(part, dict) else None
                 if inline and inline.get("data") and not part.get("thought"):
                     raw = base64.b64decode(inline["data"])
-                    if image_extension(raw) in ("png", "jpg", "webp") and len(raw) <= 20 * 1024 * 1024 and len(images) < 4:
+                    if (
+                        image_extension(raw) in ("png", "jpg", "webp")
+                        and len(raw) <= 20 * 1024 * 1024
+                        and len(images) < 4
+                    ):
                         images.append((raw, None))
         if not images:
             return "Error: Antigravity returned no images"

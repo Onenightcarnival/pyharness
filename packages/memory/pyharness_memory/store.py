@@ -1,9 +1,9 @@
 """The career memory model and its SQLite store.
 
-Tree: ``profile`` (one root) → ``work`` → ``project`` (``fields.workId``; empty = independent, under the root) → ``lesson``
-(``fields.parentId``). Every write is a commit: when content changes it adds one revision (time, actor, source, summary)
-with a full snapshot of the entries; blobs are content-addressed so unchanged entries are stored once. ``revision`` is
-a monotonic concurrency counter (``stateToken``); the displayed version is the number of revisions.
+Tree: ``profile`` (one root) → ``work`` → ``project`` (``fields.workId``; empty = independent, under the root) →
+``lesson`` (``fields.parentId``). Every write is a commit: when content changes it adds one revision (time, actor,
+source, summary) with a full snapshot of the entries; blobs are content-addressed so unchanged entries are stored once.
+``revision`` is a monotonic concurrency counter (``stateToken``); the displayed version is the number of revisions.
 """
 
 from __future__ import annotations
@@ -26,8 +26,8 @@ FIELDS: dict[str, tuple[str, ...]] = {
 }
 KIND_GUIDE = {
     "profile": "The single global profile: who this agent is and what it can do.",
-    "work": "One position: one role under one job description for one organization or principal over a continuous period. "
-    "A new role or a new principal is a new work entry.",
+    "work": "One position: one role under one job description for one organization or principal over a continuous "
+    "period. A new role or a new principal is a new work entry.",
     "project": "One deliverable or body of work carried out within a position. An independent project has no work.",
     "lesson": "One reusable conclusion drawn from a project, stated so that it applies without the original context.",
 }
@@ -131,7 +131,11 @@ def children_of(entries: list[dict[str, Any]], node_id: str) -> list[dict[str, A
         return []
     kind = node["kind"]
     if kind == "profile":
-        out = [e for e in entries if e["kind"] == "work" or (e["kind"] == "project" and not (e["fields"].get("workId") or ""))]
+        out = [
+            e
+            for e in entries
+            if e["kind"] == "work" or (e["kind"] == "project" and not (e["fields"].get("workId") or ""))
+        ]
     elif kind == "work":
         out = [e for e in entries if e["kind"] == "project" and e["fields"].get("workId") == node_id]
     elif kind == "project":
@@ -151,7 +155,13 @@ def validate_snapshot(entries: Any) -> None:
         if not isinstance(entry, dict) or set(entry) - {"id", "kind", "fields", "createdAt"}:
             raise MemoryError("invalid")
         eid, kind, fields = entry.get("id"), entry.get("kind"), entry.get("fields")
-        if not isinstance(eid, str) or not ID_RE.match(eid) or eid in seen or kind not in KINDS or not isinstance(fields, dict):
+        if (
+            not isinstance(eid, str)
+            or not ID_RE.match(eid)
+            or eid in seen
+            or kind not in KINDS
+            or not isinstance(fields, dict)
+        ):
             raise MemoryError("invalid")
         seen.add(eid)
         created = entry.get("createdAt")
@@ -166,7 +176,12 @@ def validate_snapshot(entries: Any) -> None:
                 raise MemoryError("invalid", key)
             if len(value) > (MAX_HIGHLIGHTS if key == "highlights" else MAX_FIELD):
                 raise MemoryError("invalid", key)
-            if key in ("startDate", "endDate") and value and not (key == "endDate" and value == "present") and not valid_date(value):
+            if (
+                key in ("startDate", "endDate")
+                and value
+                and not (key == "endDate" and value == "present")
+                and not valid_date(value)
+            ):
                 raise MemoryError("date", key)
         start, end = fields.get("startDate") or "", fields.get("endDate") or ""
         if start and end and end != "present" and start > end:
@@ -199,9 +214,13 @@ def _copy(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS blobs (hash TEXT PRIMARY KEY, body TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS entries (seq INTEGER PRIMARY KEY, id TEXT NOT NULL UNIQUE, hash TEXT NOT NULL REFERENCES blobs(hash));
-CREATE TABLE IF NOT EXISTS revisions (revision INTEGER PRIMARY KEY, time TEXT NOT NULL, actor TEXT NOT NULL, source TEXT NOT NULL, summary TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS revision_entries (revision INTEGER NOT NULL REFERENCES revisions(revision) ON DELETE CASCADE, seq INTEGER NOT NULL, id TEXT NOT NULL, hash TEXT NOT NULL REFERENCES blobs(hash), PRIMARY KEY (revision, seq));
+CREATE TABLE IF NOT EXISTS entries (
+    seq INTEGER PRIMARY KEY, id TEXT NOT NULL UNIQUE, hash TEXT NOT NULL REFERENCES blobs(hash));
+CREATE TABLE IF NOT EXISTS revisions (
+    revision INTEGER PRIMARY KEY, time TEXT NOT NULL, actor TEXT NOT NULL, source TEXT NOT NULL, summary TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS revision_entries (
+    revision INTEGER NOT NULL REFERENCES revisions(revision) ON DELETE CASCADE, seq INTEGER NOT NULL, id TEXT NOT NULL,
+    hash TEXT NOT NULL REFERENCES blobs(hash), PRIMARY KEY (revision, seq));
 """
 
 
@@ -241,7 +260,10 @@ class MemoryStore:
         return None if row is None else row[0]
 
     def _set_meta(self, key: str, value: str) -> None:
-        self.db.execute("INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", (key, value))
+        self.db.execute(
+            "INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (key, value),
+        )
 
     def _put_blob(self, entry: dict[str, Any]) -> str:
         body = json.dumps(entry, ensure_ascii=False, separators=(",", ":"))
@@ -252,7 +274,9 @@ class MemoryStore:
     def _write_entries(self, entries: list[dict[str, Any]]) -> None:
         self.db.execute("DELETE FROM entries")
         for seq, entry in enumerate(entries):
-            self.db.execute("INSERT INTO entries (seq, id, hash) VALUES (?, ?, ?)", (seq, entry["id"], self._put_blob(entry)))
+            self.db.execute(
+                "INSERT INTO entries (seq, id, hash) VALUES (?, ?, ?)", (seq, entry["id"], self._put_blob(entry))
+            )
 
     def _write_revision_entries(self, revision: int, entries: list[dict[str, Any]]) -> None:
         for seq, entry in enumerate(entries):
@@ -269,12 +293,15 @@ class MemoryStore:
         if self.db.execute("SELECT 1 FROM revisions WHERE revision = ?", (revision,)).fetchone() is None:
             return None
         rows = self.db.execute(
-            "SELECT b.body FROM revision_entries r JOIN blobs b ON b.hash = r.hash WHERE r.revision = ? ORDER BY r.seq", (revision,)
+            "SELECT b.body FROM revision_entries r JOIN blobs b ON b.hash = r.hash WHERE r.revision = ? ORDER BY r.seq",
+            (revision,),
         ).fetchall()
         return [json.loads(r[0]) for r in rows]
 
     def _history(self) -> list[dict[str, Any]]:
-        rows = self.db.execute("SELECT revision, time, actor, source, summary FROM revisions ORDER BY revision").fetchall()
+        rows = self.db.execute(
+            "SELECT revision, time, actor, source, summary FROM revisions ORDER BY revision"
+        ).fetchall()
         return [{"revision": r[0], "time": r[1], "actor": r[2], "source": r[3], "summary": r[4]} for r in rows]
 
     # ------------------------------------------------------------------ reads

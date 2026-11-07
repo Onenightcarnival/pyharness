@@ -109,7 +109,11 @@ CORE_EVENTS = [
         "All plugins are applied. Listeners finish wiring and bind no external resources; "
         "preflight runs this event. A listener error fails the boot.",
     ),
-    ("app/serve", "series", "Listeners start accepting external input. Runs after app/ready. A listener error fails the boot."),
+    (
+        "app/serve",
+        "series",
+        "Listeners start accepting external input. Runs after app/ready. A listener error fails the boot.",
+    ),
     (
         "app/started",
         "parallel",

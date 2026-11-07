@@ -2,7 +2,7 @@
 
 | member                                   | contract                                                                 |
 |------------------------------------------|--------------------------------------------------------------------------|
-| ``register_client(path, calls=, inject=)`` | serve ``path`` (a browser module) for the calling plugin; ``calls`` answer ``ctx.host.call`` from the page |
+| ``register_client(path, calls=, inject=)`` | serve ``path`` for the caller; ``calls`` answer ``ctx.host.call`` |
 | ``clients()``                            | registered client modules: entry id, revision, calls                     |
 | ``slots()``                              | the page's extension slots with their kinds and props (:data:`SLOTS`)    |
 
@@ -19,11 +19,15 @@ Browser module contract (plain JavaScript, no bundler)::
       id: "<entry id>",  // the patch entry's id; a file registering one module is accepted under its entry id
       factory(require) {
         const { h, icon, esc, toast } = require("pyharness");
-        return { apply(ctx) { ctx.slots.register({ slot: "main", key: "my-panel", label: "My panel", icon: "box" }, (el, props) => { el.textContent = "hi"; return () => {}; }); } };
+        return { apply(ctx) {
+            ctx.slots.register({ slot: "main", key: "my-panel", label: "My panel", icon: "box" },
+                               (el, props) => { el.textContent = "hi"; return () => {}; });
+        } };
       },
     });
 
-``ctx`` in the page: ``slots.register(spec, mount?)``, ``api(path, init)``, ``host.call(method, args)``, ``on(event, fn)``
+``ctx`` in the page: ``slots.register(spec, mount?)``, ``api(path, init)``, ``host.call(method, args)``,
+``on(event, fn)``
 (``session``, ``run``, ``health``), ``effect(cleanup)``, ``locale``, ``theme()``, ``rightbar.openTab(kind, {params})`` /
 ``rightbar.openFile(path)`` / ``rightbar.close(tabId)`` / ``rightbar.isExpanded()`` / ``rightbar.toggle()``.
 """
@@ -49,10 +53,18 @@ SLOTS: list[dict[str, Any]] = [
     {
         "name": "sidebar.panellist",
         "kind": "list",
-        "entry": "{id, label, icon?, description?, order?}; selecting it opens the `main` panel with the same key; Settings → General lets the user hide entries",
+        "entry": (
+            "{id, label, icon?, description?, order?}; selecting it opens the `main` panel with the same key; "
+            "Settings → General lets the user hide entries"
+        ),
         "props": {},
     },
-    {"name": "sidebar.more", "kind": "list", "entry": "{id, label, icon?, order?, onPick()}; a row of the sidebar More menu", "props": {}},
+    {
+        "name": "sidebar.more",
+        "kind": "list",
+        "entry": "{id, label, icon?, order?, onPick()}; a row of the sidebar More menu",
+        "props": {},
+    },
     {
         "name": "main",
         "kind": "keyed",
@@ -65,16 +77,28 @@ SLOTS: list[dict[str, Any]] = [
         "entry": "{id, order?} + mount(el, props); inline beside the composer controls",
         "props": {"session": "current session record or null"},
     },
-    {"name": "settings.sections", "kind": "keyed", "entry": "{key, label, icon?, order?} + mount(el, props); a Settings tab", "props": {}},
+    {
+        "name": "settings.sections",
+        "kind": "keyed",
+        "entry": "{key, label, icon?, order?} + mount(el, props); a Settings tab",
+        "props": {},
+    },
     {
         "name": "rightbar.tabs",
         "kind": "keyed",
-        "entry": "a right-sidebar tab type: {key, label, icon?, guide?: {title, description?, order?}, multiple?, contentId?(params), title?(params)} + mount(el, props); "
-        "`guide` (the start page), `files`, `preview` and `info` are built in; a type with `guide` gets a card on the start page",
+        "entry": (
+            "a right-sidebar tab type: {key, label, icon?, guide?: {title, description?, order?}, multiple?, "
+            "contentId?(params), title?(params)} + mount(el, props); "
+            "`guide` (the start page), `files`, `preview` and `info` are built in; "
+            "a type with `guide` gets a card on the start page"
+        ),
         "props": {
             "session": "current session record or null",
             "workspace": "workspace root of the session",
-            "tab": "{id, kind, params, title, store, setTitle(t), close(), openTab(kind, {params, replaceTab}), openFile(path), replaceWith(kind, opts)}",
+            "tab": (
+                "{id, kind, params, title, store, setTitle(t), close(), openTab(kind, {params, replaceTab}), "
+                "openFile(path), replaceWith(kind, opts)}"
+            ),
         },
     },
 ]
@@ -101,7 +125,13 @@ class ClientModule:
         return f"{int(stat.st_mtime)}-{stat.st_size}"
 
     def describe(self) -> dict[str, Any]:
-        return {"entry": self.entry, "path": str(self.path), "rev": self.rev, "calls": sorted(self.calls), "inject": list(self.inject)}
+        return {
+            "entry": self.entry,
+            "path": str(self.path),
+            "rev": self.rev,
+            "calls": sorted(self.calls),
+            "inject": list(self.inject),
+        }
 
 
 class WebUIService(Service):
@@ -124,7 +154,10 @@ class WebUIService(Service):
     def register_client(
         self, path: str | Path, *, calls: dict[str, Callable[..., Any]] | None = None, inject: list[str] | None = None
     ) -> Callable[[], Any]:
-        """Serve ``path`` as the calling plugin's browser module; ``calls`` answer ``ctx.host.call``. Returns the disposer."""
+        """Serve ``path`` as the calling plugin's browser module; ``calls`` answer ``ctx.host.call``.
+
+        Returns the disposer.
+        """
         entry = self.caller.entry_id
         file = Path(path).expanduser().resolve()
         if not file.is_file():
@@ -144,7 +177,12 @@ class WebUIService(Service):
         prefix = self.config.plugins_prefix
         return {
             "plugins": [
-                {"id": c.entry, "url": f"{prefix}/{c.entry}/client.js?rev={c.rev}", "inject": c.inject, "calls": sorted(c.calls)}
+                {
+                    "id": c.entry,
+                    "url": f"{prefix}/{c.entry}/client.js?rev={c.rev}",
+                    "inject": c.inject,
+                    "calls": sorted(c.calls),
+                }
                 for c in self._clients.values()
             ],
             "generation": self.ctx.lifecycle.generation,

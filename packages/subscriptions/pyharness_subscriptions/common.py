@@ -48,7 +48,14 @@ def http_error(label: str, status: int, body: str) -> LlmError:
     return LlmError(f"HTTP_{status}", message)
 
 
-RESET_FIELDS = ("resets_in_seconds", "reset_after_seconds", "resets_at", "reset_at", "retry_after", "retry_after_seconds")
+RESET_FIELDS = (
+    "resets_in_seconds",
+    "reset_after_seconds",
+    "resets_at",
+    "reset_at",
+    "retry_after",
+    "retry_after_seconds",
+)
 
 
 def reset_delay_ms(body: str | None) -> int | None:
@@ -102,8 +109,11 @@ class SseEvent:
     data: str
 
 
-async def iter_sse(res: httpx.Response, label: str, idle_timeout: float = STREAM_IDLE_TIMEOUT) -> AsyncIterator[SseEvent]:
-    """Parse an SSE body: ``data:`` lines joined with newlines, dispatched on blank lines; comments reset the idle timer."""
+async def iter_sse(
+    res: httpx.Response, label: str, idle_timeout: float = STREAM_IDLE_TIMEOUT
+) -> AsyncIterator[SseEvent]:
+    """Parse an SSE body: ``data:`` lines joined with newlines, dispatched on blank lines; comments reset the idle
+    timer."""
     event: str | None = None
     data: list[str] = []
     lines = res.aiter_lines()
@@ -184,7 +194,8 @@ class TokenManager:
                 return again
             self.provider.auth.delete(self.provider.id, self.key)
             raise LlmError(
-                "INVALID_CREDENTIAL", f"{self.provider.title} login expired or was revoked; log in again on the AI subscriptions page"
+                "INVALID_CREDENTIAL",
+                f"{self.provider.title} login expired or was revoked; log in again on the AI subscriptions page",
             ) from exc
         except Exception as exc:  # noqa: BLE001
             if int(latest.get("expiresAt") or 0) > int(time.time() * 1000):

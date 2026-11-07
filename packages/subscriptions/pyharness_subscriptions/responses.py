@@ -84,7 +84,9 @@ def to_responses_input(
         elif isinstance(message, AIMessage):
             text = _text_of(message.content)
             if text:
-                items.append({"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": text}]})
+                items.append(
+                    {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": text}]}
+                )
             for call in message.tool_calls or []:
                 cid = str(call.get("id") or "")
                 wire = short_call_id(cid) if shorten_ids else cid
@@ -193,7 +195,9 @@ class ResponsesTranslator:
                 state["args"] += delta
                 yield AIMessageChunk(
                     content="",
-                    tool_call_chunks=[{"name": None, "args": delta, "id": None, "index": state["index"], "type": "tool_call_chunk"}],
+                    tool_call_chunks=[
+                        {"name": None, "args": delta, "id": None, "index": state["index"], "type": "tool_call_chunk"}
+                    ],
                 )
         elif kind == "response.output_item.done":
             item = payload.get("item") or {}
@@ -204,12 +208,20 @@ class ResponsesTranslator:
                     yield AIMessageChunk(
                         content="",
                         tool_call_chunks=[
-                            {"name": None, "args": str(item["arguments"]), "id": None, "index": state["index"], "type": "tool_call_chunk"}
+                            {
+                                "name": None,
+                                "args": str(item["arguments"]),
+                                "id": None,
+                                "index": state["index"],
+                                "type": "tool_call_chunk",
+                            }
                         ],
                     )
             elif item.get("type") == "message" and not self.saw_content:
                 text = "".join(
-                    str(c.get("text") or "") for c in item.get("content") or [] if isinstance(c, dict) and c.get("type") == "output_text"
+                    str(c.get("text") or "")
+                    for c in item.get("content") or []
+                    if isinstance(c, dict) and c.get("type") == "output_text"
                 )
                 if text:
                     self.saw_content = True
@@ -299,14 +311,22 @@ class ResponsesChatModel(BaseChatModel):
 
     # generation -----------------------------------------------------------
     def _generate(
-        self, messages: list[BaseMessage], stop: list[str] | None = None, run_manager: CallbackManagerForLLMRun | None = None, **kwargs: Any
+        self,
+        messages: list[BaseMessage],
+        stop: list[str] | None = None,
+        run_manager: CallbackManagerForLLMRun | None = None,
+        **kwargs: Any,
     ) -> ChatResult:
         import asyncio
 
         return asyncio.run(self._agenerate(messages, stop=stop, **kwargs))
 
     def _stream(
-        self, messages: list[BaseMessage], stop: list[str] | None = None, run_manager: CallbackManagerForLLMRun | None = None, **kwargs: Any
+        self,
+        messages: list[BaseMessage],
+        stop: list[str] | None = None,
+        run_manager: CallbackManagerForLLMRun | None = None,
+        **kwargs: Any,
     ) -> Iterator[ChatGenerationChunk]:
         import asyncio
 

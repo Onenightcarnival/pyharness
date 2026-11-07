@@ -142,7 +142,11 @@ class ProviderSettings:
                 raise ValueError(f"unknown tool {name!r} for {provider}")
         clean["tools"] = {k: bool(v) for k, v in tools.items()}
         clean["accounts"] = {
-            str(k): {kk: vv for kk, vv in (v or {}).items() if kk in ("alias", "poolEnabled", "independentEntry", "poolModels")}
+            str(k): {
+                kk: vv
+                for kk, vv in (v or {}).items()
+                if kk in ("alias", "poolEnabled", "independentEntry", "poolModels")
+            }
             for k, v in (prefs.get("accounts") or {}).items()
         }
 

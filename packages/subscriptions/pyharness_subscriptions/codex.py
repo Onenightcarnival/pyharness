@@ -24,7 +24,9 @@ TOKEN_URL = "https://auth.openai.com/oauth/token"
 SCOPE = "openid profile email offline_access api.connectors.read api.connectors.invoke"
 BACKEND = "https://chatgpt.com/backend-api"
 CLIENT_VERSION_FLOOR = "0.153.4"
-DEFAULT_INSTRUCTIONS = "You are Codex, a coding agent based on GPT-5. Help the user with their software engineering tasks."
+DEFAULT_INSTRUCTIONS = (
+    "You are Codex, a coding agent based on GPT-5. Help the user with their software engineering tasks."
+)
 PERMANENT = {"refresh_token_expired", "refresh_token_reused", "refresh_token_invalidated", "invalid_grant"}
 EFFORT_NAMES = {"xhigh": "Extra High"}
 
@@ -48,10 +50,21 @@ class CodexProvider(Provider):
     # ------------------------------------------------------------------ auth
     def flow_spec(self, account: str | None = None) -> FlowSpec:
         return FlowSpec(
-            provider=self.id, authorize_url=AUTHORIZE_URL, host="localhost", ports=(1455, 1457), callback_path="/auth/callback",
-            manual_redirect_uri="http://localhost:1455/auth/callback", timeout=180.0, scope=SCOPE, client_id=CLIENT_ID,
-            extra_params={"id_token_add_organizations": "true", "codex_cli_simplified_flow": "true", "originator": "codex_cli_rs"},
-        )  # fmt: skip
+            provider=self.id,
+            authorize_url=AUTHORIZE_URL,
+            host="localhost",
+            ports=(1455, 1457),
+            callback_path="/auth/callback",
+            manual_redirect_uri="http://localhost:1455/auth/callback",
+            timeout=180.0,
+            scope=SCOPE,
+            client_id=CLIENT_ID,
+            extra_params={
+                "id_token_add_organizations": "true",
+                "codex_cli_simplified_flow": "true",
+                "originator": "codex_cli_rs",
+            },
+        )
 
     def _session_from(self, data: dict[str, Any], previous: dict[str, Any] | None) -> tuple[str, dict[str, Any]]:
         access = data.get("access_token")
@@ -70,7 +83,9 @@ class CodexProvider(Provider):
         if not account_id:
             raise RuntimeError("codex login did not return a chatgpt account id; cannot use the subscription")
         email = (
-            claims.get("email") or (claims.get("https://api.openai.com/profile") or {}).get("email") or (previous or {}).get("emailAddress")
+            claims.get("email")
+            or (claims.get("https://api.openai.com/profile") or {}).get("email")
+            or (previous or {}).get("emailAddress")
         )
         session = {
             "accessToken": access,
@@ -143,13 +158,21 @@ class CodexProvider(Provider):
         if configured and re.match(r"^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$", str(configured)):
             return str(configured), "config"
         now = time.time()
-        if self._client_version and not force and now - self._client_version[0] < (6 * 3600 if self._client_version[2] == "npm" else 300):
+        if (
+            self._client_version
+            and not force
+            and now - self._client_version[0] < (6 * 3600 if self._client_version[2] == "npm" else 300)
+        ):
             return self._client_version[1], self._client_version[2]
         version, source = CLIENT_VERSION_FLOOR, "fallback"
         try:
             res = await self.http.get("https://registry.npmjs.org/@openai%2fcodex/latest", timeout=5)
             found = str(res.json().get("version") or "")
-            if res.status_code == 200 and re.match(r"^\d+\.\d+\.\d+$", found) and _ver(found) >= _ver(CLIENT_VERSION_FLOOR):
+            if (
+                res.status_code == 200
+                and re.match(r"^\d+\.\d+\.\d+$", found)
+                and _ver(found) >= _ver(CLIENT_VERSION_FLOOR)
+            ):
                 version, source = found, "npm"
         except Exception:  # noqa: BLE001
             pass
@@ -197,14 +220,27 @@ class CodexProvider(Provider):
     def fallback_models(self) -> list[DiscoveredModel]:
         efforts = [{"id": e, "name": effort_name(e)} for e in ("minimal", "low", "medium", "high", "xhigh")]
         return [
-            DiscoveredModel(id=i, name=n, context_window=400000, efforts=efforts, default_effort="high", input_modalities=["text", "image"])
-            for i, n in (("gpt-5.1-codex", "GPT-5.1 Codex"), ("gpt-5.1-codex-mini", "GPT-5.1 Codex Mini"), ("gpt-5.1", "GPT-5.1"))
+            DiscoveredModel(
+                id=i,
+                name=n,
+                context_window=400000,
+                efforts=efforts,
+                default_effort="high",
+                input_modalities=["text", "image"],
+            )
+            for i, n in (
+                ("gpt-5.1-codex", "GPT-5.1 Codex"),
+                ("gpt-5.1-codex-mini", "GPT-5.1 Codex Mini"),
+                ("gpt-5.1", "GPT-5.1"),
+            )
         ]
 
     # ------------------------------------------------------------------ usage
     async def usage(self, session: dict[str, Any]) -> dict[str, Any]:
         res = await self.http.get(
-            f"{BACKEND}/wham/usage", headers=self.headers(session, accept="application/json"), timeout=self.discovery_timeout
+            f"{BACKEND}/wham/usage",
+            headers=self.headers(session, accept="application/json"),
+            timeout=self.discovery_timeout,
         )
         if res.status_code >= 400:
             raise http_error("codex usage", res.status_code, res.text)
@@ -283,7 +319,12 @@ class CodexChatModel(ResponsesChatModel):
         if self.fast_tier and provider.speed.get(session_id or "") == "fast":
             body["service_tier"] = "priority"
         headers = provider.headers(
-            session, **{"session-id": session_uuid(session_id), "accept": "text/event-stream", "content-type": "application/json"}
+            session,
+            **{
+                "session-id": session_uuid(session_id),
+                "accept": "text/event-stream",
+                "content-type": "application/json",
+            },
         )
         return f"{BACKEND}/codex/responses", headers, body
 

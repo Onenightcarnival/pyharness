@@ -5,7 +5,8 @@
 | 1                    | environment variable of that name                   |
 | 2                    | ``credentials.yaml`` in the profile directory (0600) |
 
-A configuration names a credential (``api_key_env: OPENAI_API_KEY``); the value lives in the environment or in the store.
+A configuration names a credential (``api_key_env: OPENAI_API_KEY``); the value lives in the environment or in the
+store.
 """
 
 from __future__ import annotations
@@ -46,7 +47,8 @@ class CredentialStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(self.path.suffix + ".tmp")
         tmp.write_text(
-            "# Credentials referenced by name from the profile configuration. Keep private.\n" + yaml.safe_dump(data, sort_keys=True),
+            "# Credentials referenced by name from the profile configuration. Keep private.\n"
+            + yaml.safe_dump(data, sort_keys=True),
             encoding="utf-8",
         )
         os.chmod(tmp, 0o600)

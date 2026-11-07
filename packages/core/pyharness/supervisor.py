@@ -166,7 +166,9 @@ class Supervisor:
                     if not rolled_back_once and self.profile.restore_last_known_good():
                         rolled_back_once = True
                         log.error(
-                            "generation %d failed to boot (%s); restored last-known-good configuration", self.generation, error.get("error")
+                            "generation %d failed to boot (%s); restored last-known-good configuration",
+                            self.generation,
+                            error.get("error"),
                         )
                         (self.profile.runtime / "rollback.json").write_text(
                             json.dumps({"failed_generation": self.generation, **error}, ensure_ascii=False, indent=2),
@@ -174,7 +176,11 @@ class Supervisor:
                         )
                         self._record("rolled-back")
                         continue
-                    log.error("generation %d failed to boot and there is nothing to roll back to: %s", self.generation, error.get("error"))
+                    log.error(
+                        "generation %d failed to boot and there is nothing to roll back to: %s",
+                        self.generation,
+                        error.get("error"),
+                    )
                     return BOOT_FAILURE_EXIT_CODE
                 rolled_back_once = False
                 self._record("ready")

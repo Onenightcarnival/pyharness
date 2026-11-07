@@ -32,7 +32,13 @@ def sse(text):
 
 
 def git(cwd, *args):
-    env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@x", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@x"}
+    env = {
+        **os.environ,
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@x",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_COMMITTER_EMAIL": "t@x",
+    }
     return subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True, text=True).stdout
 
 
@@ -48,11 +54,21 @@ async def test_turn_changes_from_git_snapshots(home, tmp_path):
         {
             "content": "",
             "tool_calls": [
-                {"name": "edit_file", "args": {"file_path": "/a.py", "old_string": "return 1", "new_string": "return 2"}, "id": "e1"}
+                {
+                    "name": "edit_file",
+                    "args": {"file_path": "/a.py", "old_string": "return 1", "new_string": "return 2"},
+                    "id": "e1",
+                }
             ],
         },
-        {"content": "", "tool_calls": [{"name": "write_file", "args": {"file_path": "/new.txt", "content": "hello\n"}, "id": "w2"}]},
-        {"content": "", "tool_calls": [{"name": "write_file", "args": {"file_path": "/ignored.txt", "content": "x"}, "id": "w3"}]},
+        {
+            "content": "",
+            "tool_calls": [{"name": "write_file", "args": {"file_path": "/new.txt", "content": "hello\n"}, "id": "w2"}],
+        },
+        {
+            "content": "",
+            "tool_calls": [{"name": "write_file", "args": {"file_path": "/ignored.txt", "content": "x"}, "id": "w3"}],
+        },
         {"content": "done"},
         {"content": "nothing to do"},
     ]
@@ -67,7 +83,12 @@ async def test_turn_changes_from_git_snapshots(home, tmp_path):
             assert [f["display"] for f in changes["files"]] == ["a.py", "new.txt"]  # ignored.txt is gitignored
             a, new = changes["files"]
             assert (a["status"], a["added"], a["deleted"], a["binary"]) == ("M", 1, 1, False)
-            assert new["status"] == "A" and (changes["added"], changes["deleted"], changes["total"], changes["seq"]) == (2, 1, 2, 1)
+            assert new["status"] == "A" and (
+                changes["added"],
+                changes["deleted"],
+                changes["total"],
+                changes["seq"],
+            ) == (2, 1, 2, 1)
             page = (await c.get(f"/api/sessions/{s['id']}")).json()
             assert page["changes"][0]["run_id"] == changes["run_id"] and changes["after"] == len(page["messages"])
             assert (await c.get(f"/api/sessions/{s['id']}/changes")).json()["changes"] == page["changes"]
@@ -76,12 +97,17 @@ async def test_turn_changes_from_git_snapshots(home, tmp_path):
             lines = d["hunks"][0]["lines"]
             assert [ln["kind"] for ln in lines] == ["ctx", "del", "add"]
             assert (
-                lines[1]["text"] == "    return 1" and lines[2]["text"] == "    return 2" and lines[1]["old"] == 2 and lines[2]["new"] == 2
+                lines[1]["text"] == "    return 1"
+                and lines[2]["text"] == "    return 2"
+                and lines[1]["old"] == 2
+                and lines[2]["new"] == 2
             )
             assert 'class="hl-k"' in lines[2]["html"] and 'class="hl-k"' in lines[1]["html"]
             d = (await c.get(f"/api/sessions/{s['id']}/changes/{changes['run_id']}/diff", params={"index": 1})).json()
             assert d["status"] == "A" and [ln["kind"] for ln in d["hunks"][0]["lines"]] == ["add"]
-            assert (await c.get(f"/api/sessions/{s['id']}/changes/{changes['run_id']}/diff", params={"index": 5})).status_code == 404
+            assert (
+                await c.get(f"/api/sessions/{s['id']}/changes/{changes['run_id']}/diff", params={"index": 5})
+            ).status_code == 404
             assert (await c.get(f"/api/sessions/{s['id']}/changes/nope/diff")).status_code == 404
             # A turn that changes nothing records no summary.
             events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "again"})).text)
@@ -97,7 +123,10 @@ async def test_non_git_workspace_records_nothing(home, tmp_path):
     plain = tmp_path / "plain"
     plain.mkdir()
     replies = [
-        {"content": "", "tool_calls": [{"name": "write_file", "args": {"file_path": "/x.txt", "content": "x"}, "id": "w1"}]},
+        {
+            "content": "",
+            "tool_calls": [{"name": "write_file", "args": {"file_path": "/x.txt", "content": "x"}, "id": "w1"}],
+        },
         {"content": "ok"},
     ]
     profile = Profile.init("web", home=str(home))
@@ -139,7 +168,11 @@ async def test_highlight_routes(home):
                 },
             )
             items = r.json()["items"]
-            assert 'class="hl-k">def</span>' in items[0]["html"] and items[0]["lang"] == "python" and items[0]["html"].count("\n") == 1
+            assert (
+                'class="hl-k">def</span>' in items[0]["html"]
+                and items[0]["lang"] == "python"
+                and items[0]["html"].count("\n") == 1
+            )
             assert items[1]["html"] == "" and items[3]["html"] == ""
             assert "hl-" in items[2]["html"]
             css = await c.get("/api/highlight.css")

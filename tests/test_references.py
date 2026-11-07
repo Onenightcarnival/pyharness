@@ -27,7 +27,8 @@ def test_tokens_and_expand(tmp_path):
     content, refs = expand('see @README.md and @"src/a b.py" plus @src/ and @nope.txt and @src/img.png', ws)
     assert [r["path"] for r in refs] == ["/README.md", "/src/a b.py", "/src", "/src/img.png"]
     assert content.startswith(
-        'see @README.md and @"src/a b.py" plus @src/ and @nope.txt and @src/img.png\n\n<attached-file path="/README.md">\n# Hello'
+        'see @README.md and @"src/a b.py" plus @src/ and @nope.txt and @src/img.png\n\n'
+        '<attached-file path="/README.md">\n# Hello'
     )
     assert '<attached-directory path="/src">\na b.py\nimg.png\n</attached-directory>' in content
     assert '<attached-file path="/src/img.png" binary="true"' in content
@@ -45,15 +46,23 @@ async def test_message_route_expands_references(home, tmp_path):
     profile = Profile.init("web", home=str(home))
     scripted.CALLS.clear()
     async with Harness(profile, patch=scripted_patch([{"content": "noted"}])) as h:
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=60) as c:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=60
+        ) as c:
             found = (await c.get("/api/workspaces/search", params={"q": "note"})).json()["entries"]
             assert found and found[0]["path"] == "/notes.md"
             sid = (await c.post("/api/sessions", json={})).json()["id"]
-            events = sse_events((await c.post(f"/api/sessions/{sid}/messages", json={"content": "summarize @notes.md"})).text)
+            events = sse_events(
+                (await c.post(f"/api/sessions/{sid}/messages", json={"content": "summarize @notes.md"})).text
+            )
             assert events[-1]["outcome"] == "completed"
             refs_event = next(e for e in events if e["type"] == "references")
-            assert refs_event["refs"] == [{"token": "@notes.md", "path": "/notes.md", "kind": "file", "chars": 18, "truncated": False}]
-            human = next(m for call in scripted.CALLS if "messages" in call for m in call["messages"] if m[0] == "human")
+            assert refs_event["refs"] == [
+                {"token": "@notes.md", "path": "/notes.md", "kind": "file", "chars": 18, "truncated": False}
+            ]
+            human = next(
+                m for call in scripted.CALLS if "messages" in call for m in call["messages"] if m[0] == "human"
+            )
             assert human[1].startswith('summarize @notes.md\n\n<attached-file path="/notes.md">\nremember the milk')
             turn = events[-1]["extras"]["turn"]
             assert turn["records"][0]["preview"] == "summarize @notes.md"

@@ -1,4 +1,6 @@
-"""Model routes: configuration model, credential store, settings API, per-session selection; live endpoint when configured."""
+"""Model routes: configuration model, credential store, settings API, per-session selection; live endpoint when
+configured.
+"""
 
 from __future__ import annotations
 
@@ -9,7 +11,15 @@ import stat
 import httpx
 import pytest
 import yaml
-from pyharness_llm import LLMConfig, LLMConfigError, ProviderConfig, mask_secret, split_spec, translate_options, type_info
+from pyharness_llm import (
+    LLMConfig,
+    LLMConfigError,
+    ProviderConfig,
+    mask_secret,
+    split_spec,
+    translate_options,
+    type_info,
+)
 
 from pyharness import CredentialStore, Harness, Profile
 from pyharness.credentials import reference_for
@@ -23,7 +33,12 @@ def profile(home):
 
 def base_patch(llm: dict | None = None, replies=None):
     return [
-        {"id": "scripted", "name": "testkit.scripted", "after": "llm", "config": {"replies": replies or [{"content": "hi"}]}},
+        {
+            "id": "scripted",
+            "name": "testkit.scripted",
+            "after": "llm",
+            "config": {"replies": replies or [{"content": "hi"}]},
+        },
         {"id": "llm", "config": {"default": "scripted:test", **(llm or {})}},
         {"id": "http", "config": {"serve": False}},
     ]
@@ -43,7 +58,10 @@ def test_helpers():
     assert split_spec("gpt-4o") == ("", "gpt-4o")
     assert mask_secret("cs-sk-3078205a-1234") == "••••••••1234"
     assert mask_secret(None) is None
-    assert translate_options("deepseek", {"base_url": "u", "api_key": None, "temperature": 0}) == {"base_url": "u", "temperature": 0}
+    assert translate_options("deepseek", {"base_url": "u", "api_key": None, "temperature": 0}) == {
+        "base_url": "u",
+        "temperature": 0,
+    }
     assert translate_options("google_genai", {"api_key": "k"}) == {"google_api_key": "k"}
     assert translate_options("openai", {"base_url": "http://127.0.0.1:1/v1"}) == {
         "base_url": "http://127.0.0.1:1/v1",
@@ -54,13 +72,19 @@ def test_helpers():
     assert reference_for("1x") == "P_1X_API_KEY"
     openai = type_info("openai")
     assert openai["installed"] and openai["env"] == "OPENAI_API_KEY" and openai["models_api"] == "openai"
-    assert type_info("deepseek")["installed"] and type_info("openrouter")["installed"] and type_info("google_genai")["installed"]
+    assert (
+        type_info("deepseek")["installed"]
+        and type_info("openrouter")["installed"]
+        and type_info("google_genai")["installed"]
+    )
     assert type_info("ollama")["credentials"] is False and type_info("ollama")["preset"] is False
     assert type_info("nonexistent")["package"] is None
 
 
 def test_config_model():
-    cfg = LLMConfig.model_validate({"default": "a:b", "providers": {"openai": {"base_url": "u", "api_key": "k", "temperature": 0}}})
+    cfg = LLMConfig.model_validate(
+        {"default": "a:b", "providers": {"openai": {"base_url": "u", "api_key": "k", "temperature": 0}}}
+    )
     assert cfg.providers["openai"].kwargs() == {"temperature": 0}  # legacy extra keys are keyword arguments
     with pytest.raises(ValueError):
         LLMConfig.model_validate({"providers": {"Bad Id": {}}})
@@ -78,7 +102,11 @@ def test_config_model():
 
 def test_credential_store(tmp_path, monkeypatch):
     store = CredentialStore(tmp_path / "credentials.yaml")
-    assert store.get("X_API_KEY") is None and store.describe("X_API_KEY") == {"reference": "X_API_KEY", "configured": False, "source": None}
+    assert store.get("X_API_KEY") is None and store.describe("X_API_KEY") == {
+        "reference": "X_API_KEY",
+        "configured": False,
+        "source": None,
+    }
     store.set("X_API_KEY", "secret-1")
     assert store.get("X_API_KEY") == "secret-1" and store.describe("X_API_KEY")["source"] == "store"
     assert stat.S_IMODE(os.stat(tmp_path / "credentials.yaml").st_mode) == 0o600
@@ -100,7 +128,9 @@ async def test_route_lifecycle_through_the_api(profile):
         async with client(h) as c:
             d = (await c.get("/api/settings/models")).json()
             assert d["default"] == "scripted:test" and d["routes"] == [] and d["editable"] is True
-            assert [c_["id"] for c_ in d["catalog"] if c_["id"] != "subscription"] == [  # the toolkit registers `subscription`
+            assert [
+                c_["id"] for c_ in d["catalog"] if c_["id"] != "subscription"
+            ] == [  # the toolkit registers `subscription`
                 "openai",
                 "anthropic",
                 "deepseek",
@@ -156,7 +186,13 @@ async def test_route_lifecycle_through_the_api(profile):
                         "title": "Alt",
                         "type": "scripted",
                         "models": [
-                            {"id": "m1", "name": "Model one", "spec": "alt:m1", "input": ["text", "image"], "context_window": None},
+                            {
+                                "id": "m1",
+                                "name": "Model one",
+                                "spec": "alt:m1",
+                                "input": ["text", "image"],
+                                "context_window": None,
+                            },
                             {"id": "m2", "name": "m2", "spec": "alt:m2", "input": ["text"], "context_window": None},
                         ],
                     }
@@ -242,7 +278,9 @@ LIVE = {k: os.environ.get(f"PYH_TEST_OPENAI_{k}") for k in ("BASE_URL", "MODEL",
 
 @pytest.mark.skipif(not all(LIVE.values()), reason="PYH_TEST_OPENAI_BASE_URL / _MODEL / _API_KEY unset")
 async def test_live_openai_compatible_service(profile, monkeypatch):
-    """Settings flow against a real OpenAI-compatible endpoint: discover, test, save, run with the model selected per session."""
+    """Settings flow against a real OpenAI-compatible endpoint: discover, test, save, run with the model selected per
+    session.
+    """
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     body = {"type": "openai", "base_url": LIVE["BASE_URL"], "api_key": LIVE["API_KEY"]}
     async with Harness(profile, patch=base_patch()) as h:
@@ -251,13 +289,24 @@ async def test_live_openai_compatible_service(profile, monkeypatch):
             assert found["ok"] is True and any(m["id"] == LIVE["MODEL"] for m in found["models"]), found
             probe = (await c.post("/api/settings/models/local/test", json={**body, "model": LIVE["MODEL"]})).json()
             assert probe["ok"] is True and probe["reply"], probe
-            bad = (await c.post("/api/settings/models/local/test", json={**body, "api_key": "wrong-key", "model": LIVE["MODEL"]})).json()
+            bad = (
+                await c.post(
+                    "/api/settings/models/local/test", json={**body, "api_key": "wrong-key", "model": LIVE["MODEL"]}
+                )
+            ).json()
             assert bad["ok"] is False
-            saved = (await c.put("/api/settings/models/local", json={**body, "title": "Local", "models": [{"id": LIVE["MODEL"]}]})).json()
+            saved = (
+                await c.put(
+                    "/api/settings/models/local", json={**body, "title": "Local", "models": [{"id": LIVE["MODEL"]}]}
+                )
+            ).json()
             assert saved["route"]["api_key"]["source"] == "store" and saved["default"] == f"local:{LIVE['MODEL']}"
             # No restart: a session on the new route answers at once.
             s = (await c.post("/api/sessions", json={"model": f"local:{LIVE['MODEL']}"})).json()
-            res = await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "Reply with exactly the word PONG and nothing else."})
+            res = await c.post(
+                f"/api/sessions/{s['id']}/messages",
+                json={"content": "Reply with exactly the word PONG and nothing else."},
+            )
             events = sse(res.text)
             assert events[-1]["outcome"] == "completed", events
             assert "PONG" in "".join(e["text"] for e in events if e["type"] == "token").upper()

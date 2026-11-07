@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .engine import DEFAULT_PORT, KINDS, TARGETS, parse_hosts
+from .driver import DEFAULT_PORT, KINDS, TARGETS, parse_hosts
 
 NAME_RE = re.compile(r"^[^\W_][\w .-]{0,63}$", re.U)
 HOST_RE = re.compile(r"^(?:\[[0-9a-fA-F:.]+\]|[0-9a-fA-F:]*:[0-9a-fA-F:]*:[0-9a-fA-F.:]*|[A-Za-z0-9._-]+)$")
@@ -66,7 +66,9 @@ def validate(profile: dict[str, Any]) -> None:
     if not entries:
         raise StoreError("host is required")
     if profile.get("targetSessionAttrs") not in TARGETS:
-        raise StoreError("targetSessionAttrs must be one of any, read-write, read-only, primary, standby, prefer-standby")
+        raise StoreError(
+            "targetSessionAttrs must be one of any, read-write, read-only, primary, standby, prefer-standby"
+        )
     if not (profile.get("database") or "").strip():
         raise StoreError("database is required")
     if not (profile.get("user") or "").strip():
@@ -181,7 +183,8 @@ class ProfileStore:
             "file": (payload.get("file") if payload.get("file") is not None else base.get("file", "")) or "",
             "host": (payload.get("host") if payload.get("host") is not None else base.get("host", "")) or "",
             "port": payload.get("port") if payload.get("port") is not None else base.get("port"),
-            "database": (payload.get("database") if payload.get("database") is not None else base.get("database", "")) or "",
+            "database": (payload.get("database") if payload.get("database") is not None else base.get("database", ""))
+            or "",
             "user": (payload.get("user") if payload.get("user") is not None else base.get("user", "")) or "",
             "ssl": bool(payload.get("ssl", base.get("ssl", False))),
             "targetSessionAttrs": payload.get("targetSessionAttrs") or base.get("targetSessionAttrs") or "any",
@@ -191,7 +194,13 @@ class ProfileStore:
         merged["name"] = str(merged["name"]).strip()
         if kind == "sqlite":
             merged.update(
-                file=str(merged["file"]).strip(), host="", port=0, database="", user="", targetSessionAttrs="any", loadBalanceHosts=False
+                file=str(merged["file"]).strip(),
+                host="",
+                port=0,
+                database="",
+                user="",
+                targetSessionAttrs="any",
+                loadBalanceHosts=False,
             )
         else:
             if merged["port"] in (None, "", 0):
@@ -209,7 +218,9 @@ class ProfileStore:
             profile = self._normalize(payload, None)
             now = int(time.time() * 1000)
             profile["id"] = secrets.token_hex(6)
-            profile["name"] = unique_name(profile["name"] or default_name(profile), [p["name"] for p in data["profiles"]])
+            profile["name"] = unique_name(
+                profile["name"] or default_name(profile), [p["name"] for p in data["profiles"]]
+            )
             profile["createdAt"] = now
             profile["updatedAt"] = now
             data["profiles"].append(profile)
@@ -228,7 +239,9 @@ class ProfileStore:
             profile["id"] = pid
             profile["createdAt"] = existing.get("createdAt")
             profile["updatedAt"] = int(time.time() * 1000)
-            profile["name"] = unique_name(profile["name"] or default_name(profile), [p["name"] for p in data["profiles"] if p["id"] != pid])
+            profile["name"] = unique_name(
+                profile["name"] or default_name(profile), [p["name"] for p in data["profiles"] if p["id"] != pid]
+            )
             data["profiles"] = [profile if p["id"] == pid else p for p in data["profiles"]]
             if payload.get("password"):
                 self.credentials.set(ref(pid), str(payload["password"]))

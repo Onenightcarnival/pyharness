@@ -44,10 +44,15 @@ async def apply(ctx: Any, config: Config) -> None:
         row = await (await conn.execute("SHOW server_encoding")).fetchone()
     encoding = (row or {}).get("server_encoding")
     if encoding == "SQL_ASCII":
-        raise RuntimeError("database encoding is SQL_ASCII; required: UTF8 (CREATE DATABASE ... ENCODING 'UTF8' TEMPLATE template0)")
+        raise RuntimeError(
+            "database encoding is SQL_ASCII; required: UTF8 (CREATE DATABASE ... ENCODING 'UTF8' TEMPLATE template0)"
+        )
     saver = AsyncPostgresSaver(pool)
     await saver.setup()
     store = AsyncPostgresStore(pool)
     await store.setup()
     ctx.provide("checkpointer", saver)
     ctx.provide("store", store)
+
+
+__all__ = ["Config", "apply", "name"]

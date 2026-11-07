@@ -74,20 +74,27 @@ def cmd_plugin(args: argparse.Namespace) -> int:
 
         setup_logging("WARNING")
         report = asyncio.run(preflight_in_process(profile))
-        rows = [{k: e.get(k) for k in ("id", "name", "state", "source", "missing", "error") if e.get(k)} for e in report["entries"]]
+        rows = [
+            {k: e.get(k) for k in ("id", "name", "state", "source", "missing", "error") if e.get(k)}
+            for e in report["entries"]
+        ]
         _print({"bundles": profile.installed_bundles(), "entries": rows})
         return 0
     if action == "install":
         if manage.looks_like_path(args.target):
             result = asyncio.run(manage.install_bundle(profile, args.target, preflight=preflight))
         else:
-            result = asyncio.run(manage.install_package(profile, args.target, index_url=args.index_url, preflight=preflight))
+            result = asyncio.run(
+                manage.install_package(profile, args.target, index_url=args.index_url, preflight=preflight)
+            )
     elif action == "uninstall":
         result = asyncio.run(manage.uninstall_bundle(profile, args.target, preflight=preflight))
     elif action in ("enable", "disable"):
         result = asyncio.run(manage.set_entry_enabled(profile, args.target, action == "enable", preflight=preflight))
     elif action in ("enable-bundle", "disable-bundle"):
-        result = asyncio.run(manage.set_bundle_enabled(profile, args.target, action == "enable-bundle", preflight=preflight))
+        result = asyncio.run(
+            manage.set_bundle_enabled(profile, args.target, action == "enable-bundle", preflight=preflight)
+        )
     else:  # pragma: no cover
         raise SystemExit(f"unknown action {action}")
     _print(result)
@@ -132,11 +139,17 @@ def cmd_exec(args: argparse.Namespace) -> int:
                 if kind == "token":
                     print(event["text"], end="", flush=True)
                 elif kind == "tool_call":
-                    print(f"\n[tool] {event['name']}({json.dumps(event.get('args', {}), ensure_ascii=False)})", file=sys.stderr)
+                    print(
+                        f"\n[tool] {event['name']}({json.dumps(event.get('args', {}), ensure_ascii=False)})",
+                        file=sys.stderr,
+                    )
                 elif kind == "tool_result":
                     print(f"[tool result] {str(event.get('content', ''))[:300]}", file=sys.stderr)
                 elif kind == "interrupt":
-                    print(f"\n[approval needed] {json.dumps(event['interrupts'], ensure_ascii=False)[:800]}", file=sys.stderr)
+                    print(
+                        f"\n[approval needed] {json.dumps(event['interrupts'], ensure_ascii=False)[:800]}",
+                        file=sys.stderr,
+                    )
                     exit_code = 2
                 elif kind == "error":
                     print(f"\n[error] {event['message']}", file=sys.stderr)
@@ -170,7 +183,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = with_profile(sub.add_parser("run", help="run the profile under the supervisor"))
     p.add_argument("--patch", action="append", default=[], help="extra patch file applied last (repeatable)")
-    p.add_argument("--no-supervisor", action="store_true", help="run one generation without a supervisor; a restart request exits")
+    p.add_argument(
+        "--no-supervisor", action="store_true", help="run one generation without a supervisor; a restart request exits"
+    )
     p.add_argument("--boot-timeout", type=float, default=120.0)
     p.add_argument("--log-level", default=None)
     p.set_defaults(func=cmd_run)
@@ -189,7 +204,9 @@ def build_parser() -> argparse.ArgumentParser:
         "action",
         choices=["list", "install", "uninstall", "enable", "disable", "enable-bundle", "disable-bundle"],
     )
-    p.add_argument("target", nargs="?", help="bundle directory or package requirement (install), bundle name or entry id")
+    p.add_argument(
+        "target", nargs="?", help="bundle directory or package requirement (install), bundle name or entry id"
+    )
     p.add_argument("--index-url", help="package index for install (default: PyPI)")
     p.add_argument("--no-preflight", action="store_true")
     p.set_defaults(func=cmd_plugin)

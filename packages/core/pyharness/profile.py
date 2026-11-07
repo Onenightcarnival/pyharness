@@ -80,7 +80,9 @@ class Profile:
         return self.manifest_path.exists()
 
     @classmethod
-    def init(cls, name: str = "web", template: str | None = None, home: str | None = None, *, force: bool = False) -> Profile:
+    def init(
+        cls, name: str = "web", template: str | None = None, home: str | None = None, *, force: bool = False
+    ) -> Profile:
         profile = cls(name, home)
         if profile.exists() and not force:
             return profile
@@ -94,7 +96,9 @@ class Profile:
 
     def require(self) -> Profile:
         if not self.exists():
-            raise ConfigError(f"profile {self.name!r} does not exist under {self.home}; create: `pyh init --profile {self.name}`")
+            raise ConfigError(
+                f"profile {self.name!r} does not exist under {self.home}; create: `pyh init --profile {self.name}`"
+            )
         return self
 
     # ------------------------------------------------------------------ manifest
@@ -116,7 +120,11 @@ class Profile:
         explicit = [str(b) for b in data.get("bundles", [])]
         disabled = {str(b) for b in data.get("disabled", [])}
         builtin = [b for b in self.builtin_bundles() if b not in explicit]
-        return explicit + builtin + [b for b in self.optional_bundles() if b not in explicit and b not in builtin and b not in disabled]
+        return (
+            explicit
+            + builtin
+            + [b for b in self.optional_bundles() if b not in explicit and b not in builtin and b not in disabled]
+        )
 
     def _flagged_bundles(self, flag: str) -> list[str]:
         self.activate_site()
@@ -143,8 +151,19 @@ class Profile:
         try:
             info = load_bundle(name)
         except Exception as exc:  # noqa: BLE001
-            return {"title": name, "description": "", "optional": False, "builtin": False, "error": f"{type(exc).__name__}: {exc}"}
-        return {"title": info.title, "description": info.description, "optional": info.optional, "builtin": info.builtin}
+            return {
+                "title": name,
+                "description": "",
+                "optional": False,
+                "builtin": False,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+        return {
+            "title": info.title,
+            "description": info.description,
+            "optional": info.optional,
+            "builtin": info.builtin,
+        }
 
     def patch_ops_raw(self) -> list[dict[str, Any]]:
         data = load_yaml(self.patch_path, default=[]) or []
@@ -177,7 +196,9 @@ class Profile:
         }
 
     # ------------------------------------------------------------------ composition
-    def layers(self, extra_patches: list[Path] | None = None) -> tuple[list[tuple[str, list[PatchOp]]], list[BundleInfo]]:
+    def layers(
+        self, extra_patches: list[Path] | None = None
+    ) -> tuple[list[tuple[str, list[PatchOp]]], list[BundleInfo]]:
         layers: list[tuple[str, list[PatchOp]]] = []
         infos: list[BundleInfo] = []
         for bundle in self.bundles():
@@ -228,7 +249,8 @@ class Profile:
         self.save_patch(ops)
 
     def set_bundle_enabled(self, bundle: str, enabled: bool) -> bool:
-        """Enable or disable a bundle: optional bundles move in and out of ``disabled``, others in and out of ``bundles``.
+        """Enable or disable a bundle: optional bundles move in and out of ``disabled``, others in and out of
+        ``bundles``.
         A built-in bundle (``builtin: true``) is always on: disabling it raises :class:`ConfigError`."""
         if not enabled and bundle in self.builtin_bundles():
             raise ConfigError(f"bundle {bundle!r} is built in and cannot be disabled")

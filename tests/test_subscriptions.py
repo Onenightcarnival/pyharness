@@ -55,7 +55,12 @@ async def test_loopback_login_flow():
     attempt = LoginAttempt(spec)
     url = await attempt.start()
     q = parse_qs(urlparse(url).query)
-    assert q["client_id"] == ["cid"] and q["code_challenge_method"] == ["S256"] and q["foo"] == ["bar"] and q["state"] == [attempt.state]
+    assert (
+        q["client_id"] == ["cid"]
+        and q["code_challenge_method"] == ["S256"]
+        and q["foo"] == ["bar"]
+        and q["state"] == [attempt.state]
+    )
     assert attempt.redirect_uri.startswith("http://127.0.0.1:") and not attempt.manual_only
     async with httpx.AsyncClient() as c:
         bad = await c.get(attempt.redirect_uri, params={"state": "nope", "code": "c"})
@@ -98,7 +103,12 @@ async def test_loopback_login_flow():
         await a3.wait()
     a4 = LoginAttempt(
         FlowSpec(
-            provider="x", authorize_url="https://auth.example/authorize", host="127.0.0.1", ports=(0,), callback_path="/cb", client_id="cid"
+            provider="x",
+            authorize_url="https://auth.example/authorize",
+            host="127.0.0.1",
+            ports=(0,),
+            callback_path="/cb",
+            client_id="cid",
         )
     )
     await a4.start()
@@ -113,12 +123,25 @@ def test_stores(tmp_path):
     auth.save("codex", "a", {"accessToken": "1"})
     auth.save("codex", "b", {"accessToken": "2"})
     assert auth.default_key("codex") == "a" and auth.ordered_keys("codex") == ["a", "b"]
-    assert auth.set_default("codex", "b") and auth.ordered_keys("codex") == ["b", "a"] and not auth.set_default("codex", "zzz")
+    assert (
+        auth.set_default("codex", "b")
+        and auth.ordered_keys("codex") == ["b", "a"]
+        and not auth.set_default("codex", "zzz")
+    )
     assert auth.delete("codex", "b") and auth.default_key("codex") == "a" and not auth.delete("codex", "b")
     prefs = ProviderSettings(tmp_path)
     assert prefs.get("codex") == {"accounts": {}, "contextWindows": {}, "tools": {}}
-    prefs.set("codex", {"visibleModels": ["gpt-5.1"], "contextWindows": {"gpt-5.1": 200000, "bad": "x"}, "tools": {"web_search": False}})
-    assert prefs.get("codex")["visibleModels"] == ["gpt-5.1"] and prefs.get("codex")["contextWindows"] == {"gpt-5.1": 200000}
+    prefs.set(
+        "codex",
+        {
+            "visibleModels": ["gpt-5.1"],
+            "contextWindows": {"gpt-5.1": 200000, "bad": "x"},
+            "tools": {"web_search": False},
+        },
+    )
+    assert prefs.get("codex")["visibleModels"] == ["gpt-5.1"] and prefs.get("codex")["contextWindows"] == {
+        "gpt-5.1": 200000
+    }
     assert prefs.tool_enabled("codex", "web_search") is False and prefs.tool_enabled("codex", "image_generate") is True
     assert prefs.tool_enabled("codex", "web_search", at_ms=1) is True  # before the history entry
     with pytest.raises(ValueError, match="unknown tool"):
@@ -170,7 +193,10 @@ def test_responses_input_and_translation():
     events = [
         (
             "response.output_item.added",
-            {"type": "response.output_item.added", "item": {"type": "function_call", "id": "it1", "call_id": "call_1", "name": "f"}},
+            {
+                "type": "response.output_item.added",
+                "item": {"type": "function_call", "id": "it1", "call_id": "call_1", "name": "f"},
+            },
         ),
         (None, {"type": "response.function_call_arguments.delta", "item_id": "it1", "delta": '{"a":'}),
         (None, {"type": "response.function_call_arguments.delta", "item_id": "it1", "delta": "1}"}),
@@ -205,7 +231,10 @@ def test_responses_input_and_translation():
     with pytest.raises(LlmError) as info:
         list(
             ResponsesTranslator("t").feed(
-                None, json.dumps({"type": "response.failed", "error": {"code": "context_window_exceeded", "message": "too long"}})
+                None,
+                json.dumps(
+                    {"type": "response.failed", "error": {"code": "context_window_exceeded", "message": "too long"}}
+                ),
             )
         )
     assert info.value.code == "CONTEXT_WINDOW_EXCEEDED"
@@ -219,15 +248,19 @@ def test_antigravity_wire():
         and efforts_for("claude-sonnet-4") == ["high"]
         and efforts_for("gemini-2.5-flash") == ["low", "medium", "high"]
     )
-    assert thinking_config("gemini-2.5-flash", "medium", 10000) == {"includeThoughts": True, "thinkingBudget": 4000} and thinking_config(
-        "gemini-2.5-flash", "off", None
-    ) == {"includeThoughts": False, "thinkingBudget": 0}
+    assert thinking_config("gemini-2.5-flash", "medium", 10000) == {
+        "includeThoughts": True,
+        "thinkingBudget": 4000,
+    } and thinking_config("gemini-2.5-flash", "off", None) == {"includeThoughts": False, "thinkingBudget": 0}
     assert thinking_config("gemini-3.1-flash-image", "high", None) == {"thinkingLevel": "HIGH", "includeThoughts": True}
     with pytest.raises(LlmError, match="UNSUPPORTED|does not support"):
         thinking_config("claude-sonnet-4", "low", None)
     schema = {
         "type": "object",
-        "properties": {"n": {"type": ["integer", "null"]}, "k": {"anyOf": [{"type": "string", "enum": ["a", "b"]}, {"type": "null"}]}},
+        "properties": {
+            "n": {"type": ["integer", "null"]},
+            "k": {"anyOf": [{"type": "string", "enum": ["a", "b"]}, {"type": "null"}]},
+        },
         "required": ["n"],
         "$schema": "x",
     }
@@ -249,11 +282,19 @@ def test_antigravity_wire():
         "functionCall": {"id": "c1", "name": "f", "args": {"a": 1}},
         "thoughtSignature": "skip_thought_signature_validator",
     }
-    assert contents[2]["parts"][0]["functionResponse"] == {"id": "c1", "name": "f", "response": {"ok": True}} and contents[2]["parts"][
-        1
-    ] == {"text": "next"}
-    req = build_request(project="p", model="claude-sonnet-4", session_id="s", messages=messages, tools=[], max_tokens=70000, effort=None)
-    assert req["request"]["generationConfig"]["maxOutputTokens"] == 64000 and req["project"] == "p" and "tools" not in req["request"]
+    assert contents[2]["parts"][0]["functionResponse"] == {
+        "id": "c1",
+        "name": "f",
+        "response": {"ok": True},
+    } and contents[2]["parts"][1] == {"text": "next"}
+    req = build_request(
+        project="p", model="claude-sonnet-4", session_id="s", messages=messages, tools=[], max_tokens=70000, effort=None
+    )
+    assert (
+        req["request"]["generationConfig"]["maxOutputTokens"] == 64000
+        and req["project"] == "p"
+        and "tools" not in req["request"]
+    )
     tr = AntigravityTranslator("ag")
     chunks = list(
         tr.feed(
@@ -286,7 +327,11 @@ def test_antigravity_wire():
     merged = chunks[0]
     for c in chunks[1:]:
         merged = merged + c
-    assert merged.content == "hello" and merged.additional_kwargs["reasoning_content"] == "hmm" and merged.tool_calls[0]["args"] == {"q": 1}
+    assert (
+        merged.content == "hello"
+        and merged.additional_kwargs["reasoning_content"] == "hmm"
+        and merged.tool_calls[0]["args"] == {"q": 1}
+    )
     assert merged.usage_metadata == {
         "input_tokens": 9,
         "output_tokens": 4,
@@ -328,23 +373,33 @@ async def test_codex_provider_with_mocked_http(tmp_path):
                 else parse_qs(request.content.decode())
             )
             grant = (
-                body.get("grant_type") if isinstance(body, dict) and not isinstance(body.get("grant_type"), list) else body["grant_type"][0]
+                body.get("grant_type")
+                if isinstance(body, dict) and not isinstance(body.get("grant_type"), list)
+                else body["grant_type"][0]
             )
             if grant == "refresh_token" and (body.get("refresh_token") == "dead"):
                 return httpx.Response(400, json={"error": {"code": "refresh_token_expired"}})
             id_token = fake_jwt(
                 {
                     "email": "ann@example.com",
-                    "https://api.openai.com/auth": {"chatgpt_account_id": "acct1", "chatgpt_user_id": "u1", "chatgpt_plan_type": "plus"},
+                    "https://api.openai.com/auth": {
+                        "chatgpt_account_id": "acct1",
+                        "chatgpt_user_id": "u1",
+                        "chatgpt_plan_type": "plus",
+                    },
                 }
             )
             return httpx.Response(
-                200, json={"access_token": "at-" + grant, "refresh_token": "rt2", "expires_in": 3600, "id_token": id_token}
+                200,
+                json={"access_token": "at-" + grant, "refresh_token": "rt2", "expires_in": 3600, "id_token": id_token},
             )
         if "codex/latest" in str(request.url):
             return httpx.Response(200, json={"version": "0.160.0"})
         if request.url.path == "/backend-api/codex/models":
-            assert request.headers["chatgpt-account-id"] == "acct1" and request.url.params["client_version"] in ("0.160.0", "0.153.4")
+            assert request.headers["chatgpt-account-id"] == "acct1" and request.url.params["client_version"] in (
+                "0.160.0",
+                "0.153.4",
+            )
             return httpx.Response(
                 200,
                 json={
@@ -371,8 +426,16 @@ async def test_codex_provider_with_mocked_http(tmp_path):
                 json={
                     "plan_type": "plus",
                     "rate_limit": {
-                        "primary_window": {"used_percent": 12.5, "limit_window_seconds": 18000, "reset_after_seconds": 100},
-                        "secondary_window": {"used_percent": 40, "limit_window_seconds": 604800, "reset_at": 1800000000},
+                        "primary_window": {
+                            "used_percent": 12.5,
+                            "limit_window_seconds": 18000,
+                            "reset_after_seconds": 100,
+                        },
+                        "secondary_window": {
+                            "used_percent": 40,
+                            "limit_window_seconds": 604800,
+                            "reset_at": 1800000000,
+                        },
                     },
                 },
             )
@@ -453,13 +516,17 @@ async def test_codex_provider_with_mocked_http(tmp_path):
         .model_copy(update={"session_id_hint": "sess-1"})
     )
     result = await chat.ainvoke(
-        [SystemMessage(content="be brief"), HumanMessage(content="ping")], config={"configurable": {"thread_id": "sess-1"}}
+        [SystemMessage(content="be brief"), HumanMessage(content="ping")],
+        config={"configurable": {"thread_id": "sess-1"}},
     )
     assert result.content == "pong" and result.usage_metadata["input_tokens"] == 5
     # Refresh: an expired session refreshes once; a dead refresh token deletes the account.
     provider.auth.save("codex", key, {**session, "expiresAt": 0})
     fresh = await provider.token_manager(key).session()
-    assert fresh["accessToken"] == "at-refresh_token" and provider.auth.get("codex", key)["accessToken"] == "at-refresh_token"
+    assert (
+        fresh["accessToken"] == "at-refresh_token"
+        and provider.auth.get("codex", key)["accessToken"] == "at-refresh_token"
+    )
     provider.auth.save("codex", key, {**session, "expiresAt": 0, "refreshToken": "dead"})
     provider._managers.clear()
     with pytest.raises(LlmError) as info:
@@ -473,7 +540,9 @@ async def test_service_routes_and_model_routes(home, tmp_path, monkeypatch):
     async with Harness(profile, patch=[HTTP_OFF]) as h:
         service: SubscriptionsService = h.get("subscriptions")
         assert set(service.providers) == {"codex", "chatgpt", "antigravity", "grok"}
-        assert "subscription" in h.get("llm").providers() and not any(r in h.get("llm").config.providers for r in service.providers)
+        assert "subscription" in h.get("llm").providers() and not any(
+            r in h.get("llm").config.providers for r in service.providers
+        )
         # A stored Grok session with a cached catalog becomes a model route and registers the Grok tools.
         grok = service.providers["grok"]
         grok.auth.save(
@@ -490,7 +559,12 @@ async def test_service_routes_and_model_routes(home, tmp_path, monkeypatch):
             "grok",
             [
                 {"id": "grok-4", "name": "Grok 4", "contextWindow": 256000, "inputModalities": ["text", "image"]},
-                {"id": "grok-code-fast-1", "name": "Grok Code Fast 1", "contextWindow": 256000, "inputModalities": ["text"]},
+                {
+                    "id": "grok-code-fast-1",
+                    "name": "Grok Code Fast 1",
+                    "contextWindow": 256000,
+                    "inputModalities": ["text"],
+                },
             ],
             "ann@x.ai",
         )
@@ -506,8 +580,12 @@ async def test_service_routes_and_model_routes(home, tmp_path, monkeypatch):
         assert any(g["id"] == "grok" and g["title"].startswith("Grok") for g in directory["groups"])
         chat = h.get("llm").resolve("grok:grok-4")
         assert chat.label == "grok" and chat.model_name == "grok-4" and chat.provider_ref is grok
-        assert {"grok_x_search", "grok_image_generate", "grok_video_generate"} <= {t.name for t in h.get("tools").list()}
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=30) as c:
+        assert {"grok_x_search", "grok_image_generate", "grok_video_generate"} <= {
+            t.name for t in h.get("tools").list()
+        }
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=30
+        ) as c:
             st = (await c.get("/api/subscriptions/status")).json()["providers"]
             assert (
                 st["grok"]["accounts"]
@@ -534,20 +612,34 @@ async def test_service_routes_and_model_routes(home, tmp_path, monkeypatch):
                 "/api/subscriptions/provider-settings",
                 json={
                     "provider": "grok",
-                    "settings": {"visibleModels": ["grok-4"], "contextWindows": {"grok-4": 128000}, "tools": {"x_search": False}},
+                    "settings": {
+                        "visibleModels": ["grok-4"],
+                        "contextWindows": {"grok-4": 128000},
+                        "tools": {"x_search": False},
+                    },
                 },
             )
             assert r.json() == {"ok": True}
             route = h.get("llm").config.providers["grok"]
             assert [m.id for m in route.models] == ["grok-4"] and route.models[0].context_window == 128000
-            assert service.tool_enabled("grok", "x_search") is False and service.tool_enabled("grok", "image_generate") is True
             assert (
-                await c.put("/api/subscriptions/provider-settings", json={"provider": "grok", "settings": {"tools": {"web_search": True}}})
+                service.tool_enabled("grok", "x_search") is False
+                and service.tool_enabled("grok", "image_generate") is True
+            )
+            assert (
+                await c.put(
+                    "/api/subscriptions/provider-settings",
+                    json={"provider": "grok", "settings": {"tools": {"web_search": True}}},
+                )
             ).status_code == 400
             assert (
-                await c.post("/api/subscriptions/model-default", json={"provider": "grok", "model": "grok-4", "effort": "high"})
+                await c.post(
+                    "/api/subscriptions/model-default", json={"provider": "grok", "model": "grok-4", "effort": "high"}
+                )
             ).status_code == 400  # no efforts listed
-            assert (await c.post("/api/subscriptions/default", json={"provider": "grok", "account": "nobody"})).status_code == 404
+            assert (
+                await c.post("/api/subscriptions/default", json={"provider": "grok", "account": "nobody"})
+            ).status_code == 404
             assert (await c.post("/api/subscriptions/login", json={"provider": "nope"})).status_code == 400
             assert (await c.get("/api/subscriptions/media/../etc/passwd")).status_code == 404
             assert (await c.get("/api/subscriptions/media/missing.png")).status_code == 404

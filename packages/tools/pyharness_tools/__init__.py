@@ -149,7 +149,9 @@ class ToolsService(Service):
 
     def interrupt_on(self) -> dict[str, Any]:
         """``tool name -> gate`` for the agent loop; one gate per tool, the strictest (:func:`_strictest`)."""
-        gates: dict[str, list[bool | dict[str, Any]]] = {name: [c for c, _ in items] for name, items in self._approvals.items()}
+        gates: dict[str, list[bool | dict[str, Any]]] = {
+            name: [c for c, _ in items] for name, items in self._approvals.items()
+        }
         for name, record in self._records.items():
             if record.approval:
                 gates.setdefault(name, []).append(record.approval)

@@ -100,7 +100,9 @@ class ImageArgs(BaseModel):
     model_config = ConfigDict(extra="forbid")
     prompt: str
     transparent_background: bool = False
-    referenced_image_paths: list[str] | None = Field(None, description="1–5 absolute paths of local images to edit or use as references.")
+    referenced_image_paths: list[str] | None = Field(
+        None, description="1–5 absolute paths of local images to edit or use as references."
+    )
     size: Literal["1024x1024", "1024x1536", "1536x1024", "auto"] | None = None
     quality: Literal["low", "medium", "high", "auto"] | None = None
 
@@ -132,7 +134,11 @@ def validate_commands(args: SearchArgs) -> dict[str, Any]:
 def make_tools(provider: CodexProvider, service: Any) -> list[Any]:
     @tool(
         "codex_web_search",
-        description="Web and image search, page opening, finance, weather, sports and time lookups through the Codex search backend. Use search_query for ordinary searches; results carry ref ids that later open / click / find commands reuse.",
+        description=(
+            "Web and image search, page opening, finance, weather, sports and time lookups through the Codex search "
+            "backend. Use search_query for ordinary searches; results carry ref ids that later open / click / find "
+            "commands reuse."
+        ),
         args_schema=SearchArgs,
     )
     async def codex_web_search(**kwargs: Any) -> str:
@@ -151,7 +157,8 @@ def make_tools(provider: CodexProvider, service: Any) -> list[Any]:
         body = {
             "id": f"pyharness-subscriptions:{service.current_session_id() or uuid.uuid4()}",
             "model": SEARCH_MODEL,
-            "input": "\n".join(q["q"] for q in commands.get("search_query", [])) or json.dumps(commands, ensure_ascii=False),
+            "input": "\n".join(q["q"] for q in commands.get("search_query", []))
+            or json.dumps(commands, ensure_ascii=False),
             "commands": commands,
             "settings": {"search_context_size": "medium", "allowed_callers": ["direct"], "external_web_access": "live"},
             "max_output_tokens": {"medium": 4096, "long": 8192}.get(length, 2048),
@@ -182,7 +189,10 @@ def make_tools(provider: CodexProvider, service: Any) -> list[Any]:
 
     @tool(
         "codex_image_generate",
-        description="Generate an image with gpt-image-2 through the Codex subscription, or edit / combine up to 5 local reference images. Saves PNG files and returns their paths and preview URLs.",
+        description=(
+            "Generate an image with gpt-image-2 through the Codex subscription, or edit / combine up to 5 local "
+            "reference images. Saves PNG files and returns their paths and preview URLs."
+        ),
         args_schema=ImageArgs,
     )
     async def codex_image_generate(**kwargs: Any) -> str:

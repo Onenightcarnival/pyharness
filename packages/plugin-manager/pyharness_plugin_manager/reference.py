@@ -1,4 +1,5 @@
-"""``references/packages.md`` of the ``pyharness-composition-reference`` skill, rendered from the installed entry points.
+"""``references/packages.md`` of the ``pyharness-composition-reference`` skill, rendered from the installed entry
+points.
 
 ``python scripts/gen_packages.py`` writes it; ``tests/test_creator.py`` fails when the file is stale.
 """
@@ -15,10 +16,12 @@ PACKAGES_MD = Path(__file__).with_name("skills") / "pyharness-composition-refere
 HEADER = """\
 # Installed plugin packages and bundles
 
-Generated from the `pyharness.plugins` and `pyharness.bundles` entry points of the environment: `python scripts/gen_packages.py`.
+Generated from the `pyharness.plugins` and `pyharness.bundles` entry points of the environment:
+`python scripts/gen_packages.py`.
 Plugins installed into a profile after generation: `plugin_manager action=list`.
 
-Columns: `kind` is `service` (provides the service under `provides`) or `function` (`apply(ctx, config)`); `inject` lists the
+Columns: `kind` is `service` (provides the service under `provides`) or `function` (`apply(ctx, config)`);
+`inject` lists the
 services the entry waits for; `config` says whether the entry accepts `config`.
 """
 
@@ -37,7 +40,16 @@ def plugin_rows() -> list[dict[str, Any]]:
         try:
             spec = load_plugin(name)
         except Exception as exc:  # noqa: BLE001 - a broken package is listed with its error
-            rows.append({"name": name, "kind": "error", "provides": "", "inject": "", "config": "", "doc": f"{type(exc).__name__}: {exc}"})
+            rows.append(
+                {
+                    "name": name,
+                    "kind": "error",
+                    "provides": "",
+                    "inject": "",
+                    "config": "",
+                    "doc": f"{type(exc).__name__}: {exc}",
+                }
+            )
             continue
         rows.append(
             {
@@ -61,12 +73,20 @@ def bundle_rows() -> list[dict[str, Any]]:
             rows.append({"name": name, "title": "", "description": f"{type(exc).__name__}: {exc}", "entries": ""})
             continue
         entries = ", ".join(f"`{op.id}`" for op in info.ops)
-        rows.append({"name": name, "title": info.title, "description": _first_line(info.description), "entries": entries})
+        rows.append(
+            {"name": name, "title": info.title, "description": _first_line(info.description), "entries": entries}
+        )
     return rows
 
 
 def render_packages() -> str:
-    out = [HEADER, "## Plugins", "", "| entry point | kind | provides | inject | config | contract |", "|---|---|---|---|---|---|"]
+    out = [
+        HEADER,
+        "## Plugins",
+        "",
+        "| entry point | kind | provides | inject | config | contract |",
+        "|---|---|---|---|---|---|",
+    ]
     for r in plugin_rows():
         out.append(f"| `{r['name']}` | {r['kind']} | {r['provides']} | {r['inject']} | {r['config']} | {r['doc']} |")
     out += ["", "## Bundles", "", "| bundle | title | description | entries (patch op ids) |", "|---|---|---|---|"]

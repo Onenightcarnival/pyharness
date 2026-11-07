@@ -19,7 +19,14 @@ from langchain_core.callbacks import AsyncCallbackManagerForLLMRun
 from langchain_core.messages import BaseMessage
 from langchain_core.outputs import ChatGenerationChunk
 
-from .antigravity_wire import DEFAULT_ORIGIN, FALLBACK_ORIGIN, FALLBACK_STATUSES, AntigravityTranslator, build_request, efforts_for
+from .antigravity_wire import (
+    DEFAULT_ORIGIN,
+    FALLBACK_ORIGIN,
+    FALLBACK_STATUSES,
+    AntigravityTranslator,
+    build_request,
+    efforts_for,
+)
 from .common import LlmError, PermanentRefreshError, http_error, iter_sse, read_error
 from .oauth import FlowSpec, LoginAttempt
 from .providers import DiscoveredModel, Provider
@@ -29,7 +36,11 @@ from .store import JsonFile
 AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
-SCOPE = "openid https://www.googleapis.com/auth/aicode https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/cclog https://www.googleapis.com/auth/experimentsandconfigs"
+SCOPE = (
+    "openid https://www.googleapis.com/auth/aicode https://www.googleapis.com/auth/cloud-platform "
+    "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile "
+    "https://www.googleapis.com/auth/cclog https://www.googleapis.com/auth/experimentsandconfigs"
+)
 DEFAULT_CLIENT_ID = "1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com"
 DEFAULT_CLIENT_SECRET = "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"
 PROJECT_KEYS = (
@@ -88,7 +99,10 @@ class AntigravityProvider(Provider):
         cfg = self.config.get("antigravity") or {}
         if cfg.get("clientId"):
             return str(cfg["clientId"]), cfg.get("clientSecret")
-        for id_var, secret_var in (("ANTIGRAVITY_CLIENT_ID", "ANTIGRAVITY_CLIENT_SECRET"), ("NOAGY_CLIENT_ID", "NOAGY_CLIENT_SECRET")):
+        for id_var, secret_var in (
+            ("ANTIGRAVITY_CLIENT_ID", "ANTIGRAVITY_CLIENT_SECRET"),
+            ("NOAGY_CLIENT_ID", "NOAGY_CLIENT_SECRET"),
+        ):
             if os.environ.get(id_var):
                 return os.environ[id_var], os.environ.get(secret_var)
         stored = self.client_file.read()
@@ -131,13 +145,17 @@ class AntigravityProvider(Provider):
         last: Exception | None = None
         for origin in self.origins()[: 1 if single_origin else None]:
             try:
-                res = await self.http.post(f"{origin}/v1internal:{method}", headers=self.headers(session), json=body, timeout=timeout)
+                res = await self.http.post(
+                    f"{origin}/v1internal:{method}", headers=self.headers(session), json=body, timeout=timeout
+                )
             except httpx.HTTPError as exc:
                 last = exc
                 continue
             if res.status_code == 404 and tolerate_404:
                 return {}
-            if res.status_code in FALLBACK_STATUSES and not (res.status_code == 429 and "Individual quota reached" in res.text):
+            if res.status_code in FALLBACK_STATUSES and not (
+                res.status_code == 429 and "Individual quota reached" in res.text
+            ):
                 last = http_error(f"antigravity {method}", res.status_code, res.text)
                 continue
             if res.status_code >= 400:
@@ -149,8 +167,15 @@ class AntigravityProvider(Provider):
     def flow_spec(self, account: str | None = None) -> FlowSpec:
         client_id, _ = self.oauth_client()
         return FlowSpec(
-            provider=self.id, authorize_url=AUTHORIZE_URL, host="localhost", ports=(51121,), callback_path="/oauth-callback",
-            manual_redirect_uri="http://localhost:51121/oauth-callback", timeout=300.0, scope=SCOPE, client_id=client_id,
+            provider=self.id,
+            authorize_url=AUTHORIZE_URL,
+            host="localhost",
+            ports=(51121,),
+            callback_path="/oauth-callback",
+            manual_redirect_uri="http://localhost:51121/oauth-callback",
+            timeout=300.0,
+            scope=SCOPE,
+            client_id=client_id,
             extra_params={"access_type": "offline", "include_granted_scopes": "true", "prompt": "consent"},
         )  # fmt: skip
 
@@ -187,12 +212,22 @@ class AntigravityProvider(Provider):
             listed = await self.call(session, "listCloudAICompanionProjects", {}, tolerate_404=True)
             project = _find_project(listed)
         if not project and (self.config.get("antigravity") or {}).get("onboard"):
-            tier = next((t.get("id") for t in info.get("allowedTiers") or [] if isinstance(t, dict) and t.get("isDefault")), "LEGACY")
+            tier = next(
+                (t.get("id") for t in info.get("allowedTiers") or [] if isinstance(t, dict) and t.get("isDefault")),
+                "LEGACY",
+            )
             for _ in range(10):
                 op = await self.call(
                     session,
                     "onboardUser",
-                    {"tierId": tier, "metadata": {"ideType": "ANTIGRAVITY", "platform": "PLATFORM_UNSPECIFIED", "pluginType": "GEMINI"}},
+                    {
+                        "tierId": tier,
+                        "metadata": {
+                            "ideType": "ANTIGRAVITY",
+                            "platform": "PLATFORM_UNSPECIFIED",
+                            "pluginType": "GEMINI",
+                        },
+                    },
                     single_origin=True,
                 )
                 if op.get("done"):
@@ -201,7 +236,9 @@ class AntigravityProvider(Provider):
                 await __import__("asyncio").sleep(1)
         email = user_id = None
         try:
-            who = await self.http.get(USERINFO_URL, headers={"authorization": f"Bearer {session['accessToken']}"}, timeout=10)
+            who = await self.http.get(
+                USERINFO_URL, headers={"authorization": f"Bearer {session['accessToken']}"}, timeout=10
+            )
             if who.status_code == 200:
                 email, user_id = who.json().get("email"), who.json().get("id")
         except httpx.HTTPError:
@@ -214,7 +251,11 @@ class AntigravityProvider(Provider):
         paid = info.get("paidTier") or {}
         current = info.get("currentTier") or {}
         session.update(
-            {"projectId": project, "account": email, "plan": paid.get("name") or paid.get("id") or current.get("name") or current.get("id")}
+            {
+                "projectId": project,
+                "account": email,
+                "plan": paid.get("name") or paid.get("id") or current.get("name") or current.get("id"),
+            }
         )
         key = str(email).lower() if email else str(project)
         return key, session
@@ -272,9 +313,17 @@ class AntigravityProvider(Provider):
             context = (
                 m.get("inputTokenLimit")
                 or m.get("maxInputTokens")
-                or (200000 if lower.startswith("claude-") else 131072 if lower.startswith("gpt-oss-") or "-image" in lower else 1048576)
+                or (
+                    200000
+                    if lower.startswith("claude-")
+                    else 131072
+                    if lower.startswith("gpt-oss-") or "-image" in lower
+                    else 1048576
+                )
             )
-            modalities = ["text"] if m.get("supportsImages") is False or lower.startswith("gpt-oss-") else ["text", "image"]
+            modalities = (
+                ["text"] if m.get("supportsImages") is False or lower.startswith("gpt-oss-") else ["text", "image"]
+            )
             max_out = m.get("maxOutputTokens")
             default_max = min(int(max_cfg or max_out or 32768), int(max_out)) if max_out else int(max_cfg or 32768)
             efforts = [{"id": e, "name": e.capitalize()} for e in efforts_for(mid)]
@@ -322,13 +371,19 @@ class AntigravityProvider(Provider):
                         try:
                             from datetime import datetime
 
-                            resets = int(datetime.fromisoformat(str(bucket["resetTime"]).replace("Z", "+00:00")).timestamp() * 1000)
+                            resets = int(
+                                datetime.fromisoformat(str(bucket["resetTime"]).replace("Z", "+00:00")).timestamp()
+                                * 1000
+                            )
                         except ValueError:
                             resets = None
                     windows.append(
                         {
                             "kind": kind,
-                            "scope": f"{group.get('displayName', '')} · {bucket.get('displayName') or bucket.get('bucketId', '')}",
+                            "scope": (
+                                f"{group.get('displayName', '')} · "
+                                f"{bucket.get('displayName') or bucket.get('bucketId', '')}"
+                            ),
                             "usedPercent": round((1 - float(bucket.get("remainingFraction") or 0)) * 100, 1),
                             "resetsAt": resets,
                         }

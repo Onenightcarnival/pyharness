@@ -44,25 +44,42 @@ class PromptService(Service):
         self._sections: dict[str, Section] = {}
         self._seq = 0
 
-    def add(self, id: str, content: str | Callable[[], str], order: int = 100, presets: list[str] | None = None) -> Callable[[], Any]:
-        """Add a section; ``content`` is text or a zero-argument callable; ``presets`` limits it to those agent presets. Returns the disposer."""
+    def add(
+        self, id: str, content: str | Callable[[], str], order: int = 100, presets: list[str] | None = None
+    ) -> Callable[[], Any]:
+        """Add a section; ``content`` is text or a zero-argument callable; ``presets`` limits it to those agent
+        presets. Returns the disposer.
+        """
         if id in self._sections:
             raise ValueError(f"prompt section {id!r} already added by {self._sections[id].owner!r}")
         self._seq += 1
         section = Section(
-            id=id, content=content, order=order, owner=self.caller.entry_id, seq=self._seq, presets=tuple(presets) if presets else None
+            id=id,
+            content=content,
+            order=order,
+            owner=self.caller.entry_id,
+            seq=self._seq,
+            presets=tuple(presets) if presets else None,
         )
         self._sections[id] = section
         return self.caller.on_dispose(lambda: self._sections.pop(id, None))
 
     def sections(self) -> list[dict[str, Any]]:
         return [
-            {"id": s.id, "order": s.order, "owner": s.owner, "chars": len(s.render()), "presets": list(s.presets) if s.presets else None}
+            {
+                "id": s.id,
+                "order": s.order,
+                "owner": s.owner,
+                "chars": len(s.render()),
+                "presets": list(s.presets) if s.presets else None,
+            }
             for s in sorted(self._sections.values(), key=lambda s: (s.order, s.seq))
         ]
 
     def render(self, preset: str | None = None) -> str:
-        parts = [s.render() for s in sorted(self._sections.values(), key=lambda s: (s.order, s.seq)) if s.applies(preset)]
+        parts = [
+            s.render() for s in sorted(self._sections.values(), key=lambda s: (s.order, s.seq)) if s.applies(preset)
+        ]
         return "\n\n".join(p for p in parts if p)
 
 

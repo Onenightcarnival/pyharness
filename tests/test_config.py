@@ -10,8 +10,14 @@ def layers(*named):
 def test_layers_insert_replace_merge_remove():
     tree, warnings = compose(
         layers(
-            ("bundle:a", [{"id": "a", "name": "p-a", "config": {"x": 1, "nested": {"k": 1}}}, {"id": "b", "name": "p-b"}]),
-            ("bundle:b", [{"id": "c", "name": "p-c", "before": "b"}, {"id": "g", "children": [{"id": "g1", "name": "p-g1"}]}]),
+            (
+                "bundle:a",
+                [{"id": "a", "name": "p-a", "config": {"x": 1, "nested": {"k": 1}}}, {"id": "b", "name": "p-b"}],
+            ),
+            (
+                "bundle:b",
+                [{"id": "c", "name": "p-c", "before": "b"}, {"id": "g", "children": [{"id": "g1", "name": "p-g1"}]}],
+            ),
             (
                 "profile",
                 [
@@ -33,7 +39,9 @@ def test_layers_insert_replace_merge_remove():
 
 
 def test_config_is_replaced_without_merge():
-    tree, _ = compose(layers(("a", [{"id": "a", "name": "p", "config": {"x": 1, "y": 2}}]), ("b", [{"id": "a", "config": {"y": 3}}])))
+    tree, _ = compose(
+        layers(("a", [{"id": "a", "name": "p", "config": {"x": 1, "y": 2}}]), ("b", [{"id": "a", "config": {"y": 3}}]))
+    )
     assert tree[0].config == {"y": 3}
 
 

@@ -11,8 +11,15 @@ from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import parse_qs, urlencode, urlparse
 
-SUCCESS_HTML = "<!doctype html><meta charset=utf-8><title>Login successful</title><body style='font-family:system-ui;padding:40px'><h1>Login successful</h1><p>You can close this tab and return to pyharness.</p></body>"
-FAILED_HTML = "<!doctype html><meta charset=utf-8><title>Login failed</title><body style='font-family:system-ui;padding:40px'><h1>Login failed</h1><p>{detail}</p></body>"
+SUCCESS_HTML = (
+    "<!doctype html><meta charset=utf-8><title>Login successful</title>"
+    "<body style='font-family:system-ui;padding:40px'><h1>Login successful</h1>"
+    "<p>You can close this tab and return to pyharness.</p></body>"
+)
+FAILED_HTML = (
+    "<!doctype html><meta charset=utf-8><title>Login failed</title>"
+    "<body style='font-family:system-ui;padding:40px'><h1>Login failed</h1><p>{detail}</p></body>"
+)
 
 
 def b64url(data: bytes) -> str:
@@ -121,7 +128,10 @@ class LoginAttempt:
             status, body = self._respond(target)
             payload = body.encode("utf-8")
             writer.write(
-                f"HTTP/1.1 {status}\r\ncontent-type: text/html; charset=utf-8\r\ncontent-length: {len(payload)}\r\nconnection: close\r\n\r\n".encode()
+                (
+                    f"HTTP/1.1 {status}\r\ncontent-type: text/html; charset=utf-8\r\n"
+                    f"content-length: {len(payload)}\r\nconnection: close\r\n\r\n"
+                ).encode()
                 + payload
             )
             await writer.drain()

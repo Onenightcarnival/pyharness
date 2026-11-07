@@ -56,7 +56,9 @@ async def test_broken_bundle_is_rejected_and_rolled_back(profile, example_bundle
     broken = tmp_path / "broken-audit"
     shutil.copytree(example_bundle, broken)
     init = broken / "pyharness_audit" / "__init__.py"
-    init.write_text(init.read_text().replace('inject = ["tools"]', 'inject = ["tools"]\nraise ImportError("deliberately broken")'))
+    init.write_text(
+        init.read_text().replace('inject = ["tools"]', 'inject = ["tools"]\nraise ImportError("deliberately broken")')
+    )
     before = profile.read_state()
     result = await manage.install_bundle(profile, broken)
     assert result["application"] == "rejected", result
@@ -71,7 +73,8 @@ async def test_bundle_without_entry_point_is_rejected(profile, tmp_path):
     (pkg / "plain_pkg").mkdir(parents=True)
     (pkg / "plain_pkg" / "__init__.py").write_text("")
     (pkg / "pyproject.toml").write_text(
-        '[project]\nname = "plain-pkg"\nversion = "0.1.0"\n[build-system]\nrequires = ["hatchling"]\nbuild-backend = "hatchling.build"\n'
+        '[project]\nname = "plain-pkg"\nversion = "0.1.0"\n'
+        '[build-system]\nrequires = ["hatchling"]\nbuild-backend = "hatchling.build"\n'
         '[tool.hatch.build.targets.wheel]\npackages = ["plain_pkg"]\n'
     )
     result = await manage.install_bundle(profile, pkg)
@@ -87,7 +90,13 @@ async def test_agent_installs_a_bundle_through_the_tool(profile, example_bundle,
     replies = [
         {
             "content": "",
-            "tool_calls": [{"name": "plugin_manager", "args": {"action": "install_bundle", "target": "/plugins/audit"}, "id": "pm1"}],
+            "tool_calls": [
+                {
+                    "name": "plugin_manager",
+                    "args": {"action": "install_bundle", "target": "/plugins/audit"},
+                    "id": "pm1",
+                }
+            ],
         },
         {"content": "installed"},
     ]

@@ -58,7 +58,8 @@ def format_search(content: str, sources: list[dict[str, Any]], truncated: bool) 
         parts.append(
             "Sources:\n"
             + "\n".join(
-                f'- "{s.get("title") or s["url"]}": {s["url"]}' + (f" — {s['snippet']}" if s.get("snippet") else "") for s in sources
+                f'- "{s.get("title") or s["url"]}": {s["url"]}' + (f" — {s['snippet']}" if s.get("snippet") else "")
+                for s in sources
             )
         )
     if not content and not sources:

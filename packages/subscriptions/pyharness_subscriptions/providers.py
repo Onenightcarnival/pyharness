@@ -69,7 +69,9 @@ class Provider:
     preempt_ms = 5 * 60 * 1000
     discovery_timeout = 10.0
 
-    def __init__(self, auth: AuthStore, catalogs: CatalogCache, http: httpx.AsyncClient, config: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, auth: AuthStore, catalogs: CatalogCache, http: httpx.AsyncClient, config: dict[str, Any] | None = None
+    ) -> None:
         self.auth = auth
         self.catalogs = catalogs
         self.http = http
@@ -123,7 +125,7 @@ class Provider:
             out["detail"] = self.last_error
         return out
 
-    # ------------------------------------------------------------------ login (subclasses: flow_spec, exchange, refresh)
+    # ------------------------------------------------ login (subclasses: flow_spec, exchange, refresh)
     def flow_spec(self, account: str | None = None) -> FlowSpec:
         raise NotImplementedError
 

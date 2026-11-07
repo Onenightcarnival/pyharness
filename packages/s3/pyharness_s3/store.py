@@ -15,7 +15,18 @@ from urllib.parse import urlparse
 
 NAME_RE = re.compile(r"^[^\W_][\w .-]{0,63}$", re.U)
 BUCKET_RE = re.compile(r"^[a-z0-9][a-z0-9.-]{1,62}$")
-SUMMARY_FIELDS = ("id", "name", "bucket", "endpoint", "region", "accessKeyHint", "pathStyle", "prefix", "createdAt", "updatedAt")
+SUMMARY_FIELDS = (
+    "id",
+    "name",
+    "bucket",
+    "endpoint",
+    "region",
+    "accessKeyHint",
+    "pathStyle",
+    "prefix",
+    "createdAt",
+    "updatedAt",
+)
 
 
 class StoreError(ValueError):
@@ -200,7 +211,9 @@ class ProfileStore:
             profile["id"] = pid
             profile["createdAt"] = existing.get("createdAt")
             profile["updatedAt"] = int(time.time() * 1000)
-            profile["name"] = unique_name(profile["name"] or profile["bucket"], [p["name"] for p in data["profiles"] if p["id"] != pid])
+            profile["name"] = unique_name(
+                profile["name"] or profile["bucket"], [p["name"] for p in data["profiles"] if p["id"] != pid]
+            )
             data["profiles"] = [profile if p["id"] == pid else p for p in data["profiles"]]
             if secret:
                 self.credentials.set(ref(pid), str(secret))

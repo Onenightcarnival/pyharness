@@ -51,7 +51,10 @@ ASPECT = {"1024x1024": "1:1", "1024x1536": "2:3", "1536x1024": "3:2", "auto": "a
 def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
     @tool(
         "grok_x_search",
-        description="Search X (Twitter) posts, profiles and threads through the Grok subscription; returns an answer with citation URLs.",
+        description=(
+            "Search X (Twitter) posts, profiles and threads through the Grok subscription; "
+            "returns an answer with citation URLs."
+        ),
         args_schema=XSearchArgs,
     )
     async def grok_x_search(**kwargs: Any) -> str:
@@ -81,7 +84,12 @@ def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
             res = await provider.http.post(
                 f"{API}/responses",
                 headers=provider.headers(session, **{"content-type": "application/json"}),
-                json={"model": "grok-4", "input": [{"role": "user", "content": args.query}], "tools": [tool_spec], "store": False},
+                json={
+                    "model": "grok-4",
+                    "input": [{"role": "user", "content": args.query}],
+                    "tools": [tool_spec],
+                    "store": False,
+                },
                 timeout=120,
             )
         except (LlmError, httpx.HTTPError) as exc:
@@ -108,7 +116,10 @@ def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
 
     @tool(
         "grok_image_generate",
-        description="Generate an image with grok-imagine-image-2.0 through the Grok subscription, or edit local reference images. Saves the images and returns their paths and preview URLs.",
+        description=(
+            "Generate an image with grok-imagine-image-2.0 through the Grok subscription, or edit local reference "
+            "images. Saves the images and returns their paths and preview URLs."
+        ),
         args_schema=ImageArgs,
     )
     async def grok_image_generate(**kwargs: Any) -> str:
@@ -147,7 +158,10 @@ def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
 
     @tool(
         "grok_video_generate",
-        description="Generate a 1–15 second video with grok-imagine-video-1.5 through the Grok subscription (text-to-video, or image-to-video with image_url). Saves an MP4 and returns its path and preview URL.",
+        description=(
+            "Generate a 1–15 second video with grok-imagine-video-1.5 through the Grok subscription (text-to-video, "
+            "or image-to-video with image_url). Saves an MP4 and returns its path and preview URL."
+        ),
         args_schema=VideoArgs,
     )
     async def grok_video_generate(**kwargs: Any) -> str:
@@ -164,7 +178,11 @@ def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
             session = await provider.token_manager().session()
         except LlmError as exc:
             return f"Error: {exc}"
-        headers = {"authorization": f"Bearer {session['accessToken']}", "accept": "application/json", "content-type": "application/json"}
+        headers = {
+            "authorization": f"Bearer {session['accessToken']}",
+            "accept": "application/json",
+            "content-type": "application/json",
+        }
         res = await provider.http.post(f"{API}/videos/generations", headers=headers, json=body, timeout=60)
         if res.status_code >= 400:
             return f"Error: {http_error('grok video', res.status_code, res.text)}"
@@ -203,6 +221,10 @@ def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
         path = service.media.video_path()
         path.write_bytes(download.content)
         duration = video.get("duration")
-        return f"Saved video to {path}{f' ({duration}s)' if duration else ''}\nPreview URL: {service.media_url(path)}\nTemporary provider URL (expires soon): {url}"
+        return (
+            f"Saved video to {path}{f' ({duration}s)' if duration else ''}\n"
+            f"Preview URL: {service.media_url(path)}\n"
+            f"Temporary provider URL (expires soon): {url}"
+        )
 
     return [grok_x_search, grok_image_generate, grok_video_generate]

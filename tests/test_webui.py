@@ -34,7 +34,11 @@ async def test_page_carries_the_boot_manifest_and_serves_client_modules(home):
             )
             assert (await c.get("/plugins/boot.json")).json() == manifest
             js = await c.get(plugin["url"])
-            assert js.status_code == 200 and js.headers["content-type"].startswith("application/javascript") and "__PyhModules__" in js.text
+            assert (
+                js.status_code == 200
+                and js.headers["content-type"].startswith("application/javascript")
+                and "__PyhModules__" in js.text
+            )
             assert (await c.get("/plugins/nope/client.js")).status_code == 404
             r = await c.post("/plugins/uiplugin/call/stats", json={"echo": 1})
             assert r.json() == {"result": {"greeting": "hello", "echo": 1}}
@@ -77,7 +81,11 @@ async def test_workspace_files_api(home, tmp_path):
             assert f["text"] == "pri" and f["truncated"] is True
             assert (await c.get("/api/workspaces/file", params={"path": "/src"})).status_code == 404
             raw = await c.get("/api/workspaces/file/raw", params={"path": "/blob.bin"})
-            assert raw.status_code == 200 and raw.content == b"\x00\x01\x02" and raw.headers["content-type"] == "application/octet-stream"
+            assert (
+                raw.status_code == 200
+                and raw.content == b"\x00\x01\x02"
+                and raw.headers["content-type"] == "application/octet-stream"
+            )
             (ws / "pic.png").write_bytes(b"\x89PNG\r\n\x1a\n")
             raw = await c.get("/api/workspaces/file/raw", params={"path": "/pic.png"})
             assert raw.headers["content-type"] == "image/png" and raw.headers["cache-control"] == "no-store"

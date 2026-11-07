@@ -3,7 +3,7 @@ skills, and the managed bun runtime for JavaScript MCP servers.
 
 | member        | contract                                                                  |
 |---------------|---------------------------------------------------------------------------|
-| ``skills``    | :class:`SkillStore`: ``<profile data>/toolkit/skills/`` (mounted for the agent at ``/skills/user/``) and ``disabled-skills/`` |
+| ``skills``    | :class:`SkillStore`: ``toolkit/skills/`` (mounted at ``/skills/user/``) and ``disabled-skills/`` |
 | ``bun``       | :class:`BunManager`: pinned bun under ``<profile data>/toolkit/bun/``      |
 
 | config            | meaning                                                      |
@@ -38,7 +38,9 @@ ZIP_BODY_LIMIT = (32 * 1024 * 1024 * 4) // 3 + 4096
 
 class Config(BaseModel):
     bun_version: str = Field(BUN_VERSION, description="bun release installed by Settings → Environment.")
-    skills_presets: list[str] | None = Field(None, description="Agent presets that see the user skills; all when unset.")
+    skills_presets: list[str] | None = Field(
+        None, description="Agent presets that see the user skills; all when unset."
+    )
 
 
 class ConfigCenterService(Service):
@@ -56,7 +58,11 @@ class ConfigCenterService(Service):
 
     def _data(self) -> Path:
         profile = self.ctx.get("profile", None)
-        base = Path(profile.data) if profile is not None and hasattr(profile, "data") else Path.home() / ".pyharness" / "data"
+        base = (
+            Path(profile.data)
+            if profile is not None and hasattr(profile, "data")
+            else Path.home() / ".pyharness" / "data"
+        )
         return base / "toolkit"
 
     async def start(self) -> None:
@@ -110,7 +116,9 @@ class ConfigCenterService(Service):
             seconds = data.get("connectTimeout")
             if not isinstance(seconds, (int, float)) or isinstance(seconds, bool) or not 1 <= seconds <= 86400:
                 raise HTTPException(400, "connectTimeout must be a number of seconds from 1 to 86400")
-            result = await manage.set_entry_config(profile(), "mcp", {"connect_timeout": float(seconds)}, merge=True, preflight=False)
+            result = await manage.set_entry_config(
+                profile(), "mcp", {"connect_timeout": float(seconds)}, merge=True, preflight=False
+            )
             if result.get("application") == "rejected":
                 raise HTTPException(422, result.get("error") or "rejected")
             mcp_service().config.connect_timeout = float(seconds)
@@ -196,7 +204,11 @@ class ConfigCenterService(Service):
         async def skills_install(request: Request) -> dict[str, Any]:
             data = await body(request, ZIP_BODY_LIMIT)
             filename, encoded, policy = data.get("filename"), data.get("data"), data.get("policy", "ask")
-            if not isinstance(filename, str) or not isinstance(encoded, str) or policy not in ("ask", "skip", "replace"):
+            if (
+                not isinstance(filename, str)
+                or not isinstance(encoded, str)
+                or policy not in ("ask", "skip", "replace")
+            ):
                 raise HTTPException(400, "invalid installation parameters")
             try:
                 raw = base64.b64decode(encoded, validate=True)

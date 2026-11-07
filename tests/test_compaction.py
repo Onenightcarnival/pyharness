@@ -56,7 +56,9 @@ async def test_automatic_and_manual_compaction(profile):
     ]
     patch = scripted_patch(
         replies,
-        extra=[{"id": "compaction", "config": {"default_context_window": 600, "threshold_ratio": 0.8, "retain_ratio": 0.2}}],
+        extra=[
+            {"id": "compaction", "config": {"default_context_window": 600, "threshold_ratio": 0.8, "retain_ratio": 0.2}}
+        ],
     )
     async with Harness(profile, patch=patch) as h:
         http = h.get("http")
@@ -65,14 +67,21 @@ async def test_automatic_and_manual_compaction(profile):
             first = sse_events((await client.post(f"/api/sessions/{sid}/messages", json={"content": LONG})).text)
             assert [e["type"] for e in first] == ["token", "done"]
             # Second turn: ~800 estimated tokens ≥ 480 → the head (first exchange) becomes a checkpoint.
-            second = sse_events((await client.post(f"/api/sessions/{sid}/messages", json={"content": LONG + " again"})).text)
+            second = sse_events(
+                (await client.post(f"/api/sessions/{sid}/messages", json={"content": LONG + " again"})).text
+            )
             kinds = [e["type"] for e in second]
             assert kinds == ["compact", "token", "done"], kinds
             compact = second[0]
             assert compact["trigger"] == "auto" and compact["removed"] == 2 and "SUMMARY ONE" in compact["summary"]
             assert compact["after_tokens"] < compact["before_tokens"]
             turn = second[-1]["extras"]["turn"]
-            assert turn["stats"]["compactions"] == 1 and [r["t"] for r in turn["records"]] == ["user", "compact", "step", "end"]
+            assert turn["stats"]["compactions"] == 1 and [r["t"] for r in turn["records"]] == [
+                "user",
+                "compact",
+                "step",
+                "end",
+            ]
             detail = (await client.get(f"/api/sessions/{sid}")).json()
             roles = [(m["role"], m.get("harness", {}).get("kind")) for m in detail["messages"]]
             assert roles == [("human", "compact-checkpoint"), ("human", None), ("ai", None)]
@@ -87,7 +96,9 @@ async def test_automatic_and_manual_compaction(profile):
             # Manual: everything becomes one checkpoint; no model call.
             manual = sse_events((await client.post(f"/api/sessions/{sid}/compact")).text)
             assert [e["type"] for e in manual] == ["compact", "done"]
-            assert manual[0]["trigger"] == "manual" and manual[0]["removed"] == 3 and "SUMMARY TWO" in manual[0]["summary"]
+            assert (
+                manual[0]["trigger"] == "manual" and manual[0]["removed"] == 3 and "SUMMARY TWO" in manual[0]["summary"]
+            )
             assert manual[-1]["extras"]["turn"]["kind"] == "compact"
             detail = (await client.get(f"/api/sessions/{sid}")).json()
             assert [m.get("harness", {}).get("kind") for m in detail["messages"]] == ["compact-checkpoint"]

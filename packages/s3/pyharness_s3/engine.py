@@ -18,17 +18,21 @@ DELETE_BATCH = 1000
 PART_SIZE = 8 * 1024 * 1024
 
 MIME = {
-    ".txt": "text/plain; charset=utf-8", ".md": "text/markdown; charset=utf-8", ".csv": "text/csv; charset=utf-8", ".json": "application/json",
-    ".yml": "application/yaml", ".yaml": "application/yaml", ".xml": "application/xml", ".html": "text/html; charset=utf-8", ".htm": "text/html; charset=utf-8",
-    ".css": "text/css", ".js": "text/javascript", ".mjs": "text/javascript", ".ts": "text/plain; charset=utf-8", ".py": "text/x-python", ".sh": "text/x-shellscript",
-    ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp", ".svg": "image/svg+xml", ".ico": "image/x-icon",
-    ".bmp": "image/bmp", ".avif": "image/avif", ".pdf": "application/pdf", ".zip": "application/zip", ".gz": "application/gzip", ".tar": "application/x-tar",
-    ".tgz": "application/gzip", ".7z": "application/x-7z-compressed", ".rar": "application/vnd.rar", ".mp4": "video/mp4", ".webm": "video/webm", ".mov": "video/quicktime",
-    ".mp3": "audio/mpeg", ".wav": "audio/wav", ".ogg": "audio/ogg", ".flac": "audio/flac", ".woff": "font/woff", ".woff2": "font/woff2", ".ttf": "font/ttf",
-    ".doc": "application/msword", ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document", ".xls": "application/vnd.ms-excel",
-    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".ppt": "application/vnd.ms-powerpoint",
-    ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation", ".wasm": "application/wasm", ".parquet": "application/vnd.apache.parquet",
-    ".log": "text/plain; charset=utf-8",
+    ".txt": "text/plain; charset=utf-8", ".md": "text/markdown; charset=utf-8", ".csv": "text/csv; charset=utf-8",
+    ".json": "application/json", ".yml": "application/yaml", ".yaml": "application/yaml", ".xml": "application/xml",
+    ".html": "text/html; charset=utf-8", ".htm": "text/html; charset=utf-8", ".css": "text/css",
+    ".js": "text/javascript", ".mjs": "text/javascript", ".ts": "text/plain; charset=utf-8", ".py": "text/x-python",
+    ".sh": "text/x-shellscript", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif",
+    ".webp": "image/webp", ".svg": "image/svg+xml", ".ico": "image/x-icon", ".bmp": "image/bmp", ".avif": "image/avif",
+    ".pdf": "application/pdf", ".zip": "application/zip", ".gz": "application/gzip", ".tar": "application/x-tar",
+    ".tgz": "application/gzip", ".7z": "application/x-7z-compressed", ".rar": "application/vnd.rar",
+    ".mp4": "video/mp4", ".webm": "video/webm", ".mov": "video/quicktime", ".mp3": "audio/mpeg", ".wav": "audio/wav",
+    ".ogg": "audio/ogg", ".flac": "audio/flac", ".woff": "font/woff", ".woff2": "font/woff2", ".ttf": "font/ttf",
+    ".doc": "application/msword", ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xls": "application/vnd.ms-excel", ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".ppt": "application/vnd.ms-powerpoint",
+    ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation", ".wasm": "application/wasm",
+    ".parquet": "application/vnd.apache.parquet", ".log": "text/plain; charset=utf-8",
 }  # fmt: skip
 PREVIEWABLE = re.compile(r"^(image/(png|jpeg|gif|webp|bmp|avif)|application/pdf|video/|audio/)")
 
@@ -90,7 +94,9 @@ def make_client(profile: dict[str, Any], secret: str) -> Any:
         "read_timeout": 60,
     }
     try:
-        cfg = Config(request_checksum_calculation="when_required", response_checksum_validation="when_required", **kwargs)
+        cfg = Config(
+            request_checksum_calculation="when_required", response_checksum_validation="when_required", **kwargs
+        )
     except TypeError:  # older botocore
         cfg = Config(**kwargs)
     return boto3.client(
@@ -128,8 +134,14 @@ class Bucket:
         started = time.perf_counter()
         try:
             res = self.client.list_objects_v2(Bucket=self.bucket, Prefix=self.prefix, MaxKeys=5)
-            sample = [self.rel(p["Prefix"]) for p in res.get("CommonPrefixes", [])] + [self.rel(o["Key"]) for o in res.get("Contents", [])]
-            return {"ok": True, "latencyMs": int((time.perf_counter() - started) * 1000), "sample": [s for s in sample if s]}
+            sample = [self.rel(p["Prefix"]) for p in res.get("CommonPrefixes", [])] + [
+                self.rel(o["Key"]) for o in res.get("Contents", [])
+            ]
+            return {
+                "ok": True,
+                "latencyMs": int((time.perf_counter() - started) * 1000),
+                "sample": [s for s in sample if s],
+            }
         except Exception as exc:  # noqa: BLE001
             return {"ok": False, "latencyMs": int((time.perf_counter() - started) * 1000), "error": error_text(exc)}
 
@@ -150,13 +162,22 @@ class Bucket:
         for o in res.get("Contents", []):
             if o["Key"] == "" or o["Key"] == full_prefix:
                 continue
-            item = {"key": self.rel(o["Key"]), "size": int(o.get("Size") or 0), "lastModified": _iso(o.get("LastModified"))}
+            item = {
+                "key": self.rel(o["Key"]),
+                "size": int(o.get("Size") or 0),
+                "lastModified": _iso(o.get("LastModified")),
+            }
             if o.get("ETag"):
                 item["etag"] = o["ETag"]
             if o.get("StorageClass"):
                 item["storageClass"] = o["StorageClass"]
             objects.append(item)
-        out: dict[str, Any] = {"prefix": rel_prefix, "folders": folders, "objects": objects, "truncated": bool(res.get("IsTruncated"))}
+        out: dict[str, Any] = {
+            "prefix": rel_prefix,
+            "folders": folders,
+            "objects": objects,
+            "truncated": bool(res.get("IsTruncated")),
+        }
         if res.get("NextContinuationToken"):
             out["nextToken"] = res["NextContinuationToken"]
         return out
@@ -170,7 +191,11 @@ class Bucket:
                 kwargs["ContinuationToken"] = token
             res = self.client.list_objects_v2(**kwargs)
             for o in res.get("Contents", []):
-                yield {"key": self.rel(o["Key"]), "size": int(o.get("Size") or 0), "lastModified": _iso(o.get("LastModified"))}
+                yield {
+                    "key": self.rel(o["Key"]),
+                    "size": int(o.get("Size") or 0),
+                    "lastModified": _iso(o.get("LastModified")),
+                }
             token = res.get("NextContinuationToken") if res.get("IsTruncated") else None
             if not token:
                 return
@@ -225,7 +250,11 @@ class Bucket:
     # ------------------------------------------------------------------ writes
     def put(self, key: str, body: bytes, content_type: str | None = None) -> dict[str, Any]:
         res = self.client.put_object(
-            Bucket=self.bucket, Key=self.full(key), Body=body, ContentType=content_type or guess_mime(key), ContentLength=len(body)
+            Bucket=self.bucket,
+            Key=self.full(key),
+            Body=body,
+            ContentType=content_type or guess_mime(key),
+            ContentLength=len(body),
         )
         out: dict[str, Any] = {"size": len(body)}
         if res.get("ETag"):
@@ -279,11 +308,14 @@ class Bucket:
         for i in range(0, len(unique), DELETE_BATCH):
             batch = unique[i : i + DELETE_BATCH]
             try:
-                res = self.client.delete_objects(Bucket=self.bucket, Delete={"Objects": [{"Key": k} for k in batch], "Quiet": True})
+                res = self.client.delete_objects(
+                    Bucket=self.bucket, Delete={"Objects": [{"Key": k} for k in batch], "Quiet": True}
+                )
                 errs = res.get("Errors") or []
                 deleted += len(batch) - len(errs)
                 errors += [
-                    {"key": self.rel(e.get("Key", "")), "error": f"{e.get('Code', '')} {e.get('Message', '')}".strip()} for e in errs
+                    {"key": self.rel(e.get("Key", "")), "error": f"{e.get('Code', '')} {e.get('Message', '')}".strip()}
+                    for e in errs
                 ]
             except Exception as first:  # noqa: BLE001
                 for k in batch:
@@ -291,20 +323,32 @@ class Bucket:
                         self.client.delete_object(Bucket=self.bucket, Key=k)
                         deleted += 1
                     except Exception as inner:  # noqa: BLE001
-                        errors.append({"key": self.rel(k), "error": f"{error_text(inner)} (batch delete failed: {error_text(first)})"})
+                        errors.append(
+                            {
+                                "key": self.rel(k),
+                                "error": f"{error_text(inner)} (batch delete failed: {error_text(first)})",
+                            }
+                        )
         return {"deleted": deleted, "errors": errors}
 
     def copy(self, source: str, target: str, move: bool = False) -> None:
         src, dst = self.full(source), self.full(target)
         if src == dst:
             raise S3Error("source and target are the same key")
-        self.client.copy_object(Bucket=self.bucket, Key=dst, CopySource={"Bucket": self.bucket, "Key": src}, MetadataDirective="COPY")
+        self.client.copy_object(
+            Bucket=self.bucket, Key=dst, CopySource={"Bucket": self.bucket, "Key": src}, MetadataDirective="COPY"
+        )
         if move:
             self.client.delete_object(Bucket=self.bucket, Key=src)
 
     def presign(self, key: str, expires_in: int = 3600, method: str = "GET") -> dict[str, Any]:
         seconds = max(1, min(PRESIGN_MAX, int(expires_in)))
         url = self.client.generate_presigned_url(
-            "put_object" if method == "PUT" else "get_object", Params={"Bucket": self.bucket, "Key": self.full(key)}, ExpiresIn=seconds
+            "put_object" if method == "PUT" else "get_object",
+            Params={"Bucket": self.bucket, "Key": self.full(key)},
+            ExpiresIn=seconds,
         )
-        return {"url": url, "expiresAt": (dt.datetime.now(dt.UTC) + dt.timedelta(seconds=seconds)).isoformat().replace("+00:00", "Z")}
+        return {
+            "url": url,
+            "expiresAt": (dt.datetime.now(dt.UTC) + dt.timedelta(seconds=seconds)).isoformat().replace("+00:00", "Z"),
+        }

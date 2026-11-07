@@ -84,7 +84,11 @@ class BunManager:
             return None
         try:
             out = subprocess.run(
-                [str(self.exe), "--version"], capture_output=True, text=True, timeout=10, env={**os.environ, **bun_env(self.root)}
+                [str(self.exe), "--version"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                env={**os.environ, **bun_env(self.root)},
             )
         except (OSError, subprocess.TimeoutExpired):
             return ""
@@ -181,7 +185,9 @@ class BunManager:
         tmp = Path(tempfile.mkdtemp(prefix=".install-", dir=self.root))
         try:
             self._phase = "downloading"
-            archive = self.fetch(RELEASE.format(version=self.version, asset=asset), lambda p: setattr(self, "_progress", p))
+            archive = self.fetch(
+                RELEASE.format(version=self.version, asset=asset), lambda p: setattr(self, "_progress", p)
+            )
             self._phase = "verifying"
             sums = self.fetch(RELEASE.format(version=self.version, asset="SHASUMS256.txt")).decode("utf-8", "replace")
             expected = next((line.split()[0] for line in sums.splitlines() if line.strip().endswith(asset)), None)
@@ -223,13 +229,15 @@ class BunManager:
                 if backup.exists():
                     backup.rename(target)
                 raise RuntimeError(
-                    f"bun replacement failed; the previous version is kept at {backup}. Stop related MCP servers and retry."
+                    f"bun replacement failed; the previous version is kept at {backup}. "
+                    "Stop related MCP servers and retry."
                 ) from exc
             if backup.exists():
                 shutil.rmtree(backup, ignore_errors=True)
             (self.root / "cache").mkdir(exist_ok=True)
             (self.root / "installed.json").write_text(
-                f'{{"version": "{self.version}", "target": "{self.target}", "installedAt": {int(time.time() * 1000)}}}\n'
+                f'{{"version": "{self.version}", "target": "{self.target}", '
+                f'"installedAt": {int(time.time() * 1000)}}}\n'
             )
         finally:
             shutil.rmtree(tmp, ignore_errors=True)

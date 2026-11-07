@@ -94,9 +94,19 @@ class ChatGPTProvider(Provider):
         else:
             extra["agent_name_hint"] = AGENT_NAME
         spec = FlowSpec(
-            provider=self.id, authorize_url=AUTHORIZE_URL, host="127.0.0.1", ports=(1455, 1457, 0), callback_path="/auth/callback",
-            manual_redirect_uri="http://127.0.0.1:1455/auth/callback", timeout=180.0, require_complete_callback=True, scope=SCOPE, client_id=client_id, extra_params=extra, use_nonce=True,
-        )  # fmt: skip
+            provider=self.id,
+            authorize_url=AUTHORIZE_URL,
+            host="127.0.0.1",
+            ports=(1455, 1457, 0),
+            callback_path="/auth/callback",
+            manual_redirect_uri="http://127.0.0.1:1455/auth/callback",
+            timeout=180.0,
+            require_complete_callback=True,
+            scope=SCOPE,
+            client_id=client_id,
+            extra_params=extra,
+            use_nonce=True,
+        )
         self._pending_account = account
         return spec
 
@@ -132,7 +142,9 @@ class ChatGPTProvider(Provider):
             if header.get("alg") != "RS256":
                 raise LoginError("id_token is not RS256")
             keys = await self._jwks_keys()
-            jwk = next((k for k in keys.get("keys", []) if k.get("kid") == header.get("kid") and k.get("kty") == "RSA"), None)
+            jwk = next(
+                (k for k in keys.get("keys", []) if k.get("kid") == header.get("kid") and k.get("kty") == "RSA"), None
+            )
             if jwk is None:
                 raise LoginError("id_token key not found in the issuer JWKS")
             from cryptography.hazmat.primitives import hashes
@@ -142,7 +154,12 @@ class ChatGPTProvider(Provider):
             e = int.from_bytes(_b64url_decode(jwk["e"]), "big")
             public = rsa.RSAPublicNumbers(e, n).public_key()
             try:
-                public.verify(_b64url_decode(signature_b64), f"{header_b64}.{payload_b64}".encode(), padding.PKCS1v15(), hashes.SHA256())
+                public.verify(
+                    _b64url_decode(signature_b64),
+                    f"{header_b64}.{payload_b64}".encode(),
+                    padding.PKCS1v15(),
+                    hashes.SHA256(),
+                )
             except Exception as exc:  # noqa: BLE001
                 raise LoginError("id_token signature is invalid") from exc
         if claims.get("iss") != ISSUER:
@@ -178,14 +195,20 @@ class ChatGPTProvider(Provider):
         if res.status_code >= 400:
             raise RuntimeError(f"ChatGPT token exchange failed (HTTP {res.status_code}): {res.text[:300]}")
         data = res.json()
-        if not data.get("access_token") or not (data.get("expires_in") or 0) > 0 or str(data.get("token_type", "")).lower() != "bearer":
+        if (
+            not data.get("access_token")
+            or not (data.get("expires_in") or 0) > 0
+            or str(data.get("token_type", "")).lower() != "bearer"
+        ):
             raise RuntimeError("ChatGPT token response is incomplete")
         if not data.get("id_token"):
             raise RuntimeError("ChatGPT did not return an id_token")
         claims = await self.validate_id_token(data["id_token"], client_id, attempt.nonce)
         scopes = str(data.get("scope") or "").split()
         plan_enabled = "chatgpt.tokens.use.direct" in scopes
-        self._save_registration(client_id, {"subject": claims["sub"], "emailAddress": claims.get("email"), "planEnabled": plan_enabled})
+        self._save_registration(
+            client_id, {"subject": claims["sub"], "emailAddress": claims.get("email"), "planEnabled": plan_enabled}
+        )
         if not plan_enabled:
             raise RuntimeError("ChatGPT plan usage was not enabled. Continue with ChatGPT to grant access.")
         if not data.get("refresh_token"):
@@ -251,20 +274,30 @@ class ChatGPTProvider(Provider):
                     raise RuntimeError("unexpected revocation endpoint")
                 res = await self.http.post(
                     endpoint,
-                    data={"token": session["refreshToken"], "token_type_hint": "refresh_token", "client_id": session["clientId"]},
+                    data={
+                        "token": session["refreshToken"],
+                        "token_type_hint": "refresh_token",
+                        "client_id": session["clientId"],
+                    },
                     timeout=5,
                 )
                 if res.status_code >= 400:
                     raise RuntimeError(f"HTTP {res.status_code}")
             except Exception:  # noqa: BLE001
-                detail = "Signed out locally. Remote revocation was not confirmed; disconnect the app in ChatGPT settings."
+                detail = (
+                    "Signed out locally. Remote revocation was not confirmed; disconnect the app in ChatGPT settings."
+                )
         await super().logout(key)
         if detail:
             self.last_error = detail
 
     def account_label(self, session: dict[str, Any]) -> str:
         email = session.get("emailAddress")
-        return f"{email} · {str(session.get('clientId', ''))[-6:]}" if email else str(session.get("clientId") or self.title)
+        return (
+            f"{email} · {str(session.get('clientId', ''))[-6:]}"
+            if email
+            else str(session.get("clientId") or self.title)
+        )
 
     def account_rows(self) -> list[dict[str, Any]]:
         rows = super().account_rows()
@@ -353,7 +386,11 @@ class ChatGPTChatModel(ResponsesChatModel):
                     "tools": to_responses_tools(self.bound_tools, strict=False),
                 }
             ]
-        headers = {"authorization": f"Bearer {session['accessToken']}", "content-type": "application/json", "accept": "text/event-stream"}
+        headers = {
+            "authorization": f"Bearer {session['accessToken']}",
+            "content-type": "application/json",
+            "accept": "text/event-stream",
+        }
         return f"{API}/responses", headers, body
 
 

@@ -45,7 +45,9 @@ async def preflight_in_process(profile: Profile, extra_patches: list[str] | None
     for entry in report["entries"]:
         if entry["state"] == "failed":
             report["errors"].append({"stage": "start", "entry": entry["id"], "error": entry.get("error")})
-    report["pending"] = [{"entry": e["id"], "missing": e.get("missing", [])} for e in report["entries"] if e["state"] == "pending"]
+    report["pending"] = [
+        {"entry": e["id"], "missing": e.get("missing", [])} for e in report["entries"] if e["state"] == "pending"
+    ]
     report["ok"] = not report["errors"]
     return report
 
@@ -58,26 +60,43 @@ def recorded_overlays(profile: Profile) -> list[str]:
     return [str(p) for p in data] if isinstance(data, list) else []
 
 
-async def run_preflight(profile: Profile, extra_patches: list[str] | None = None, timeout: float = 180.0) -> dict[str, Any]:
+async def run_preflight(
+    profile: Profile, extra_patches: list[str] | None = None, timeout: float = 180.0
+) -> dict[str, Any]:
     """Run :func:`preflight_in_process` in a new interpreter; returns its report.
 
     ``extra_patches=None`` uses the overlays recorded by the running generation.
     """
     if extra_patches is None:
         extra_patches = recorded_overlays(profile)
-    cmd = [sys.executable, "-m", "pyharness.preflight", "--profile", profile.name, "--home", str(profile.home), "--json"]
+    cmd = [
+        sys.executable,
+        "-m",
+        "pyharness.preflight",
+        "--profile",
+        profile.name,
+        "--home",
+        str(profile.home),
+        "--json",
+    ]
     for patch in extra_patches or []:
         cmd += ["--patch", str(patch)]
     env = dict(os.environ)
     env.setdefault("PYH_CWD", os.getcwd())
     env["PYH_LOG_LEVEL"] = env.get("PYH_PREFLIGHT_LOG_LEVEL", "WARNING")
-    proc = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=env)
+    proc = await asyncio.create_subprocess_exec(
+        *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=env
+    )
     try:
         out, err = await asyncio.wait_for(proc.communicate(), timeout)
     except TimeoutError:
         proc.kill()
         await proc.wait()
-        return {"ok": False, "errors": [{"stage": "preflight", "error": f"timed out after {timeout:.0f}s"}], "entries": []}
+        return {
+            "ok": False,
+            "errors": [{"stage": "preflight", "error": f"timed out after {timeout:.0f}s"}],
+            "entries": [],
+        }
     text = out.decode("utf-8", "replace").strip().splitlines()
     for line in reversed(text):
         line = line.strip()

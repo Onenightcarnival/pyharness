@@ -21,7 +21,11 @@ async def test_shell_session_persists_cwd_and_env(tmp_path: Path):
     shell = ShellSession("bash", tmp_path)
     try:
         r = await shell.run("export PYH_T=1; mkdir -p sub; cd sub; echo hi; echo err >&2", 10)
-        assert r["exit_code"] == 0 and r["output"].splitlines() == ["hi", "err"] and r["cwd"] == str((tmp_path / "sub").resolve())
+        assert (
+            r["exit_code"] == 0
+            and r["output"].splitlines() == ["hi", "err"]
+            and r["cwd"] == str((tmp_path / "sub").resolve())
+        )
         r = await shell.run('echo "$PYH_T $(basename "$PWD")"; exit_code_test() { return 3; }; exit_code_test', 10)
         assert r["output"] == "1 sub" and r["exit_code"] == 3
         r = await shell.run("cat", 10)  # stdin is /dev/null: no hang
@@ -85,7 +89,9 @@ async def test_tools_jobs_and_terminals(home):
                     if b"pyh-42" in got:
                         break
                 assert b"pyh-42" in got
-                assert (await c.post(f"/api/terminals/{term['id']}/resize", json={"cols": 100, "rows": 30})).json()["cols"] == 100
+                assert (await c.post(f"/api/terminals/{term['id']}/resize", json={"cols": 100, "rows": 30})).json()[
+                    "cols"
+                ] == 100
                 assert term["id"] in [x["id"] for x in (await c.get("/api/terminals")).json()["terminals"]]
                 assert (await c.delete(f"/api/terminals/{term['id']}")).json() == {"closed": True}
                 assert not live.alive and (await c.delete(f"/api/terminals/{term['id']}")).status_code == 404

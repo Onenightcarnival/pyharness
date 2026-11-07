@@ -133,7 +133,8 @@ class Context:
         if hit is None:
             if default is _MISSING:
                 raise ServiceNotFound(
-                    f"service {key!r} is not available to {self.entry_id!r} (add it to `inject`, or check that its provider is active)"
+                    f"service {key!r} is not available to {self.entry_id!r} "
+                    "(add it to `inject`, or check that its provider is active)"
                 )
             return default
         value = hit[0]

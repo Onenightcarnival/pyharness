@@ -13,7 +13,7 @@ from pyharness import Harness, Profile
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 PAGE = """<html><head><title>Hello &amp; welcome</title><style>p{}</style><script>alert(1)</script></head>
 <body><nav><a href="/about">About</a></nav><h1>Heading</h1><p>First   paragraph with <a href="https://x.test/doc">a link</a>.</p>
-<ul><li>one</li><li>two</li></ul><pre>  code\n  block</pre><img alt="diagram"></body></html>"""
+<ul><li>one</li><li>two</li></ul><pre>  code\n  block</pre><img alt="diagram"></body></html>"""  # noqa: E501
 
 SEARCH_RESPONSE = {
     "content": [
@@ -59,7 +59,10 @@ async def test_tools_over_mock_transport_and_optional_bundle(home, monkeypatch):
         if request.url.path.endswith("/messages"):
             assert request.headers["x-api-key"] == "sk-test" and request.headers["anthropic-version"] == "2023-06-01"
             body = json.loads(request.content)
-            assert body["tools"][0]["type"] == "web_search_20250305" and "pyharness" in body["messages"][0]["content"][0]["text"]
+            assert (
+                body["tools"][0]["type"] == "web_search_20250305"
+                and "pyharness" in body["messages"][0]["content"][0]["text"]
+            )
             return httpx.Response(200, json=SEARCH_RESPONSE)
         if request.url.path == "/page":
             return httpx.Response(200, headers={"content-type": "text/html; charset=utf-8"}, text=PAGE)
@@ -81,7 +84,11 @@ async def test_tools_over_mock_transport_and_optional_bundle(home, monkeypatch):
         assert web.status()["search"]["configured"] is False
         profile.credentials.set("DEEPSEEK_API_KEY", "sk-test")
         out = await tools["web_search"].ainvoke({"query": "pyharness"})
-        assert "A says hi. B too." in out and "[Result A](https://a.test/1)" in out and "[Result B](https://b.test/2)" in out
+        assert (
+            "A says hi. B too." in out
+            and "[Result A](https://a.test/1)" in out
+            and "[Result B](https://b.test/2)" in out
+        )
         assert web.status()["search"]["configured"] is True and web.status()["search"]["source"] == "store"
         page = await tools["web_fetch"].ainvoke({"url": "https://x.test/page"})
         assert "Title: Hello & welcome" in page and "# Heading" in page and "[a link](https://x.test/doc)" in page
@@ -93,9 +100,15 @@ async def test_tools_over_mock_transport_and_optional_bundle(home, monkeypatch):
         small = await tools["web_fetch"].ainvoke({"url": "https://x.test/page", "max_chars": 40})
         assert "truncated" in small
         # Optional bundle: switchable through the API, not removable; built-in bundles stay read-only.
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=120) as c:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=120
+        ) as c:
             listed = {b["bundle"]: b for b in (await c.get("/api/plugins")).json()["bundles"]}
-            assert listed["web"]["optional"] is True and listed["web"]["enabled"] is True and listed["web"]["title"] == "Web"
+            assert (
+                listed["web"]["optional"] is True
+                and listed["web"]["enabled"] is True
+                and listed["web"]["title"] == "Web"
+            )
             assert listed["base"]["optional"] is False
             r = await c.put("/api/plugins/bundles/web", json={"enabled": False})
             assert r.status_code == 200 and r.json()["application"] == "saved-restart-required", r.text

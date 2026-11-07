@@ -1,9 +1,11 @@
 # Installed plugin packages and bundles
 
-Generated from the `pyharness.plugins` and `pyharness.bundles` entry points of the environment: `python scripts/gen_packages.py`.
+Generated from the `pyharness.plugins` and `pyharness.bundles` entry points of the environment:
+`python scripts/gen_packages.py`.
 Plugins installed into a profile after generation: `plugin_manager action=list`.
 
-Columns: `kind` is `service` (provides the service under `provides`) or `function` (`apply(ctx, config)`); `inject` lists the
+Columns: `kind` is `service` (provides the service under `provides`) or `function` (`apply(ctx, config)`);
+`inject` lists the
 services the entry waits for; `config` says whether the entry accepts `config`.
 
 ## Plugins

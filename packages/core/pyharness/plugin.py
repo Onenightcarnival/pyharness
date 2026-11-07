@@ -128,7 +128,11 @@ def to_spec(obj: Any, fallback_name: str) -> PluginSpec:
 def call_apply(spec: PluginSpec, ctx: Any, config: Any) -> Any:
     assert spec.apply is not None
     try:
-        params = [p for p in inspect.signature(spec.apply).parameters.values() if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)]
+        params = [
+            p
+            for p in inspect.signature(spec.apply).parameters.values()
+            if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
+        ]
     except (TypeError, ValueError):  # pragma: no cover
         params = []
     if len(params) >= 2:

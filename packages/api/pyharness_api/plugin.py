@@ -1,0 +1,40 @@
+"""Plugin entry: ``Config``, the router composition, ``apply`` mounting both routers on ``ctx.http``.
+
+| router                     | routes                                                     |
+|----------------------------|------------------------------------------------------------|
+| ``build_router``           | harness, sessions and workspaces routes (one ``APIRouter``) |
+| ``build_settings_router``  | agent defaults, compaction, model routes                   |
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from fastapi import APIRouter
+from pydantic import BaseModel, Field
+
+from .routes_harness import build_harness_router
+from .routes_sessions import build_sessions_router
+from .routes_settings import build_settings_router
+from .routes_workspaces import build_workspaces_router
+
+name = "pyharness-api"
+inject = ["http", "agents", "llm"]
+
+
+class Config(BaseModel):
+    prefix: str = "/api"
+    llm_entry: str = Field("llm", description="Entry id of the model registry the settings page edits.")
+
+
+def build_router(ctx: Any) -> APIRouter:
+    router = APIRouter()
+    router.include_router(build_harness_router(ctx))
+    router.include_router(build_sessions_router(ctx))
+    router.include_router(build_workspaces_router(ctx))
+    return router
+
+
+def apply(ctx: Any, config: Config) -> None:
+    ctx.http.include_router(build_router(ctx), prefix=config.prefix, tags=["pyharness"])
+    ctx.http.include_router(build_settings_router(ctx, config.llm_entry), prefix=config.prefix, tags=["pyharness"])

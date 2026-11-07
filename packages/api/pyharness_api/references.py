@@ -79,7 +79,9 @@ def expand(text: str, workspace: Any) -> tuple[str, list[dict[str, Any]]]:
                     names.append(item.name + ("/" if item.is_dir() else ""))
             except OSError:
                 continue
-            listing = "\n".join(names[:DIR_ENTRIES]) + (f"\n… ({len(names) - DIR_ENTRIES} more)" if len(names) > DIR_ENTRIES else "")
+            listing = "\n".join(names[:DIR_ENTRIES]) + (
+                f"\n… ({len(names) - DIR_ENTRIES} more)" if len(names) > DIR_ENTRIES else ""
+            )
             blocks.append(f'<attached-directory path="{virtual}">\n{listing}\n</attached-directory>')
             refs.append({"token": token, "path": virtual, "kind": "directory", "entries": len(names)})
             continue
@@ -90,13 +92,23 @@ def expand(text: str, workspace: Any) -> tuple[str, list[dict[str, Any]]]:
         except OSError:
             continue
         if binary:
-            blocks.append(f'<attached-file path="{virtual}" binary="true" bytes="{real.stat().st_size}"></attached-file>')
+            blocks.append(
+                f'<attached-file path="{virtual}" binary="true" bytes="{real.stat().st_size}"></attached-file>'
+            )
             refs.append({"token": token, "path": virtual, "kind": "binary"})
             continue
         budget -= len(body)
         note = ' truncated="true"' if truncated or budget < 0 else ""
         blocks.append(f'<attached-file path="{virtual}"{note}>\n{body}\n</attached-file>')
-        refs.append({"token": token, "path": virtual, "kind": "file", "chars": len(body), "truncated": bool(truncated or budget < 0)})
+        refs.append(
+            {
+                "token": token,
+                "path": virtual,
+                "kind": "file",
+                "chars": len(body),
+                "truncated": bool(truncated or budget < 0),
+            }
+        )
         if budget <= 0:
             break
     if not blocks:
@@ -105,7 +117,8 @@ def expand(text: str, workspace: Any) -> tuple[str, list[dict[str, Any]]]:
 
 
 def search(root: Path, query: str, limit: int = 50, max_visited: int = 30_000) -> list[dict[str, Any]]:
-    """Files and directories under ``root`` whose virtual path matches ``query`` (substring, then subsequence), ranked."""
+    """Files and directories under ``root`` whose virtual path matches ``query`` (substring, then subsequence),
+    ranked."""
     q = query.strip().lower().lstrip("/")
     results: list[tuple[int, str, dict[str, Any]]] = []
     visited = 0

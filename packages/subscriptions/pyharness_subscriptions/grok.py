@@ -75,9 +75,17 @@ class GrokProvider(Provider):
     def flow_spec(self, account: str | None = None) -> FlowSpec:
         authorize = (self._endpoints or {}).get("authorization_endpoint") or "https://auth.x.ai/oauth2/authorize"
         return FlowSpec(
-            provider=self.id, authorize_url=authorize, host="127.0.0.1", ports=(56121,), callback_path="/callback", timeout=180.0, scope=SCOPE,
-            client_id=CLIENT_ID, extra_params={"plan": "generic", "referrer": "pyharness-subscriptions"}, use_nonce=True,
-        )  # fmt: skip
+            provider=self.id,
+            authorize_url=authorize,
+            host="127.0.0.1",
+            ports=(56121,),
+            callback_path="/callback",
+            timeout=180.0,
+            scope=SCOPE,
+            client_id=CLIENT_ID,
+            extra_params={"plan": "generic", "referrer": "pyharness-subscriptions"},
+            use_nonce=True,
+        )
 
     async def login(self, account: str | None = None) -> dict[str, Any]:
         await self.endpoints()
@@ -100,13 +108,16 @@ class GrokProvider(Provider):
         )
         if res.status_code == 403:
             raise RuntimeError(
-                "Grok token endpoint refused the exchange (HTTP 403): the X plan does not include the API OAuth entitlement; an X Premium or xAI subscription with API access is required"
+                "Grok token endpoint refused the exchange (HTTP 403): the X plan does not include the API OAuth "
+                "entitlement; an X Premium or xAI subscription with API access is required"
             )
         if res.status_code >= 400:
             raise RuntimeError(f"Grok token exchange failed (HTTP {res.status_code}): {res.text[:300]}")
         data = res.json()
         claims = jwt_claims(data.get("id_token"))
-        account_label = claims.get("email") or claims.get("preferred_username") or claims.get("name") or claims.get("sub")
+        account_label = (
+            claims.get("email") or claims.get("preferred_username") or claims.get("name") or claims.get("sub")
+        )
         session = {
             "accessToken": data["access_token"],
             "refreshToken": data.get("refresh_token"),
@@ -163,7 +174,11 @@ class GrokProvider(Provider):
         if isinstance(ids_res, Exception):
             raise ids_res
         ids_res.raise_for_status()
-        ids = [str(m.get("id")) for m in ids_res.json().get("data") or [] if m.get("id") and not NON_CHAT.search(str(m["id"]))]
+        ids = [
+            str(m.get("id"))
+            for m in ids_res.json().get("data") or []
+            if m.get("id") and not NON_CHAT.search(str(m["id"]))
+        ]
         if not ids:
             raise RuntimeError("Grok returned no chat models")
         meta: dict[str, dict[str, Any]] = {}
@@ -196,14 +211,23 @@ class GrokProvider(Provider):
 
     def fallback_models(self) -> list[DiscoveredModel]:
         return [
-            DiscoveredModel(id=i, name=n, context_window=256000, input_modalities=["text"] if "code" in i else ["text", "image"])
-            for i, n in (("grok-4", "Grok 4"), ("grok-4-fast-reasoning", "Grok 4 Fast Reasoning"), ("grok-code-fast-1", "Grok Code Fast 1"))
+            DiscoveredModel(
+                id=i, name=n, context_window=256000, input_modalities=["text"] if "code" in i else ["text", "image"]
+            )
+            for i, n in (
+                ("grok-4", "Grok 4"),
+                ("grok-4-fast-reasoning", "Grok 4 Fast Reasoning"),
+                ("grok-code-fast-1", "Grok Code Fast 1"),
+            )
         ]
 
     # ------------------------------------------------------------------ usage
     async def usage(self, session: dict[str, Any]) -> dict[str, Any]:
         res = await self.http.get(
-            f"{PROXY}/billing", params={"format": "credits"}, headers=self.headers(session, proxy=True), timeout=self.discovery_timeout
+            f"{PROXY}/billing",
+            params={"format": "credits"},
+            headers=self.headers(session, proxy=True),
+            timeout=self.discovery_timeout,
         )
         if res.status_code >= 400:
             raise http_error("grok usage", res.status_code, res.text)
@@ -230,7 +254,13 @@ class GrokProvider(Provider):
         elif (cfg.get("monthlyLimit") or {}).get("val"):
             used = float((cfg.get("used") or {}).get("val") or 0)
             limit = float(cfg["monthlyLimit"]["val"])
-            windows.append({"kind": "other", "usedPercent": used / limit * 100 if limit else 0, "resetsAt": cfg.get("billingPeriodEnd")})
+            windows.append(
+                {
+                    "kind": "other",
+                    "usedPercent": used / limit * 100 if limit else 0,
+                    "resetsAt": cfg.get("billingPeriodEnd"),
+                }
+            )
         return {"supported": True, "plan": data.get("subscriptionTier") or self.plan(session), "windows": windows}
 
     # ------------------------------------------------------------------ chat

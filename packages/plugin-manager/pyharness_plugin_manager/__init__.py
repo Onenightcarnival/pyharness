@@ -6,7 +6,8 @@
 | ``skills``   | ``skills/`` of this package mounted at ``/skills/pyharness/`` for the ``creator`` preset |
 
 Skills (``skills/<name>/SKILL.md``): ``pyharness-plugin-development``, ``editing-pyharness-compositions``,
-``pyharness-composition-reference``, ``agent-experience``. Templates: ``skills/pyharness-plugin-development/templates/``.
+``pyharness-composition-reference``, ``agent-experience``.
+Templates: ``skills/pyharness-plugin-development/templates/``.
 
 | step                | effect                                                                    |
 |---------------------|---------------------------------------------------------------------------|
@@ -53,17 +54,23 @@ MUTATING = {"install_bundle", "uninstall_bundle", "set_bundle_enabled", "set_plu
 
 class Config(BaseModel):
     require_approval: bool = Field(True, description="Human approval for each mutating action.")
-    guidance: bool = Field(True, description="Short plugin-authoring section in the system prompt of presets without the skills.")
-    skills: bool = Field(
-        True, description="Mount the plugin-authoring skills at /skills/pyharness/ for the presets listed in skills_presets."
+    guidance: bool = Field(
+        True, description="Short plugin-authoring section in the system prompt of presets without the skills."
     )
-    skills_presets: list[str] = Field(default_factory=lambda: ["creator"], description="Agent presets that see the skills.")
+    skills: bool = Field(
+        True,
+        description="Mount the plugin-authoring skills at /skills/pyharness/ for the presets listed in skills_presets.",
+    )
+    skills_presets: list[str] = Field(
+        default_factory=lambda: ["creator"], description="Agent presets that see the skills."
+    )
 
 
 GUIDANCE = """\
 ## Extending this harness
 Plugins are Python distributions mounted in this profile's configuration tree. `harness_inspect` shows the live API; \
-`plugin_manager` writes starter files, installs bundles (approval, preflight in a separate process, restart after the turn) \
+`plugin_manager` writes starter files, installs bundles (approval, preflight in a separate process, restart after \
+the turn) \
 and toggles entries; profile files change only through it. The Creator preset adds skills with the full procedure."""
 
 
@@ -81,7 +88,9 @@ def _template_files(variant: str) -> Iterator[tuple[str, str]]:
 
 
 def render_template(short: str, variant: str = "basic") -> dict[str, str]:
-    """Template files for a bundle named after ``short``; ``__DIST__``-style tokens substituted in paths and contents."""
+    """Template files for a bundle named after ``short``; ``__DIST__``-style tokens substituted in paths and
+    contents.
+    """
     slug = re.sub(r"[^a-z0-9]+", "-", short.lower()).strip("-") or "my-plugin"
     module = "pyh_" + slug.replace("-", "_")
     dist = f"pyh-{slug}"
@@ -122,10 +131,15 @@ def apply(ctx: Any, config: Config) -> None:
         if lifecycle.supervised:
             lifecycle.request_restart(reason, resume=[session_id] if session_id else [])
             result["application"] = "restart-scheduled"
-            result["next"] = "Saved. Restart after this turn; this session continues in the new generation. Turn end: one-line status."
+            result["next"] = (
+                "Saved. Restart after this turn; this session continues in the new generation. "
+                "Turn end: one-line status."
+            )
         else:
             result["application"] = "saved-restart-required"
-            result["next"] = "Saved. Unsupervised harness: the change applies on the next start (`pyh run` supervises restarts)."
+            result["next"] = (
+                "Saved. Unsupervised harness: the change applies on the next start (`pyh run` supervises restarts)."
+            )
         return result
 
     async def plugin_manager(
@@ -140,7 +154,7 @@ def apply(ctx: Any, config: Config) -> None:
         action                                              effect
         list                                                entries with state; installed bundles
         template target=<name> [variant=basic|tool-and-route|ui-panel] starter bundle files; variant default basic
-        install_bundle target=<dir | package>               install a bundle from a workspace directory, or a package from PyPI
+        install_bundle target=<dir | package>               install a bundle from a workspace directory or PyPI
         uninstall_bundle target=<bundle>                    remove an installed bundle
         set_bundle_enabled target=<bundle> enabled=<bool>   enable or disable a bundle
         set_plugin_enabled target=<entry id> enabled=<bool> enable or disable an entry
@@ -156,7 +170,10 @@ def apply(ctx: Any, config: Config) -> None:
         result: dict[str, Any]
         if action == "list":
             result = {
-                "entries": [{k: e.get(k) for k in ("id", "name", "state", "source", "missing", "error") if e.get(k)} for e in baseline],
+                "entries": [
+                    {k: e.get(k) for k in ("id", "name", "state", "source", "missing", "error") if e.get(k)}
+                    for e in baseline
+                ],
                 "bundles": profile.installed_bundles(),
                 "generation": ctx.lifecycle.generation,
             }
@@ -176,13 +193,25 @@ def apply(ctx: Any, config: Config) -> None:
                 return json.dumps({"error": "install_bundle: target=<directory> required"})
             path = resolve_path(target)
             if manage.looks_like_path(target) or Path(str(path)).exists():
-                result = finish(await manage.install_bundle(profile, path, baseline=baseline), f"install bundle from {target}", session_id)
+                result = finish(
+                    await manage.install_bundle(profile, path, baseline=baseline),
+                    f"install bundle from {target}",
+                    session_id,
+                )
             else:
-                result = finish(await manage.install_package(profile, target, baseline=baseline), f"install package {target}", session_id)
+                result = finish(
+                    await manage.install_package(profile, target, baseline=baseline),
+                    f"install package {target}",
+                    session_id,
+                )
         elif action == "uninstall_bundle":
             if not target:
                 return json.dumps({"error": "uninstall_bundle: target=<bundle> required"})
-            result = finish(await manage.uninstall_bundle(profile, target, baseline=baseline), f"uninstall bundle {target}", session_id)
+            result = finish(
+                await manage.uninstall_bundle(profile, target, baseline=baseline),
+                f"uninstall bundle {target}",
+                session_id,
+            )
         elif action == "set_bundle_enabled":
             if not target or enabled is None:
                 return json.dumps({"error": "set_bundle_enabled: target and enabled required"})
@@ -214,3 +243,18 @@ def apply(ctx: Any, config: Config) -> None:
             "when": lambda request: (request.tool_call.get("args") or {}).get("action") in MUTATING,
         }
     ctx.tools.register(tool, approval=approval)
+
+
+__all__ = [
+    "Action",
+    "Config",
+    "MUTATING",
+    "SKILLS_DIR",
+    "TEMPLATES_DIR",
+    "TOKENS",
+    "apply",
+    "inject",
+    "name",
+    "render_template",
+    "template_variants",
+]

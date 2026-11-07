@@ -74,14 +74,19 @@ class EventBus:
 
     # ------------------------------------------------------------------ contract
     def define(self, name: str, mode: str, doc: str = "", owner: str | None = None) -> Callable[[], None]:
-        """Declare ``name`` with ``mode``; returns the disposer. One event has one mode and any number of declaring owners."""
+        """Declare ``name`` with ``mode``; returns the disposer.
+
+        One event has one mode and any number of declaring owners.
+        """
         if mode not in EVENT_MODES:
             raise EventModeError(f"unknown dispatch mode {mode!r} for event {name!r}")
         decl = self._decls.get(name)
         if decl is None:
             decl = self._decls[name] = EventDecl(name=name, mode=mode, doc=doc)
         elif decl.mode != mode:
-            raise EventModeError(f"event {name!r} is already declared as {decl.mode!r} by {decl.owners}; cannot redeclare as {mode!r}")
+            raise EventModeError(
+                f"event {name!r} is already declared as {decl.mode!r} by {decl.owners}; cannot redeclare as {mode!r}"
+            )
         elif doc and not decl.doc:
             decl.doc = doc
         token = owner or "<anonymous>"
@@ -108,7 +113,9 @@ class EventBus:
         return list(self._listeners.get(name, ()))
 
     # ------------------------------------------------------------------ listening
-    def on(self, name: str, fn: Callable[..., Any], *, owner: str | None = None, prepend: bool = False) -> Callable[[], None]:
+    def on(
+        self, name: str, fn: Callable[..., Any], *, owner: str | None = None, prepend: bool = False
+    ) -> Callable[[], None]:
         self._seq += 1
         listener = Listener(fn=fn, owner=owner, seq=self._seq)
         bucket = self._listeners.setdefault(name, [])

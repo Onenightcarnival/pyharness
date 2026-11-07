@@ -53,13 +53,13 @@ asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 
 [tool.ruff]
-line-length = 140
+line-length = 120
 target-version = "py312"
 extend-exclude = [".venv", "examples/pyharness-audit/build"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B"]
-ignore = ["E501", "B008", "B904", "UP042"]
+ignore = ["B008", "B904", "UP042"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["pyharness", "testkit"]

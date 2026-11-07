@@ -58,8 +58,14 @@ def test_agent_extends_itself_across_a_restart(home, example_bundle, tmp_path):
                 "after": "llm",
                 "config": {
                     "by_generation": {
-                        1: [{"content": "", "tool_calls": [install]}, {"content": "Installed; restart after this turn."}],
-                        2: [{"content": "", "tool_calls": [use]}, {"content": "Verified: the audit plugin recorded the call."}],
+                        1: [
+                            {"content": "", "tool_calls": [install]},
+                            {"content": "Installed; restart after this turn."},
+                        ],
+                        2: [
+                            {"content": "", "tool_calls": [use]},
+                            {"content": "Verified: the audit plugin recorded the call."},
+                        ],
                     }
                 },
             },

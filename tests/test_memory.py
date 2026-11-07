@@ -1,4 +1,6 @@
-"""Career memory: store commits and history, memory_get / memory_save tools, the agent-access switch, the HTTP routes."""
+"""Career memory: store commits and history, memory_get / memory_save tools, the agent-access switch, the HTTP
+routes.
+"""
 
 from __future__ import annotations
 
@@ -33,7 +35,11 @@ def test_store_commits_validates_and_keeps_history(tmp_path):
             "baseRevision": 0,
             "summary": "seed",
             "changes": [
-                {"id": "w1", "kind": "work", "fields": {"organization": "ACME", "startDate": "2024-01-01", "endDate": "present"}},
+                {
+                    "id": "w1",
+                    "kind": "work",
+                    "fields": {"organization": "ACME", "startDate": "2024-01-01", "endDate": "present"},
+                },
                 {"id": "p1", "kind": "project", "fields": {"title": "Port", "workId": "w1", "startDate": "2025-02-01"}},
                 {"id": "l1", "kind": "lesson", "fields": {"parentId": "p1", "lesson": "Read before writing."}},
             ],
@@ -53,7 +59,14 @@ def test_store_commits_validates_and_keeps_history(tmp_path):
         ({"id": "x", "kind": "lesson", "fields": {"parentId": "nope", "lesson": "x"}}, "reference"),
         ({"id": "x", "kind": "project", "fields": {"title": ""}}, "content"),
         ({"id": "x", "kind": "work", "fields": {"organization": "A", "startDate": "2024-13-01"}}, "date"),
-        ({"id": "x", "kind": "work", "fields": {"organization": "A", "startDate": "2024-02-01", "endDate": "2024-01-01"}}, "dateRange"),
+        (
+            {
+                "id": "x",
+                "kind": "work",
+                "fields": {"organization": "A", "startDate": "2024-02-01", "endDate": "2024-01-01"},
+            },
+            "dateRange",
+        ),
         ({"id": "p1", "kind": "project", "remove": True}, "reference"),  # l1 still references it
         ({"id": "profile", "kind": "profile", "remove": True}, "invalid"),
     ]:
@@ -65,14 +78,22 @@ def test_store_commits_validates_and_keeps_history(tmp_path):
     # A no-op commit creates no revision; an empty string clears a field.
     assert (
         store.commit(
-            {"baseRevision": 1, "summary": "same", "changes": [{"id": "w1", "kind": "work", "fields": {"organization": "ACME"}}]},
+            {
+                "baseRevision": 1,
+                "summary": "same",
+                "changes": [{"id": "w1", "kind": "work", "fields": {"organization": "ACME"}}],
+            },
             "human",
             "ui",
         )["revision"]
         == 1
     )
     st = store.commit(
-        {"baseRevision": 1, "summary": "edit", "changes": [{"id": "w1", "kind": "work", "fields": {"jobTitle": "Lead", "endDate": ""}}]},
+        {
+            "baseRevision": 1,
+            "summary": "edit",
+            "changes": [{"id": "w1", "kind": "work", "fields": {"jobTitle": "Lead", "endDate": ""}}],
+        },
         "human",
         "ui",
     )
@@ -83,15 +104,24 @@ def test_store_commits_validates_and_keeps_history(tmp_path):
         "jobTitle": "Lead",
     }
     d = store.diff(2)
-    assert d["before"]["entries"][1]["fields"]["endDate"] == "present" and d["after"]["entries"][1]["fields"]["jobTitle"] == "Lead"
-    assert store.diff(1)["before"]["entries"] == [{"id": "profile", "kind": "profile", "fields": {}}] and store.diff(9) is None
+    assert (
+        d["before"]["entries"][1]["fields"]["endDate"] == "present"
+        and d["after"]["entries"][1]["fields"]["jobTitle"] == "Lead"
+    )
+    assert (
+        store.diff(1)["before"]["entries"] == [{"id": "profile", "kind": "profile", "fields": {}}]
+        and store.diff(9) is None
+    )
     st = store.commit({"baseRevision": 2, "summary": "restore", "restore": 1}, "human", "ui")
     assert st["revision"] == 3 and st["entries"][1]["fields"]["endDate"] == "present"
     st = store.commit(
         {
             "baseRevision": 3,
             "summary": "import",
-            "imported": {"schemaVersion": 1, "entries": [{"id": "profile", "kind": "profile", "fields": {"name": "Pyh"}}]},
+            "imported": {
+                "schemaVersion": 1,
+                "entries": [{"id": "profile", "kind": "profile", "fields": {"name": "Pyh"}}],
+            },
         },
         "human",
         "ui",
@@ -100,7 +130,13 @@ def test_store_commits_validates_and_keeps_history(tmp_path):
     assert store.set_agent_tools(False)["agentTools"] is False and store.state()["revision"] == 4
     with pytest.raises(MemoryError, match="disabled"):
         store.commit(
-            {"baseRevision": 4, "summary": "x", "changes": [{"id": "w9", "kind": "work", "fields": {"organization": "B"}}]}, "agent", "s"
+            {
+                "baseRevision": 4,
+                "summary": "x",
+                "changes": [{"id": "w9", "kind": "work", "fields": {"organization": "B"}}],
+            },
+            "agent",
+            "s",
         )
     st = store.clear(4)
     assert (
@@ -116,7 +152,9 @@ def test_store_commits_validates_and_keeps_history(tmp_path):
         {"id": "c", "kind": "work", "fields": {"endDate": "2022-01-01"}},
         {"id": "d", "kind": "work", "fields": {"endDate": "present"}},
     ]
-    assert [e["id"] for e in sort_entries(entries)] == ["c", "a", "b", "d"] and [e["id"] for e in sort_entries(entries, "oldest")] == [
+    assert [e["id"] for e in sort_entries(entries)] == ["c", "a", "b", "d"] and [
+        e["id"] for e in sort_entries(entries, "oldest")
+    ] == [
         "a",
         "c",
         "b",
@@ -126,10 +164,14 @@ def test_store_commits_validates_and_keeps_history(tmp_path):
 
 async def test_tools_prompt_switch_and_routes(home, tmp_path):
     profile = Profile.init("web", home=str(home))
-    async with Harness(profile, patch=[HTTP_OFF, {"id": "memory", "config": {"path": str(tmp_path / "mem.sqlite")}, "merge": True}]) as h:
+    async with Harness(
+        profile, patch=[HTTP_OFF, {"id": "memory", "config": {"path": str(tmp_path / "mem.sqlite")}, "merge": True}]
+    ) as h:
         memory: MemoryService = h.get("memory")
         tools = {t.name: t for t in h.get("tools").list()}
-        assert {"memory_get", "memory_save"} <= set(tools) and "Career memory is this agent's own resume." in h.get("prompt").render()
+        assert {"memory_get", "memory_save"} <= set(tools) and "Career memory is this agent's own resume." in h.get(
+            "prompt"
+        ).render()
         schema = tools["memory_save"].tool_call_schema.model_json_schema()
         assert "tool_call_id" not in schema["properties"] and schema["required"] == ["stateToken", "summary", "changes"]
         root = run(tools["memory_get"], {})
@@ -152,9 +194,19 @@ async def test_tools_prompt_switch_and_routes(home, tmp_path):
                 ],
             },
         )
-        assert saved["ok"] is True and saved["version"] == 1 and saved["stateToken"] == "r:1" and saved["changed"] is True
-        assert set(saved["refs"]) == {"job", "proj"} and [r["kind"] for r in saved["records"]] == ["work", "project", "lesson", "profile"]
-        stale = run(tools["memory_save"], {"stateToken": "r:0", "summary": "x", "changes": [{"kind": "profile", "fields": {"name": "Z"}}]})
+        assert (
+            saved["ok"] is True and saved["version"] == 1 and saved["stateToken"] == "r:1" and saved["changed"] is True
+        )
+        assert set(saved["refs"]) == {"job", "proj"} and [r["kind"] for r in saved["records"]] == [
+            "work",
+            "project",
+            "lesson",
+            "profile",
+        ]
+        stale = run(
+            tools["memory_save"],
+            {"stateToken": "r:0", "summary": "x", "changes": [{"kind": "profile", "fields": {"name": "Z"}}]},
+        )
         assert (
             stale["ok"] is False
             and stale["error"]["code"] == "conflict"
@@ -169,15 +221,24 @@ async def test_tools_prompt_switch_and_routes(home, tmp_path):
         )
         bad = run(
             tools["memory_save"],
-            {"stateToken": "r:1", "summary": "x", "changes": [{"kind": "lesson", "fields": {"parentId": "@nope", "lesson": "x"}}]},
+            {
+                "stateToken": "r:1",
+                "summary": "x",
+                "changes": [{"kind": "lesson", "fields": {"parentId": "@nope", "lesson": "x"}}],
+            },
         )
         assert bad["error"]["code"] == "reference" and bad["error"]["detail"] == "@nope"
         removed = run(
-            tools["memory_save"], {"stateToken": "r:1", "summary": "drop", "changes": [{"kind": "remove", "id": saved["records"][2]["id"]}]}
+            tools["memory_save"],
+            {"stateToken": "r:1", "summary": "drop", "changes": [{"kind": "remove", "id": saved["records"][2]["id"]}]},
         )
-        assert removed["ok"] is True and removed["records"] == [{"id": saved["records"][2]["id"], "kind": "remove", "removed": True}]
+        assert removed["ok"] is True and removed["records"] == [
+            {"id": saved["records"][2]["id"], "kind": "remove", "removed": True}
+        ]
         assert memory.store.state()["history"][-1]["source"].startswith("session:")
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=30) as c:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=30
+        ) as c:
             st = (await c.get("/api/memory")).json()
             assert st["revision"] == 2 and len(st["entries"]) == 3 and st["agentTools"] is True
             d = (await c.get("/api/memory", params={"diff": "1"})).json()
@@ -193,12 +254,22 @@ async def test_tools_prompt_switch_and_routes(home, tmp_path):
                     "changes": [{"id": "profile", "kind": "profile", "fields": {"name": "Pyh", "position": "harness"}}],
                 },
             )
-            assert r.status_code == 200 and r.json()["history"][-1] == {**r.json()["history"][-1], "actor": "human", "source": "ui"}
+            assert r.status_code == 200 and r.json()["history"][-1] == {
+                **r.json()["history"][-1],
+                "actor": "human",
+                "source": "ui",
+            }
             r = await c.patch("/api/memory", json={"agentTools": False})
             assert r.json()["agentTools"] is False
-            assert not any(t.name.startswith("memory_") for t in h.get("tools").list()) and "Career memory" not in h.get("prompt").render()
+            assert (
+                not any(t.name.startswith("memory_") for t in h.get("tools").list())
+                and "Career memory" not in h.get("prompt").render()
+            )
             r = await c.patch("/api/memory", json={"agentTools": True})
-            assert r.json()["agentTools"] is True and {t.name for t in h.get("tools").list()} >= {"memory_get", "memory_save"}
+            assert r.json()["agentTools"] is True and {t.name for t in h.get("tools").list()} >= {
+                "memory_get",
+                "memory_save",
+            }
             r = await c.request("DELETE", "/api/memory", content=json.dumps({"baseRevision": 3}))
             assert r.status_code == 200 and r.json()["history"] == [] and r.json()["revision"] == 4
             assert (await c.post("/api/memory", content=b"[]")).status_code == 400

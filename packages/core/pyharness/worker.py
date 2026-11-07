@@ -48,7 +48,9 @@ def setup_logging(level: str | None = None) -> None:
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
-def _write_boot_error(profile: Profile, generation: int, stage: str, exc: BaseException, harness: Harness | None) -> None:
+def _write_boot_error(
+    profile: Profile, generation: int, stage: str, exc: BaseException, harness: Harness | None
+) -> None:
     profile.runtime.mkdir(parents=True, exist_ok=True)
     payload = {
         "generation": generation,
@@ -58,7 +60,9 @@ def _write_boot_error(profile: Profile, generation: int, stage: str, exc: BaseEx
         "at": time.time(),
         "entries": harness.loader.snapshot() if harness is not None else [],
     }
-    (profile.runtime / "boot-error.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    (profile.runtime / "boot-error.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
 
 async def run_generation(
@@ -83,7 +87,9 @@ async def run_generation(
         stage = "ready"
         await harness.ready()
     except BaseException as exc:  # noqa: BLE001
-        log.error("generation %d failed during %s: %s", generation, stage, exc, exc_info=log.isEnabledFor(logging.DEBUG))
+        log.error(
+            "generation %d failed during %s: %s", generation, stage, exc, exc_info=log.isEnabledFor(logging.DEBUG)
+        )
         _write_boot_error(profile, generation, stage, exc, harness)
         if harness is not None:
             await harness.stop()
@@ -101,14 +107,21 @@ async def run_generation(
     profile.save_last_known_good(booted_state)
     if ready_file is not None:
         ready_file.parent.mkdir(parents=True, exist_ok=True)
-        ready_file.write_text(json.dumps({"pid": os.getpid(), "generation": generation, "summary": summary}), encoding="utf-8")
+        ready_file.write_text(
+            json.dumps({"pid": os.getpid(), "generation": generation, "summary": summary}), encoding="utf-8"
+        )
     if supervised:
         lifecycle.handoff()
         lifecycle.commit_handoff()
     await harness.started()
 
     code = await lifecycle.wait_stopped()
-    log.info("generation %d stopping (exit code %d%s)", generation, code, ", restart requested" if code == RESTART_EXIT_CODE else "")
+    log.info(
+        "generation %d stopping (exit code %d%s)",
+        generation,
+        code,
+        ", restart requested" if code == RESTART_EXIT_CODE else "",
+    )
     if code != RESTART_EXIT_CODE:
         lifecycle.discard_pending_restart()
     await harness.stop()
@@ -125,7 +138,10 @@ def record_overlays(profile: Profile, extra_patches: list[str]) -> None:
 def _install_signal_handlers(harness: Harness) -> None:
     lifecycle = harness.lifecycle
     loop = asyncio.get_running_loop()
-    handlers: list[tuple[int, Any]] = [(signal.SIGINT, lambda: lifecycle.stop(0)), (signal.SIGTERM, lambda: lifecycle.stop(0))]
+    handlers: list[tuple[int, Any]] = [
+        (signal.SIGINT, lambda: lifecycle.stop(0)),
+        (signal.SIGTERM, lambda: lifecycle.stop(0)),
+    ]
     if hasattr(signal, "SIGHUP"):
         handlers.append((signal.SIGHUP, lambda: lifecycle.request_restart("restart signal")))
     for sig, handler in handlers:

@@ -46,7 +46,9 @@ async def test_subagent_tool_calls_use_the_pipeline(profile):
     replies = [
         {
             "content": "",
-            "tool_calls": [{"name": "task", "args": {"description": "shout x", "subagent_type": "general-purpose"}, "id": "t1"}],
+            "tool_calls": [
+                {"name": "task", "args": {"description": "shout x", "subagent_type": "general-purpose"}, "id": "t1"}
+            ],
         },
         {"content": "", "tool_calls": [{"name": "shout", "args": {"text": "from subagent"}, "id": "s1"}]},
         {"content": "subagent done"},
@@ -65,7 +67,10 @@ async def test_workspace_containing_home_is_protected(profile, home, tmp_path, m
     target = f"/{home.relative_to(tmp_path).as_posix()}/profiles/web/harness.patch.yaml"
     before = (profile.patch_path).read_text()
     replies = [
-        {"content": "", "tool_calls": [{"name": "write_file", "args": {"file_path": target, "content": "[]"}, "id": "w1"}]},
+        {
+            "content": "",
+            "tool_calls": [{"name": "write_file", "args": {"file_path": target, "content": "[]"}, "id": "w1"}],
+        },
         {"content": "tried"},
     ]
     async with Harness(profile, patch=scripted(replies)) as h:
@@ -93,7 +98,9 @@ def _variant(example: Path, dest: Path, version: str, broken: bool) -> Path:
     pyproject.write_text(pyproject.read_text().replace('version = "0.1.0"', f'version = "{version}"'))
     if broken:
         init = dest / "pyharness_audit" / "__init__.py"
-        init.write_text(init.read_text().replace('inject = ["tools"]', 'inject = ["tools"]\nraise ImportError("broken upgrade")'))
+        init.write_text(
+            init.read_text().replace('inject = ["tools"]', 'inject = ["tools"]\nraise ImportError("broken upgrade")')
+        )
     return dest
 
 
@@ -162,7 +169,13 @@ async def test_approval_gates_are_per_owner(profile):
         raise RuntimeError("fails after gating")
 
     sys.modules["tk_gatefail"] = types.SimpleNamespace(apply=gate_then_fail, inject=["tools"], __name__="tk_gatefail")
-    patch = scripted([], extra=[{"id": "workspace", "config": {"shell": True}, "merge": True}, {"id": "gatefail", "name": "tk_gatefail"}])
+    patch = scripted(
+        [],
+        extra=[
+            {"id": "workspace", "config": {"shell": True}, "merge": True},
+            {"id": "gatefail", "name": "tk_gatefail"},
+        ],
+    )
     async with Harness(profile, patch=patch) as h:
         assert h.loader.get("gatefail").state.value == "failed"
         gates = h.get("tools").interrupt_on()
@@ -173,7 +186,13 @@ async def test_approval_gates_are_per_owner(profile):
 async def test_inspect_redacts_environment_values(profile, monkeypatch):
     monkeypatch.setenv("PYH_TEST_SECRET", "sk-very-secret")
     patch = scripted(
-        [], extra=[{"id": "llm", "config": {"default": "scripted:test", "providers": {"openai": {"api_key": "${env:PYH_TEST_SECRET}"}}}}]
+        [],
+        extra=[
+            {
+                "id": "llm",
+                "config": {"default": "scripted:test", "providers": {"openai": {"api_key": "${env:PYH_TEST_SECRET}"}}},
+            }
+        ],
     )
     async with Harness(profile, patch=patch) as h:
         tool = next(t for t in h.get("tools").list() if t.name == "harness_inspect")

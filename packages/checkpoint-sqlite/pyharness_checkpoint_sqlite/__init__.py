@@ -41,3 +41,6 @@ async def apply(ctx: Any, config: Config) -> None:
     ctx.provide("checkpointer", saver)
     ctx.provide("store", store)
     ctx.logger.debug("sqlite persistence at %s / %s", config.path, config.store_path)
+
+
+__all__ = ["Config", "apply", "name"]

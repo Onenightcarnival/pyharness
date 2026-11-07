@@ -115,7 +115,11 @@ async def test_isolate_groups_get_their_own_instance():
 async def test_isolated_group_without_provider_stays_pending():
     patch = [
         {"id": "counter", "name": "lt_counter:Counter"},
-        {"id": "group", "isolate": ["counter"], "children": [{"id": "c", "name": "lt_consumer", "config": {"item": "x"}}]},
+        {
+            "id": "group",
+            "isolate": ["counter"],
+            "children": [{"id": "c", "name": "lt_consumer", "config": {"item": "x"}}],
+        },
     ]
     h = Harness(patch=patch)
     await h.start()

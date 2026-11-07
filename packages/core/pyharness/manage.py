@@ -52,7 +52,17 @@ class ManageError(RuntimeError):
 # ---------------------------------------------------------------------- installer
 def _installer(target: Path) -> list[str]:
     if util.find_spec("pip") is not None:
-        return [sys.executable, "-m", "pip", "install", "--target", str(target), "--upgrade", "--no-input", "--disable-pip-version-check"]
+        return [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--target",
+            str(target),
+            "--upgrade",
+            "--no-input",
+            "--disable-pip-version-check",
+        ]
     uv = shutil.which("uv")
     if uv:
         return [uv, "pip", "install", "--python", sys.executable, "--target", str(target), "--upgrade"]
@@ -262,7 +272,9 @@ async def install_bundle(
             dist = _dist_for_path(profile, source)
             if dist is None:
                 return _rejected("install", txn, error="installed distribution not found in the profile site")
-            return await _complete_install(profile, txn, dist, baseline=baseline, preflight=preflight, source=str(source))
+            return await _complete_install(
+                profile, txn, dist, baseline=baseline, preflight=preflight, source=str(source)
+            )
         except BaseException:
             txn.rollback()
             raise
@@ -280,7 +292,9 @@ def requirement_name(requirement: str) -> str | None:
 
 
 def looks_like_path(target: str) -> bool:
-    """Whether an install target names a directory rather than a package: a separator, ``~``, ``.`` or an existing path."""
+    """Whether an install target names a directory rather than a package: a separator, ``~``, ``.`` or an existing
+    path.
+    """
     return target.startswith(("/", ".", "~")) or "/" in target or "\\" in target or Path(target).expanduser().exists()
 
 
@@ -311,7 +325,9 @@ async def install_package(
             dist = _site_dists(profile).get(_norm(name))
             if dist is None:
                 return _rejected("install", txn, error=f"{name} was not installed into the profile site")
-            return await _complete_install(profile, txn, dist, baseline=baseline, preflight=preflight, source=f"package:{requirement}")
+            return await _complete_install(
+                profile, txn, dist, baseline=baseline, preflight=preflight, source=f"package:{requirement}"
+            )
         except BaseException:
             txn.rollback()
             raise
@@ -342,7 +358,13 @@ async def _complete_install(
             return _rejected("dependencies", txn, error=deps_output[-4000:], unmet=unmet)
     for bundle in bundles:
         profile.set_bundle_enabled(bundle, True)
-    outcome = {"dist": dist_name, "version": dist_version, "bundles": bundles, "dependencies_installed": unmet, "source": source}
+    outcome = {
+        "dist": dist_name,
+        "version": dist_version,
+        "bundles": bundles,
+        "dependencies_installed": unmet,
+        "source": source,
+    }
     report, failures = await _preflight(profile, baseline, preflight)
     if failures:
         return _rejected("preflight", txn, errors=failures, preflight=_compact(report or {}), **outcome)
@@ -361,7 +383,9 @@ async def uninstall_bundle(
         if owner is None:
             return {
                 "application": "rejected",
-                "error": f"bundle {bundle!r} is not installed in profile {profile.name!r}; environment bundles: disable only",
+                "error": (
+                    f"bundle {bundle!r} is not installed in profile {profile.name!r}; environment bundles: disable only"
+                ),
             }
         txn = _Transaction(profile, site=True)
         try:
