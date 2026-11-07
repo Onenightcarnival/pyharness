@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "pyharness plugin: deepagents agent loop (ctx.agentLoop)"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core", "pyharness-tools", "deepagents>=0.7", "langchain>=1.0"]
+dependencies = ["pyharness-core==0.1.0", "pyharness-tools==0.1.0", "deepagents==0.7.32", "langchain==1.4.7"]
 
 [project.entry-points."pyharness.plugins"]
 pyharness-agent-loop-deepagents = "pyharness_agent_loop_deepagents:DeepAgentsLoop"

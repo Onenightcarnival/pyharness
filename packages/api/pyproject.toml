@@ -4,7 +4,13 @@ version = "0.1.0"
 description = "pyharness plugin: REST and SSE API under /api"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core", "pyharness-agent", "pyharness-llm", "fastapi>=0.110", "pygments>=2.14"]
+dependencies = [
+    "pyharness-core==0.1.0",
+    "pyharness-agent==0.1.0",
+    "pyharness-llm==0.1.0",
+    "fastapi==0.162.0",
+    "pygments==2.21.0",
+]
 
 [project.entry-points."pyharness.plugins"]
 pyharness-api = "pyharness_api"

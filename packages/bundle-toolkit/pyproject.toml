@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "pyharness bundle: the toolkit (memory, databases, S3, skills, MCP page, subscriptions, OpenTelemetry); built in"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core"]
+dependencies = ["pyharness-core==0.1.0"]
 
 [project.entry-points."pyharness.bundles"]
 toolkit = "pyharness_bundle_toolkit:BUNDLE"

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "pyharness plugin: web_search through DeepSeek native search and web_fetch"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core", "pyharness-tools", "httpx>=0.27", "langchain-core>=1.0"]
+dependencies = ["pyharness-core==0.1.0", "pyharness-tools==0.1.0", "httpx==0.28.1", "langchain-core==1.7.1"]
 
 [project.entry-points."pyharness.plugins"]
 pyharness-web-tools = "pyharness_web_tools:WebToolsService"

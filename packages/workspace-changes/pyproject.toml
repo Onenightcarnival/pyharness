@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "pyharness plugin: files changed per turn, from git work-tree snapshots"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core", "pyharness-agent", "pyharness-workspace"]
+dependencies = ["pyharness-core==0.1.0", "pyharness-agent==0.1.0", "pyharness-workspace==0.1.0"]
 
 [project.entry-points."pyharness.plugins"]
 pyharness-workspace-changes = "pyharness_workspace_changes:WorkspaceChangesService"

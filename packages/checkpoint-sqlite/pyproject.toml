@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "pyharness plugin: SQLite checkpointer and store"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core", "langgraph-checkpoint-sqlite>=3", "aiosqlite"]
+dependencies = ["pyharness-core==0.1.0", "langgraph-checkpoint-sqlite==3.1.2", "aiosqlite==0.22.1"]
 
 [project.entry-points."pyharness.plugins"]
 pyharness-checkpoint-sqlite = "pyharness_checkpoint_sqlite"

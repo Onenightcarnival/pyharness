@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "pyharness plugins: plugin_manager tool, plugin-authoring skills, dev-context prompt section"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core", "pyharness-tools", "langchain>=1.0"]
+dependencies = ["pyharness-core==0.1.0", "pyharness-tools==0.1.0", "langchain==1.4.7"]
 
 [project.entry-points."pyharness.plugins"]
 pyharness-plugin-manager = "pyharness_plugin_manager"

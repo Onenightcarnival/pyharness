@@ -4,7 +4,16 @@ version = "0.1.0"
 description = "pyharness plugin: layered career memory (profile, work, projects, lessons) with version history; memory_get / memory_save tools and the Memory page"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core", "pyharness-tools", "pyharness-prompt", "pyharness-http", "fastapi>=0.115", "langchain-core>=1.0", "langgraph>=1.0", "pydantic>=2"]
+dependencies = [
+    "pyharness-core==0.1.0",
+    "pyharness-tools==0.1.0",
+    "pyharness-prompt==0.1.0",
+    "pyharness-http==0.1.0",
+    "fastapi==0.162.0",
+    "langchain-core==1.7.1",
+    "langgraph==1.2.18",
+    "pydantic==2.14.1",
+]
 
 [project.entry-points."pyharness.plugins"]
 pyharness-memory = "pyharness_memory:MemoryService"

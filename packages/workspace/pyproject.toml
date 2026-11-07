@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "pyharness plugin: agent workspace and deepagents backend"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core", "deepagents>=0.7"]
+dependencies = ["pyharness-core==0.1.0", "deepagents==0.7.32"]
 
 [project.entry-points."pyharness.plugins"]
 pyharness-workspace = "pyharness_workspace"

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "pyharness plugin: Web UI at / and the client-module registry (ctx.webui)"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core", "fastapi>=0.110"]
+dependencies = ["pyharness-core==0.1.0", "fastapi==0.162.0"]
 
 [project.entry-points."pyharness.plugins"]
 pyharness-web-ui = "pyharness_web_ui:WebUIService"

@@ -4,7 +4,27 @@ version = "0.1.0"
 description = "pyharness bundle: base plugin set"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core", "pyharness-llm", "pyharness-tools", "pyharness-mcp", "pyharness-ask-user", "pyharness-prompt", "pyharness-agent", "pyharness-agent-loop-deepagents", "pyharness-compaction", "pyharness-checkpoint-sqlite", "pyharness-checkpoint-postgres", "pyharness-workspace", "pyharness-workspace-changes", "pyharness-http", "pyharness-api", "pyharness-web-ui", "pyharness-terminal", "pyharness-inspect", "pyharness-plugin-manager"]
+dependencies = [
+    "pyharness-core==0.1.0",
+    "pyharness-llm==0.1.0",
+    "pyharness-tools==0.1.0",
+    "pyharness-mcp==0.1.0",
+    "pyharness-ask-user==0.1.0",
+    "pyharness-prompt==0.1.0",
+    "pyharness-agent==0.1.0",
+    "pyharness-agent-loop-deepagents==0.1.0",
+    "pyharness-compaction==0.1.0",
+    "pyharness-checkpoint-sqlite==0.1.0",
+    "pyharness-checkpoint-postgres==0.1.0",
+    "pyharness-workspace==0.1.0",
+    "pyharness-workspace-changes==0.1.0",
+    "pyharness-http==0.1.0",
+    "pyharness-api==0.1.0",
+    "pyharness-web-ui==0.1.0",
+    "pyharness-terminal==0.1.0",
+    "pyharness-inspect==0.1.0",
+    "pyharness-plugin-manager==0.1.0",
+]
 
 [project.entry-points."pyharness.bundles"]
 base = "pyharness_bundle_base:BUNDLE"

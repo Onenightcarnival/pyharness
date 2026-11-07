@@ -4,7 +4,17 @@ version = "0.1.0"
 description = "pyharness plugin: OpenTelemetry GenAI export of agent turns (OTLP/HTTP, Langfuse) with the Settings → Observability page"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core", "pyharness-http", "pyharness-web-ui", "fastapi>=0.115", "pydantic>=2", "httpx>=0.27", "opentelemetry-api>=1.25", "opentelemetry-sdk>=1.25", "opentelemetry-exporter-otlp-proto-http>=1.25"]
+dependencies = [
+    "pyharness-core==0.1.0",
+    "pyharness-http==0.1.0",
+    "pyharness-web-ui==0.1.0",
+    "fastapi==0.162.0",
+    "pydantic==2.14.1",
+    "httpx==0.28.1",
+    "opentelemetry-api==1.45.1",
+    "opentelemetry-sdk==1.45.1",
+    "opentelemetry-exporter-otlp-proto-http==1.45.1",
+]
 
 [project.entry-points."pyharness.plugins"]
 pyharness-otel = "pyharness_otel:OtelService"
