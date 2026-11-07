@@ -36,7 +36,7 @@
 | `pyharness-subscriptions` | `subscriptions` | `subscriptions` | AI 订阅（对齐 dsh-subscriptions）：Codex（OpenAI）、ChatGPT、Google Antigravity、Grok（xAI）四个提供方；本机回环 OAuth（PKCE S256、state / nonce、端口占用时手动粘贴回调 URL、超时与取消）；会话存 `<profile data>/toolkit/subscriptions/auth.json`（0600），令牌管理器提前 5 分钟刷新、并发共享一次刷新、永久性错误时删除账号；模型目录（Codex 目录接口 + npm 查 client 版本、ChatGPT `/v1/models`、Antigravity 两个 origin 合并、Grok 两个接口合并）缓存 5 分钟并落盘；注册 `ctx.llm` 提供方类型 `subscription`，按账号把可见模型发布成路由 `codex` / `chatgpt` / `antigravity` / `grok`（Responses 协议与 Antigravity `v1internal` 的流式翻译：文本、推理、工具调用、用量）；工具 `codex_web_search`、`codex_image_generate`、`antigravity_web_search`、`antigravity_image_generate`、`grok_x_search`、`grok_image_generate`、`grok_video_generate`，开关存 `provider-settings.json`（搜索类立即生效，生成类按会话创建时刻），生成的媒体放 `images/` / `videos/` 并由 `/api/subscriptions/media/{name}` 提供预览；`/api/subscriptions/*` 路由；左侧栏「AI 订阅」全页 |
 | `pyharness-bundle-toolkit` | — | — | `toolkit` bundle：工具箱各模块（memory、rdb、s3、config-center、otel、subscriptions）；`builtin: true`，每个 profile 必含、不可关闭、不可卸载；左侧栏入口可在设置 → 通用里隐藏 |
 
-条目 id 与配置：`packages/bundle-base/src/pyharness_bundle_base/bundle.yaml`。
+条目 id 与配置：`packages/bundle-base/pyharness_bundle_base/bundle.yaml`。
 
 可选 bundle：bundle 定义里 `optional: true` 的 bundle 不必写进 profile 的 `bundles` 列表就会生效（排在显式列表之后），profile 清单的 `disabled` 列表把它关掉；插件页与 `PUT /plugins/bundles/{name}` 对这类 bundle 允许开关，不允许卸载。内置 bundle（`base`）仍然只读。
 
