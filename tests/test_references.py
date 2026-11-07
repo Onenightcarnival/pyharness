@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
+from textwrap import dedent
+
 import httpx
-from pyharness_api.references import expand, search, strip_attachments, tokens
-from test_agent import scripted_patch, sse_events
 
 from pyharness import Harness, Profile
+from pyharness_api.references import expand, search, strip_attachments, tokens
+from pyharness_workspace import Workspace
+from test_agent import scripted_patch, sse_events
 from testkit import scripted
 
 
 def test_tokens_and_expand(tmp_path):
-    from pyharness_workspace import Workspace
-
     (tmp_path / "README.md").write_text("# Hello\nbody\n")
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "a b.py").write_text("print(1)\n")
@@ -27,8 +28,14 @@ def test_tokens_and_expand(tmp_path):
     content, refs = expand('see @README.md and @"src/a b.py" plus @src/ and @nope.txt and @src/img.png', ws)
     assert [r["path"] for r in refs] == ["/README.md", "/src/a b.py", "/src", "/src/img.png"]
     assert content.startswith(
-        'see @README.md and @"src/a b.py" plus @src/ and @nope.txt and @src/img.png\n\n'
-        '<attached-file path="/README.md">\n# Hello'
+        dedent(
+            """
+            see @README.md and @"src/a b.py" plus @src/ and @nope.txt and @src/img.png
+
+            <attached-file path="/README.md">
+            # Hello
+            """
+        ).strip()
     )
     assert '<attached-directory path="/src">\na b.py\nimg.png\n</attached-directory>' in content
     assert '<attached-file path="/src/img.png" binary="true"' in content

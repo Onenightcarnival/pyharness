@@ -6,14 +6,15 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from textwrap import dedent
 
 import httpx
 import pytest
+
+from pyharness import Harness, Profile
 from pyharness_rdb import RdbService
 from pyharness_rdb import engine as eng
 from pyharness_rdb.store import ProfileStore, StoreError
-
-from pyharness import Harness, Profile
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 
@@ -69,11 +70,15 @@ def test_classification_and_splitting():
 def seed(path):
     db = sqlite3.connect(path)
     db.executescript(
-        "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER DEFAULT 0);"
-        "CREATE INDEX users_name ON users(name);"
-        "CREATE VIEW adults AS SELECT * FROM users WHERE age >= 18;"
-        "CREATE TABLE nopk (a TEXT, b TEXT);"
-        "INSERT INTO users (name, age) VALUES ('ann', 30), ('bob', 12), ('cy', 44);"
+        dedent(
+            """
+            CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER DEFAULT 0);
+            CREATE INDEX users_name ON users(name);
+            CREATE VIEW adults AS SELECT * FROM users WHERE age >= 18;
+            CREATE TABLE nopk (a TEXT, b TEXT);
+            INSERT INTO users (name, age) VALUES ('ann', 30), ('bob', 12), ('cy', 44);
+            """
+        ).strip()
     )
     db.commit()
     db.close()

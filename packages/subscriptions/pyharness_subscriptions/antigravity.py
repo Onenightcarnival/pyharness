@@ -3,15 +3,17 @@ origins, quota summary, streaming chat, web search and image generation."""
 
 from __future__ import annotations
 
-import base64
+import asyncio
 import hashlib
 import json
 import os
 import platform
+import re
 import sys
 import time
 import uuid
 from collections.abc import AsyncIterator
+from datetime import datetime
 from typing import Any
 
 import httpx
@@ -19,6 +21,9 @@ from langchain_core.callbacks import AsyncCallbackManagerForLLMRun
 from langchain_core.messages import BaseMessage
 from langchain_core.outputs import ChatGenerationChunk
 
+from pyharness import package_toml
+
+from .antigravity_tools import make_tools
 from .antigravity_wire import (
     DEFAULT_ORIGIN,
     FALLBACK_ORIGIN,
@@ -33,26 +38,15 @@ from .providers import DiscoveredModel, Provider
 from .responses import ResponsesChatModel
 from .store import JsonFile
 
-AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth"
-TOKEN_URL = "https://oauth2.googleapis.com/token"
-USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
-SCOPE = (
-    "openid https://www.googleapis.com/auth/aicode https://www.googleapis.com/auth/cloud-platform "
-    "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile "
-    "https://www.googleapis.com/auth/cclog https://www.googleapis.com/auth/experimentsandconfigs"
-)
-DEFAULT_CLIENT_ID = "1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com"
-DEFAULT_CLIENT_SECRET = "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"
-PROJECT_KEYS = (
-    "antigravityProjectId",
-    "projectId",
-    "backendProjectId",
-    "userDefinedCloudaicompanionProject",
-    "cloudaicompanionProject",
-    "project",
-    "id",
-)
-PROJECT_LISTS = ("projects", "projectIds", "cloudaicompanionProjects")
+_CFG = package_toml(__file__)["antigravity"]
+AUTHORIZE_URL: str = _CFG["AUTHORIZE_URL"]
+TOKEN_URL: str = _CFG["TOKEN_URL"]
+USERINFO_URL: str = _CFG["USERINFO_URL"]
+SCOPE: str = _CFG["SCOPE"]
+DEFAULT_CLIENT_ID: str = _CFG["DEFAULT_CLIENT_ID"]
+DEFAULT_CLIENT_SECRET: str = _CFG["DEFAULT_CLIENT_SECRET"]
+PROJECT_KEYS: tuple[str, ...] = tuple(_CFG["PROJECT_KEYS"])
+PROJECT_LISTS: tuple[str, ...] = tuple(_CFG["PROJECT_LISTS"])
 PLATFORM = {"darwin": "MACOS", "win32": "WINDOWS"}.get(sys.platform, "LINUX")
 
 
@@ -233,7 +227,7 @@ class AntigravityProvider(Provider):
                 if op.get("done"):
                     project = _find_project(op.get("response") or {})
                     break
-                await __import__("asyncio").sleep(1)
+                await asyncio.sleep(1)
         email = user_id = None
         try:
             who = await self.http.get(
@@ -282,8 +276,6 @@ class AntigravityProvider(Provider):
 
     # ------------------------------------------------------------------ catalog
     async def discover(self, session: dict[str, Any]) -> list[DiscoveredModel]:
-        import asyncio
-
         project = (self.config.get("antigravity") or {}).get("projectId") or session.get("projectId")
         merged: dict[str, Any] = {}
         origins = self.origins()
@@ -343,9 +335,6 @@ class AntigravityProvider(Provider):
 
     # ------------------------------------------------------------------ usage
     async def usage(self, session: dict[str, Any]) -> dict[str, Any]:
-        import asyncio
-        import re
-
         info_task = self.call(
             session,
             "loadCodeAssist",
@@ -369,8 +358,6 @@ class AntigravityProvider(Provider):
                     resets = None
                     if bucket.get("resetTime"):
                         try:
-                            from datetime import datetime
-
                             resets = int(
                                 datetime.fromisoformat(str(bucket["resetTime"]).replace("Z", "+00:00")).timestamp()
                                 * 1000
@@ -414,8 +401,6 @@ class AntigravityProvider(Provider):
         )
 
     def tools(self, service: Any) -> list[Any]:
-        from .antigravity_tools import make_tools
-
         return make_tools(self, service)
 
 
@@ -489,7 +474,3 @@ class AntigravityChatModel(ResponsesChatModel):
                 raise last or LlmError("TRANSPORT", f"{self.label}: no origin reachable")
             if not isinstance(last, LlmError) or last.code != "AUTH":
                 raise last
-
-
-def data_url(mime: str, data: bytes) -> str:
-    return f"data:{mime};base64,{base64.b64encode(data).decode()}"

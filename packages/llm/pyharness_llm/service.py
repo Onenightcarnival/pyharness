@@ -8,11 +8,14 @@ import time
 from collections.abc import Callable
 from typing import Any
 
+import httpx
+from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
 from pyharness import Service
+from pyharness.credentials import reference_for
 
 from .catalog import PRESETS, PROTOCOLS, translate_options, type_info
 from .config import LLMConfig, LLMConfigError, ModelFactory, ProviderConfig, _freeze, mask_secret, split_spec
@@ -118,8 +121,6 @@ class LLMService(Service):
     def references(self, route: str, cfg: ProviderConfig | None = None) -> list[str]:
         """Credential references tried in order: ``api_key_env``, ``<ROUTE>_API_KEY`` for a named route, the type's
         variable."""
-        from pyharness.credentials import reference_for
-
         cfg = cfg or self.route(route)
         kind = self.route_type(route)
         env = type_info(kind)["env"]
@@ -209,8 +210,6 @@ class LLMService(Service):
                     f"provider {kind!r} needs the {info['package']} package "
                     f"(pip install {info['package'].replace('_', '-')})"
                 )
-            from langchain.chat_models import init_chat_model
-
             try:
                 chat = init_chat_model(model, model_provider=kind, **translate_options(kind, options))
             except Exception as exc:
@@ -331,14 +330,12 @@ class LLMService(Service):
         self, route: str, kind: str | None = None, timeout: float = 20.0, **overrides: Any
     ) -> dict[str, Any]:
         """Model ids served by the route's endpoint: ``/models`` (OpenAI, Anthropic) or ``/api/tags`` (Ollama)."""
-        import httpx
-
         cfg = self.route(route)
         kind = kind or self.route_type(route)
         info = type_info(kind)
-        api = PROTOCOLS[cfg.protocol]["models_api"] if cfg.protocol else info["models_api"]
+        api = PROTOCOLS[cfg.protocol].get("models_api") if cfg.protocol else info["models_api"]
         if "protocol" in overrides and overrides["protocol"]:
-            api = PROTOCOLS[overrides["protocol"]]["models_api"]
+            api = PROTOCOLS[overrides["protocol"]].get("models_api")
         if api is None:
             return {"supported": False, "models": []}
         base_url = (overrides.get("base_url") or cfg.base_url or info["base_url"] or "").rstrip("/")

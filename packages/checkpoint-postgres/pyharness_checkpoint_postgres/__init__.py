@@ -13,6 +13,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from langgraph.store.postgres.aio import AsyncPostgresStore
+from psycopg.rows import dict_row
+from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel, Field
 
 name = "pyharness-checkpoint-postgres"
@@ -26,11 +30,6 @@ class Config(BaseModel):
 
 
 async def apply(ctx: Any, config: Config) -> None:
-    from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-    from langgraph.store.postgres.aio import AsyncPostgresStore
-    from psycopg.rows import dict_row
-    from psycopg_pool import AsyncConnectionPool
-
     pool = AsyncConnectionPool(
         conninfo=config.dsn,
         min_size=config.pool_min,

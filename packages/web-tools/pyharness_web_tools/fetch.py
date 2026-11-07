@@ -21,11 +21,12 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin, urlparse
 
 import httpx
+from langchain_core.tools import tool
 
 from .common import NOTICE
 
 if TYPE_CHECKING:
-    from .service import WebToolsService
+    from .service import WebToolsService  # type-only: .service imports this module
 
 BLOCK_TAGS = {
     "p",
@@ -203,8 +204,6 @@ async def fetch(service: WebToolsService, url: str, max_chars: int | None = None
 
 
 def fetch_tool(service: WebToolsService) -> Any:
-    from langchain_core.tools import tool
-
     @tool("web_fetch")
     async def web_fetch(url: str, max_chars: int | None = None) -> str:
         """Fetch a web page or file by URL and return its readable text (HTML reduced to text with links kept,

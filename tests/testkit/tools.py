@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from pydantic import BaseModel
@@ -27,8 +28,6 @@ def apply(ctx: Any, config: Config) -> None:
 
     async def slow(seconds: float) -> str:
         """Report after a delay."""
-        import asyncio
-
         await asyncio.sleep(seconds)
         return "slept"
 

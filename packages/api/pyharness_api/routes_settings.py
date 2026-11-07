@@ -24,15 +24,13 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 
 from pyharness import manage
+from pyharness.credentials import reference_for
+from pyharness_llm import PROTOCOLS, LLMConfig, LLMConfigError, ProviderConfig, split_spec, type_info
 
 from .models import AgentDefaults, CompactionSettings, DefaultModel, RouteSettings
 
 
 def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
-    from pyharness_llm import PROTOCOLS, LLMConfig, LLMConfigError, ProviderConfig, split_spec, type_info
-
-    from pyharness.credentials import reference_for
-
     router = APIRouter()
 
     def llm() -> Any:

@@ -8,18 +8,23 @@ import base64
 import hashlib
 import secrets
 from dataclasses import dataclass, field
+from textwrap import dedent
 from typing import Any
 from urllib.parse import parse_qs, urlencode, urlparse
 
-SUCCESS_HTML = (
-    "<!doctype html><meta charset=utf-8><title>Login successful</title>"
-    "<body style='font-family:system-ui;padding:40px'><h1>Login successful</h1>"
-    "<p>You can close this tab and return to pyharness.</p></body>"
-)
-FAILED_HTML = (
-    "<!doctype html><meta charset=utf-8><title>Login failed</title>"
-    "<body style='font-family:system-ui;padding:40px'><h1>Login failed</h1><p>{detail}</p></body>"
-)
+SUCCESS_HTML = dedent(
+    """
+    <!doctype html><meta charset=utf-8><title>Login successful</title>
+    <body style='font-family:system-ui;padding:40px'><h1>Login successful</h1>
+    <p>You can close this tab and return to pyharness.</p></body>
+    """
+).strip()
+FAILED_HTML = dedent(
+    """
+    <!doctype html><meta charset=utf-8><title>Login failed</title>
+    <body style='font-family:system-ui;padding:40px'><h1>Login failed</h1><p>{detail}</p></body>
+    """
+).strip()
 
 
 def b64url(data: bytes) -> str:

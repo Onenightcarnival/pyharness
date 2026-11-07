@@ -17,7 +17,14 @@ the model reads a skill with ``read_file``.
 
 from __future__ import annotations
 
+from textwrap import dedent
 from typing import TYPE_CHECKING, Any
+
+from deepagents import FilesystemPermission, create_deep_agent
+from deepagents.backends import CompositeBackend, FilesystemBackend, StateBackend
+from deepagents.middleware.subagents import GENERAL_PURPOSE_SUBAGENT
+
+from pyharness_llm import LLMConfigError
 
 from .config import MODES, SKILLS_MOUNT
 from .middleware import HarnessMiddleware
@@ -31,8 +38,6 @@ def backend_and_skills(
 ) -> tuple[Any, list[str], list[Any]]:
     """Backend for the workspace and mode with the preset's skills routes, the skill sources, and the write-deny
     rules."""
-    from deepagents import FilesystemPermission
-
     workspaces = loop.ctx.get("workspace", None)
     if workspaces is not None and hasattr(workspaces, "backend_for"):
         backend = workspaces.backend_for(workspace, shell=mode != "read-only")
@@ -45,8 +50,6 @@ def backend_and_skills(
     mounts = [(s, p) for s, p, _, presets in loop._skills if presets is None or preset in presets]
     if not mounts:
         return backend, sources, rules
-    from deepagents.backends import CompositeBackend, FilesystemBackend, StateBackend
-
     routes: dict[str, Any] = {}
     for slug, path in mounts:
         mount = f"{SKILLS_MOUNT}/{slug}/"
@@ -80,8 +83,6 @@ def resolve_subagent(loop: DeepAgentsLoop, spec: dict[str, Any], registry: dict[
 def built_model(loop: DeepAgentsLoop) -> tuple[str | None, Any]:
     """Model the graph is built with. An unusable default falls back to ``echo:echo`` so the harness boots;
     requests then resolve the configured model and report its error in the session."""
-    from pyharness_llm import LLMConfigError
-
     spec = loop.config.model or loop.ctx.llm.default
     try:
         return spec, loop.ctx.llm.resolve(spec)
@@ -100,9 +101,6 @@ async def build(
     loop: DeepAgentsLoop, workspace: str | None = None, mode: str | None = None, preset: str | None = None
 ) -> Any:
     """Graph for a workspace root (``None``: the default), a permission mode and an agent preset."""
-    from deepagents import create_deep_agent
-    from deepagents.middleware.subagents import GENERAL_PURPOSE_SUBAGENT
-
     ctx = loop.ctx
     mode = loop.mode(mode)
     preset_id, preset_cfg = loop.preset(preset)
@@ -130,11 +128,14 @@ async def build(
     permissions = [*permissions, *rules]
     interrupt_on = {} if mode == "full-access" else {**ctx.tools.interrupt_on(), **loop.config.interrupt_on}
     root = ws.root if ws is not None and hasattr(ws, "root") else "(none)"
-    policy = (
-        f"## Session policy\nPermission mode: {MODES[mode]['title']}. {MODES[mode]['description']}\n"
-        f"Agent preset: {preset_cfg.title}. Workspace root: {root}; "
-        "the file tools address it as `/` (paths inside the workspace are relative to that root)."
-    )
+    policy = dedent(
+        f"""
+        ## Session policy
+        Permission mode: {MODES[mode]["title"]}. {MODES[mode]["description"]}
+        Agent preset: {preset_cfg.title}. Workspace root: {root};
+        the file tools address it as `/` (paths inside the workspace are relative to that root).
+        """
+    ).strip()
     kwargs: dict[str, Any] = {
         "model": model,
         "tools": tools,

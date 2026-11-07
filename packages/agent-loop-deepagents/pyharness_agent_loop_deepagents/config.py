@@ -12,28 +12,27 @@
 
 from __future__ import annotations
 
+from textwrap import dedent
 from typing import Any
 
 from pydantic import BaseModel, Field
 
+from pyharness import package_toml
+
+_CFG = package_toml(__file__)
+
 SKILLS_MOUNT = "/skills"
 
 MODES: dict[str, dict[str, str]] = {
-    "read-only": {
-        "title": "Read only",
-        "description": "File tools read the workspace; writes and the shell are unavailable.",
-    },
-    "workspace-write": {
-        "title": "Workspace write",
-        "description": "File tools write inside the workspace; gated tools ask for approval.",
-    },
-    "full-access": {"title": "Full access", "description": "Workspace writes and the shell without approval prompts."},
+    id: {"title": m["title"], "description": m["description"]} for id, m in _CFG["modes"].items()
 }
 
-DEFAULT_SYSTEM_PROMPT = (
-    "Role: agent inside pyharness, a plugin-based agent harness.\n"
-    "Style: direct answers; tools where they help; failures reported plainly."
-)
+DEFAULT_SYSTEM_PROMPT = dedent(
+    """
+    Role: agent inside pyharness, a plugin-based agent harness.
+    Style: direct answers; tools where they help; failures reported plainly.
+    """
+).strip()
 
 
 class PresetConfig(BaseModel):
@@ -44,22 +43,7 @@ class PresetConfig(BaseModel):
     order: int = 100
 
 
-DEFAULT_PRESETS: dict[str, PresetConfig] = {
-    "standard": PresetConfig(
-        title="Standard",
-        description="Everyday work in the workspace: files, shell, subagents. Plugin management stays out of the way.",
-        exclude_tools=["plugin_manager", "harness_inspect"],
-        order=1,
-    ),
-    "creator": PresetConfig(
-        title="Creator",
-        description=(
-            "Standard plus harness inspection, plugin management and the plugin-authoring skills: "
-            "extend the harness itself."
-        ),
-        order=2,
-    ),
-}
+DEFAULT_PRESETS: dict[str, PresetConfig] = {id: PresetConfig(**p) for id, p in _CFG["presets"].items()}
 
 
 class LoopConfig(BaseModel):

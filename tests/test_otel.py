@@ -8,10 +8,10 @@ import json
 
 import httpx
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from pyharness_otel import OtelService, normalize_endpoint, signal_url
-from test_agent import scripted_patch
 
 from pyharness import Harness, Profile
+from pyharness_otel import OtelService, normalize_endpoint, signal_url
+from test_agent import scripted_patch
 from testkit import scripted
 
 

@@ -33,7 +33,11 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import StreamingResponse
 
+from pyharness_agent import RestartPending, SessionBusy
+
 from . import references
+from .highlight import escaped_lines
+from .highlight import lines as highlighted_lines
 from .models import (
     Approvals,
     NewMessage,
@@ -45,6 +49,11 @@ from .models import (
     SessionTitle,
 )
 
+try:
+    from pyharness_ask_user import normalize_answers
+except ImportError:  # optional plugin package; the answers route answers 503 without it
+    normalize_answers = None
+
 
 def _sse(events: AsyncIterator[dict[str, Any]]) -> StreamingResponse:
     async def body() -> AsyncIterator[bytes]:
@@ -55,8 +64,6 @@ def _sse(events: AsyncIterator[dict[str, Any]]) -> StreamingResponse:
 
 
 def build_sessions_router(ctx: Any) -> APIRouter:
-    from pyharness_agent import RestartPending, SessionBusy
-
     router = APIRouter()
     agents = ctx.agents
 
@@ -155,9 +162,6 @@ def build_sessions_router(ctx: Any) -> APIRouter:
             diff = await changes.diff(session_id, run_id, index)
         except LookupError as exc:
             raise HTTPException(404, str(exc)) from None
-        from .highlight import escaped_lines
-        from .highlight import lines as highlighted_lines
-
         name = diff["path"].rsplit("/", 1)[-1]
         for hunk in diff.get("hunks", []):
             for side, kinds in (("old", ("ctx", "del")), ("new", ("ctx", "add"))):
@@ -247,9 +251,9 @@ def build_sessions_router(ctx: Any) -> APIRouter:
         target = next((i for i in pending if body.interrupt_id in (None, i["id"])), None)
         if target is None:
             raise HTTPException(409, f"no pending question with interrupt id {body.interrupt_id!r}")
+        if normalize_answers is None:
+            raise HTTPException(503, "ask-user plugin unavailable")
         try:
-            from pyharness_ask_user import normalize_answers
-
             answers = normalize_answers(target["value"].get("questions") or [], body.answers)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None

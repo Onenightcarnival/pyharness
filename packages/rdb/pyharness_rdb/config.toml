@@ -1,0 +1,70 @@
+# Data of pyharness_rdb; loaded with pyharness.package_toml(__file__).
+
+# driver.DEFAULT_PORT: default port per connection kind (0 for sqlite)
+[driver.default_port]
+sqlite = 0
+postgres = 5432
+gaussdb = 8000
+mysql = 3306
+
+# postgres.PG_TYPES: pg_type oid -> type name of result columns
+[postgres.types]
+16 = "bool"
+17 = "bytea"
+18 = "char"
+19 = "name"
+20 = "int8"
+21 = "int2"
+23 = "int4"
+25 = "text"
+26 = "oid"
+114 = "json"
+142 = "xml"
+700 = "float4"
+701 = "float8"
+790 = "money"
+1042 = "bpchar"
+1043 = "varchar"
+1082 = "date"
+1083 = "time"
+1114 = "timestamp"
+1184 = "timestamptz"
+1186 = "interval"
+1266 = "timetz"
+1700 = "numeric"
+2950 = "uuid"
+3802 = "jsonb"
+1007 = "int4[]"
+1009 = "text[]"
+1015 = "varchar[]"
+
+# mysql.MYSQL_TYPES: field type code -> type name of result columns
+[mysql.types]
+0 = "decimal"
+1 = "tinyint"
+2 = "smallint"
+3 = "int"
+4 = "float"
+5 = "double"
+6 = "null"
+7 = "timestamp"
+8 = "bigint"
+9 = "mediumint"
+10 = "date"
+11 = "time"
+12 = "datetime"
+13 = "year"
+14 = "date"
+15 = "varchar"
+16 = "bit"
+245 = "json"
+246 = "decimal"
+247 = "enum"
+248 = "set"
+249 = "tinyblob"
+250 = "mediumblob"
+251 = "longblob"
+252 = "blob"
+253 = "varchar"
+254 = "char"
+255 = "geometry"

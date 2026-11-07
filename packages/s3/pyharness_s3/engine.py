@@ -11,29 +11,19 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+import boto3
+from boto3.s3.transfer import TransferConfig
+from botocore.config import Config as BotoConfig
+
+from pyharness import package_toml
+
 MAX_PAGE = 1000
 MAX_TEXT_BYTES = 2 * 1024 * 1024
 PRESIGN_MAX = 604800
 DELETE_BATCH = 1000
 PART_SIZE = 8 * 1024 * 1024
 
-MIME = {
-    ".txt": "text/plain; charset=utf-8", ".md": "text/markdown; charset=utf-8", ".csv": "text/csv; charset=utf-8",
-    ".json": "application/json", ".yml": "application/yaml", ".yaml": "application/yaml", ".xml": "application/xml",
-    ".html": "text/html; charset=utf-8", ".htm": "text/html; charset=utf-8", ".css": "text/css",
-    ".js": "text/javascript", ".mjs": "text/javascript", ".ts": "text/plain; charset=utf-8", ".py": "text/x-python",
-    ".sh": "text/x-shellscript", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif",
-    ".webp": "image/webp", ".svg": "image/svg+xml", ".ico": "image/x-icon", ".bmp": "image/bmp", ".avif": "image/avif",
-    ".pdf": "application/pdf", ".zip": "application/zip", ".gz": "application/gzip", ".tar": "application/x-tar",
-    ".tgz": "application/gzip", ".7z": "application/x-7z-compressed", ".rar": "application/vnd.rar",
-    ".mp4": "video/mp4", ".webm": "video/webm", ".mov": "video/quicktime", ".mp3": "audio/mpeg", ".wav": "audio/wav",
-    ".ogg": "audio/ogg", ".flac": "audio/flac", ".woff": "font/woff", ".woff2": "font/woff2", ".ttf": "font/ttf",
-    ".doc": "application/msword", ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ".xls": "application/vnd.ms-excel", ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    ".ppt": "application/vnd.ms-powerpoint",
-    ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation", ".wasm": "application/wasm",
-    ".parquet": "application/vnd.apache.parquet", ".log": "text/plain; charset=utf-8",
-}  # fmt: skip
+MIME: dict[str, str] = package_toml(__file__)["engine"]["mime"]  # file extension -> media type
 PREVIEWABLE = re.compile(r"^(image/(png|jpeg|gif|webp|bmp|avif)|application/pdf|video/|audio/)")
 
 
@@ -84,9 +74,6 @@ def human(n: int | float) -> str:
 
 
 def make_client(profile: dict[str, Any], secret: str) -> Any:
-    import boto3
-    from botocore.config import Config
-
     kwargs: dict[str, Any] = {
         "s3": {"addressing_style": "path" if profile.get("pathStyle") else "virtual"},
         "retries": {"max_attempts": 3},
@@ -94,11 +81,11 @@ def make_client(profile: dict[str, Any], secret: str) -> Any:
         "read_timeout": 60,
     }
     try:
-        cfg = Config(
+        cfg = BotoConfig(
             request_checksum_calculation="when_required", response_checksum_validation="when_required", **kwargs
         )
     except TypeError:  # older botocore
-        cfg = Config(**kwargs)
+        cfg = BotoConfig(**kwargs)
     return boto3.client(
         "s3",
         region_name=profile.get("region") or "us-east-1",
@@ -262,8 +249,6 @@ class Bucket:
         return out
 
     def upload_stream(self, key: str, stream: Any, content_type: str | None = None) -> None:
-        from boto3.s3.transfer import TransferConfig
-
         self.client.upload_fileobj(
             stream,
             self.bucket,

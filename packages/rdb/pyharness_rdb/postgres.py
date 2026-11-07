@@ -3,16 +3,17 @@
 from __future__ import annotations
 
 import re
+from textwrap import dedent
 from typing import Any
+
+import psycopg
+
+from pyharness import package_toml
 
 from .driver import CONNECT_TIMEOUT_S, Driver, EngineError, QueryResult, SessionState, _Cursor
 
-PG_TYPES = {
-    16: "bool", 17: "bytea", 18: "char", 19: "name", 20: "int8", 21: "int2", 23: "int4", 25: "text", 26: "oid",
-    114: "json", 142: "xml", 700: "float4", 701: "float8", 790: "money", 1042: "bpchar", 1043: "varchar", 1082: "date",
-    1083: "time", 1114: "timestamp", 1184: "timestamptz", 1186: "interval", 1266: "timetz", 1700: "numeric",
-    2950: "uuid", 3802: "jsonb", 1007: "int4[]", 1009: "text[]", 1015: "varchar[]",
-}  # fmt: skip
+# pg_type oid -> type name of result columns
+PG_TYPES: dict[int, str] = {int(oid): name for oid, name in package_toml(__file__)["postgres"]["types"].items()}
 
 
 class PgDriver(Driver):
@@ -20,8 +21,6 @@ class PgDriver(Driver):
 
     def __init__(self, kind: str, host: str, port: int, database: str, user: str, password: str, ssl: bool) -> None:
         super().__init__()
-        import psycopg
-
         self.kind = kind
         self.conn = psycopg.connect(
             host=host, port=port, dbname=database, user=user, password=password, connect_timeout=CONNECT_TIMEOUT_S,
@@ -50,8 +49,6 @@ class PgDriver(Driver):
             pass
 
     def query(self, sql: str, params: list[Any] | None, max_rows: int, timeout_ms: int) -> QueryResult:
-        import psycopg
-
         with self.lock:
             self._timeout(timeout_ms)
             try:
@@ -83,36 +80,40 @@ class PgDriver(Driver):
                 raise
 
     def list_schemas(self) -> list[str]:
-        return [
-            r["nspname"]
-            for r in self._rows(
-                "SELECT nspname FROM pg_namespace WHERE nspname NOT IN ('pg_catalog','information_schema','pg_toast') "
-                "AND nspname NOT LIKE 'pg_temp%' AND nspname NOT LIKE 'pg_toast%' "
-                "ORDER BY (nspname <> 'public'), nspname"
-            )
-        ]
+        sql = dedent(
+            """
+            SELECT nspname FROM pg_namespace WHERE nspname NOT IN ('pg_catalog','information_schema','pg_toast')
+            AND nspname NOT LIKE 'pg_temp%' AND nspname NOT LIKE 'pg_toast%'
+            ORDER BY (nspname <> 'public'), nspname
+            """
+        ).strip()
+        return [r["nspname"] for r in self._rows(sql)]
 
     def list_tables(self, schema: str) -> list[dict[str, str]]:
-        rows = self._rows(
-            "SELECT c.relname AS name, c.relkind AS kind FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
-            "WHERE n.nspname = %s AND c.relkind IN ('r','p','v','m','f') ORDER BY (c.relkind IN ('v','m')), c.relname",
-            [schema],
-        )
+        sql = dedent(
+            """
+            SELECT c.relname AS name, c.relkind AS kind FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = %s AND c.relkind IN ('r','p','v','m','f') ORDER BY (c.relkind IN ('v','m')), c.relname
+            """
+        ).strip()
+        rows = self._rows(sql, [schema])
         return [
             {"schema": schema, "name": r["name"], "kind": "view" if r["kind"] in ("v", "m") else "table"} for r in rows
         ]
 
     def columns(self, schema: str, table: str) -> list[dict[str, Any]]:
-        rows = self._rows(
-            "SELECT a.attnum AS position, a.attname AS name, format_type(a.atttypid, a.atttypmod) AS type, "
-            "NOT a.attnotnull AS nullable, pg_get_expr(d.adbin, d.adrelid) AS default_value, "
-            "EXISTS (SELECT 1 FROM pg_index i WHERE i.indrelid = c.oid AND i.indisprimary "
-            "AND a.attnum = ANY(i.indkey)) AS primary_key "
-            "FROM pg_attribute a JOIN pg_class c ON c.oid = a.attrelid JOIN pg_namespace n ON n.oid = c.relnamespace "
-            "LEFT JOIN pg_attrdef d ON d.adrelid = c.oid AND d.adnum = a.attnum "
-            "WHERE n.nspname = %s AND c.relname = %s AND a.attnum > 0 AND NOT a.attisdropped ORDER BY a.attnum",
-            [schema, table],
-        )
+        sql = dedent(
+            """
+            SELECT a.attnum AS position, a.attname AS name, format_type(a.atttypid, a.atttypmod) AS type,
+            NOT a.attnotnull AS nullable, pg_get_expr(d.adbin, d.adrelid) AS default_value,
+            EXISTS (SELECT 1 FROM pg_index i WHERE i.indrelid = c.oid AND i.indisprimary
+            AND a.attnum = ANY(i.indkey)) AS primary_key
+            FROM pg_attribute a JOIN pg_class c ON c.oid = a.attrelid JOIN pg_namespace n ON n.oid = c.relnamespace
+            LEFT JOIN pg_attrdef d ON d.adrelid = c.oid AND d.adnum = a.attnum
+            WHERE n.nspname = %s AND c.relname = %s AND a.attnum > 0 AND NOT a.attisdropped ORDER BY a.attnum
+            """
+        ).strip()
+        rows = self._rows(sql, [schema, table])
         return [
             {
                 "name": r["name"],
@@ -126,22 +127,23 @@ class PgDriver(Driver):
         ]
 
     def indexes(self, schema: str, table: str) -> list[dict[str, Any]]:
-        rows = self._rows(
-            'SELECT ic.relname AS name, i.indisunique AS "unique", i.indisprimary AS "primary", i.indkey::text AS keys '
-            "FROM pg_index i JOIN pg_class c ON c.oid = i.indrelid JOIN pg_class ic ON ic.oid = i.indexrelid "
-            "JOIN pg_namespace n ON n.oid = c.relnamespace "
-            "WHERE n.nspname = %s AND c.relname = %s ORDER BY i.indisprimary DESC, ic.relname",
-            [schema, table],
-        )
-        names = {
-            r["attnum"]: r["name"]
-            for r in self._rows(
-                "SELECT a.attnum, a.attname::text AS name FROM pg_attribute a JOIN pg_class c ON c.oid = a.attrelid "
-                "JOIN pg_namespace n ON n.oid = c.relnamespace "
-                "WHERE n.nspname = %s AND c.relname = %s AND a.attnum > 0 AND NOT a.attisdropped",
-                [schema, table],
-            )
-        }
+        index_sql = dedent(
+            """
+            SELECT ic.relname AS name, i.indisunique AS "unique", i.indisprimary AS "primary", i.indkey::text AS keys
+            FROM pg_index i JOIN pg_class c ON c.oid = i.indrelid JOIN pg_class ic ON ic.oid = i.indexrelid
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = %s AND c.relname = %s ORDER BY i.indisprimary DESC, ic.relname
+            """
+        ).strip()
+        attnum_sql = dedent(
+            """
+            SELECT a.attnum, a.attname::text AS name FROM pg_attribute a JOIN pg_class c ON c.oid = a.attrelid
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = %s AND c.relname = %s AND a.attnum > 0 AND NOT a.attisdropped
+            """
+        ).strip()
+        rows = self._rows(index_sql, [schema, table])
+        names = {r["attnum"]: r["name"] for r in self._rows(attnum_sql, [schema, table])}
         out = []
         for r in rows:
             keys = [int(k) for k in str(r["keys"]).split()]
@@ -173,22 +175,23 @@ class PgDriver(Driver):
         if pk:
             lines.append("  PRIMARY KEY (" + ", ".join(q(c) for c in pk) + ")")
         out = [f"CREATE TABLE {q(schema)}.{q(table)} (\n" + ",\n".join(lines) + "\n);"]
-        out += [
-            r["indexdef"] + ";"
-            for r in self._rows(
-                "SELECT indexdef FROM pg_indexes WHERE schemaname = %s AND tablename = %s AND indexname NOT IN "
-                "(SELECT ic.relname FROM pg_index i JOIN pg_class ic ON ic.oid = i.indexrelid WHERE i.indisprimary)",
-                [schema, table],
-            )
-        ]
+        index_sql = dedent(
+            """
+            SELECT indexdef FROM pg_indexes WHERE schemaname = %s AND tablename = %s AND indexname NOT IN
+            (SELECT ic.relname FROM pg_index i JOIN pg_class ic ON ic.oid = i.indexrelid WHERE i.indisprimary)
+            """
+        ).strip()
+        out += [r["indexdef"] + ";" for r in self._rows(index_sql, [schema, table])]
         return "\n".join(out)
 
     def estimated_rows(self, schema: str, table: str) -> int | None:
-        rows = self._rows(
-            "SELECT c.reltuples::bigint AS n FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
-            "WHERE n.nspname = %s AND c.relname = %s",
-            [schema, table],
-        )
+        sql = dedent(
+            """
+            SELECT c.reltuples::bigint AS n FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = %s AND c.relname = %s
+            """
+        ).strip()
+        rows = self._rows(sql, [schema, table])
         n = rows[0]["n"] if rows else None
         return None if n is None or int(n) < 0 else int(n)
 

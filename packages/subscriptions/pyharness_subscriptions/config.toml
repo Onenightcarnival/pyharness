@@ -1,0 +1,144 @@
+# Provider endpoints, OAuth client ids and scopes, wire-level identifiers. One table per module; each module loads
+# its table with ``package_toml(__file__)``.
+
+[common]
+USER_AGENT = "pyharness-subscriptions/0.1 (+https://github.com/Onenightcarnival/dsh-toolkit)"
+# JSON fields searched for a rate-limit reset (seconds, epoch seconds or epoch ms).
+RESET_FIELDS = [
+    "resets_in_seconds",
+    "reset_after_seconds",
+    "resets_at",
+    "reset_at",
+    "retry_after",
+    "retry_after_seconds",
+]
+
+[store]
+PROVIDERS = ["codex", "chatgpt", "antigravity", "grok"]
+
+[store.PROVIDER_TOOLS]
+codex = ["image_generate", "web_search"]
+antigravity = ["image_generate", "web_search"]
+grok = ["image_generate", "video_generate", "x_search"]
+chatgpt = []
+
+[codex]
+CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
+AUTHORIZE_URL = "https://auth.openai.com/oauth/authorize"
+TOKEN_URL = "https://auth.openai.com/oauth/token"
+SCOPE = "openid profile email offline_access api.connectors.read api.connectors.invoke"
+BACKEND = "https://chatgpt.com/backend-api"
+NPM_LATEST_URL = "https://registry.npmjs.org/@openai%2fcodex/latest"
+CLIENT_VERSION_FLOOR = "0.153.4"
+# Refresh error codes after which the stored account is dropped.
+PERMANENT = ["refresh_token_expired", "refresh_token_reused", "refresh_token_invalidated", "invalid_grant"]
+
+[codex.EFFORT_NAMES]
+xhigh = "Extra High"
+
+[codex_tools]
+SEARCH_MODEL = "gpt-5.6-terra"
+IMAGE_MODEL = "gpt-image-2"
+
+[chatgpt]
+ISSUER = "https://auth.openai.com"
+AUTHORIZE_URL = "https://auth.openai.com/api/accounts/authorize"
+TOKEN_URL = "https://auth.openai.com/api/accounts/oauth/token"
+JWKS_URL = "https://auth.openai.com/.well-known/jwks.json"
+SCOPE = "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct"
+RESOURCE = "https://api.openai.com/v1"
+API = "https://api.openai.com/v1"
+DYNAMIC_CLIENT = "dynamic_agent_client"
+AGENT_NAME = "pyharness toolkit"
+NAMESPACE = "pyharness"
+# Refresh error codes after which the stored account is dropped.
+PERMANENT = [
+    "invalid_grant",
+    "invalid_refresh_token",
+    "token_expired",
+    "refresh_token_expired",
+    "refresh_token_invalidated",
+    "refresh_token_reused",
+]
+
+[grok]
+CLIENT_ID = "b1a00492-073a-47ea-816f-4c329264a828"
+DISCOVERY_URL = "https://auth.x.ai/.well-known/openid-configuration"
+# Authorize endpoint used until OIDC discovery has run.
+AUTHORIZE_URL = "https://auth.x.ai/oauth2/authorize"
+SCOPE = "openid profile email offline_access grok-cli:access api:access"
+API = "https://api.x.ai/v1"
+PROXY = "https://cli-chat-proxy.grok.com/v1"
+
+# Subscription tier names by the ``tier`` claim of the access token.
+[[grok.tiers]]
+level = 0
+name = "Free"
+
+[[grok.tiers]]
+level = 1
+name = "SuperGrok"
+
+[[grok.tiers]]
+level = 2
+name = "X Basic"
+
+[[grok.tiers]]
+level = 3
+name = "X Premium"
+
+[[grok.tiers]]
+level = 4
+name = "X Premium+"
+
+[[grok.tiers]]
+level = 5
+name = "SuperGrok Heavy"
+
+[[grok.tiers]]
+level = 6
+name = "SuperGrok Lite"
+
+[[grok.tiers]]
+level = 7
+name = "SuperGrok Plus"
+
+[grok_tools]
+SEARCH_MODEL = "grok-4"
+IMAGE_MODEL = "grok-imagine-image-2.0"
+VIDEO_MODEL = "grok-imagine-video-1.5"
+# Image size → Grok aspect ratio.
+[grok_tools.ASPECT]
+"1024x1024" = "1:1"
+"1024x1536" = "2:3"
+"1536x1024" = "3:2"
+auto = "auto"
+
+[antigravity]
+AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+TOKEN_URL = "https://oauth2.googleapis.com/token"
+USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+SCOPE = "openid https://www.googleapis.com/auth/aicode https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/cclog https://www.googleapis.com/auth/experimentsandconfigs"
+DEFAULT_CLIENT_ID = "1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com"
+DEFAULT_CLIENT_SECRET = "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"
+# Keys searched, in order, for the Cloud AI Companion project id in ``loadCodeAssist`` / ``onboardUser`` replies.
+PROJECT_KEYS = [
+    "antigravityProjectId",
+    "projectId",
+    "backendProjectId",
+    "userDefinedCloudaicompanionProject",
+    "cloudaicompanionProject",
+    "project",
+    "id",
+]
+PROJECT_LISTS = ["projects", "projectIds", "cloudaicompanionProjects"]
+
+[antigravity_tools]
+SEARCH_MODEL = "gemini-3-flash"
+IMAGE_MODEL = "gemini-3.1-flash-image"
+
+[antigravity_wire]
+DEFAULT_ORIGIN = "https://cloudcode-pa.googleapis.com"
+FALLBACK_ORIGIN = "https://daily-cloudcode-pa.sandbox.googleapis.com"
+# HTTP statuses after which the next origin is tried.
+FALLBACK_STATUSES = [403, 404, 429, 500, 502, 503, 504]

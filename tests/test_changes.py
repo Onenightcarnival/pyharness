@@ -7,9 +7,9 @@ import os
 import subprocess
 
 import httpx
-from pyharness_workspace_changes import parse_unified
 
 from pyharness import Harness, Profile
+from pyharness_workspace_changes import parse_unified
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 

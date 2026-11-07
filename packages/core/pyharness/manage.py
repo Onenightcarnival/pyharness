@@ -37,7 +37,9 @@ from importlib import metadata, util
 from pathlib import Path
 from typing import Any
 
-from .config import ConfigError
+from packaging.requirements import Requirement
+
+from .config import ConfigError, find
 from .plugin import BUNDLE_GROUP
 from .preflight import run_preflight
 from .profile import Profile
@@ -130,8 +132,6 @@ def _prune_stale_dist_infos(profile: Profile, keep: metadata.Distribution) -> No
 
 
 def unmet_requirements(dist: metadata.Distribution) -> list[str]:
-    from packaging.requirements import Requirement
-
     unmet = []
     for raw in dist.requires or []:
         req = Requirement(raw)
@@ -437,8 +437,6 @@ async def set_entry_enabled(
     preflight: bool = True,
 ) -> dict[str, Any]:
     async with _locked(profile):
-        from .config import find
-
         if find(profile.compose().tree, entry_id) is None:
             return {"application": "rejected", "error": f"no entry {entry_id!r} in profile {profile.name!r}"}
         txn = _Transaction(profile, site=False)
@@ -460,8 +458,6 @@ async def set_entry_config(
 ) -> dict[str, Any]:
     """Patch an entry's ``config`` in the profile patch (see :meth:`Profile.set_entry_config`)."""
     async with _locked(profile):
-        from .config import find
-
         if find(profile.compose().tree, entry_id) is None:
             return {"application": "rejected", "error": f"no entry {entry_id!r} in profile {profile.name!r}"}
         txn = _Transaction(profile, site=False)

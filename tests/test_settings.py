@@ -11,6 +11,9 @@ import stat
 import httpx
 import pytest
 import yaml
+
+from pyharness import CredentialStore, Harness, Profile
+from pyharness.credentials import reference_for
 from pyharness_llm import (
     LLMConfig,
     LLMConfigError,
@@ -20,9 +23,6 @@ from pyharness_llm import (
     translate_options,
     type_info,
 )
-
-from pyharness import CredentialStore, Harness, Profile
-from pyharness.credentials import reference_for
 from testkit import scripted
 
 

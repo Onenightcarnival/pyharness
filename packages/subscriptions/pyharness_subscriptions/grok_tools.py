@@ -4,17 +4,28 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Any, Literal
+from textwrap import dedent
+from typing import TYPE_CHECKING, Any, Literal
 from urllib.parse import quote
 
 import httpx
 from langchain_core.tools import tool
 from pydantic import BaseModel, ConfigDict, Field
 
-from .codex import generate_images
+from pyharness import package_toml
+
 from .common import LlmError, http_error
-from .grok import API, GrokProvider
-from .media import describe_images, read_reference, save_images
+from .media import describe_images, generate_images, read_reference, save_images
+
+if TYPE_CHECKING:
+    from .grok import GrokProvider
+
+_CFG = package_toml(__file__)
+API: str = _CFG["grok"]["API"]
+SEARCH_MODEL: str = _CFG["grok_tools"]["SEARCH_MODEL"]
+IMAGE_MODEL: str = _CFG["grok_tools"]["IMAGE_MODEL"]
+VIDEO_MODEL: str = _CFG["grok_tools"]["VIDEO_MODEL"]
+ASPECT: dict[str, str] = dict(_CFG["grok_tools"]["ASPECT"])
 
 
 class XSearchArgs(BaseModel):
@@ -45,16 +56,15 @@ class VideoArgs(BaseModel):
     image_url: str | None = Field(None, description="Public URL or data URL of a still image (image-to-video).")
 
 
-ASPECT = {"1024x1024": "1:1", "1024x1536": "2:3", "1536x1024": "3:2", "auto": "auto"}
-
-
 def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
     @tool(
         "grok_x_search",
-        description=(
-            "Search X (Twitter) posts, profiles and threads through the Grok subscription; "
-            "returns an answer with citation URLs."
-        ),
+        description=dedent(
+            """
+            Search X (Twitter) posts, profiles and threads through the Grok subscription;
+            returns an answer with citation URLs.
+            """
+        ).strip(),
         args_schema=XSearchArgs,
     )
     async def grok_x_search(**kwargs: Any) -> str:
@@ -85,7 +95,7 @@ def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
                 f"{API}/responses",
                 headers=provider.headers(session, **{"content-type": "application/json"}),
                 json={
-                    "model": "grok-4",
+                    "model": SEARCH_MODEL,
                     "input": [{"role": "user", "content": args.query}],
                     "tools": [tool_spec],
                     "store": False,
@@ -116,10 +126,12 @@ def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
 
     @tool(
         "grok_image_generate",
-        description=(
-            "Generate an image with grok-imagine-image-2.0 through the Grok subscription, or edit local reference "
-            "images. Saves the images and returns their paths and preview URLs."
-        ),
+        description=dedent(
+            """
+            Generate an image with grok-imagine-image-2.0 through the Grok subscription, or edit local reference
+            images. Saves the images and returns their paths and preview URLs.
+            """
+        ).strip(),
         args_schema=ImageArgs,
     )
     async def grok_image_generate(**kwargs: Any) -> str:
@@ -132,7 +144,7 @@ def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
                 refs.append(read_reference(path)[1])
             except Exception as exc:  # noqa: BLE001
                 return f"Error: cannot read reference image {path}: {exc}"
-        body: dict[str, Any] = {"prompt": args.prompt, "model": "grok-imagine-image-2.0", "response_format": "b64_json"}
+        body: dict[str, Any] = {"prompt": args.prompt, "model": IMAGE_MODEL, "response_format": "b64_json"}
         if args.size:
             body["aspect_ratio"] = ASPECT[args.size]
         if args.quality in ("low", "medium", "high"):
@@ -158,17 +170,19 @@ def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
 
     @tool(
         "grok_video_generate",
-        description=(
-            "Generate a 1–15 second video with grok-imagine-video-1.5 through the Grok subscription (text-to-video, "
-            "or image-to-video with image_url). Saves an MP4 and returns its path and preview URL."
-        ),
+        description=dedent(
+            """
+            Generate a 1–15 second video with grok-imagine-video-1.5 through the Grok subscription (text-to-video,
+            or image-to-video with image_url). Saves an MP4 and returns its path and preview URL.
+            """
+        ).strip(),
         args_schema=VideoArgs,
     )
     async def grok_video_generate(**kwargs: Any) -> str:
         if not service.tool_enabled("grok", "video_generate", at_creation=True):
             return "Error: grok_video_generate is disabled on the AI subscriptions page"
         args = VideoArgs(**kwargs)
-        body: dict[str, Any] = {"prompt": args.prompt, "model": "grok-imagine-video-1.5"}
+        body: dict[str, Any] = {"prompt": args.prompt, "model": VIDEO_MODEL}
         for key in ("duration", "aspect_ratio", "resolution"):
             if getattr(args, key) is not None:
                 body[key] = getattr(args, key)
@@ -221,10 +235,12 @@ def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
         path = service.media.video_path()
         path.write_bytes(download.content)
         duration = video.get("duration")
-        return (
-            f"Saved video to {path}{f' ({duration}s)' if duration else ''}\n"
-            f"Preview URL: {service.media_url(path)}\n"
-            f"Temporary provider URL (expires soon): {url}"
-        )
+        return dedent(
+            f"""
+            Saved video to {path}{f" ({duration}s)" if duration else ""}
+            Preview URL: {service.media_url(path)}
+            Temporary provider URL (expires soon): {url}
+            """
+        ).strip()
 
     return [grok_x_search, grok_image_generate, grok_video_generate]

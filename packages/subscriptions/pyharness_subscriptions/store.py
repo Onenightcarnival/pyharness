@@ -11,13 +11,11 @@ import time
 from pathlib import Path
 from typing import Any
 
-PROVIDERS = ("codex", "chatgpt", "antigravity", "grok")
-PROVIDER_TOOLS: dict[str, tuple[str, ...]] = {
-    "codex": ("image_generate", "web_search"),
-    "antigravity": ("image_generate", "web_search"),
-    "grok": ("image_generate", "video_generate", "x_search"),
-    "chatgpt": (),
-}
+from pyharness import package_toml
+
+_CFG = package_toml(__file__)["store"]
+PROVIDERS: tuple[str, ...] = tuple(_CFG["PROVIDERS"])
+PROVIDER_TOOLS: dict[str, tuple[str, ...]] = {k: tuple(v) for k, v in _CFG["PROVIDER_TOOLS"].items()}
 
 
 class JsonFile:

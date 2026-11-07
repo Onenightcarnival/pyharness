@@ -20,23 +20,12 @@ from pygments.lexer import Lexer
 from pygments.lexers import get_lexer_by_name, get_lexer_for_filename
 from pygments.util import ClassNotFound
 
+from pyharness import package_toml
+
 MAX_CHARS = 400_000
 FORMATTER = HtmlFormatter(nowrap=True, classprefix="hl-")
-ALIASES = {
-    "sh": "bash",
-    "shell": "bash",
-    "zsh": "bash",
-    "console": "console",
-    "jsonc": "json",
-    "yml": "yaml",
-    "py": "python",
-    "js": "javascript",
-    "ts": "typescript",
-    "md": "markdown",
-    "text": None,
-    "txt": None,
-    "plain": None,
-}
+# Fence language -> lexer name; ``None`` means plain text (``""`` in the TOML).
+ALIASES: dict[str, str | None] = {k: v or None for k, v in package_toml(__file__)["highlight"]["ALIASES"].items()}
 
 
 @lru_cache(maxsize=256)

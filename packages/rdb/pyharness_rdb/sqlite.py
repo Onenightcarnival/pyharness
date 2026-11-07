@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 import time
+from textwrap import dedent
 from typing import Any
 
 from .driver import Driver, EngineError, QueryResult, _Cursor
@@ -48,10 +49,13 @@ class SQLiteDriver(Driver):
 
     def list_tables(self, schema: str) -> list[dict[str, str]]:
         q = self.quote_ident
-        rows = self._rows(
-            f"SELECT name, type FROM {q(schema)}.sqlite_master WHERE type IN ('table','view') "
-            "AND name NOT LIKE 'sqlite_%' ORDER BY type, name"
-        )
+        sql = dedent(
+            f"""
+            SELECT name, type FROM {q(schema)}.sqlite_master WHERE type IN ('table','view')
+            AND name NOT LIKE 'sqlite_%' ORDER BY type, name
+            """
+        ).strip()
+        rows = self._rows(sql)
         return [{"schema": schema, "name": r["name"], "kind": "view" if r["type"] == "view" else "table"} for r in rows]
 
     def columns(self, schema: str, table: str) -> list[dict[str, Any]]:

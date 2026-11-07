@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from textwrap import dedent
 from typing import TYPE_CHECKING, Any
 
 from langchain_core.tools import tool
@@ -10,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .engine import Bucket, error_text, human
 
 if TYPE_CHECKING:
-    from .service import S3Service
+    from .service import S3Service  # type-only: .service imports this module
 
 TOOL_LIST_MAX = 500
 TOOL_LIST_DEFAULT = 200
@@ -32,9 +33,13 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_buckets",
-        description="List the S3-compatible bucket profiles configured in the S3 panel (name, bucket, endpoint, "
-        "region, key prefix). Every other s3_* tool takes one of these profile names. Triggers: S3, bucket, object "
-        "storage, MinIO, OSS, COS, R2, cloud storage files.",
+        description=dedent(
+            """
+            List the S3-compatible bucket profiles configured in the S3 panel (name, bucket, endpoint,
+            region, key prefix). Every other s3_* tool takes one of these profile names. Triggers: S3, bucket, object
+            storage, MinIO, OSS, COS, R2, cloud storage files.
+            """
+        ).strip(),
     )
     def s3_buckets() -> str:
         assert service.store is not None
@@ -50,9 +55,13 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_list",
-        description='List one "directory" level of a bucket profile: sub-prefixes (folders) and objects directly under '
-        '`prefix` (delimiter "/"). Paginated — pass `token` from the previous result to continue. Set `recursive` to '
-        "walk every object under the prefix instead (capped by `max`). Keys are relative to the profile prefix.",
+        description=dedent(
+            """
+            List one "directory" level of a bucket profile: sub-prefixes (folders) and objects directly under
+            `prefix` (delimiter "/"). Paginated — pass `token` from the previous result to continue. Set `recursive` to
+            walk every object under the prefix instead (capped by `max`). Keys are relative to the profile prefix.
+            """
+        ).strip(),
     )
     async def s3_list(
         profile: str = Field(description=PROFILE_DOC),
@@ -126,8 +135,12 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_get",
-        description="Read a TEXT object (config, log, CSV, JSON, HTML…) from a bucket and return its content. Bounded "
-        "by maxBytes (default 200 KiB, cap 2097152); binary objects are rejected — use s3_download for those.",
+        description=dedent(
+            """
+            Read a TEXT object (config, log, CSV, JSON, HTML…) from a bucket and return its content. Bounded
+            by maxBytes (default 200 KiB, cap 2097152); binary objects are rejected — use s3_download for those.
+            """
+        ).strip(),
     )
     async def s3_get(
         profile: str = Field(description=PROFILE_DOC),
@@ -146,8 +159,12 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_put",
-        description="Write a text object (create or overwrite) with the given content. For files already on this "
-        "machine use s3_upload instead. Overwrites silently — s3_stat first if the key may exist.",
+        description=dedent(
+            """
+            Write a text object (create or overwrite) with the given content. For files already on this
+            machine use s3_upload instead. Overwrites silently — s3_stat first if the key may exist.
+            """
+        ).strip(),
     )
     async def s3_put(
         profile: str = Field(description=PROFILE_DOC),
@@ -163,8 +180,12 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_upload",
-        description="Upload a file FROM this machine (the harness host) to a bucket. Large files use multipart upload "
-        "automatically.",
+        description=dedent(
+            """
+            Upload a file FROM this machine (the harness host) to a bucket. Large files use multipart upload
+            automatically.
+            """
+        ).strip(),
     )
     async def s3_upload(
         profile: str = Field(description=PROFILE_DOC),
@@ -179,8 +200,12 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_download",
-        description="Download one object to a path on this machine (the harness host); parent directories are "
-        "created. Use this for binary objects or anything larger than s3_get allows.",
+        description=dedent(
+            """
+            Download one object to a path on this machine (the harness host); parent directories are
+            created. Use this for binary objects or anything larger than s3_get allows.
+            """
+        ).strip(),
     )
     async def s3_download(
         profile: str = Field(description=PROFILE_DOC),
@@ -195,8 +220,12 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_copy",
-        description="Server-side copy (or move/rename with move=true) of one object inside the same bucket profile. "
-        "Objects above 5 GiB are not supported.",
+        description=dedent(
+            """
+            Server-side copy (or move/rename with move=true) of one object inside the same bucket profile.
+            Objects above 5 GiB are not supported.
+            """
+        ).strip(),
         args_schema=CopyArgs,
     )
     async def s3_copy(profile: str, from_: str, to: str, move: bool | None = None) -> str:
@@ -208,8 +237,12 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_presign",
-        description="Create a time-limited presigned URL for one object: GET to share a download link, PUT to let "
-        "someone upload to that key. The URL is the only credential-free way to hand an object to a third party.",
+        description=dedent(
+            """
+            Create a time-limited presigned URL for one object: GET to share a download link, PUT to let
+            someone upload to that key. The URL is the only credential-free way to hand an object to a third party.
+            """
+        ).strip(),
     )
     async def s3_presign(
         profile: str = Field(description=PROFILE_DOC),
@@ -227,8 +260,12 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_mkdir",
-        description='Create an empty "folder" marker (zero-byte object with a trailing slash) so the prefix shows up '
-        "in listings before it has objects.",
+        description=dedent(
+            """
+            Create an empty "folder" marker (zero-byte object with a trailing slash) so the prefix shows up
+            in listings before it has objects.
+            """
+        ).strip(),
     )
     async def s3_mkdir(
         profile: str = Field(description=PROFILE_DOC),
@@ -242,9 +279,13 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_delete",
-        description='PERMANENTLY delete objects. A key ending in "/" deletes everything under that prefix (recursive). '
-        "Irreversible unless bucket versioning is on — list first, show the user exactly what will be deleted, and "
-        "only call with confirm=true after they agree.",
+        description=dedent(
+            """
+            PERMANENTLY delete objects. A key ending in "/" deletes everything under that prefix (recursive).
+            Irreversible unless bucket versioning is on — list first, show the user exactly what will be deleted, and
+            only call with confirm=true after they agree.
+            """
+        ).strip(),
     )
     async def s3_delete(
         profile: str = Field(description=PROFILE_DOC),

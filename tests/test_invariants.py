@@ -16,6 +16,8 @@ import pytest
 
 from pyharness import Harness, Profile, manage
 from pyharness.events import EventBus
+from pyharness.preflight import run_preflight
+from pyharness_agent import RestartPending
 from testkit import tools as testtools
 
 
@@ -110,8 +112,6 @@ async def test_rejected_upgrade_restores_previous_version(profile, example_bundl
     assert bad["application"] == "rejected" and bad["stage"] == "preflight"
     versions = sorted(d.version for d in profile.site_distributions())
     assert versions == ["0.1.0"]
-    from pyharness.preflight import run_preflight
-
     assert (await run_preflight(profile))["ok"] is True
 
     good = await manage.install_bundle(profile, _variant(example_bundle, tmp_path / "v3", "0.3.0", broken=False))
@@ -152,8 +152,6 @@ async def test_ready_listener_returning_a_value_does_not_skip_the_agent_build(pr
 
 # Restart pending: new work refused ---------------------------------------------------------------
 async def test_new_runs_are_refused_while_a_restart_is_pending(profile):
-    from pyharness_agent import RestartPending
-
     async with Harness(profile, patch=scripted([])) as h:
         agents = h.get("agents")
         session = await agents.create_session()

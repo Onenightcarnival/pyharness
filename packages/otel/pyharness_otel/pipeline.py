@@ -9,6 +9,12 @@ import time
 from collections import deque
 from typing import TYPE_CHECKING, Any
 
+from opentelemetry.exporter.otlp.proto.http import Compression
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExportResult
+
 from .spans import AGENT_SYSTEM
 
 if TYPE_CHECKING:
@@ -65,8 +71,6 @@ class CountingExporter:
         self.trace_ids: deque[str] = deque(maxlen=50)
 
     def export(self, spans: Any) -> Any:
-        from opentelemetry.sdk.trace.export import SpanExportResult
-
         try:
             result = self.inner.export(spans)
         except Exception as exc:  # noqa: BLE001
@@ -91,32 +95,18 @@ class CountingExporter:
 
 class Pipeline:
     def __init__(self, config: Config, secret: str, *, exporter: Any | None = None) -> None:
-        from opentelemetry.sdk.resources import Resource
-        from opentelemetry.sdk.trace import TracerProvider
-        from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
         self.config = config
         self.endpoint = normalize_endpoint(config.endpoint, is_langfuse_key_pair(config.public_key, secret))
         self.trace_endpoint = signal_url(self.endpoint, "traces") if self.endpoint else ""
         self.langfuse = is_langfuse_endpoint(self.endpoint)
         self.headers = basic_auth(config.public_key, secret)
         if exporter is None:
-            from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-
-            try:
-                from opentelemetry.exporter.otlp.proto.http import Compression
-
-                compression = Compression.Gzip if config.gzip else Compression.NoCompression
-            except Exception:  # noqa: BLE001
-                compression = None
-            kwargs: dict[str, Any] = {
-                "endpoint": self.trace_endpoint,
-                "headers": self.headers,
-                "timeout": max(1, config.export_timeout_ms // 1000),
-            }
-            if compression is not None:
-                kwargs["compression"] = compression
-            exporter = OTLPSpanExporter(**kwargs)
+            exporter = OTLPSpanExporter(
+                endpoint=self.trace_endpoint,
+                headers=self.headers,
+                timeout=max(1, config.export_timeout_ms // 1000),
+                compression=Compression.Gzip if config.gzip else Compression.NoCompression,
+            )
         self.exporter = CountingExporter(exporter)
         resource = Resource.create(
             {

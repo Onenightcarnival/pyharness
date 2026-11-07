@@ -10,6 +10,7 @@ from langchain.agents.middleware import AgentMiddleware
 from langchain.agents.middleware.types import hook_config
 from langchain_core.messages import BaseMessage, HumanMessage, RemoveMessage, SystemMessage
 from langchain_core.messages.utils import count_tokens_approximately
+from langgraph.config import get_config
 from langgraph.graph.message import REMOVE_ALL_MESSAGES
 from pydantic import BaseModel, Field
 
@@ -42,8 +43,6 @@ class CompactionError(RuntimeError):
 
 def _configurable() -> dict[str, Any]:
     try:
-        from langgraph.config import get_config
-
         return dict(get_config().get("configurable") or {})
     except Exception:
         return {}

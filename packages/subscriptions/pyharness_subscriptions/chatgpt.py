@@ -10,7 +10,11 @@ import time
 import uuid
 from typing import Any
 
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from langchain_core.messages import BaseMessage
+
+from pyharness import package_toml
 
 from .common import LlmError, PermanentRefreshError, jwt_claims
 from .oauth import FlowSpec, LoginAttempt, LoginError
@@ -18,24 +22,18 @@ from .providers import DiscoveredModel, Provider
 from .responses import ResponsesChatModel, to_responses_input, to_responses_tools
 from .store import JsonFile
 
-ISSUER = "https://auth.openai.com"
-AUTHORIZE_URL = f"{ISSUER}/api/accounts/authorize"
-TOKEN_URL = f"{ISSUER}/api/accounts/oauth/token"
-JWKS_URL = f"{ISSUER}/.well-known/jwks.json"
-SCOPE = "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct"
-RESOURCE = "https://api.openai.com/v1"
-API = "https://api.openai.com/v1"
-DYNAMIC_CLIENT = "dynamic_agent_client"
-AGENT_NAME = "pyharness toolkit"
-NAMESPACE = "pyharness"
-PERMANENT = {
-    "invalid_grant",
-    "invalid_refresh_token",
-    "token_expired",
-    "refresh_token_expired",
-    "refresh_token_invalidated",
-    "refresh_token_reused",
-}
+_CFG = package_toml(__file__)["chatgpt"]
+ISSUER: str = _CFG["ISSUER"]
+AUTHORIZE_URL: str = _CFG["AUTHORIZE_URL"]
+TOKEN_URL: str = _CFG["TOKEN_URL"]
+JWKS_URL: str = _CFG["JWKS_URL"]
+SCOPE: str = _CFG["SCOPE"]
+RESOURCE: str = _CFG["RESOURCE"]
+API: str = _CFG["API"]
+DYNAMIC_CLIENT: str = _CFG["DYNAMIC_CLIENT"]
+AGENT_NAME: str = _CFG["AGENT_NAME"]
+NAMESPACE: str = _CFG["NAMESPACE"]
+PERMANENT: set[str] = set(_CFG["PERMANENT"])
 CLIENT_ID_RE = re.compile(r"^[a-zA-Z0-9_.~-]+$")
 
 
@@ -147,9 +145,6 @@ class ChatGPTProvider(Provider):
             )
             if jwk is None:
                 raise LoginError("id_token key not found in the issuer JWKS")
-            from cryptography.hazmat.primitives import hashes
-            from cryptography.hazmat.primitives.asymmetric import padding, rsa
-
             n = int.from_bytes(_b64url_decode(jwk["n"]), "big")
             e = int.from_bytes(_b64url_decode(jwk["e"]), "big")
             public = rsa.RSAPublicNumbers(e, n).public_key()

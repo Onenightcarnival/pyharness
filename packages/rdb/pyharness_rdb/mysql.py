@@ -3,16 +3,17 @@
 from __future__ import annotations
 
 import re
+from textwrap import dedent
 from typing import Any
+
+import pymysql
+
+from pyharness import package_toml
 
 from .driver import CONNECT_TIMEOUT_S, DEFAULT_TIMEOUT_MS, Driver, EngineError, QueryResult, SessionState, _Cursor
 
-MYSQL_TYPES = {
-    0: "decimal", 1: "tinyint", 2: "smallint", 3: "int", 4: "float", 5: "double", 6: "null", 7: "timestamp",
-    8: "bigint", 9: "mediumint", 10: "date", 11: "time", 12: "datetime", 13: "year", 14: "date", 15: "varchar",
-    16: "bit", 245: "json", 246: "decimal", 247: "enum", 248: "set", 249: "tinyblob", 250: "mediumblob",
-    251: "longblob", 252: "blob", 253: "varchar", 254: "char", 255: "geometry",
-}  # fmt: skip
+# field type code -> type name of result columns
+MYSQL_TYPES: dict[int, str] = {int(code): name for code, name in package_toml(__file__)["mysql"]["types"].items()}
 
 
 class MySQLDriver(Driver):
@@ -21,8 +22,6 @@ class MySQLDriver(Driver):
 
     def __init__(self, host: str, port: int, database: str, user: str, password: str, ssl: bool) -> None:
         super().__init__()
-        import pymysql
-
         self.conn = pymysql.connect(
             host=host, port=port, user=user, password=password, database=database or None,
             connect_timeout=CONNECT_TIMEOUT_S, autocommit=True, ssl={"ssl": {}} if ssl else None, charset="utf8mb4",
@@ -88,8 +87,6 @@ class MySQLDriver(Driver):
         return MYSQL_TYPES.get(code, f"type:{code}")
 
     def query(self, sql: str, params: list[Any] | None, max_rows: int, timeout_ms: int) -> QueryResult:
-        import pymysql
-
         with self.lock:
             self._timeout(timeout_ms)
             try:
@@ -118,22 +115,23 @@ class MySQLDriver(Driver):
                 raise
 
     def list_schemas(self) -> list[str]:
-        return [
-            r["name"]
-            for r in self._rows(
-                "SELECT SCHEMA_NAME AS name FROM information_schema.SCHEMATA "
-                "WHERE SCHEMA_NAME NOT IN ('information_schema','mysql','performance_schema','sys') "
-                "ORDER BY (SCHEMA_NAME <> %s), SCHEMA_NAME",
-                [self.default_schema],
-            )
-        ]
+        sql = dedent(
+            """
+            SELECT SCHEMA_NAME AS name FROM information_schema.SCHEMATA
+            WHERE SCHEMA_NAME NOT IN ('information_schema','mysql','performance_schema','sys')
+            ORDER BY (SCHEMA_NAME <> %s), SCHEMA_NAME
+            """
+        ).strip()
+        return [r["name"] for r in self._rows(sql, [self.default_schema])]
 
     def list_tables(self, schema: str) -> list[dict[str, str]]:
-        rows = self._rows(
-            "SELECT TABLE_NAME AS name, TABLE_TYPE AS type FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s "
-            "ORDER BY (TABLE_TYPE <> 'BASE TABLE'), TABLE_NAME",
-            [schema],
-        )
+        sql = dedent(
+            """
+            SELECT TABLE_NAME AS name, TABLE_TYPE AS type FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s
+            ORDER BY (TABLE_TYPE <> 'BASE TABLE'), TABLE_NAME
+            """
+        ).strip()
+        rows = self._rows(sql, [schema])
         return [
             {
                 "schema": schema,
@@ -144,12 +142,14 @@ class MySQLDriver(Driver):
         ]
 
     def columns(self, schema: str, table: str) -> list[dict[str, Any]]:
-        rows = self._rows(
-            "SELECT ORDINAL_POSITION AS position, COLUMN_NAME AS name, COLUMN_TYPE AS type, IS_NULLABLE AS nullable, "
-            "COLUMN_DEFAULT AS default_value, COLUMN_KEY AS col_key, EXTRA AS extra FROM information_schema.COLUMNS "
-            "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s ORDER BY ORDINAL_POSITION",
-            [schema, table],
-        )
+        sql = dedent(
+            """
+            SELECT ORDINAL_POSITION AS position, COLUMN_NAME AS name, COLUMN_TYPE AS type, IS_NULLABLE AS nullable,
+            COLUMN_DEFAULT AS default_value, COLUMN_KEY AS col_key, EXTRA AS extra FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s ORDER BY ORDINAL_POSITION
+            """
+        ).strip()
+        rows = self._rows(sql, [schema, table])
         out = []
         for r in rows:
             nullable = str(r["nullable"]).upper() == "YES"
@@ -172,12 +172,14 @@ class MySQLDriver(Driver):
         return out
 
     def indexes(self, schema: str, table: str) -> list[dict[str, Any]]:
-        rows = self._rows(
-            "SELECT INDEX_NAME AS name, NON_UNIQUE AS non_unique, SEQ_IN_INDEX AS seq, COLUMN_NAME AS col "
-            "FROM information_schema.STATISTICS "
-            "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s ORDER BY (INDEX_NAME <> 'PRIMARY'), INDEX_NAME, SEQ_IN_INDEX",
-            [schema, table],
-        )
+        sql = dedent(
+            """
+            SELECT INDEX_NAME AS name, NON_UNIQUE AS non_unique, SEQ_IN_INDEX AS seq, COLUMN_NAME AS col
+            FROM information_schema.STATISTICS
+            WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s ORDER BY (INDEX_NAME <> 'PRIMARY'), INDEX_NAME, SEQ_IN_INDEX
+            """
+        ).strip()
+        rows = self._rows(sql, [schema, table])
         grouped: dict[str, dict[str, Any]] = {}
         for r in rows:
             g = grouped.setdefault(

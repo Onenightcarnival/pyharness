@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import sys
 from pathlib import Path
 
 import httpx
 import pytest
-from pyharness_terminal import ShellSession, Terminal, clip, pty_available
 
 from pyharness import Harness, Profile
+from pyharness_terminal import ShellSession, Terminal, clip, pty_available
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 posix = pytest.mark.skipif(sys.platform == "win32", reason="POSIX shell")
@@ -54,8 +55,6 @@ async def test_tools_jobs_and_terminals(home):
         assert "no output" in await tools["bash"].ainvoke({"command": "true"})
         # Background jobs: output in a log, status through the tools and the API.
         started = await tools["run_in_background"].ainvoke({"command": "echo one; sleep 0.3; echo two", "name": "demo"})
-        import json
-
         job_id = json.loads(started)["job_id"]
         waited = await tools["job_output"].ainvoke({"job_id": job_id, "wait": True, "timeout": 10})
         assert "exited" in waited and "one\ntwo" in waited

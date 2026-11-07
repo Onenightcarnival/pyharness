@@ -20,6 +20,7 @@ import socket
 from collections.abc import Callable
 from typing import Any
 
+import uvicorn
 from fastapi import APIRouter, FastAPI
 from pydantic import BaseModel, Field
 
@@ -35,18 +36,12 @@ class HttpConfig(BaseModel):
     shutdown_timeout: int = Field(5, description="Seconds for in-flight requests when stopping.")
 
 
-class _Server:
+class _Server(uvicorn.Server):
     """``uvicorn.Server`` without signal handlers; the worker owns signals."""
 
-    def __new__(cls, config: Any) -> Any:
-        import uvicorn
-
-        class Server(uvicorn.Server):
-            @contextlib.contextmanager
-            def capture_signals(self):  # type: ignore[override]
-                yield
-
-        return Server(config)
+    @contextlib.contextmanager
+    def capture_signals(self):  # type: ignore[override]
+        yield
 
 
 class HttpService(Service):
@@ -130,8 +125,6 @@ class HttpService(Service):
     async def _serve(self) -> None:
         if not self.config.serve:
             return
-        import uvicorn
-
         config = uvicorn.Config(
             self.app,
             host=self.config.host,

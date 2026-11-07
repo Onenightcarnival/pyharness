@@ -6,6 +6,9 @@ import json
 import time
 from typing import TYPE_CHECKING, Any
 
+from langchain_core.tools import tool
+from langgraph.config import get_config
+
 from .shell import clip
 
 if TYPE_CHECKING:
@@ -14,16 +17,12 @@ if TYPE_CHECKING:
 
 def _thread_id() -> str | None:
     try:
-        from langgraph.config import get_config
-
         return dict(get_config().get("configurable") or {}).get("thread_id")
     except Exception:
         return None
 
 
 def bash_tool(service: TerminalService) -> Any:
-    from langchain_core.tools import tool
-
     @tool("bash")
     async def bash(command: str, timeout: int | None = None) -> str:
         """Run a bash command in this session's persistent shell. The working directory and environment variables
@@ -51,8 +50,6 @@ def bash_tool(service: TerminalService) -> Any:
 
 
 def background_tool(service: TerminalService) -> Any:
-    from langchain_core.tools import tool
-
     @tool("run_in_background")
     async def run_in_background(command: str, name: str | None = None) -> str:
         """Start a long-running bash command (a build, a test suite, a dev server) as a background job in the
@@ -69,8 +66,6 @@ def background_tool(service: TerminalService) -> Any:
 
 
 def job_tools(service: TerminalService) -> list[Any]:
-    from langchain_core.tools import tool
-
     @tool("job_output")
     async def job_output(job_id: str, tail_lines: int | None = None, wait: bool = False, timeout: int = 60) -> str:
         """Read a background job's output (the last `tail_lines` lines, default 200) and its status. With `wait`

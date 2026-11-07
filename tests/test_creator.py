@@ -5,10 +5,10 @@ from __future__ import annotations
 import re
 
 import pytest
-from pyharness_plugin_manager import SKILLS_DIR, render_template, template_variants
-from pyharness_plugin_manager.reference import PACKAGES_MD, render_packages
 
 from pyharness import Harness, Profile
+from pyharness_plugin_manager import SKILLS_DIR, render_template, template_variants
+from pyharness_plugin_manager.reference import PACKAGES_MD, render_packages
 from testkit import scripted
 
 SKILLS = {

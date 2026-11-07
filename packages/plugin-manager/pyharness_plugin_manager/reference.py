@@ -7,23 +7,26 @@ points.
 from __future__ import annotations
 
 from pathlib import Path
+from textwrap import dedent
 from typing import Any
 
 from pyharness.plugin import bundle_entry_points, load_bundle, load_plugin, plugin_entry_points
 
 PACKAGES_MD = Path(__file__).with_name("skills") / "pyharness-composition-reference" / "references" / "packages.md"
 
-HEADER = """\
-# Installed plugin packages and bundles
+HEADER = dedent(
+    """
+    # Installed plugin packages and bundles
 
-Generated from the `pyharness.plugins` and `pyharness.bundles` entry points of the environment:
-`python scripts/gen_packages.py`.
-Plugins installed into a profile after generation: `plugin_manager action=list`.
+    Generated from the `pyharness.plugins` and `pyharness.bundles` entry points of the environment:
+    `python scripts/gen_packages.py`.
+    Plugins installed into a profile after generation: `plugin_manager action=list`.
 
-Columns: `kind` is `service` (provides the service under `provides`) or `function` (`apply(ctx, config)`);
-`inject` lists the
-services the entry waits for; `config` says whether the entry accepts `config`.
-"""
+    Columns: `kind` is `service` (provides the service under `provides`) or `function` (`apply(ctx, config)`);
+    `inject` lists the
+    services the entry waits for; `config` says whether the entry accepts `config`.
+    """
+).strip()
 
 
 def _first_line(text: str | None) -> str:
@@ -82,6 +85,7 @@ def bundle_rows() -> list[dict[str, Any]]:
 def render_packages() -> str:
     out = [
         HEADER,
+        "",
         "## Plugins",
         "",
         "| entry point | kind | provides | inject | config | contract |",

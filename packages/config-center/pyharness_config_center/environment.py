@@ -20,21 +20,18 @@ from typing import Any
 
 import httpx
 
-BUN_VERSION = "1.4.4"
-RELEASE = "https://github.com/oven-sh/bun/releases/download/bun-v{version}/{asset}"
+from pyharness import package_toml
+
+_ENVIRONMENT = package_toml(__file__)["environment"]
+
+BUN_VERSION: str = _ENVIRONMENT["bun_version"]
+RELEASE: str = _ENVIRONMENT["release"]
 DOWNLOAD_LIMIT = 200 * 1024 * 1024
 DOWNLOAD_TIMEOUT = 300.0
 LOCK_WAIT = 360.0
 
-TARGETS = {
-    ("darwin", "arm64"): "darwin-aarch64",
-    ("darwin", "x86_64"): "darwin-x64",
-    ("linux", "x86_64"): "linux-x64",
-    ("linux", "aarch64"): "linux-aarch64",
-    ("linux", "arm64"): "linux-aarch64",
-    ("win32", "amd64"): "windows-x64",
-    ("win32", "x86_64"): "windows-x64",
-}
+# ``(sys.platform, machine)`` → bun release target.
+TARGETS: dict[tuple[str, str], str] = {(t["system"], t["machine"]): t["target"] for t in _ENVIRONMENT["targets"]}
 MESSAGES = {
     "unsupported": "This operating system or architecture is not supported.",
     "broken": "Installed bun cannot run. Repair the environment.",

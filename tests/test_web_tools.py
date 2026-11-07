@@ -3,17 +3,23 @@
 from __future__ import annotations
 
 import json
+from textwrap import dedent
 
 import httpx
 import yaml
-from pyharness_web_tools import format_search, html_to_text, parse_search_response
 
 from pyharness import Harness, Profile
+from pyharness_web_tools import format_search, html_to_text, parse_search_response
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
-PAGE = """<html><head><title>Hello &amp; welcome</title><style>p{}</style><script>alert(1)</script></head>
-<body><nav><a href="/about">About</a></nav><h1>Heading</h1><p>First   paragraph with <a href="https://x.test/doc">a link</a>.</p>
-<ul><li>one</li><li>two</li></ul><pre>  code\n  block</pre><img alt="diagram"></body></html>"""  # noqa: E501
+PAGE = dedent(
+    """
+    <html><head><title>Hello &amp; welcome</title><style>p{}</style><script>alert(1)</script></head>
+    <body><nav><a href="/about">About</a></nav><h1>Heading</h1><p>First   paragraph with <a href="https://x.test/doc">a link</a>.</p>
+    <ul><li>one</li><li>two</li></ul><pre>  code
+      block</pre><img alt="diagram"></body></html>
+    """  # noqa: E501
+).strip()
 
 SEARCH_RESPONSE = {
     "content": [

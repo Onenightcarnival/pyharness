@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import inspect as _inspect
 import json
+from textwrap import dedent
 from typing import Any, Literal
 
 from langchain_core.tools import StructuredTool
@@ -225,10 +226,12 @@ class Inspector:
         return {
             "slots": slots,
             "clients": webui.clients(),
-            "contract": (
-                "ctx.webui.register_client(path, calls={...}); "
-                "the page: window.__PyhModules__.load({id, factory(require) { return { apply(ctx) {...} } }})"
-            ),
+            "contract": dedent(
+                """
+                ctx.webui.register_client(path, calls={...});
+                the page: window.__PyhModules__.load({id, factory(require) { return { apply(ctx) {...} } }})
+                """
+            ).strip(),
         }
 
     def overview(self, name: str | None) -> Any:

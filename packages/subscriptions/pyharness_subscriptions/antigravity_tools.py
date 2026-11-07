@@ -5,18 +5,24 @@ from __future__ import annotations
 
 import base64
 import uuid
-from typing import Any, Literal
+from textwrap import dedent
+from typing import TYPE_CHECKING, Any, Literal
 
 from langchain_core.tools import tool
 from pydantic import BaseModel, ConfigDict, Field
 
-from .antigravity import AntigravityProvider
+from pyharness import package_toml
+
 from .common import LlmError
 from .media import dedupe_sources, describe_images, format_search, read_reference, save_images
 from .store import image_extension
 
-SEARCH_MODEL = "gemini-3-flash"
-IMAGE_MODEL = "gemini-3.1-flash-image"
+if TYPE_CHECKING:
+    from .antigravity import AntigravityProvider
+
+_CFG = package_toml(__file__)["antigravity_tools"]
+SEARCH_MODEL: str = _CFG["SEARCH_MODEL"]
+IMAGE_MODEL: str = _CFG["IMAGE_MODEL"]
 
 
 class SearchArgs(BaseModel):
@@ -88,10 +94,12 @@ def make_tools(provider: AntigravityProvider, service: Any) -> list[Any]:
 
     @tool(
         "antigravity_image_generate",
-        description=(
-            "Generate or edit an image with Gemini 3.1 Flash Image through the Antigravity subscription. "
-            "Saves the images and returns their paths and preview URLs."
-        ),
+        description=dedent(
+            """
+            Generate or edit an image with Gemini 3.1 Flash Image through the Antigravity subscription.
+            Saves the images and returns their paths and preview URLs.
+            """
+        ).strip(),
         args_schema=ImageArgs,
     )
     async def antigravity_image_generate(

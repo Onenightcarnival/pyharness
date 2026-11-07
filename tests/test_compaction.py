@@ -6,10 +6,10 @@ import httpx
 import pytest
 import yaml
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
-from pyharness_compaction import checkpoint_message, cut_index, is_checkpoint, measure, summary_of
-from test_agent import scripted_patch, sse_events
 
 from pyharness import Harness, Profile
+from pyharness_compaction import checkpoint_message, cut_index, is_checkpoint, measure, summary_of
+from test_agent import scripted_patch, sse_events
 from testkit import scripted
 
 LONG = "lorem ipsum dolor sit amet " * 60  # ~1600 chars ≈ 400 tokens by the approximate counter

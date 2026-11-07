@@ -6,6 +6,9 @@ import json
 import time
 from typing import Any
 
+from opentelemetry import trace
+from opentelemetry.trace import SpanKind, Status, StatusCode
+
 AGENT_SYSTEM = "pyharness"
 FINISH = {"tool-calls": "tool_calls", "max-tokens": "length", "aborted": "cancelled", "stop": "stop", "error": "error"}
 
@@ -47,9 +50,6 @@ def build_turn_spans(
     user_input: str | None,
 ) -> str | None:
     """Emit the trace of one turn from its record (``stats``, ``records``) and run events; returns the trace id."""
-    from opentelemetry import trace
-    from opentelemetry.trace import SpanKind, Status, StatusCode
-
     records = turn.get("records") or []
     stats = turn.get("stats") or {}
     started = float(turn.get("at") or time.time())

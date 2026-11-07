@@ -3,32 +3,34 @@ image generation."""
 
 from __future__ import annotations
 
-import base64
 import json
 import re
 import time
 from typing import Any
 
-import httpx
 from langchain_core.messages import BaseMessage
-from pydantic import BaseModel, ConfigDict, Field
 
-from .common import LlmError, PermanentRefreshError, headers_with_ua, http_error, jwt_claims, session_uuid
+from pyharness import package_toml
+
+from .codex_tools import make_tools
+from .common import PermanentRefreshError, headers_with_ua, http_error, jwt_claims, session_uuid
 from .oauth import FlowSpec, LoginAttempt
 from .providers import DiscoveredModel, Provider
 from .responses import ResponsesChatModel, to_responses_input, to_responses_tools
 
-CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
-AUTHORIZE_URL = "https://auth.openai.com/oauth/authorize"
-TOKEN_URL = "https://auth.openai.com/oauth/token"
-SCOPE = "openid profile email offline_access api.connectors.read api.connectors.invoke"
-BACKEND = "https://chatgpt.com/backend-api"
-CLIENT_VERSION_FLOOR = "0.153.4"
+_CFG = package_toml(__file__)["codex"]
+CLIENT_ID: str = _CFG["CLIENT_ID"]
+AUTHORIZE_URL: str = _CFG["AUTHORIZE_URL"]
+TOKEN_URL: str = _CFG["TOKEN_URL"]
+SCOPE: str = _CFG["SCOPE"]
+BACKEND: str = _CFG["BACKEND"]
+NPM_LATEST_URL: str = _CFG["NPM_LATEST_URL"]
+CLIENT_VERSION_FLOOR: str = _CFG["CLIENT_VERSION_FLOOR"]
+PERMANENT: set[str] = set(_CFG["PERMANENT"])
+EFFORT_NAMES: dict[str, str] = dict(_CFG["EFFORT_NAMES"])
 DEFAULT_INSTRUCTIONS = (
     "You are Codex, a coding agent based on GPT-5. Help the user with their software engineering tasks."
 )
-PERMANENT = {"refresh_token_expired", "refresh_token_reused", "refresh_token_invalidated", "invalid_grant"}
-EFFORT_NAMES = {"xhigh": "Extra High"}
 
 
 def effort_name(effort: str) -> str:
@@ -166,7 +168,7 @@ class CodexProvider(Provider):
             return self._client_version[1], self._client_version[2]
         version, source = CLIENT_VERSION_FLOOR, "fallback"
         try:
-            res = await self.http.get("https://registry.npmjs.org/@openai%2fcodex/latest", timeout=5)
+            res = await self.http.get(NPM_LATEST_URL, timeout=5)
             found = str(res.json().get("version") or "")
             if (
                 res.status_code == 200
@@ -283,8 +285,6 @@ class CodexProvider(Provider):
         )
 
     def tools(self, service: Any) -> list[Any]:
-        from .codex_tools import make_tools
-
         return make_tools(self, service)
 
 
@@ -329,33 +329,4 @@ class CodexChatModel(ResponsesChatModel):
         return f"{BACKEND}/codex/responses", headers, body
 
 
-# ---------------------------------------------------------------------- image generation (shared helpers)
-class ReferenceImage(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    attachmentId: str = Field(description="sha256:<hex> id of an image already in the conversation.")
-    mediaType: str = Field(description="image/png, image/jpeg, image/webp or image/gif.")
-    bytes: int
-    width: int
-    height: int
-    name: str | None = None
-
-
-def data_url(mime: str, data: bytes) -> str:
-    return f"data:{mime};base64,{base64.b64encode(data).decode()}"
-
-
-async def generate_images(
-    http: httpx.AsyncClient, url: str, headers: dict[str, str], body: dict[str, Any], label: str
-) -> list[tuple[bytes, str | None]]:
-    """POST an image request; returns ``[(bytes, revised_prompt)]``."""
-    res = await http.post(url, headers=headers, json=body, timeout=180)
-    if res.status_code >= 400:
-        raise http_error(label, res.status_code, res.text)
-    out = []
-    for item in res.json().get("data") or []:
-        b64 = item.get("b64_json")
-        if b64:
-            out.append((base64.b64decode(b64), item.get("revised_prompt")))
-    if not out:
-        raise LlmError("EMPTY_RESPONSE", f"{label} returned no images")
-    return out
+# ---------------------------------------------------------------------- image generation

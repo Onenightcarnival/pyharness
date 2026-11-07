@@ -13,23 +13,10 @@ import re
 from pathlib import Path
 from typing import Any
 
+from pyharness import package_toml
+
 TOKEN = re.compile(r'(?:(?<=\s)|(?<=[(\[{,，、])|^)@(?:"(?P<quoted>[^"\n]+)"|(?P<bare>[^\s"@,;:!?)\]}]+))')
-SKIP_DIRS = {
-    ".git",
-    "node_modules",
-    ".venv",
-    "venv",
-    "__pycache__",
-    ".mypy_cache",
-    ".ruff_cache",
-    ".pytest_cache",
-    "dist",
-    "build",
-    ".idea",
-    ".next",
-    "target",
-    ".tox",
-}
+SKIP_DIRS: set[str] = set(package_toml(__file__)["references"]["SKIP_DIRS"])  # left out of listings and search
 FILE_CHARS = 60_000
 TOTAL_CHARS = 240_000
 DIR_ENTRIES = 200

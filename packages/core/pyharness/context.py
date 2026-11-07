@@ -19,8 +19,8 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from pydantic import BaseModel
 
 if TYPE_CHECKING:  # pragma: no cover
-    from .events import EventBus
-    from .loader import EntryRuntime, Root
+    from .events import EventBus  # annotations only
+    from .loader import EntryRuntime, Root  # annotations only; import cycle with loader
 
 Disposer = Callable[[], Any]
 

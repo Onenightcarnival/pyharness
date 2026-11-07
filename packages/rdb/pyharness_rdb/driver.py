@@ -10,6 +10,8 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
+from pyharness import package_toml
+
 from .sql import command_of, sql_literal, to_js
 
 DEFAULT_MAX_ROWS = 1000
@@ -17,7 +19,7 @@ MAX_ROWS_CAP = 100000
 DEFAULT_TIMEOUT_MS = 30000
 COUNT_TIMEOUT_MS = 10000
 CONNECT_TIMEOUT_S = 15
-DEFAULT_PORT = {"sqlite": 0, "postgres": 5432, "gaussdb": 8000, "mysql": 3306}
+DEFAULT_PORT: dict[str, int] = package_toml(__file__)["driver"]["default_port"]  # kind -> port (0 for sqlite)
 KINDS = ("sqlite", "postgres", "gaussdb", "mysql")
 TARGETS = ("any", "read-write", "read-only", "primary", "standby", "prefer-standby")
 

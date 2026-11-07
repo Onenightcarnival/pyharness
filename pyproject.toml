@@ -54,6 +54,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 120
+src = [".", "packages/*", "tests"]
 target-version = "py312"
 extend-exclude = [".venv", "examples/pyharness-audit/build"]
 

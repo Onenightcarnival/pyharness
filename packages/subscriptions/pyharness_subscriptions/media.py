@@ -7,7 +7,27 @@ import json
 from pathlib import Path
 from typing import Any
 
+import httpx
+
+from .common import LlmError, http_error
 from .store import MediaStore, image_extension
+
+
+async def generate_images(
+    http: httpx.AsyncClient, url: str, headers: dict[str, str], body: dict[str, Any], label: str
+) -> list[tuple[bytes, str | None]]:
+    """POST an OpenAI-style image request; returns ``[(bytes, revised_prompt)]``."""
+    res = await http.post(url, headers=headers, json=body, timeout=180)
+    if res.status_code >= 400:
+        raise http_error(label, res.status_code, res.text)
+    out = []
+    for item in res.json().get("data") or []:
+        b64 = item.get("b64_json")
+        if b64:
+            out.append((base64.b64decode(b64), item.get("revised_prompt")))
+    if not out:
+        raise LlmError("EMPTY_RESPONSE", f"{label} returned no images")
+    return out
 
 
 def save_images(media: MediaStore, images: list[tuple[bytes, str | None]]) -> tuple[list[Path], str | None]:

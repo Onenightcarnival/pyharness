@@ -5,16 +5,22 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import hashlib
 import json
 import re
 import time
+import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Any
 
 import httpx
 
-USER_AGENT = "pyharness-subscriptions/0.1 (+https://github.com/Onenightcarnival/dsh-toolkit)"
+from pyharness import package_toml
+
+_CFG = package_toml(__file__)["common"]
+USER_AGENT: str = _CFG["USER_AGENT"]
+RESET_FIELDS: tuple[str, ...] = tuple(_CFG["RESET_FIELDS"])
 PREEMPT_MS = 5 * 60 * 1000
 STREAM_IDLE_TIMEOUT = 300.0
 
@@ -46,16 +52,6 @@ def http_error(label: str, status: int, body: str) -> LlmError:
     if status >= 500:
         return LlmError("SERVER", message)
     return LlmError(f"HTTP_{status}", message)
-
-
-RESET_FIELDS = (
-    "resets_in_seconds",
-    "reset_after_seconds",
-    "resets_at",
-    "reset_at",
-    "retry_after",
-    "retry_after_seconds",
-)
 
 
 def reset_delay_ms(body: str | None) -> int | None:
@@ -211,9 +207,6 @@ class PermanentRefreshError(RuntimeError):
 
 def session_uuid(session_id: str | None) -> str:
     """A UUID for a session id: the id itself when it is one, else a UUIDv8 from its hash, else random."""
-    import hashlib
-    import uuid
-
     if session_id:
         try:
             return str(uuid.UUID(session_id))

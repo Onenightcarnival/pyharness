@@ -13,6 +13,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 name = "__DIST__"
@@ -27,8 +28,6 @@ class Config(BaseModel):
 
 
 def apply(ctx: Any, config: Config) -> None:
-    from fastapi import APIRouter
-
     notes: list[str] = []
     calls: Counter[str] = Counter()
 

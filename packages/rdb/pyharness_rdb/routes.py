@@ -16,7 +16,7 @@ from .query import grid_changes, page_rows, run_query, table_info, to_csv
 from .store import ProfileStore, StoreError
 
 if TYPE_CHECKING:
-    from .service import RdbService
+    from .service import RdbService  # type-only: .service imports this module
 
 
 def build_router(service: RdbService) -> APIRouter:

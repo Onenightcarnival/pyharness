@@ -12,15 +12,17 @@
 
 from __future__ import annotations
 
+from textwrap import dedent
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import httpx
+from langchain_core.tools import tool
 
 from .common import NOTICE
 
 if TYPE_CHECKING:
-    from .service import WebToolsService
+    from .service import WebToolsService  # type-only: .service imports this module
 
 
 def format_search(answer: str, sources: list[dict[str, Any]], truncated: bool) -> str:
@@ -85,8 +87,12 @@ async def search(service: WebToolsService, query: str) -> dict[str, Any]:
     key = service.api_key()
     if not key:
         raise RuntimeError(
-            f"web_search has no API key: store {config.api_key_env} in Settings → Models (DeepSeek route credential) "
-            "or export it in the environment of the harness. Say so to the user and continue without the search."
+            dedent(
+                f"""
+                web_search has no API key: store {config.api_key_env} in Settings → Models (DeepSeek route credential)
+                or export it in the environment of the harness. Say so to the user and continue without the search.
+                """
+            ).strip()
         )
     body = {
         "model": config.model,
@@ -131,8 +137,6 @@ async def search(service: WebToolsService, query: str) -> dict[str, Any]:
 
 
 def search_tool(service: WebToolsService) -> Any:
-    from langchain_core.tools import tool
-
     @tool("web_search")
     async def web_search(query: str) -> str:
         """Search the web for current information (DeepSeek native search). Returns an answer with its sources:

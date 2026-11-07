@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 from pathlib import Path
+from textwrap import dedent
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -19,17 +20,19 @@ from .tools import connections_tool, execute_tool, explain_tool, query_tool, sch
 
 PROMPT_ORDER = 153
 
-GUIDANCE = (
-    "The database workbench (SQLite / PostgreSQL / MySQL / GaussDB) is installed and the user allowed its tools. "
-    "db_connections lists the connections the user configured on the Database page (refer to them by name); "
-    "db_schema shows schemas, tables, or one table's columns / indexes / DDL (look before writing SQL); db_query runs "
-    "ONE read-only statement (SELECT / WITH / EXPLAIN / SHOW; rows are capped, so add WHERE / LIMIT on large tables); "
-    "db_explain shows the plan; db_execute runs write statements in one transaction, only on connections where the "
-    "user enabled agent writes, and only after you showed the user the exact SQL and they agreed (then call with "
-    "confirm=true; a failure rolls everything back). Credentials are configured in the UI; tools never return or need "
-    "passwords. When the user mentions databases, tables, SQL, PostgreSQL, MySQL, GaussDB or SQLite they mean this "
-    "workbench."
-)
+GUIDANCE = dedent(
+    """
+    The database workbench (SQLite / PostgreSQL / MySQL / GaussDB) is installed and the user allowed its tools.
+    db_connections lists the connections the user configured on the Database page (refer to them by name);
+    db_schema shows schemas, tables, or one table's columns / indexes / DDL (look before writing SQL); db_query runs
+    ONE read-only statement (SELECT / WITH / EXPLAIN / SHOW; rows are capped, so add WHERE / LIMIT on large tables);
+    db_explain shows the plan; db_execute runs write statements in one transaction, only on connections where the
+    user enabled agent writes, and only after you showed the user the exact SQL and they agreed (then call with
+    confirm=true; a failure rolls everything back). Credentials are configured in the UI; tools never return or need
+    passwords. When the user mentions databases, tables, SQL, PostgreSQL, MySQL, GaussDB or SQLite they mean this
+    workbench.
+    """
+).strip()
 
 
 class Config(BaseModel):

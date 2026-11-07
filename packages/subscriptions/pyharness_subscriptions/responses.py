@@ -4,9 +4,11 @@ tool calls, usage)."""
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 from collections.abc import AsyncIterator, Iterator
+from textwrap import dedent
 from typing import Any
 
 import httpx
@@ -15,13 +17,16 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.utils.function_calling import convert_to_openai_tool
+from langgraph.config import get_config
 
 from .common import LlmError, http_error, iter_sse, read_error
 
-UNKNOWN_OUTCOME = (
-    "The tool call has no recorded result. Its outcome is unknown; verify external state before retrying any "
-    "operation that may have side effects."
-)
+UNKNOWN_OUTCOME = dedent(
+    """
+    The tool call has no recorded result. Its outcome is unknown; verify external state before retrying any
+    operation that may have side effects.
+    """
+).strip()
 
 
 # ---------------------------------------------------------------------- input building
@@ -298,8 +303,6 @@ class ResponsesChatModel(BaseChatModel):
     def _session_id(self, kwargs: dict[str, Any]) -> str | None:
         """The harness session: the LangGraph thread of the running graph, else an explicit hint."""
         try:
-            from langgraph.config import get_config
-
             thread = dict(get_config().get("configurable") or {}).get("thread_id")
             if thread:
                 return str(thread)
@@ -317,8 +320,6 @@ class ResponsesChatModel(BaseChatModel):
         run_manager: CallbackManagerForLLMRun | None = None,
         **kwargs: Any,
     ) -> ChatResult:
-        import asyncio
-
         return asyncio.run(self._agenerate(messages, stop=stop, **kwargs))
 
     def _stream(
@@ -328,8 +329,6 @@ class ResponsesChatModel(BaseChatModel):
         run_manager: CallbackManagerForLLMRun | None = None,
         **kwargs: Any,
     ) -> Iterator[ChatGenerationChunk]:
-        import asyncio
-
         async def collect() -> list[ChatGenerationChunk]:
             return [c async for c in self._astream(messages, stop=stop, **kwargs)]
 

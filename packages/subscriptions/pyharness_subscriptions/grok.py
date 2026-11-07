@@ -3,34 +3,32 @@ X search, image and video generation."""
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import re
 import time
+from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
 
 from langchain_core.messages import BaseMessage
 
+from pyharness import package_toml
+
 from .common import PermanentRefreshError, headers_with_ua, http_error, jwt_claims
+from .grok_tools import make_tools
 from .oauth import FlowSpec, LoginAttempt
 from .providers import DiscoveredModel, Provider
 from .responses import ResponsesChatModel, to_responses_input, to_responses_tools
 
-CLIENT_ID = "b1a00492-073a-47ea-816f-4c329264a828"
-DISCOVERY_URL = "https://auth.x.ai/.well-known/openid-configuration"
-SCOPE = "openid profile email offline_access grok-cli:access api:access"
-API = "https://api.x.ai/v1"
-PROXY = "https://cli-chat-proxy.grok.com/v1"
-TIERS = {
-    0: "Free",
-    1: "SuperGrok",
-    2: "X Basic",
-    3: "X Premium",
-    4: "X Premium+",
-    5: "SuperGrok Heavy",
-    6: "SuperGrok Lite",
-    7: "SuperGrok Plus",
-}
+_CFG = package_toml(__file__)["grok"]
+CLIENT_ID: str = _CFG["CLIENT_ID"]
+DISCOVERY_URL: str = _CFG["DISCOVERY_URL"]
+AUTHORIZE_URL: str = _CFG["AUTHORIZE_URL"]
+SCOPE: str = _CFG["SCOPE"]
+API: str = _CFG["API"]
+PROXY: str = _CFG["PROXY"]
+TIERS: dict[int, str] = {int(t["level"]): str(t["name"]) for t in _CFG["tiers"]}
 NON_CHAT = re.compile(r"imagine|image-|video|embed", re.I)
 
 
@@ -73,7 +71,7 @@ class GrokProvider(Provider):
         return out
 
     def flow_spec(self, account: str | None = None) -> FlowSpec:
-        authorize = (self._endpoints or {}).get("authorization_endpoint") or "https://auth.x.ai/oauth2/authorize"
+        authorize = (self._endpoints or {}).get("authorization_endpoint") or AUTHORIZE_URL
         return FlowSpec(
             provider=self.id,
             authorize_url=authorize,
@@ -164,8 +162,6 @@ class GrokProvider(Provider):
 
     # ------------------------------------------------------------------ catalog
     async def discover(self, session: dict[str, Any]) -> list[DiscoveredModel]:
-        import asyncio
-
         ids_res, meta_res = await asyncio.gather(
             self.http.get(f"{API}/models", headers=self.headers(session), timeout=self.discovery_timeout),
             self.http.get(f"{PROXY}/models", headers=self.headers(session, proxy=True), timeout=self.discovery_timeout),
@@ -239,8 +235,6 @@ class GrokProvider(Provider):
             resets = None
             if period.get("end"):
                 try:
-                    from datetime import datetime
-
                     resets = int(datetime.fromisoformat(str(period["end"]).replace("Z", "+00:00")).timestamp() * 1000)
                 except ValueError:
                     pass
@@ -274,8 +268,6 @@ class GrokProvider(Provider):
         )
 
     def tools(self, service: Any) -> list[Any]:
-        from .grok_tools import make_tools
-
         return make_tools(self, service)
 
 

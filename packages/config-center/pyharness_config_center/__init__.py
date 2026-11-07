@@ -28,7 +28,8 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from pyharness import Service
+from pyharness import Service, manage
+from pyharness_mcp import MASK, ServerConfig
 
 from .environment import BUN_VERSION, BunManager
 from .skills import SkillError, SkillStore
@@ -110,8 +111,6 @@ class ConfigCenterService(Service):
 
         @router.put("/mcp/timeout")
         async def mcp_timeout(request: Request) -> dict[str, Any]:
-            from pyharness import manage
-
             data = await body(request)
             seconds = data.get("connectTimeout")
             if not isinstance(seconds, (int, float)) or isinstance(seconds, bool) or not 1 <= seconds <= 86400:
@@ -126,8 +125,6 @@ class ConfigCenterService(Service):
 
         @router.post("/mcp/test")
         async def mcp_test(request: Request) -> dict[str, Any]:
-            from pyharness_mcp import MASK, ServerConfig
-
             mcp = mcp_service()
             data = await body(request)
             raw = data.get("server")

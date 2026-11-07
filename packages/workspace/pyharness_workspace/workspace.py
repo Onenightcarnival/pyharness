@@ -12,6 +12,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from deepagents import FilesystemPermission
+
 
 class WorkspaceError(ValueError):
     """A path cannot be a workspace."""
@@ -44,8 +46,6 @@ class Workspace:
 
     def permissions(self) -> list[Any]:
         """deepagents ``FilesystemPermission`` rules: deny read and write on protected paths."""
-        from deepagents import FilesystemPermission
-
         rules = []
         for guarded in self.protected:
             base = "/" + guarded.relative_to(self.root).as_posix() if self.virtual_mode else guarded.as_posix()

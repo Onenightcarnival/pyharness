@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from textwrap import dedent
 from typing import Any
 
 from langchain.agents.middleware import AgentMiddleware
@@ -60,8 +61,12 @@ class DeepAgentsLoop(Service):
         self.ctx.define_event(
             "agent-loop/build",
             "waterfall",
-            "listener(kwargs: dict, next) before create_deep_agent(**kwargs); "
-            "listeners edit kwargs and return `await next()`.",
+            dedent(
+                """
+                listener(kwargs: dict, next) before create_deep_agent(**kwargs);
+                listeners edit kwargs and return `await next()`.
+                """
+            ).strip(),
         )
         self.ctx.prompt.add("identity", self.config.system_prompt, order=0)
 

@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Request
 from .store import MemoryError
 
 if TYPE_CHECKING:
-    from .service import MemoryService
+    from .service import MemoryService  # type-only: .service imports this module
 
 MAX_BODY = 2 * 1024 * 1024
 

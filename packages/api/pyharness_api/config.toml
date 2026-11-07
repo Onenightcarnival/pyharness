@@ -1,0 +1,36 @@
+# Data of pyharness_api; one table per module, loaded with ``package_toml(__file__)``.
+
+[references]
+# references.SKIP_DIRS: directory names left out of listings and search.
+SKIP_DIRS = [
+    ".git",
+    "node_modules",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".pytest_cache",
+    "dist",
+    "build",
+    ".idea",
+    ".next",
+    "target",
+    ".tox",
+]
+
+# highlight.ALIASES: fence language -> Pygments lexer name; "" means plain text (no lexer).
+[highlight.ALIASES]
+sh = "bash"
+shell = "bash"
+zsh = "bash"
+console = "console"
+jsonc = "json"
+yml = "yaml"
+py = "python"
+js = "javascript"
+ts = "typescript"
+md = "markdown"
+text = ""
+txt = ""
+plain = ""

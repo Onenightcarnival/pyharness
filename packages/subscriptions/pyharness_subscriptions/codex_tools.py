@@ -5,17 +5,25 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
-from typing import Any, Literal
+from textwrap import dedent
+from typing import TYPE_CHECKING, Any, Literal
 
 import httpx
 from langchain_core.tools import tool
 from pydantic import BaseModel, ConfigDict, Field
 
-from .codex import BACKEND, CodexProvider, generate_images
-from .common import LlmError, headers_with_ua, http_error
-from .media import dedupe_sources, describe_images, format_search, read_reference, save_images
+from pyharness import package_toml
 
-SEARCH_MODEL = "gpt-5.6-terra"
+from .common import LlmError, headers_with_ua, http_error
+from .media import dedupe_sources, describe_images, format_search, generate_images, read_reference, save_images
+
+if TYPE_CHECKING:
+    from .codex import CodexProvider
+
+_CFG = package_toml(__file__)
+BACKEND: str = _CFG["codex"]["BACKEND"]
+SEARCH_MODEL: str = _CFG["codex_tools"]["SEARCH_MODEL"]
+IMAGE_MODEL: str = _CFG["codex_tools"]["IMAGE_MODEL"]
 
 
 class SearchQuery(BaseModel):
@@ -134,11 +142,13 @@ def validate_commands(args: SearchArgs) -> dict[str, Any]:
 def make_tools(provider: CodexProvider, service: Any) -> list[Any]:
     @tool(
         "codex_web_search",
-        description=(
-            "Web and image search, page opening, finance, weather, sports and time lookups through the Codex search "
-            "backend. Use search_query for ordinary searches; results carry ref ids that later open / click / find "
-            "commands reuse."
-        ),
+        description=dedent(
+            """
+            Web and image search, page opening, finance, weather, sports and time lookups through the Codex search
+            backend. Use search_query for ordinary searches; results carry ref ids that later open / click / find
+            commands reuse.
+            """
+        ).strip(),
         args_schema=SearchArgs,
     )
     async def codex_web_search(**kwargs: Any) -> str:
@@ -189,10 +199,12 @@ def make_tools(provider: CodexProvider, service: Any) -> list[Any]:
 
     @tool(
         "codex_image_generate",
-        description=(
-            "Generate an image with gpt-image-2 through the Codex subscription, or edit / combine up to 5 local "
-            "reference images. Saves PNG files and returns their paths and preview URLs."
-        ),
+        description=dedent(
+            """
+            Generate an image with gpt-image-2 through the Codex subscription, or edit / combine up to 5 local
+            reference images. Saves PNG files and returns their paths and preview URLs.
+            """
+        ).strip(),
         args_schema=ImageArgs,
     )
     async def codex_image_generate(**kwargs: Any) -> str:
@@ -213,7 +225,7 @@ def make_tools(provider: CodexProvider, service: Any) -> list[Any]:
             return f"Error: {exc}"
         body: dict[str, Any] = {
             "prompt": args.prompt,
-            "model": "gpt-image-2",
+            "model": IMAGE_MODEL,
             "size": args.size or "auto",
             "quality": args.quality or "auto",
             "background": "transparent" if args.transparent_background else "opaque",

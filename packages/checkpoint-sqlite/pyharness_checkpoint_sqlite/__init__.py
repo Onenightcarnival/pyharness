@@ -17,6 +17,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+from langgraph.store.sqlite.aio import AsyncSqliteStore
 from pydantic import BaseModel, Field
 
 name = "pyharness-checkpoint-sqlite"
@@ -29,9 +31,6 @@ class Config(BaseModel):
 
 
 async def apply(ctx: Any, config: Config) -> None:
-    from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-    from langgraph.store.sqlite.aio import AsyncSqliteStore
-
     for raw in (config.path, config.store_path):
         Path(raw).expanduser().parent.mkdir(parents=True, exist_ok=True)
     saver = await ctx.enter(AsyncSqliteSaver.from_conn_string(str(Path(config.path).expanduser())))

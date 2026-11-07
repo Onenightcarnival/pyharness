@@ -15,29 +15,42 @@
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import copy
+import importlib
 import os
 import sys
 from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass
 from importlib import metadata
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from .config import ConfigError, PatchOp, Tree, compose, deep_merge, dump_yaml, load_yaml, parse_ops, write_yaml
-from .plugin import BUNDLE_GROUP, BundleInfo, load_bundle
+from .config import (
+    ConfigError,
+    PatchOp,
+    Tree,
+    compose,
+    deep_merge,
+    dump_yaml,
+    load_yaml,
+    parse_ops,
+    tree_to_data,
+    write_yaml,
+)
+from .credentials import CredentialStore
+from .plugin import BUNDLE_GROUP, BundleInfo, bundle_entry_points, load_bundle
+from .resources import package_toml
 
-if TYPE_CHECKING:  # pragma: no cover
-    from .credentials import CredentialStore
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - POSIX only
+    fcntl = None
 
 PATCH_HEADER = "# Patch operations addressed by entry id. Managed by pyharness; comments are not preserved.\n"
 
-TEMPLATES: dict[str, dict[str, Any]] = {
-    "web": {"title": "Web", "bundles": ["base"]},
-    "creator": {"title": "Creator", "bundles": ["base", "creator"]},
-    "empty": {"title": "Empty", "bundles": []},
-}
+TEMPLATES: dict[str, dict[str, Any]] = package_toml(__file__)["profile"]["TEMPLATES"]  # name -> title, bundles
 
 
 def harness_home(home: str | os.PathLike[str] | None = None) -> Path:
@@ -71,8 +84,6 @@ class Profile:
 
     @property
     def credentials(self) -> CredentialStore:
-        from .credentials import CredentialStore
-
         return CredentialStore(self.credentials_path)
 
     # ------------------------------------------------------------------ creation
@@ -128,8 +139,6 @@ class Profile:
 
     def _flagged_bundles(self, flag: str) -> list[str]:
         self.activate_site()
-        from .plugin import bundle_entry_points
-
         names = []
         for name in sorted(bundle_entry_points()):
             try:
@@ -181,8 +190,6 @@ class Profile:
         self.site.mkdir(parents=True, exist_ok=True)
         if site not in sys.path:
             sys.path.append(site)
-        import importlib
-
         importlib.invalidate_caches()
 
     def variables(self, cwd: str | None = None) -> dict[str, str]:
@@ -375,25 +382,17 @@ class Profile:
         self.runtime.mkdir(parents=True, exist_ok=True)
         lock_path = self.runtime / "profile.lock"
         with open(lock_path, "w") as fh:
-            try:
-                import fcntl
-
+            if fcntl is not None:
                 fcntl.flock(fh, fcntl.LOCK_EX)
-            except ImportError:  # pragma: no cover
-                pass
             yield
 
     @contextlib.asynccontextmanager
     async def alock(self, poll: float = 0.1) -> AsyncIterator[None]:
         """:meth:`lock` for async code; waits by polling."""
-        import asyncio
-
         self.runtime.mkdir(parents=True, exist_ok=True)
         lock_path = self.runtime / "profile.lock"
         with open(lock_path, "w") as fh:
-            try:
-                import fcntl
-            except ImportError:  # pragma: no cover
+            if fcntl is None:  # pragma: no cover
                 yield
                 return
             while True:
@@ -408,7 +407,5 @@ class Profile:
         return {"name": self.name, "dir": str(self.dir), "bundles": self.bundles(), "home": str(self.home)}
 
     def dump(self, extra_patches: list[Path] | None = None) -> str:
-        from .config import tree_to_data
-
         result = self.compose(extra_patches)
         return dump_yaml(tree_to_data(result.tree, with_source=True))

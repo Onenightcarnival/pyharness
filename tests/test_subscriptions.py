@@ -4,6 +4,7 @@ mocked HTTP, token refresh, model routes and the page routes."""
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import time
 from typing import Any
@@ -12,6 +13,8 @@ from urllib.parse import parse_qs, urlparse
 import httpx
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
+
+from pyharness import Harness, Profile
 from pyharness_subscriptions import SubscriptionsService
 from pyharness_subscriptions.antigravity_wire import (
     AntigravityTranslator,
@@ -29,14 +32,10 @@ from pyharness_subscriptions.oauth import FlowSpec, LoginAttempt, LoginError
 from pyharness_subscriptions.responses import ResponsesTranslator, to_responses_input
 from pyharness_subscriptions.store import AuthStore, CatalogCache, ProviderSettings
 
-from pyharness import Harness, Profile
-
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 
 
 def fake_jwt(claims: dict[str, Any]) -> str:
-    import base64
-
     enc = lambda d: base64.urlsafe_b64encode(json.dumps(d).encode()).decode().rstrip("=")  # noqa: E731
     return f"{enc({'alg': 'none'})}.{enc(claims)}.sig"
 

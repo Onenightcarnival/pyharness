@@ -10,6 +10,7 @@
 | ``lifecycle``              | holds, restarts, hand-off between generations    |
 | ``profile``                | profiles in the harness home                     |
 | ``credentials``            | credential store referenced by name              |
+| ``resources``              | TOML data files shipped next to a module         |
 | ``manage``                 | transactional profile mutations                  |
 | ``preflight``              | dry boot in a separate process                   |
 | ``worker``, ``supervisor`` | process model                                    |
@@ -27,6 +28,7 @@ from .lifecycle import BOOT_FAILURE_EXIT_CODE, RESTART_EXIT_CODE, Lifecycle
 from .loader import EntryState, Loader
 from .plugin import BUNDLE_GROUP, PLUGIN_GROUP, PluginDef, PluginError, define_plugin
 from .profile import Profile
+from .resources import package_toml
 
 __version__ = "0.1.0"
 
@@ -54,5 +56,6 @@ __all__ = [
     "ServiceNotFound",
     "UndeclaredEventError",
     "define_plugin",
+    "package_toml",
     "unwrap",
 ]

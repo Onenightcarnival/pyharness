@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+import sys
+import types
 
 import httpx
 import pytest
+from langchain_core.messages import ToolMessage
 
 from pyharness import Harness, Profile
 from testkit import scripted
@@ -92,11 +96,6 @@ async def test_approval_gate(profile):
 
 
 async def test_tools_execute_waterfall_can_short_circuit(profile, tmp_path):
-    import sys
-    import types
-
-    from langchain_core.messages import ToolMessage
-
     def apply(ctx):
         @ctx.on("tools/execute")
         async def block(call, next):
@@ -164,8 +163,6 @@ async def test_inspect_tool_reports_live_api(profile):
 
 
 async def test_reasoning_cancel_and_delete(profile):
-    import asyncio
-
     replies = [
         {"reasoning": "think first", "content": "answer"},
         {"content": "", "tool_calls": [{"name": "slow", "args": {"seconds": 30}, "id": "z1"}]},

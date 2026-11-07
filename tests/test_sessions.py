@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import httpx
 import pytest
 import yaml
-from pyharness_workspace import WorkspaceError
 
 from pyharness import Harness, Profile
+from pyharness_workspace import WorkspaceError
 from testkit import scripted
 
 
@@ -205,8 +206,6 @@ async def test_agent_defaults_persist(profile):
 
 
 async def test_native_picker_through_a_command(profile, tmp_path, monkeypatch):
-    import sys
-
     chosen = tmp_path / "picked"
     chosen.mkdir()
     cmd = [sys.executable, "-c", f"print({str(chosen)!r})"]

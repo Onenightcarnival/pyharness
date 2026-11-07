@@ -20,12 +20,12 @@ import os
 import sys
 from typing import Any
 
+from .harness import Harness
 from .profile import Profile
+from .worker import setup_logging
 
 
 async def preflight_in_process(profile: Profile, extra_patches: list[str] | None = None) -> dict[str, Any]:
-    from .harness import Harness
-
     report: dict[str, Any] = {"ok": False, "errors": [], "warnings": [], "entries": []}
     try:
         harness = Harness(profile, extra_patches=extra_patches or [], preflight=True)
@@ -114,8 +114,6 @@ async def run_preflight(
 
 
 def main(argv: list[str] | None = None) -> None:
-    from .worker import setup_logging
-
     parser = argparse.ArgumentParser(prog="python -m pyharness.preflight")
     parser.add_argument("--profile", default="web")
     parser.add_argument("--home", default=None)

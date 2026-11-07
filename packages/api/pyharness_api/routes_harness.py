@@ -24,7 +24,13 @@ from fastapi import APIRouter, HTTPException, Response
 
 from pyharness import manage
 
+from .highlight import render, style_css
 from .models import EnabledBody, HighlightRequest, InstallBody, MCPSettings
+
+try:
+    from pyharness_mcp import MASK
+except ImportError:  # optional plugin package; the route answers 503 without the mcp service
+    MASK = None
 
 
 def build_harness_router(ctx: Any) -> APIRouter:
@@ -159,8 +165,6 @@ def build_harness_router(ctx: Any) -> APIRouter:
         mcp = ctx.get("mcp", None)
         if mcp is None:
             raise HTTPException(503, "mcp plugin not mounted")
-        from pyharness_mcp import MASK
-
         current = mcp.config.servers
         servers: dict[str, Any] = {}
         for name, server in body.servers.items():
@@ -187,15 +191,11 @@ def build_harness_router(ctx: Any) -> APIRouter:
     @router.post("/highlight")
     async def highlight_code(body: HighlightRequest) -> dict[str, Any]:
         """Token spans (``hl-`` classes) for code blocks; ``html`` is empty when no lexer matches."""
-        from .highlight import render
-
         items = await asyncio.to_thread(lambda: [render(item.code, item.lang, item.filename) for item in body.items])
         return {"items": items}
 
     @router.get("/highlight.css")
     async def highlight_css() -> Response:
-        from .highlight import style_css
-
         return Response(style_css(), media_type="text/css", headers={"Cache-Control": "max-age=3600"})
 
     return router

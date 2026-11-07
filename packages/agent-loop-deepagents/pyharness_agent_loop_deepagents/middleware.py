@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from langchain.agents.middleware import AgentMiddleware
+from langgraph.config import get_config
+
 from pyharness_tools import ToolCall
 
 
@@ -29,8 +31,6 @@ class ModelCall:
 
 def _configurable() -> dict[str, Any]:
     try:
-        from langgraph.config import get_config
-
         return dict(get_config().get("configurable") or {})
     except Exception:
         return {}

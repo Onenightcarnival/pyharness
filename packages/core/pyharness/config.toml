@@ -1,0 +1,14 @@
+# Data of pyharness; one table per module, loaded with ``package_toml(__file__)``.
+
+# profile.TEMPLATES: profile templates by name (``pyh init --template``).
+[profile.TEMPLATES.web]
+title = "Web"
+bundles = ["base"]
+
+[profile.TEMPLATES.creator]
+title = "Creator"
+bundles = ["base", "creator"]
+
+[profile.TEMPLATES.empty]
+title = "Empty"
+bundles = []

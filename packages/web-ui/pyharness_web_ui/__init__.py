@@ -38,6 +38,7 @@ import inspect
 import json
 from collections.abc import Callable
 from pathlib import Path
+from textwrap import dedent
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -53,10 +54,12 @@ SLOTS: list[dict[str, Any]] = [
     {
         "name": "sidebar.panellist",
         "kind": "list",
-        "entry": (
-            "{id, label, icon?, description?, order?}; selecting it opens the `main` panel with the same key; "
-            "Settings → General lets the user hide entries"
-        ),
+        "entry": dedent(
+            """
+            {id, label, icon?, description?, order?}; selecting it opens the `main` panel with the same key;
+            Settings → General lets the user hide entries
+            """
+        ).strip(),
         "props": {},
     },
     {
@@ -86,19 +89,23 @@ SLOTS: list[dict[str, Any]] = [
     {
         "name": "rightbar.tabs",
         "kind": "keyed",
-        "entry": (
-            "a right-sidebar tab type: {key, label, icon?, guide?: {title, description?, order?}, multiple?, "
-            "contentId?(params), title?(params)} + mount(el, props); "
-            "`guide` (the start page), `files`, `preview` and `info` are built in; "
-            "a type with `guide` gets a card on the start page"
-        ),
+        "entry": dedent(
+            """
+            a right-sidebar tab type: {key, label, icon?, guide?: {title, description?, order?}, multiple?,
+            contentId?(params), title?(params)} + mount(el, props);
+            `guide` (the start page), `files`, `preview` and `info` are built in;
+            a type with `guide` gets a card on the start page
+            """
+        ).strip(),
         "props": {
             "session": "current session record or null",
             "workspace": "workspace root of the session",
-            "tab": (
-                "{id, kind, params, title, store, setTitle(t), close(), openTab(kind, {params, replaceTab}), "
-                "openFile(path), replaceWith(kind, opts)}"
-            ),
+            "tab": dedent(
+                """
+                {id, kind, params, title, store, setTitle(t), close(), openTab(kind, {params, replaceTab}),
+                openFile(path), replaceWith(kind, opts)}
+                """
+            ).strip(),
         },
     },
 ]

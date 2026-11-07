@@ -6,6 +6,7 @@ from __future__ import annotations
 import copy
 import json
 import re
+import time
 import uuid
 from collections.abc import Iterator
 from typing import Any
@@ -13,12 +14,15 @@ from typing import Any
 from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.utils.function_calling import convert_to_openai_tool
 
+from pyharness import package_toml
+
 from .common import LlmError
 from .responses import _images_of, _text_of
 
-DEFAULT_ORIGIN = "https://cloudcode-pa.googleapis.com"
-FALLBACK_ORIGIN = "https://daily-cloudcode-pa.sandbox.googleapis.com"
-FALLBACK_STATUSES = {403, 404, 429, 500, 502, 503, 504}
+_CFG = package_toml(__file__)["antigravity_wire"]
+DEFAULT_ORIGIN: str = _CFG["DEFAULT_ORIGIN"]
+FALLBACK_ORIGIN: str = _CFG["FALLBACK_ORIGIN"]
+FALLBACK_STATUSES: set[int] = set(_CFG["FALLBACK_STATUSES"])
 
 
 # ---------------------------------------------------------------------- efforts and thinking
@@ -280,7 +284,7 @@ def build_request(
         request["generationConfig"] = generation
     return {
         "project": project,
-        "requestId": f"agent/{int(__import__('time').time() * 1000)}/{uuid.uuid4()}/4",
+        "requestId": f"agent/{int(time.time() * 1000)}/{uuid.uuid4()}/4",
         "model": model,
         "userAgent": "antigravity",
         "requestType": "agent",

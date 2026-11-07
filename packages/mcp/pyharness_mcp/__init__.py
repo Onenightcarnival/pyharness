@@ -26,6 +26,7 @@ import sys
 from pathlib import Path
 from typing import Any, Literal
 
+from langchain_mcp_adapters.client import MultiServerMCPClient
 from pydantic import BaseModel, Field
 
 from pyharness import Service
@@ -135,8 +136,6 @@ class MCPService(Service):
             self._status[name] = {"state": "connected", "tools": registered}
 
     async def _load(self, name: str, cfg: ServerConfig) -> list[Any]:
-        from langchain_mcp_adapters.client import MultiServerMCPClient
-
         client = MultiServerMCPClient({name: connection_of(cfg, self.data_dir())})
         return list(await client.get_tools())
 

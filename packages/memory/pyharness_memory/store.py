@@ -15,6 +15,7 @@ import sqlite3
 import threading
 from datetime import UTC, date, datetime
 from pathlib import Path
+from textwrap import dedent
 from typing import Any
 
 KINDS = ("profile", "work", "project", "lesson")
@@ -26,8 +27,12 @@ FIELDS: dict[str, tuple[str, ...]] = {
 }
 KIND_GUIDE = {
     "profile": "The single global profile: who this agent is and what it can do.",
-    "work": "One position: one role under one job description for one organization or principal over a continuous "
-    "period. A new role or a new principal is a new work entry.",
+    "work": dedent(
+        """
+        One position: one role under one job description for one organization or principal over a continuous
+        period. A new role or a new principal is a new work entry.
+        """
+    ).strip(),
     "project": "One deliverable or body of work carried out within a position. An independent project has no work.",
     "lesson": "One reusable conclusion drawn from a project, stated so that it applies without the original context.",
 }
@@ -38,8 +43,12 @@ FIELD_DESCRIPTIONS = {
     "abilities": "Demonstrated capabilities.",
     "organization": "Company or organization.",
     "startDate": "Known start date in YYYY-MM-DD; omit unknown dates.",
-    "endDate": "End date in YYYY-MM-DD, no earlier than startDate; use present for explicitly ongoing work/projects. "
-    "Omit when unknown; empty clears.",
+    "endDate": dedent(
+        """
+        End date in YYYY-MM-DD, no earlier than startDate; use present for explicitly ongoing work/projects.
+        Omit when unknown; empty clears.
+        """
+    ).strip(),
     "jobTitle": "One position held during this period.",
     "highlights": "Objectives, work performed, verified achievements and concurrent roles.",
     "title": "Short factual title.",
@@ -67,8 +76,12 @@ MESSAGES = {
     "missing": "Record not found. Read its parent node again.",
     "conflict": "Memory changed. Read the affected records again before rebuilding this update; do not blindly retry.",
     "protected": "This operation is only available in the user interface.",
-    "reference": "Invalid parent reference. Lessons belong to projects; projects optionally belong to work. "
-    "Referenced entries must remain present.",
+    "reference": dedent(
+        """
+        Invalid parent reference. Lessons belong to projects; projects optionally belong to work.
+        Referenced entries must remain present.
+        """
+    ).strip(),
     "content": "Required content is missing: work needs any field, a project needs a title, a lesson needs its text.",
     "disabled": "Memory tools are disabled.",
     "busy": "A write is in progress. Retry shortly.",
@@ -211,17 +224,20 @@ def _copy(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return json.loads(json.dumps(entries))
 
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS blobs (hash TEXT PRIMARY KEY, body TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS entries (
-    seq INTEGER PRIMARY KEY, id TEXT NOT NULL UNIQUE, hash TEXT NOT NULL REFERENCES blobs(hash));
-CREATE TABLE IF NOT EXISTS revisions (
-    revision INTEGER PRIMARY KEY, time TEXT NOT NULL, actor TEXT NOT NULL, source TEXT NOT NULL, summary TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS revision_entries (
-    revision INTEGER NOT NULL REFERENCES revisions(revision) ON DELETE CASCADE, seq INTEGER NOT NULL, id TEXT NOT NULL,
-    hash TEXT NOT NULL REFERENCES blobs(hash), PRIMARY KEY (revision, seq));
-"""
+SCHEMA = dedent(
+    """
+    CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS blobs (hash TEXT PRIMARY KEY, body TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS entries (
+        seq INTEGER PRIMARY KEY, id TEXT NOT NULL UNIQUE, hash TEXT NOT NULL REFERENCES blobs(hash));
+    CREATE TABLE IF NOT EXISTS revisions (
+        revision INTEGER PRIMARY KEY, time TEXT NOT NULL, actor TEXT NOT NULL, source TEXT NOT NULL,
+        summary TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS revision_entries (
+        revision INTEGER NOT NULL REFERENCES revisions(revision) ON DELETE CASCADE, seq INTEGER NOT NULL,
+        id TEXT NOT NULL, hash TEXT NOT NULL REFERENCES blobs(hash), PRIMARY KEY (revision, seq));
+    """
+).strip()
 
 
 class MemoryStore:

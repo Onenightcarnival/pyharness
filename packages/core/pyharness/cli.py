@@ -9,7 +9,13 @@ import os
 import sys
 from typing import Any
 
+from . import manage
+from .config import find
+from .harness import Harness
+from .preflight import preflight_in_process
 from .profile import Profile
+from .supervisor import Supervisor, signal_restart
+from .worker import run_generation, setup_logging
 
 
 def _profile(args: argparse.Namespace, *, must_exist: bool = True) -> Profile:
@@ -29,8 +35,6 @@ def cmd_init(args: argparse.Namespace) -> int:
 
 
 def cmd_run(args: argparse.Namespace) -> int:
-    from .worker import run_generation, setup_logging
-
     setup_logging(args.log_level)
     profile = Profile(args.profile, args.home)
     if not profile.exists():
@@ -38,8 +42,6 @@ def cmd_run(args: argparse.Namespace) -> int:
     os.environ.setdefault("PYH_CWD", os.getcwd())
     if args.no_supervisor:
         return asyncio.run(run_generation(profile, extra_patches=args.patch))
-    from .supervisor import Supervisor
-
     return Supervisor(profile, extra_patches=args.patch, boot_timeout=args.boot_timeout).run()
 
 
@@ -53,9 +55,6 @@ def cmd_dump(args: argparse.Namespace) -> int:
 
 
 def cmd_preflight(args: argparse.Namespace) -> int:
-    from .preflight import preflight_in_process
-    from .worker import setup_logging
-
     setup_logging("WARNING")
     report = asyncio.run(preflight_in_process(_profile(args), args.patch))
     _print(report if args.verbose else {k: report[k] for k in ("ok", "errors", "pending", "warnings") if k in report})
@@ -63,15 +62,10 @@ def cmd_preflight(args: argparse.Namespace) -> int:
 
 
 def cmd_plugin(args: argparse.Namespace) -> int:
-    from . import manage
-
     profile = _profile(args)
     preflight = not args.no_preflight
     action = args.action
     if action == "list":
-        from .preflight import preflight_in_process
-        from .worker import setup_logging
-
         setup_logging("WARNING")
         report = asyncio.run(preflight_in_process(profile))
         rows = [
@@ -99,8 +93,6 @@ def cmd_plugin(args: argparse.Namespace) -> int:
         raise SystemExit(f"unknown action {action}")
     _print(result)
     if result.get("application") == "saved":
-        from .supervisor import signal_restart
-
         if signal_restart(profile):
             print("restart signalled to the running supervisor", file=sys.stderr)
         else:
@@ -109,8 +101,6 @@ def cmd_plugin(args: argparse.Namespace) -> int:
 
 
 def cmd_restart(args: argparse.Namespace) -> int:
-    from .supervisor import signal_restart
-
     if signal_restart(_profile(args)):
         print("restart signalled")
         return 0
@@ -119,9 +109,6 @@ def cmd_restart(args: argparse.Namespace) -> int:
 
 
 def cmd_exec(args: argparse.Namespace) -> int:
-    from .harness import Harness
-    from .worker import setup_logging
-
     setup_logging(args.log_level or "WARNING")
     profile = _profile(args)
     # Headless: `http` disabled; plugins injecting it stay PENDING.
@@ -162,8 +149,6 @@ def cmd_exec(args: argparse.Namespace) -> int:
 
 
 def _has_entry(profile: Profile, entry_id: str) -> bool:
-    from .config import find
-
     return find(profile.compose().tree, entry_id) is not None
 
 

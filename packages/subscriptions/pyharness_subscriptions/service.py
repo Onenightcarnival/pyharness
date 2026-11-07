@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+from langgraph.config import get_config
 from pydantic import BaseModel, Field
 
 from pyharness import Service
@@ -28,7 +29,7 @@ from pyharness import Service
 from .antigravity import AntigravityProvider
 from .catalog import ROUTE_TYPE, provider_catalog, rebuild_routes
 from .chatgpt import ChatGPTProvider
-from .codex import CodexProvider
+from .codex import CLIENT_VERSION_FLOOR, CodexProvider
 from .grok import GrokProvider
 from .providers import Provider
 from .routes import build_router
@@ -48,8 +49,6 @@ class Config(BaseModel):
 
 def _thread_id() -> str | None:
     try:
-        from langgraph.config import get_config
-
         return dict(get_config().get("configurable") or {}).get("thread_id")
     except Exception:  # noqa: BLE001
         return None
@@ -196,7 +195,7 @@ class SubscriptionsService(Service):
                     try:
                         version, source = await asyncio.wait_for(provider.client_version(), 1.0)
                     except Exception:  # noqa: BLE001 - the npm lookup is slow or offline: report the floor
-                        version, source = provider.config.get("codexClientVersion") or "0.153.4", "fallback"
+                        version, source = provider.config.get("codexClientVersion") or CLIENT_VERSION_FLOOR, "fallback"
                     st["clientVersion"] = {"version": version, "source": source}
             except Exception as exc:  # noqa: BLE001
                 st = {"busy": False, "accounts": [], "detail": str(exc)}

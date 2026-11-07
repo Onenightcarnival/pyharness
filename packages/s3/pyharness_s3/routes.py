@@ -18,7 +18,7 @@ from .engine import PREVIEWABLE, clean_key, error_text, guess_mime
 from .store import ProfileStore, StoreError
 
 if TYPE_CHECKING:
-    from .service import S3Service
+    from .service import S3Service  # type-only: .service imports this module
 
 PREVIEW_TEXT_BYTES = 512 * 1024
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024 * 1024

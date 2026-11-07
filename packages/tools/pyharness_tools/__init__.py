@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
+from textwrap import dedent
 from typing import Any
 
 from langchain_core.tools import BaseTool
@@ -82,8 +83,12 @@ class ToolsService(Service):
         self.ctx.define_event(
             "tools/execute",
             "waterfall",
-            "listener(call: ToolCall, next) -> ToolMessage | Command. `await next()` runs the tool; "
-            "a returned ToolMessage without next() replaces the tool.",
+            dedent(
+                """
+                listener(call: ToolCall, next) -> ToolMessage | Command. `await next()` runs the tool;
+                a returned ToolMessage without next() replaces the tool.
+                """
+            ).strip(),
         )
         self.ctx.define_event("tools/result", "parallel", "listener(call: ToolCall, result) after each tool call.")
 

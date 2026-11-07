@@ -25,6 +25,7 @@ import json
 import re
 from collections.abc import Iterator
 from pathlib import Path
+from textwrap import dedent
 from typing import Any, Literal
 
 from langchain.tools import ToolRuntime
@@ -66,12 +67,15 @@ class Config(BaseModel):
     )
 
 
-GUIDANCE = """\
-## Extending this harness
-Plugins are Python distributions mounted in this profile's configuration tree. `harness_inspect` shows the live API; \
-`plugin_manager` writes starter files, installs bundles (approval, preflight in a separate process, restart after \
-the turn) \
-and toggles entries; profile files change only through it. The Creator preset adds skills with the full procedure."""
+GUIDANCE = dedent(
+    """
+    ## Extending this harness
+    Plugins are Python distributions mounted in this profile's configuration tree. `harness_inspect` shows the live API;
+    `plugin_manager` writes starter files, installs bundles (approval, preflight in a separate process, restart after
+    the turn) and toggles entries; profile files change only through it. The Creator preset adds skills with the full
+    procedure.
+    """
+).strip()
 
 
 def template_variants() -> list[str]:
@@ -131,10 +135,12 @@ def apply(ctx: Any, config: Config) -> None:
         if lifecycle.supervised:
             lifecycle.request_restart(reason, resume=[session_id] if session_id else [])
             result["application"] = "restart-scheduled"
-            result["next"] = (
-                "Saved. Restart after this turn; this session continues in the new generation. "
-                "Turn end: one-line status."
-            )
+            result["next"] = dedent(
+                """
+                Saved. Restart after this turn; this session continues in the new generation.
+                Turn end: one-line status.
+                """
+            ).strip()
         else:
             result["application"] = "saved-restart-required"
             result["next"] = (

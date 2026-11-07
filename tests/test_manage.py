@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 
@@ -73,9 +74,18 @@ async def test_bundle_without_entry_point_is_rejected(profile, tmp_path):
     (pkg / "plain_pkg").mkdir(parents=True)
     (pkg / "plain_pkg" / "__init__.py").write_text("")
     (pkg / "pyproject.toml").write_text(
-        '[project]\nname = "plain-pkg"\nversion = "0.1.0"\n'
-        '[build-system]\nrequires = ["hatchling"]\nbuild-backend = "hatchling.build"\n'
-        '[tool.hatch.build.targets.wheel]\npackages = ["plain_pkg"]\n'
+        dedent(
+            """
+            [project]
+            name = "plain-pkg"
+            version = "0.1.0"
+            [build-system]
+            requires = ["hatchling"]
+            build-backend = "hatchling.build"
+            [tool.hatch.build.targets.wheel]
+            packages = ["plain_pkg"]
+            """
+        ).strip()
     )
     result = await manage.install_bundle(profile, pkg)
     assert result["application"] == "rejected"

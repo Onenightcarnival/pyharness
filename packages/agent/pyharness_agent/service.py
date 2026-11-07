@@ -5,9 +5,11 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
+from textwrap import dedent
 from typing import Any
 
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
+from langgraph.types import Command
 from pydantic import BaseModel, Field
 
 from pyharness import Service
@@ -27,12 +29,14 @@ from .runs import TURNS, RestartPending, RunHandle, SessionBusy, Turn, TurnRecor
 
 NAMESPACE = ("pyharness", "sessions")
 
-DEFAULT_RESUME = (
-    "[pyharness] Restarted into generation {generation}.\n"
-    "Reason: {reasons}.{rollback}\n"
-    "Task: the task in progress continues. Tools of newly enabled plugins are available; "
-    "harness_inspect shows the active plugins."
-)
+DEFAULT_RESUME = dedent(
+    """
+    [pyharness] Restarted into generation {generation}.
+    Reason: {reasons}.{rollback}
+    Task: the task in progress continues. Tools of newly enabled plugins are available;
+    harness_inspect shows the active plugins.
+    """
+).strip()
 
 
 class AgentConfig(BaseModel):
@@ -273,13 +277,9 @@ class AgentService(Service):
         if not self.ctx.lifecycle.accepting_work:
             raise RestartPending("restart pending: configuration change; retry later")
         if decisions is not None:
-            from langgraph.types import Command
-
             payload: Any = Command(resume={"decisions": decisions})
             kind = kind or "approval"
         elif resume is not None:
-            from langgraph.types import Command
-
             payload = Command(resume=resume)
             kind = kind or "answer"
         elif marker is not None:
@@ -410,10 +410,13 @@ class AgentService(Service):
         rollback = state.get("rollback")
         rollback_note = ""
         if rollback:
-            rollback_note = (
-                "\nRollback: generation {gen} failed to boot ({err}). The previous configuration is active; "
-                "the change is not applied."
-            ).format(gen=rollback.get("failed_generation"), err=rollback.get("error"))
+            note = dedent(
+                """
+                Rollback: generation {gen} failed to boot ({err}). The previous configuration is active;
+                the change is not applied.
+                """
+            ).strip()
+            rollback_note = "\n" + note.format(gen=rollback.get("failed_generation"), err=rollback.get("error"))
         fields = _SafeFields(
             generation=lifecycle.generation,
             reasons="; ".join(state.get("reasons") or ["unspecified"]),

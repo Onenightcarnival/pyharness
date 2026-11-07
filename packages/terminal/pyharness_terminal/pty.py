@@ -7,10 +7,19 @@ import contextlib
 import os
 import signal
 import struct
+import subprocess
 import sys
 import time
 from pathlib import Path
+from textwrap import dedent
 from typing import Any
+
+try:  # POSIX only: elsewhere ``pty_available()`` is false and no terminal opens
+    import fcntl
+    import pty
+    import termios
+except ImportError:
+    fcntl = pty = termios = None  # type: ignore[assignment]
 
 
 class Terminal:
@@ -35,10 +44,6 @@ class Terminal:
     def open(self) -> None:
         """Spawn the shell on a new PTY: the child becomes a session leader with the slave as its controlling
         terminal."""
-        import fcntl
-        import subprocess
-        import termios
-
         master, slave = os.openpty()
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", self.rows, self.cols, 0, 0))
         env = {
@@ -49,10 +54,14 @@ class Terminal:
         }
         args = [self.shell, "-l"] if os.path.basename(self.shell) in ("bash", "zsh", "sh", "fish") else [self.shell]
         # A Python wrapper (not preexec_fn, not pty.fork) sets the session and controlling tty, then execs the shell.
-        bootstrap = (
-            "import os, sys, fcntl, termios; os.setsid(); fcntl.ioctl(0, termios.TIOCSCTTY, 0); "
-            "os.execvp(sys.argv[1], sys.argv[1:])"
-        )
+        bootstrap = dedent(
+            """
+            import os, sys, fcntl, termios
+            os.setsid()
+            fcntl.ioctl(0, termios.TIOCSCTTY, 0)
+            os.execvp(sys.argv[1], sys.argv[1:])
+            """
+        ).strip()
         try:
             proc = subprocess.Popen(
                 [sys.executable, "-c", bootstrap, *args],
@@ -117,9 +126,6 @@ class Terminal:
             os.write(self.fd, data)
 
     def resize(self, cols: int, rows: int) -> None:
-        import fcntl
-        import termios
-
         self.cols, self.rows = max(2, min(cols, 500)), max(1, min(rows, 300))
         if self.fd is not None:
             fcntl.ioctl(self.fd, termios.TIOCSWINSZ, struct.pack("HHHH", self.rows, self.cols, 0, 0))
@@ -161,9 +167,4 @@ class Terminal:
 
 
 def pty_available() -> bool:
-    try:
-        import pty  # noqa: F401
-
-        return os.name == "posix"
-    except ImportError:
-        return False
+    return pty is not None and os.name == "posix"

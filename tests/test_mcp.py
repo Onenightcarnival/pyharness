@@ -5,9 +5,11 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from pyharness_mcp import ServerConfig, connection_of, slug
+import httpx
+import yaml
 
 from pyharness import Harness, Profile
+from pyharness_mcp import ServerConfig, connection_of, slug
 
 SERVER = Path(__file__).with_name("testkit") / "mcp_server.py"
 
@@ -56,9 +58,6 @@ async def test_mcp_tools_register_and_run(home):
 
 
 async def test_mcp_settings_api_round_trip(home):
-    import httpx
-    import yaml
-
     profile = Profile.init("web", home=str(home))
     async with Harness(profile, patch=[{"id": "http", "config": {"serve": False}}]) as h:
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t") as c:

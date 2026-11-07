@@ -5,144 +5,29 @@ from __future__ import annotations
 import importlib.util
 from typing import Any
 
-PROTOCOLS: dict[str, dict[str, Any]] = {
-    "openai-chat": {
-        "title": "OpenAI Chat Completions",
-        "type": "openai",
-        "options": {"use_responses_api": False},
-        "models_api": "openai",
-    },
-    "openai-responses": {
-        "title": "OpenAI Responses",
-        "type": "openai",
-        "options": {"use_responses_api": True},
-        "models_api": "openai",
-    },
-    "anthropic-messages": {
-        "title": "Anthropic Messages",
-        "type": "anthropic",
-        "options": {},
-        "models_api": "anthropic",
-    },
-}
+from pyharness import package_toml
+
+try:
+    from langchain.chat_models.base import _BUILTIN_PROVIDERS
+except ImportError:  # older langchain without the table
+    _BUILTIN_PROVIDERS = {}
+
+_CATALOG = package_toml(__file__)
+
+# ``[protocols.<id>]``: title, LangChain type, model options, models listing API.
+PROTOCOLS: dict[str, dict[str, Any]] = _CATALOG["protocols"]
 
 # Provider types the settings page offers; their integration packages are dependencies of pyharness-llm.
-PRESETS = ["openai", "anthropic", "deepseek", "google_genai", "openrouter"]
+PRESETS: list[str] = _CATALOG["presets"]
 
-# Curated facts per LangChain provider type. Missing types fall back to generic ``api_key`` / ``base_url`` keywords.
-CURATED: dict[str, dict[str, Any]] = {
-    "openai": {
-        "title": "OpenAI",
-        "env": "OPENAI_API_KEY",
-        "base_url": "https://api.openai.com/v1",
-        "models_api": "openai",
-    },
-    "openrouter": {
-        "title": "OpenRouter",
-        "env": "OPENROUTER_API_KEY",
-        "base_url": "https://openrouter.ai/api/v1",
-        "models_api": "openai",
-    },
-    "azure_openai": {
-        "title": "Azure OpenAI",
-        "env": "AZURE_OPENAI_API_KEY",
-        "keys": {"base_url": "azure_endpoint"},
-        "models_api": None,
-    },
-    "anthropic": {
-        "title": "Anthropic",
-        "env": "ANTHROPIC_API_KEY",
-        "base_url": "https://api.anthropic.com",
-        "models_api": "anthropic",
-    },
-    "deepseek": {
-        "title": "DeepSeek",
-        "env": "DEEPSEEK_API_KEY",
-        "base_url": "https://api.deepseek.com",
-        "models_api": "openai",
-        "models": [
-            {"id": "deepseek-chat", "name": "DeepSeek Chat"},
-            {"id": "deepseek-reasoner", "name": "DeepSeek Reasoner"},
-        ],
-    },
-    "google_genai": {
-        "title": "Google Gemini",
-        "env": "GOOGLE_API_KEY",
-        "keys": {"api_key": "google_api_key"},
-        "models_api": None,
-    },
-    "google_vertexai": {"title": "Google Vertex AI", "credentials": False, "models_api": None},
-    "google_anthropic_vertex": {"title": "Anthropic on Vertex AI", "credentials": False, "models_api": None},
-    "bedrock": {"title": "Amazon Bedrock", "credentials": False, "models_api": None},
-    "bedrock_converse": {"title": "Amazon Bedrock Converse", "credentials": False, "models_api": None},
-    "anthropic_bedrock": {"title": "Anthropic on Bedrock", "credentials": False, "models_api": None},
-    "groq": {
-        "title": "Groq",
-        "env": "GROQ_API_KEY",
-        "base_url": "https://api.groq.com/openai/v1",
-        "models_api": "openai",
-    },
-    "mistralai": {
-        "title": "Mistral AI",
-        "env": "MISTRAL_API_KEY",
-        "base_url": "https://api.mistral.ai/v1",
-        "keys": {"base_url": "endpoint"},
-        "models_api": "openai",
-    },
-    "fireworks": {
-        "title": "Fireworks AI",
-        "env": "FIREWORKS_API_KEY",
-        "base_url": "https://api.fireworks.ai/inference/v1",
-        "models_api": "openai",
-    },
-    "together": {
-        "title": "Together AI",
-        "env": "TOGETHER_API_KEY",
-        "base_url": "https://api.together.xyz/v1",
-        "models_api": "openai",
-    },
-    "xai": {"title": "xAI", "env": "XAI_API_KEY", "base_url": "https://api.x.ai/v1", "models_api": "openai"},
-    "perplexity": {
-        "title": "Perplexity",
-        "env": "PPLX_API_KEY",
-        "base_url": "https://api.perplexity.ai",
-        "models_api": "openai",
-    },
-    "ollama": {"title": "Ollama", "credentials": False, "base_url": "http://localhost:11434", "models_api": "ollama"},
-    "cohere": {"title": "Cohere", "env": "COHERE_API_KEY", "keys": {"api_key": "cohere_api_key"}, "models_api": None},
-    "huggingface": {"title": "Hugging Face", "env": "HUGGINGFACEHUB_API_TOKEN", "models_api": None},
-    "nvidia": {"title": "NVIDIA", "env": "NVIDIA_API_KEY", "models_api": None},
-    "ibm": {"title": "IBM watsonx", "env": "WATSONX_APIKEY", "models_api": None},
-    "litellm": {"title": "LiteLLM", "credentials": False, "models_api": None},
-    "upstage": {"title": "Upstage", "env": "UPSTAGE_API_KEY", "models_api": None},
-    "baseten": {"title": "Baseten", "env": "BASETEN_API_KEY", "models_api": None},
-    "meta": {"title": "Meta Llama API", "env": "LLAMA_API_KEY", "models_api": None},
-    "azure_ai": {
-        "title": "Azure AI",
-        "env": "AZURE_AI_CREDENTIAL",
-        "keys": {"base_url": "endpoint", "api_key": "credential"},
-        "models_api": None,
-    },
-    "langsmith": {"title": "LangSmith", "env": "LANGSMITH_API_KEY", "models_api": None},
-    "bedrock_mantle_anthropic": {"title": "Bedrock Mantle (Anthropic)", "credentials": False, "models_api": None},
-    "bedrock_mantle_openai": {"title": "Bedrock Mantle (OpenAI)", "credentials": False, "models_api": None},
-    "echo": {
-        "title": "Echo (placeholder, no credentials)",
-        "credentials": False,
-        "models_api": None,
-        "models": [{"id": "echo", "name": "Echo"}],
-    },
-}
+# Curated facts per LangChain provider type. Missing types fall back to generic ``api_key`` / ``base_url`` keywords;
+# a missing ``models_api`` means no model listing.
+CURATED: dict[str, dict[str, Any]] = _CATALOG["curated"]
 
 
 def builtin_types() -> dict[str, tuple[str, str]]:
     """LangChain provider → ``(package, class name)``."""
-    try:
-        from langchain.chat_models.base import _BUILTIN_PROVIDERS
-
-        return {name: (pkg, cls) for name, (pkg, cls, _) in _BUILTIN_PROVIDERS.items()}
-    except Exception:  # pragma: no cover - older langchain
-        return {}
+    return {name: (pkg, cls) for name, (pkg, cls, _) in _BUILTIN_PROVIDERS.items()}
 
 
 def type_info(kind: str) -> dict[str, Any]:

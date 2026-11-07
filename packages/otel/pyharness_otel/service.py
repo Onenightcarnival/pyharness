@@ -13,9 +13,10 @@ from typing import Any
 
 import httpx
 from fastapi import APIRouter, HTTPException, Request
+from opentelemetry.trace import SpanKind
 from pydantic import BaseModel, Field
 
-from pyharness import Service
+from pyharness import Service, manage
 
 from .pipeline import DEFAULT_SERVICE, Pipeline
 from .spans import build_turn_spans
@@ -165,8 +166,6 @@ class OtelService(Service):
         return out
 
     async def save(self, data: dict[str, Any]) -> dict[str, Any]:
-        from pyharness import manage
-
         profile = self.ctx.get("profile", None)
         if profile is None:
             raise HTTPException(503, "no profile")
@@ -210,8 +209,6 @@ class OtelService(Service):
     async def test(self, data: dict[str, Any]) -> dict[str, Any]:
         """Send test spans through a temporary pipeline built from ``data`` (or the saved settings); verify on
         Langfuse."""
-        from opentelemetry.trace import SpanKind
-
         config = self.config.model_copy()
         if data.get("endpoint"):
             config.endpoint = str(data["endpoint"])

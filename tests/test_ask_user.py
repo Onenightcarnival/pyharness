@@ -6,10 +6,10 @@ import json
 
 import httpx
 import pytest
-from pyharness_ask_user import normalize_answers
-from test_agent import scripted_patch, sse_events
 
 from pyharness import Harness, Profile
+from pyharness_ask_user import normalize_answers
+from test_agent import scripted_patch, sse_events
 
 QUESTIONS = [
     {

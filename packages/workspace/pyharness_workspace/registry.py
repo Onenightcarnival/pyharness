@@ -21,12 +21,15 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from textwrap import dedent
 from typing import TYPE_CHECKING, Any
+
+from deepagents.backends import FilesystemBackend, LocalShellBackend
 
 from .workspace import Workspace, WorkspaceError
 
 if TYPE_CHECKING:
-    from .plugin import Config
+    from .plugin import Config  # annotations only; import cycle with plugin
 
 NAMESPACE = ("pyharness", "workspaces")
 
@@ -90,8 +93,6 @@ class Workspaces:
 
     def backend_for(self, path: str | os.PathLike[str] | None, shell: bool | None = None) -> Any:
         """Backend for a workspace; ``shell`` overrides the configured shell setting (``False``: file tools only)."""
-        from deepagents.backends import FilesystemBackend, LocalShellBackend
-
         workspace = self.open(path)
         use_shell = self.config.shell if shell is None else (shell and self.config.shell)
         key = (workspace.root, use_shell)
@@ -179,11 +180,13 @@ class Workspaces:
         if sys.platform == "darwin" and shutil.which("osascript"):
             return ["osascript", "-e", f'POSIX path of (choose folder with prompt "{prompt}")']
         if sys.platform == "win32":
-            ps = (
-                "Add-Type -AssemblyName System.Windows.Forms; "
-                "$d = New-Object System.Windows.Forms.FolderBrowserDialog; "
-                f"$d.Description = '{prompt}'; if ($d.ShowDialog() -eq 'OK') {{ Write-Output $d.SelectedPath }}"
-            )
+            ps = dedent(
+                f"""
+                Add-Type -AssemblyName System.Windows.Forms;
+                $d = New-Object System.Windows.Forms.FolderBrowserDialog;
+                $d.Description = '{prompt}'; if ($d.ShowDialog() -eq 'OK') {{ Write-Output $d.SelectedPath }}
+                """
+            ).strip()
             return ["powershell", "-NoProfile", "-Command", ps]
         if os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
             if shutil.which("zenity"):

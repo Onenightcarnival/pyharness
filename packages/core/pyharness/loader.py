@@ -19,6 +19,7 @@ import time
 import traceback
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from textwrap import dedent
 from typing import Any
 
 from .config import Entry, Tree, interpolate
@@ -106,8 +107,12 @@ CORE_EVENTS = [
     (
         "app/ready",
         "series",
-        "All plugins are applied. Listeners finish wiring and bind no external resources; "
-        "preflight runs this event. A listener error fails the boot.",
+        dedent(
+            """
+            All plugins are applied. Listeners finish wiring and bind no external resources;
+            preflight runs this event. A listener error fails the boot.
+            """
+        ).strip(),
     ),
     (
         "app/serve",
@@ -117,8 +122,12 @@ CORE_EVENTS = [
     (
         "app/started",
         "parallel",
-        "The generation is committed: ready marker written, last-known-good saved, hand-off consumed. "
-        "Listeners start background work. Listener errors are logged.",
+        dedent(
+            """
+            The generation is committed: ready marker written, last-known-good saved, hand-off consumed.
+            Listeners start background work. Listener errors are logged.
+            """
+        ).strip(),
     ),
     ("app/stopping", "parallel", "Plugins are about to be torn down."),
 ]
