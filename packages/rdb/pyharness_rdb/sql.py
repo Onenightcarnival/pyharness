@@ -10,11 +10,11 @@ import re
 from typing import Any
 
 # ---------------------------------------------------------------------- statement classification
-READ_START = re.compile(r"^(select|with|explain|show|values|table|describe|desc|pragma)\b", re.I)
+READ_START = re.compile(r"^(select|with|explain|show|values|table|describe|desc|pragma)\b", re.IGNORECASE)
 DML_OR_DDL = re.compile(
     r"\b(insert|update|delete|merge|create|alter|drop|truncate|grant|revoke|vacuum|reindex|attach|detach|copy|call|lock|refresh"
     r"|cluster|reset|begin|commit|rollback|savepoint|release)\b",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -28,8 +28,7 @@ def skeleton(sql: str, mysql: bool) -> str:
         s = re.sub(r"`(?:[^`]|``)*`", "``", s)
     s = re.sub(r"'(?:[^']|'')*'", "''", s)
     s = re.sub(r'"(?:[^"]|"")*"', '""', s)
-    s = re.sub(r"\$\$[\s\S]*?\$\$", "''", s)
-    return s
+    return re.sub(r"\$\$[\s\S]*?\$\$", "''", s)
 
 
 def split_statements(sql: str, mysql: bool) -> list[str]:
@@ -95,9 +94,9 @@ def is_read_only(statement: str, mysql: bool) -> bool:
         return True
     if head == "pragma":
         return "=" not in rest
-    if head == "select" and re.search(r"\binto\b", rest, re.I):
+    if head == "select" and re.search(r"\binto\b", rest, re.IGNORECASE):
         return False
-    if re.search(r"\bfor\s+(update|share|no\s+key\s+update|key\s+share)\b", rest, re.I):
+    if re.search(r"\bfor\s+(update|share|no\s+key\s+update|key\s+share)\b", rest, re.IGNORECASE):
         return False
     return not DML_OR_DDL.search(rest)
 

@@ -8,7 +8,7 @@ import shutil
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field
 
@@ -33,7 +33,7 @@ class WorkspaceChangesService(Service):
 
     key = "workspaceChanges"
     name = "pyharness-workspace-changes"
-    inject = ["agents", "workspace", "store"]
+    inject: ClassVar[list[str]] = ["agents", "workspace", "store"]
     Config = Config
 
     def __init__(self, ctx: Any, config: Config) -> None:

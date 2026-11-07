@@ -54,7 +54,7 @@ class Harness:
         if profile is not None:
             vars_.update(profile.variables(cwd))
         else:
-            vars_.update({"cwd": cwd or os.getcwd()})
+            vars_.update({"cwd": cwd or str(Path.cwd())})
         vars_.update(variables or {})
         lifecycle = Lifecycle(
             profile.runtime if profile is not None else None,

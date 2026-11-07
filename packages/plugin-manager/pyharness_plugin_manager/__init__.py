@@ -94,7 +94,8 @@ def render_template(short: str, variant: str = "basic") -> dict[str, str]:
     title = slug.replace("-", " ").title() + " plugin"
     values = dict(zip(TOKENS, (dist, module, slug, title), strict=True))
     out = {}
-    for path, text in _template_files(variant):
+    for template_path, template in _template_files(variant):
+        path, text = template_path, template
         for token, value in values.items():
             text = text.replace(token, value)
             path = path.replace(token, value)
@@ -227,12 +228,12 @@ def apply(ctx: Any, config: Config) -> None:
 
 
 __all__ = [
-    "Action",
-    "Config",
     "MUTATING",
     "SKILLS_DIR",
     "TEMPLATES_DIR",
     "TOKENS",
+    "Action",
+    "Config",
     "apply",
     "inject",
     "name",

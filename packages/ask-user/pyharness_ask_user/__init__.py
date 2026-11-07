@@ -10,7 +10,7 @@ and no ``custom``. Question and answer shapes follow dsh's ``ask_user_question``
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, ClassVar
 
 from langchain_core.tools import tool
 from langgraph.types import interrupt
@@ -72,7 +72,7 @@ def normalize_answers(questions: list[dict[str, Any]], raw: Any) -> list[dict[st
 class AskUserService(Service):
     key = "askUser"
     name = "pyharness-ask-user"
-    inject = ["tools"]
+    inject: ClassVar[list[str]] = ["tools"]
     Config = Config
 
     async def start(self) -> None:

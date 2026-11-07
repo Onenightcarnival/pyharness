@@ -4,6 +4,7 @@ against the release's ``SHASUMS256.txt``; MCP server commands that are a bare ``
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import io
 import os
@@ -83,6 +84,7 @@ class BunManager:
             out = subprocess.run(
                 [str(self.exe), "--version"],
                 capture_output=True,
+                check=False,
                 text=True,
                 timeout=10,
                 env={**os.environ, **bun_env(self.root)},
@@ -197,9 +199,9 @@ class BunManager:
                     raise RuntimeError(MESSAGES["version"])
                 ready = tmp / "ready"
                 ready.mkdir()
-                with zf.open(members[0]) as src, open(ready / self.exe.name, "wb") as dst:
+                with zf.open(members[0]) as src, (ready / self.exe.name).open("wb") as dst:
                     shutil.copyfileobj(src, dst)
-            os.chmod(ready / self.exe.name, 0o755)
+            (ready / self.exe.name).chmod(0o755)
             if sys.platform != "win32":
                 (ready / "bunx").symlink_to(self.exe.name)
             else:
@@ -207,6 +209,7 @@ class BunManager:
             out = subprocess.run(
                 [str(ready / self.exe.name), "--version"],
                 capture_output=True,
+                check=False,
                 text=True,
                 timeout=30,
                 env={**os.environ, **bun_env(self.root)},
@@ -238,7 +241,5 @@ class BunManager:
             )
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
-            try:
+            with contextlib.suppress(OSError):
                 lock_path.unlink()
-            except OSError:
-                pass

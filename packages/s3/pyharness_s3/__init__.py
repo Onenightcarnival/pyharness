@@ -18,6 +18,8 @@ routes see is relative to that prefix. Tools (shapes as dsh-s3): ``s3_buckets``,
 (raw body), delete, folder, presign, copy.
 """
 
+from __future__ import annotations
+
 from .service import GUIDANCE, Config, S3Service
 
 __all__ = ["GUIDANCE", "Config", "S3Service"]

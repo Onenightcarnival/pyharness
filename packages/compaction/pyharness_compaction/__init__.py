@@ -16,6 +16,8 @@ run stream carries a ``compact`` event, and the turn record a ``compact`` entry.
 logged and the turn continues; manual ones fail the run.
 """
 
+from __future__ import annotations
+
 from .checkpoint import (
     CHECKPOINT_KIND,
     COMMAND_KIND,

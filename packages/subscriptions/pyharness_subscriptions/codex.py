@@ -288,7 +288,7 @@ class CodexProvider(Provider):
 
 
 def _ver(v: str) -> tuple[int, ...]:
-    return tuple(int(x) for x in v.split("-")[0].split("."))
+    return tuple(int(x) for x in v.split("-", maxsplit=1)[0].split("."))
 
 
 class CodexChatModel(ResponsesChatModel):

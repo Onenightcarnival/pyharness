@@ -17,6 +17,8 @@ serve the Database page: profiles, settings, test, schemas, tables, columns, ddl
 query, execute, changes (grid edits as SQL, previewed then applied) and ``export.csv``.
 """
 
+from __future__ import annotations
+
 from .service import GUIDANCE, Config, RdbService
 
 __all__ = ["GUIDANCE", "Config", "RdbService"]

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
 from textwrap import dedent
 from typing import Any
@@ -108,10 +109,8 @@ class MySQLDriver(Driver):
                 self.conn.cursor().execute("COMMIT")
                 return total
             except Exception:
-                try:
+                with contextlib.suppress(Exception):
                     self.conn.cursor().execute("ROLLBACK")
-                except Exception:  # noqa: BLE001
-                    pass
                 raise
 
     def list_schemas(self) -> list[str]:
@@ -136,7 +135,7 @@ class MySQLDriver(Driver):
             {
                 "schema": schema,
                 "name": r["name"],
-                "kind": "view" if re.search("view", str(r["type"]), re.I) else "table",
+                "kind": "view" if re.search("view", str(r["type"]), re.IGNORECASE) else "table",
             }
             for r in rows
         ]
@@ -157,7 +156,7 @@ class MySQLDriver(Driver):
             if default is not None and str(default) == "NULL" and nullable:
                 default = None
             typ = str(r["type"]) + (
-                " AUTO_INCREMENT" if re.search("auto_increment", str(r["extra"] or ""), re.I) else ""
+                " AUTO_INCREMENT" if re.search("auto_increment", str(r["extra"] or ""), re.IGNORECASE) else ""
             )
             out.append(
                 {

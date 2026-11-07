@@ -24,7 +24,7 @@ from langchain_core.messages import AIMessage
 
 from .messages import _iter_messages, _text
 
-_ATTACHMENT = re.compile(r"\n*<attached-(?:file|directory)\b[^>]*>.*?</attached-(?:file|directory)>", re.S)
+_ATTACHMENT = re.compile(r"\n*<attached-(?:file|directory)\b[^>]*>.*?</attached-(?:file|directory)>", re.DOTALL)
 TURNS = ("pyharness", "turns")  # + (session_id,): one record per turn — stats and trajectory
 
 
@@ -51,11 +51,11 @@ class Turn:
 class RunHandle:
     """Event log of one run; each subscriber receives every event from the start."""
 
-    def __init__(self, session_id: str, kind: str, input: str | None) -> None:
+    def __init__(self, session_id: str, kind: str, text: str | None) -> None:
         self.id = uuid.uuid4().hex[:12]
         self.session_id = session_id
         self.kind = kind
-        self.input = input
+        self.input = text
         self.events: list[dict[str, Any]] = []
         self.done = False
         self.task: asyncio.Task[Any] | None = None

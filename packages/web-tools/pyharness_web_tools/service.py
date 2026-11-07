@@ -28,7 +28,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, ClassVar
 
 import httpx
 
@@ -36,16 +36,14 @@ from pyharness import Service
 
 from .common import USER_AGENT
 from .config import Config
-from .fetch import fetch as fetch_url
-from .fetch import fetch_tool
-from .search import search as search_web
-from .search import search_tool
+from .fetch import fetch as fetch_url, fetch_tool
+from .search import search as search_web, search_tool
 
 
 class WebToolsService(Service):
     key = "web"
     name = "pyharness-web-tools"
-    inject = ["tools"]
+    inject: ClassVar[list[str]] = ["tools"]
     Config = Config
 
     def __init__(self, ctx: Any, config: Config) -> None:

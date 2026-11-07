@@ -53,6 +53,8 @@ Skills directories added by plugins are mounted read-only for the model at ``/sk
 the model reads a skill with ``read_file``.
 """
 
+from __future__ import annotations
+
 from .config import DEFAULT_PRESETS, MODES, SKILLS_MOUNT, LoopConfig, PresetConfig
 from .middleware import HarnessMiddleware, ModelCall
 from .service import DeepAgentsLoop

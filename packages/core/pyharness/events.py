@@ -26,6 +26,7 @@ Waterfall listener ``listener(*args, next)``:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import inspect
 import logging
 from collections.abc import Awaitable, Callable
@@ -125,10 +126,8 @@ class EventBus:
             bucket.append(listener)
 
         def dispose() -> None:
-            try:
+            with contextlib.suppress(ValueError):
                 self._listeners.get(name, []).remove(listener)
-            except ValueError:
-                pass
 
         return dispose
 
@@ -190,7 +189,7 @@ class EventBus:
             listener = listeners[index]
 
             async def next_(*replacement: Any) -> Any:
-                return await run(index + 1, replacement if replacement else current)
+                return await run(index + 1, replacement or current)
 
             return await _call(listener.fn, current, {"next": next_})
 

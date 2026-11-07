@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 import uuid
 from string import Template
-from typing import Any
+from typing import Any, ClassVar
 
 from langchain.agents.middleware import AgentMiddleware
 from langchain.agents.middleware.types import hook_config
@@ -85,7 +85,7 @@ class CompactionMiddleware(AgentMiddleware):
 class CompactionService(Service):
     key = "compaction"
     name = "pyharness-compaction"
-    inject = ["agentLoop", "llm"]
+    inject: ClassVar[list[str]] = ["agentLoop", "llm"]
     Config = Config
 
     def __init__(self, ctx: Any, config: Config) -> None:

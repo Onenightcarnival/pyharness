@@ -85,7 +85,7 @@ def write_yaml(path: Path, data: Any, header: str | None = None) -> None:
     body = dump_yaml(data)
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text((header or "") + body, encoding="utf-8")
-    os.replace(tmp, path)
+    tmp.replace(path)
 
 
 def parse_ops(raw: Any, source: str) -> list[PatchOp]:

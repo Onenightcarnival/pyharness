@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import hashlib
 import secrets
 from dataclasses import dataclass, field
@@ -219,8 +220,6 @@ class LoginAttempt:
     async def close(self) -> None:
         if self._server is not None:
             self._server.close()
-            try:
+            with contextlib.suppress(Exception):
                 await self._server.wait_closed()
-            except Exception:  # noqa: BLE001
-                pass
             self._server = None

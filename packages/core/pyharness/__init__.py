@@ -19,6 +19,8 @@
 Model adapters, tools, the agent loop, persistence and the HTTP API are plugins.
 """
 
+from __future__ import annotations
+
 from .config import ConfigError, Entry, PatchOp
 from .context import Context, Scope, Service, ServiceConflict, ServiceNotFound, unwrap
 from .credentials import CredentialStore
@@ -35,6 +37,8 @@ __version__ = "0.1.0"
 __all__ = [
     "BOOT_FAILURE_EXIT_CODE",
     "BUNDLE_GROUP",
+    "PLUGIN_GROUP",
+    "RESTART_EXIT_CODE",
     "ConfigError",
     "Context",
     "CredentialStore",
@@ -44,12 +48,10 @@ __all__ = [
     "Harness",
     "Lifecycle",
     "Loader",
-    "PLUGIN_GROUP",
     "PatchOp",
     "PluginDef",
     "PluginError",
     "Profile",
-    "RESTART_EXIT_CODE",
     "Scope",
     "Service",
     "ServiceConflict",

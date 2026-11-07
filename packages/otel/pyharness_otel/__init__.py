@@ -26,6 +26,8 @@ Attribute names follow the GenAI semantic conventions used by dsh-otel; Langfuse
 ``POST verify``.
 """
 
+from __future__ import annotations
+
 from .config import Config
 from .pipeline import Pipeline, normalize_endpoint, signal_url
 from .service import OtelService

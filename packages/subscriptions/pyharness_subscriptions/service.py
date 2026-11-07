@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import httpx
 from langgraph.config import get_config
@@ -59,7 +59,7 @@ class SubscriptionsService(Service):
 
     key = "subscriptions"
     name = "pyharness-subscriptions"
-    inject = ["llm", "tools", "http", "webui"]
+    inject: ClassVar[list[str]] = ["llm", "tools", "http", "webui"]
     Config = Config
 
     def __init__(self, ctx: Any, config: Config) -> None:

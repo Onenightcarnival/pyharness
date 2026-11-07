@@ -91,9 +91,11 @@ def make_tools(provider: Client, service: Any) -> list[Any]:
         texts: list[str] = []
         raw_sources: list[dict[str, Any]] = []
         for candidate in response.get("candidates") or []:
-            for part in (candidate.get("content") or {}).get("parts") or []:
-                if isinstance(part, dict) and part.get("text") and not part.get("thought"):
-                    texts.append(str(part["text"]))
+            texts.extend(
+                str(part["text"])
+                for part in (candidate.get("content") or {}).get("parts") or []
+                if isinstance(part, dict) and part.get("text") and not part.get("thought")
+            )
             grounding = candidate.get("groundingMetadata") or candidate.get("grounding_metadata") or {}
             for chunk in grounding.get("groundingChunks") or grounding.get("grounding_chunks") or []:
                 web = chunk.get("web") or {}

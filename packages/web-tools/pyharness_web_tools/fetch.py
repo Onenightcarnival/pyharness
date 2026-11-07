@@ -13,6 +13,7 @@ binary content is described, and the text is cut at ``max_chars`` (at most ``fet
 
 from __future__ import annotations
 
+import contextlib
 import html
 import json
 import re
@@ -182,15 +183,12 @@ async def fetch(service: Host, url: str, max_chars: int | None = None) -> dict[s
     elif (
         kind.startswith("text/")
         or kind in ("application/json", "application/xml", "application/javascript")
-        or kind.endswith("+json")
-        or kind.endswith("+xml")
+        or kind.endswith(("+json", "+xml"))
     ):
         text = raw.decode(encoding, errors="replace")
         if kind == "application/json":
-            try:
+            with contextlib.suppress(ValueError):
                 text = json.dumps(json.loads(text), ensure_ascii=False, indent=2)
-            except ValueError:
-                pass
     else:
         text = f"(binary content: {kind or 'unknown type'}, {size} bytes; not shown)"
     truncated = len(text) > limit

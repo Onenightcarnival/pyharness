@@ -25,7 +25,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from textwrap import dedent
-from typing import Any
+from typing import Any, ClassVar
 
 from langchain.agents.middleware import AgentMiddleware
 
@@ -40,7 +40,7 @@ class DeepAgentsLoop(Service):
 
     key = "agentLoop"
     name = "pyharness-agent-loop-deepagents"
-    inject = ["llm", "tools", "prompt", "checkpointer"]
+    inject: ClassVar[list[str]] = ["llm", "tools", "prompt", "checkpointer"]
     Config = LoopConfig
 
     def __init__(self, ctx: Any, config: LoopConfig) -> None:

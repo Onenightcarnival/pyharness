@@ -2,6 +2,8 @@
 grid changes and CSV, re-exported from :mod:`.sql`, :mod:`.driver`, :mod:`.sqlite`, :mod:`.postgres`, :mod:`.mysql`,
 :mod:`.pool` and :mod:`.query`."""
 
+from __future__ import annotations
+
 from .driver import (
     CONNECT_TIMEOUT_S,
     COUNT_TIMEOUT_MS,

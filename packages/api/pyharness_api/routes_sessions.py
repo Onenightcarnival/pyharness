@@ -36,8 +36,7 @@ from fastapi.responses import StreamingResponse
 from pyharness_agent import RestartPending, SessionBusy
 
 from . import references
-from .highlight import escaped_lines
-from .highlight import lines as highlighted_lines
+from .highlight import escaped_lines, lines as highlighted_lines
 from .models import (
     Approvals,
     NewMessage,

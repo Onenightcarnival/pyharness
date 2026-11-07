@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import json
 import logging
 import os
@@ -145,10 +146,8 @@ def _install_signal_handlers(harness: Harness) -> None:
     if hasattr(signal, "SIGHUP"):
         handlers.append((signal.SIGHUP, lambda: lifecycle.request_restart("restart signal")))
     for sig, handler in handlers:
-        try:
+        with contextlib.suppress((NotImplementedError, RuntimeError)):
             loop.add_signal_handler(sig, handler)
-        except (NotImplementedError, RuntimeError):  # pragma: no cover
-            pass
 
 
 def main(argv: list[str] | None = None) -> None:

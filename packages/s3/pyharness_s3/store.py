@@ -3,8 +3,8 @@ credential store under ``S3_<ID>``."""
 
 from __future__ import annotations
 
+import contextlib
 import json
-import os
 import re
 import secrets
 import threading
@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-NAME_RE = re.compile(r"^[^\W_][\w .-]{0,63}$", re.U)
+NAME_RE = re.compile(r"^[^\W_][\w .-]{0,63}$", re.UNICODE)
 BUCKET_RE = re.compile(r"^[a-z0-9][a-z0-9.-]{1,62}$")
 SUMMARY_FIELDS = (
     "id",
@@ -113,13 +113,11 @@ class ProfileStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(".tmp")
         tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", "utf-8")
-        os.chmod(tmp, 0o600)
+        tmp.chmod(0o600)
         tmp.replace(self.path)
         for fn in self._listeners:
-            try:
+            with contextlib.suppress(Exception):
                 fn()
-            except Exception:  # noqa: BLE001
-                pass
 
     def subscribe(self, fn: Any) -> None:
         self._listeners.append(fn)
@@ -227,7 +225,5 @@ class ProfileStore:
                 raise StoreError(f"profile '{pid}' not found")
             data["profiles"] = [p for p in data["profiles"] if p["id"] != pid]
             self._write(data)
-            try:
+            with contextlib.suppress(Exception):
                 self.credentials.delete(ref(pid))
-            except Exception:  # noqa: BLE001
-                pass

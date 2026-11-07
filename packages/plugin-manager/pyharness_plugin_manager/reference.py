@@ -30,8 +30,8 @@ HEADER = dedent(
 
 
 def _first_line(text: str | None) -> str:
-    for line in (text or "").splitlines():
-        line = line.strip()
+    for raw in (text or "").splitlines():
+        line = raw.strip()
         if line:
             return line.replace("|", "\\|")
     return ""
@@ -91,11 +91,12 @@ def render_packages() -> str:
         "| entry point | kind | provides | inject | config | contract |",
         "|---|---|---|---|---|---|",
     ]
-    for r in plugin_rows():
-        out.append(f"| `{r['name']}` | {r['kind']} | {r['provides']} | {r['inject']} | {r['config']} | {r['doc']} |")
+    out.extend(
+        f"| `{r['name']}` | {r['kind']} | {r['provides']} | {r['inject']} | {r['config']} | {r['doc']} |"
+        for r in plugin_rows()
+    )
     out += ["", "## Bundles", "", "| bundle | title | description | entries (patch op ids) |", "|---|---|---|---|"]
-    for r in bundle_rows():
-        out.append(f"| `{r['name']}` | {r['title']} | {r['description']} | {r['entries']} |")
+    out.extend(f"| `{r['name']}` | {r['title']} | {r['description']} | {r['entries']} |" for r in bundle_rows())
     return "\n".join(out) + "\n"
 
 

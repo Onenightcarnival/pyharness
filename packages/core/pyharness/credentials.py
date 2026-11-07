@@ -51,8 +51,8 @@ class CredentialStore:
             + yaml.safe_dump(data, sort_keys=True),
             encoding="utf-8",
         )
-        os.chmod(tmp, 0o600)
-        os.replace(tmp, self.path)
+        tmp.chmod(0o600)
+        tmp.replace(self.path)
 
     # ------------------------------------------------------------------ access
     def names(self) -> list[str]:

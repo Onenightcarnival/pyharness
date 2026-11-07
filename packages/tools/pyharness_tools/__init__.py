@@ -27,8 +27,7 @@ from dataclasses import dataclass, field
 from textwrap import dedent
 from typing import Any
 
-from langchain_core.tools import BaseTool
-from langchain_core.tools import tool as as_tool
+from langchain_core.tools import BaseTool, tool as as_tool
 
 from pyharness import Service
 

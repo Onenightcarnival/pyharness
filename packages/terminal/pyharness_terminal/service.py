@@ -6,7 +6,7 @@ import contextlib
 import os
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from pyharness import Service
 
@@ -21,7 +21,7 @@ from .tools import background_tool, bash_tool, job_tools
 class TerminalService(Service):
     key = "terminal"
     name = "pyharness-terminal"
-    inject = ["tools", "http"]
+    inject: ClassVar[list[str]] = ["tools", "http"]
     Config = Config
 
     def __init__(self, ctx: Any, config: Config) -> None:

@@ -24,7 +24,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from pydantic import BaseModel, Field
@@ -106,7 +106,7 @@ class MCPService(Service):
 
     key = "mcp"
     name = "pyharness-mcp"
-    inject = ["tools"]
+    inject: ClassVar[list[str]] = ["tools"]
     Config = Config
 
     def __init__(self, ctx: Any, config: Config) -> None:
@@ -167,8 +167,8 @@ class MCPService(Service):
         out = {}
         for name, cfg in self.config.servers.items():
             data = cfg.model_dump()
-            data["env"] = {k: MASK for k in cfg.env}
-            data["headers"] = {k: MASK for k in cfg.headers}
+            data["env"] = dict.fromkeys(cfg.env, MASK)
+            data["headers"] = dict.fromkeys(cfg.headers, MASK)
             out[name] = {
                 **data,
                 **self._status.get(name, {"state": "disabled" if not cfg.enabled else "unknown", "tools": []}),

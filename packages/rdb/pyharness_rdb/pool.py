@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import random
 import threading
 import time
@@ -72,10 +73,8 @@ class Pool:
                 entry[0].last_used = time.monotonic()
                 return entry[0]
             if entry:
-                try:
+                with contextlib.suppress(Exception):
                     entry[0].close()
-                except Exception:  # noqa: BLE001
-                    pass
             driver = connect(profile, password)
             self.drivers[pid] = (driver, int(profile.get("updatedAt") or 0))
             return driver
@@ -84,10 +83,8 @@ class Pool:
         with self.lock:
             entry = self.drivers.pop(pid, None)
         if entry:
-            try:
+            with contextlib.suppress(Exception):
                 entry[0].close()
-            except Exception:  # noqa: BLE001
-                pass
 
     def sweep(self) -> None:
         now = time.monotonic()

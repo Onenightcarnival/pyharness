@@ -41,7 +41,7 @@ def efforts_for(model: str) -> list[str]:
     tail = re.search(r"-(low|medium|high)$", m)
     if tail:
         return [tail.group(1)]
-    if m.startswith("gemini-2.5") or m.startswith("gemini-3"):
+    if m.startswith(("gemini-2.5", "gemini-3")):
         return ["low", "medium", "high"]
     return []
 
@@ -91,8 +91,7 @@ def _resolve_refs(schema: Any, root: dict[str, Any], seen: tuple[str, ...] = ())
             target: Any = root
             for part in ref[2:].split("/"):
                 target = target[part]
-            merged = {**_resolve_refs(target, root, (*seen, ref)), **{k: v for k, v in schema.items() if k != "$ref"}}
-            return merged
+            return {**_resolve_refs(target, root, (*seen, ref)), **{k: v for k, v in schema.items() if k != "$ref"}}
         return {
             k: _resolve_refs(v, root, seen)
             for k, v in schema.items()
@@ -139,7 +138,7 @@ def simple_schema(schema: Any) -> Any:
                         break
                 s = {
                     **base,
-                    **{k: v for k, v in s.items() if k not in ("type",)},
+                    **{k: v for k, v in s.items() if k != "type"},
                     **({"type": base["type"]} if "type" in base else {}),
                 }
     t = s.get("type")

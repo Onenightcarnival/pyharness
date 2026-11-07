@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import os
 import re
 import time
@@ -18,7 +19,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExportResult
 from .config import DEFAULT_SERVICE, Config
 from .spans import AGENT_SYSTEM
 
-LANGFUSE_RE = re.compile(r"langfuse", re.I)
+LANGFUSE_RE = re.compile(r"langfuse", re.IGNORECASE)
 
 
 # ---------------------------------------------------------------------- endpoint helpers
@@ -26,7 +27,7 @@ def normalize_endpoint(raw: str, langfuse_hint: bool = False) -> str:
     url = (raw or "").strip().rstrip("/")
     if not url:
         return ""
-    if not re.match(r"^[a-z][a-z0-9+.-]*://", url, re.I):
+    if not re.match(r"^[a-z][a-z0-9+.-]*://", url, re.IGNORECASE):
         url = "https://" + url
     if (LANGFUSE_RE.search(url) or langfuse_hint) and not re.search(r"/api/public/otel$|/v1/(traces|metrics)$", url):
         url += "/api/public/otel"
@@ -132,7 +133,5 @@ class Pipeline:
         return self.provider.force_flush(timeout_ms)
 
     def shutdown(self) -> None:
-        try:
+        with contextlib.suppress(Exception):
             self.provider.shutdown()
-        except Exception:  # noqa: BLE001
-            pass

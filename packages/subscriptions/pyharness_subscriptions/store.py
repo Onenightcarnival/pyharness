@@ -38,7 +38,7 @@ class JsonFile:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             tmp = self.path.with_suffix(self.path.suffix + ".tmp")
             tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", "utf-8")
-            os.chmod(tmp, 0o600)
+            tmp.chmod(0o600)
             tmp.replace(self.path)
 
     def update(self, fn: Any) -> Any:

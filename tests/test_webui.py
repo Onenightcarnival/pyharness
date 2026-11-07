@@ -51,10 +51,9 @@ async def test_page_carries_the_boot_manifest_and_serves_client_modules(home):
         ui = json.loads(tool.invoke({"topic": "ui"}))
         assert ui["clients"][0]["entry"] == "uiplugin" and any(s["name"] == "rightbar.tabs" for s in ui["slots"])
     # Without the plugin its module leaves the manifest and the page still renders.
-    async with Harness(profile, patch=[HTTP_OFF]) as h:
-        async with client(h) as c:
-            page = (await c.get("/")).text
-            assert "window.__PYH_BOOT__ = " in page and '"id": "uiplugin"' not in page
+    async with Harness(profile, patch=[HTTP_OFF]) as h, client(h) as c:
+        page = (await c.get("/")).text
+        assert "window.__PYH_BOOT__ = " in page and '"id": "uiplugin"' not in page
 
 
 async def test_workspace_files_api(home, tmp_path):
@@ -65,57 +64,55 @@ async def test_workspace_files_api(home, tmp_path):
     (ws / ".hidden").write_text("x")
     (ws / "blob.bin").write_bytes(b"\x00\x01\x02")
     extra = [{"id": "workspace", "config": {"root": str(ws)}, "merge": True}]
-    async with Harness(profile, patch=[HTTP_OFF, *extra]) as h:
-        async with client(h) as c:
-            d = (await c.get("/api/workspaces/files")).json()
-            assert d["path"] == "/" and d["root"] == str(ws.resolve())
-            assert [e["name"] for e in d["entries"]] == ["src", ".hidden", "blob.bin"]
-            assert d["entries"][0]["dir"] is True and d["entries"][1]["hidden"] is True
-            d = (await c.get("/api/workspaces/files", params={"path": "/src"})).json()
-            assert d["path"] == "/src" and d["entries"][0]["path"] == "/src/a.py" and d["entries"][0]["size"] == 9
-            f = (await c.get("/api/workspaces/file", params={"path": "/src/a.py"})).json()
-            assert f["text"] == "print(1)\n" and f["binary"] is False and f["truncated"] is False
-            f = (await c.get("/api/workspaces/file", params={"path": "/blob.bin"})).json()
-            assert f["binary"] is True and f["text"] == ""
-            f = (await c.get("/api/workspaces/file", params={"path": "/src/a.py", "limit": 3})).json()
-            assert f["text"] == "pri" and f["truncated"] is True
-            assert (await c.get("/api/workspaces/file", params={"path": "/src"})).status_code == 404
-            raw = await c.get("/api/workspaces/file/raw", params={"path": "/blob.bin"})
-            assert (
-                raw.status_code == 200
-                and raw.content == b"\x00\x01\x02"
-                and raw.headers["content-type"] == "application/octet-stream"
-            )
-            (ws / "pic.png").write_bytes(b"\x89PNG\r\n\x1a\n")
-            raw = await c.get("/api/workspaces/file/raw", params={"path": "/pic.png"})
-            assert raw.headers["content-type"] == "image/png" and raw.headers["cache-control"] == "no-store"
-            assert (await c.get("/api/workspaces/file/raw", params={"path": "/src"})).status_code == 404
-            assert (await c.get("/api/workspaces/files", params={"path": "/../"})).status_code in (404, 422)
-            # Another workspace root: the session's own directory.
-            other = tmp_path / "other"
-            other.mkdir()
-            (other / "note.md").write_text("n")
-            d = (await c.get("/api/workspaces/files", params={"root": str(other)})).json()
-            assert [e["name"] for e in d["entries"]] == ["note.md"]
+    async with Harness(profile, patch=[HTTP_OFF, *extra]) as h, client(h) as c:
+        d = (await c.get("/api/workspaces/files")).json()
+        assert d["path"] == "/" and d["root"] == str(ws.resolve())
+        assert [e["name"] for e in d["entries"]] == ["src", ".hidden", "blob.bin"]
+        assert d["entries"][0]["dir"] is True and d["entries"][1]["hidden"] is True
+        d = (await c.get("/api/workspaces/files", params={"path": "/src"})).json()
+        assert d["path"] == "/src" and d["entries"][0]["path"] == "/src/a.py" and d["entries"][0]["size"] == 9
+        f = (await c.get("/api/workspaces/file", params={"path": "/src/a.py"})).json()
+        assert f["text"] == "print(1)\n" and f["binary"] is False and f["truncated"] is False
+        f = (await c.get("/api/workspaces/file", params={"path": "/blob.bin"})).json()
+        assert f["binary"] is True and f["text"] == ""
+        f = (await c.get("/api/workspaces/file", params={"path": "/src/a.py", "limit": 3})).json()
+        assert f["text"] == "pri" and f["truncated"] is True
+        assert (await c.get("/api/workspaces/file", params={"path": "/src"})).status_code == 404
+        raw = await c.get("/api/workspaces/file/raw", params={"path": "/blob.bin"})
+        assert (
+            raw.status_code == 200
+            and raw.content == b"\x00\x01\x02"
+            and raw.headers["content-type"] == "application/octet-stream"
+        )
+        (ws / "pic.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+        raw = await c.get("/api/workspaces/file/raw", params={"path": "/pic.png"})
+        assert raw.headers["content-type"] == "image/png" and raw.headers["cache-control"] == "no-store"
+        assert (await c.get("/api/workspaces/file/raw", params={"path": "/src"})).status_code == 404
+        assert (await c.get("/api/workspaces/files", params={"path": "/../"})).status_code in (404, 422)
+        # Another workspace root: the session's own directory.
+        other = tmp_path / "other"
+        other.mkdir()
+        (other / "note.md").write_text("n")
+        d = (await c.get("/api/workspaces/files", params={"root": str(other)})).json()
+        assert [e["name"] for e in d["entries"]] == ["note.md"]
 
 
 async def test_plugin_management_routes(home):
     profile = Profile.init("web", home=str(home))
-    async with Harness(profile, patch=[HTTP_OFF]) as h:
-        async with client(h) as c:
-            r = await c.post("/api/plugins/install", json={"path": str(home / "missing")})
-            assert r.status_code == 422 and "does not exist" in r.json()["detail"]
-            assert (await c.post("/api/restart")).status_code == 409  # unsupervised test harness
-            assert (await c.post("/api/plugins/install", json={"path": "/x", "package": "y"})).status_code == 422
-            assert (await c.post("/api/plugins/install", json={})).status_code == 422
-            r = await c.post("/api/plugins/install", json={"package": "not a requirement"})
-            assert r.status_code == 422 and "not a package requirement" in r.json()["detail"]
-            r = await c.put("/api/plugins/entries/nope", json={"enabled": False})
-            assert r.status_code == 409  # unknown entries are not user plugins either
-            # Built-in bundles and their entries are read-only through the Web API.
-            assert (await c.put("/api/plugins/bundles/base", json={"enabled": False})).status_code == 409
-            assert (await c.delete("/api/plugins/bundles/base")).status_code == 409
-            r = await c.put("/api/plugins/entries/llm", json={"enabled": False})
-            assert r.status_code == 409 and "built in" in r.json()["detail"]
-            assert (await c.put("/api/plugins/bundles/nope", json={"enabled": True})).status_code == 409
-            assert (await c.delete("/api/plugins/bundles/nope")).status_code == 409
+    async with Harness(profile, patch=[HTTP_OFF]) as h, client(h) as c:
+        r = await c.post("/api/plugins/install", json={"path": str(home / "missing")})
+        assert r.status_code == 422 and "does not exist" in r.json()["detail"]
+        assert (await c.post("/api/restart")).status_code == 409  # unsupervised test harness
+        assert (await c.post("/api/plugins/install", json={"path": "/x", "package": "y"})).status_code == 422
+        assert (await c.post("/api/plugins/install", json={})).status_code == 422
+        r = await c.post("/api/plugins/install", json={"package": "not a requirement"})
+        assert r.status_code == 422 and "not a package requirement" in r.json()["detail"]
+        r = await c.put("/api/plugins/entries/nope", json={"enabled": False})
+        assert r.status_code == 409  # unknown entries are not user plugins either
+        # Built-in bundles and their entries are read-only through the Web API.
+        assert (await c.put("/api/plugins/bundles/base", json={"enabled": False})).status_code == 409
+        assert (await c.delete("/api/plugins/bundles/base")).status_code == 409
+        r = await c.put("/api/plugins/entries/llm", json={"enabled": False})
+        assert r.status_code == 409 and "built in" in r.json()["detail"]
+        assert (await c.put("/api/plugins/bundles/nope", json={"enabled": True})).status_code == 409
+        assert (await c.delete("/api/plugins/bundles/nope")).status_code == 409

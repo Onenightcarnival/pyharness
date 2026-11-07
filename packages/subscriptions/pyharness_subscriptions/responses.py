@@ -17,6 +17,7 @@ from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage, Huma
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
 from langchain_core.utils.function_calling import convert_to_openai_tool
 from langgraph.config import get_config
+from pydantic import ConfigDict, Field
 
 from pyharness import package_prompts
 
@@ -79,8 +80,7 @@ def to_responses_input(
             text = _text_of(message.content)
             if text:
                 content.append({"type": "input_text", "text": text})
-            for url in _images_of(message.content):
-                content.append({"type": "input_image", "image_url": url})
+            content.extend({"type": "input_image", "image_url": url} for url in _images_of(message.content))
             if content:
                 items.append({"type": "message", "role": "user", "content": content})
         elif isinstance(message, AIMessage):
@@ -275,10 +275,10 @@ class ResponsesChatModel(BaseChatModel):
     session_id_hint: str | None = None
     reasoning_effort: str | None = None
     max_tokens: int | None = None
-    bound_tools: list[Any] = []
+    bound_tools: list[Any] = Field(default_factory=list)
     stream_idle_timeout: float = 300.0
 
-    model_config = {"arbitrary_types_allowed": True}
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @property
     def _llm_type(self) -> str:

@@ -163,7 +163,8 @@ def remove_distribution(profile: Profile, dist: metadata.Distribution) -> list[s
     info_dir = getattr(dist, "_path", None)
     if info_dir is not None and Path(info_dir).exists():
         shutil.rmtree(info_dir, ignore_errors=True)
-    for directory in sorted(dirs, key=lambda p: len(p.parts), reverse=True):
+    for leaf in sorted(dirs, key=lambda p: len(p.parts), reverse=True):
+        directory = leaf
         while directory != site and site in directory.parents:
             try:
                 directory.rmdir()
@@ -210,7 +211,7 @@ class _Transaction:
         self.profile.write_state(self.state)
         if self.site_backup is not None:
             shutil.rmtree(self.profile.site, ignore_errors=True)
-            os.replace(self.site_backup, self.profile.site)
+            self.site_backup.replace(self.profile.site)
             self.site_backup = None
         importlib.invalidate_caches()
 
@@ -222,9 +223,8 @@ class _Transaction:
 
 @contextlib.asynccontextmanager
 async def _locked(profile: Profile) -> AsyncIterator[None]:
-    async with _process_lock:
-        async with profile.alock():
-            yield
+    async with _process_lock, profile.alock():
+        yield
 
 
 async def _preflight(

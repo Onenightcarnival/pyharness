@@ -12,6 +12,8 @@ The shell tools carry the ``shell`` tag: the agent loop leaves them out in read-
 PTY terminals need ``pty`` (POSIX); elsewhere the terminal tab reports itself unavailable.
 """
 
+from __future__ import annotations
+
 from .config import Config
 from .jobs import Job, JobRegistry
 from .pty import Terminal, pty_available

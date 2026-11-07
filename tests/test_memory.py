@@ -11,7 +11,7 @@ import pytest
 
 from pyharness import Harness, Profile
 from pyharness_memory import MemoryService
-from pyharness_memory.store import MemoryError, MemoryStore, sort_entries
+from pyharness_memory.store import MemoryStore, MemoryStoreError, sort_entries
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 
@@ -53,7 +53,7 @@ def test_store_commits_validates_and_keeps_history(tmp_path):
         and st["entries"][1]["createdAt"].endswith("Z")
     )
     assert st["history"][0]["actor"] == "human" and st["history"][0]["summary"] == "seed"
-    with pytest.raises(MemoryError, match="conflict"):
+    with pytest.raises(MemoryStoreError, match="conflict"):
         store.commit({"baseRevision": 0, "summary": "stale", "changes": []}, "human", "ui")
     for bad, code in [
         ({"id": "x", "kind": "lesson", "fields": {"parentId": "nope", "lesson": "x"}}, "reference"),
@@ -70,10 +70,10 @@ def test_store_commits_validates_and_keeps_history(tmp_path):
         ({"id": "p1", "kind": "project", "remove": True}, "reference"),  # l1 still references it
         ({"id": "profile", "kind": "profile", "remove": True}, "invalid"),
     ]:
-        with pytest.raises(MemoryError) as info:
+        with pytest.raises(MemoryStoreError) as info:
             store.commit({"baseRevision": 1, "summary": "bad", "changes": [bad]}, "human", "ui")
         assert info.value.code == code, bad
-    with pytest.raises(MemoryError, match="protected"):
+    with pytest.raises(MemoryStoreError, match="protected"):
         store.commit({"baseRevision": 1, "summary": "agent restore", "restore": 1}, "agent", "session:x")
     # A no-op commit creates no revision; an empty string clears a field.
     assert (
@@ -128,7 +128,7 @@ def test_store_commits_validates_and_keeps_history(tmp_path):
     )
     assert [e["id"] for e in st["entries"]] == ["profile"] and len(st["history"]) == 4
     assert store.set_agent_tools(False)["agentTools"] is False and store.state()["revision"] == 4
-    with pytest.raises(MemoryError, match="disabled"):
+    with pytest.raises(MemoryStoreError, match="disabled"):
         store.commit(
             {
                 "baseRevision": 4,

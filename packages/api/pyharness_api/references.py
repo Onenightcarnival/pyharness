@@ -145,7 +145,7 @@ def _score(path: str, name: str, q: str) -> int | None:
     return None
 
 
-ATTACHMENT = re.compile(r"\n*<attached-(?:file|directory)\b[^>]*>.*?</attached-(?:file|directory)>", re.S)
+ATTACHMENT = re.compile(r"\n*<attached-(?:file|directory)\b[^>]*>.*?</attached-(?:file|directory)>", re.DOTALL)
 
 
 def strip_attachments(text: str) -> str:

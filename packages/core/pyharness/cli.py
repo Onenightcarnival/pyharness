@@ -7,6 +7,7 @@ import asyncio
 import json
 import os
 import sys
+from pathlib import Path
 from typing import Any
 
 from . import manage
@@ -39,7 +40,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     profile = Profile(args.profile, args.home)
     if not profile.exists():
         Profile.init(args.profile, None, args.home)
-    os.environ.setdefault("PYH_CWD", os.getcwd())
+    os.environ.setdefault("PYH_CWD", str(Path.cwd()))
     if args.no_supervisor:
         return asyncio.run(run_generation(profile, extra_patches=args.patch))
     return Supervisor(profile, extra_patches=args.patch, boot_timeout=args.boot_timeout).run()

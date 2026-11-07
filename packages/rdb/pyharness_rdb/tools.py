@@ -172,7 +172,7 @@ def explain_tool(service: Host):
         try:
 
             def go(d: Driver) -> str:
-                body = re.sub(r"^\s*explain(\s+query\s+plan)?\s+", "", sql, flags=re.I)
+                body = re.sub(r"^\s*explain(\s+query\s+plan)?\s+", "", sql, flags=re.IGNORECASE)
                 prefix = "EXPLAIN QUERY PLAN " if d.kind == "sqlite" else "EXPLAIN "
                 res = run_query(d, prefix + body, allow_write=False, max_rows=TOOL_MAX_ROWS)
                 return "\n".join(" | ".join("" if v is None else str(v) for v in row) for row in res.rows)

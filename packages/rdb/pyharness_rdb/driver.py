@@ -70,18 +70,13 @@ def host_entries(host: str, port: int) -> list[str]:
     for h in re.split(r"[\s,]+", host.strip()):
         if not h:
             continue
-        if ":" in h and not h.startswith("["):
-            h = f"[{h}]"
-        out.append(f"{h}:{port}")
+        bracketed = f"[{h}]" if ":" in h and not h.startswith("[") else h
+        out.append(f"{bracketed}:{port}")
     return out
 
 
 def parse_hosts(host: str) -> list[str]:
-    hosts = []
-    for h in re.split(r"[\s,]+", host.strip()):
-        if h:
-            hosts.append(h[1:-1] if h.startswith("[") and h.endswith("]") else h)
-    return hosts
+    return [h[1:-1] if h.startswith("[") and h.endswith("]") else h for h in re.split(r"[\s,]+", host.strip()) if h]
 
 
 # ---------------------------------------------------------------------- drivers

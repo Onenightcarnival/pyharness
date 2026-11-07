@@ -76,10 +76,7 @@ def escaped_lines(code: str) -> list[str]:
 @lru_cache(maxsize=1)
 def style_css() -> str:
     def rules(style: str, selector: str) -> str:
-        out = []
-        for line in HtmlFormatter(style=style, classprefix="hl-").get_style_defs(selector).splitlines():
-            if line.startswith(selector + " .hl-"):
-                out.append(line)
-        return "\n".join(out)
+        lines = HtmlFormatter(style=style, classprefix="hl-").get_style_defs(selector).splitlines()
+        return "\n".join(line for line in lines if line.startswith(selector + " .hl-"))
 
     return rules("xcode", ".hl") + "\n" + rules("github-dark", '[data-theme="dark"] .hl') + "\n"

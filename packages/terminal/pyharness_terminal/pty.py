@@ -52,7 +52,7 @@ class Terminal:
             "COLORTERM": "truecolor",
             "LANG": os.environ.get("LANG") or "en_US.UTF-8",
         }
-        args = [self.shell, "-l"] if os.path.basename(self.shell) in ("bash", "zsh", "sh", "fish") else [self.shell]
+        args = [self.shell, "-l"] if Path(self.shell).name in ("bash", "zsh", "sh", "fish") else [self.shell]
         # A Python wrapper (not preexec_fn, not pty.fork) sets the session and controlling tty, then execs the shell.
         bootstrap = dedent(
             """

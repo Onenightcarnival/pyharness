@@ -6,7 +6,7 @@ import asyncio
 import time
 import uuid
 from string import Template
-from typing import Any
+from typing import Any, ClassVar
 
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
 from langgraph.types import Command
@@ -46,7 +46,7 @@ class AgentService(Service):
 
     key = "agents"
     name = "pyharness-agent"
-    inject = ["agentLoop", "store"]
+    inject: ClassVar[list[str]] = ["agentLoop", "store"]
     Config = AgentConfig
 
     def __init__(self, ctx: Any, config: AgentConfig) -> None:

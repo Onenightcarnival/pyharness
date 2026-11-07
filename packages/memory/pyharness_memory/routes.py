@@ -9,7 +9,7 @@ from typing import Any, Protocol
 
 from fastapi import APIRouter, HTTPException, Request
 
-from .store import MemoryError, MemoryStore
+from .store import MemoryStore, MemoryStoreError
 
 
 class Host(Protocol):
@@ -27,7 +27,7 @@ def build_router(service: Host) -> APIRouter:
     """The Memory page routes bound to a service."""
     router = APIRouter()
 
-    def fail(exc: MemoryError) -> HTTPException:
+    def fail(exc: MemoryStoreError) -> HTTPException:
         status = 409 if exc.code in ("conflict", "protected", "busy") else 400
         return HTTPException(status, {"error": exc.code, "detail": exc.detail})
 
@@ -61,7 +61,7 @@ def build_router(service: Host) -> APIRouter:
         data = await body(request)
         try:
             return service.store.commit(data, "human", "ui")
-        except MemoryError as exc:
+        except MemoryStoreError as exc:
             raise fail(exc) from exc
 
     @router.patch("/memory")
@@ -70,7 +70,7 @@ def build_router(service: Host) -> APIRouter:
         data = await body(request)
         try:
             state = service.store.set_agent_tools(data.get("agentTools"))
-        except MemoryError as exc:
+        except MemoryStoreError as exc:
             raise fail(exc) from exc
         service.sync()
         return state
@@ -81,7 +81,7 @@ def build_router(service: Host) -> APIRouter:
         data = await body(request)
         try:
             return service.store.clear(data.get("baseRevision"))
-        except MemoryError as exc:
+        except MemoryStoreError as exc:
             raise fail(exc) from exc
 
     return router

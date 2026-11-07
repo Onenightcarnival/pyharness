@@ -117,8 +117,8 @@ class Inspector:
                 "methods": _methods(value, detail=True) if isinstance(value, Service) else [],
             }
         rows = []
-        for key, (value, owner, _scope) in sorted(visible.items()):
-            value = unwrap(value)
+        for key, (raw, owner, _scope) in sorted(visible.items()):
+            value = unwrap(raw)
             doc = _inspect.getdoc(type(value)) or ""
             rows.append(
                 {
@@ -267,4 +267,4 @@ def apply(ctx: Any, config: Config) -> None:
     )
 
 
-__all__ = ["Config", "Inspector", "REDACTED", "Topic", "apply", "inject", "name"]
+__all__ = ["REDACTED", "Config", "Inspector", "Topic", "apply", "inject", "name"]

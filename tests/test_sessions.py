@@ -107,7 +107,7 @@ async def test_presets_select_tools_skills_and_prompt_sections(profile):
         standard_graph = await agents.graph_for(standard)
         creator_graph = await agents.graph_for(creator)
         assert standard_graph is not creator_graph
-        names = lambda g: {n for n in g.get_graph().nodes}  # noqa: E731
+        names = lambda g: set(g.get_graph().nodes)  # noqa: E731
         assert names(standard_graph) and names(creator_graph)
 
 
@@ -171,33 +171,29 @@ async def test_session_workspace_is_used_by_file_tools(profile, tmp_path):
         },
         {"content": "ok"},
     ]
-    async with Harness(profile, patch=patch(replies)) as h:
-        async with client(h) as c:
-            assert (await c.post("/api/sessions", json={"workspace": "relative"})).status_code == 422
-            s = (await c.post("/api/sessions", json={"workspace": str(other)})).json()
-            assert s["workspace"] == str(other.resolve())
-            events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
-            assert events[-1]["outcome"] == "completed"
-            assert (other / "from-agent.txt").read_text() == "x"
-            listing = (await c.get("/api/workspaces")).json()
-            assert listing["default"]["root"] == str(h.get("workspace").root) and any(
-                w["root"] == str(other.resolve()) for w in listing["recent"]
-            )
-            browse = (await c.post("/api/workspaces/browse", json={"path": str(tmp_path)})).json()
-            assert any(d["name"] == "other" for d in browse["dirs"])
-            assert (await c.delete("/api/workspaces", params={"path": str(other)})).json()["forgotten"] is True
+    async with Harness(profile, patch=patch(replies)) as h, client(h) as c:
+        assert (await c.post("/api/sessions", json={"workspace": "relative"})).status_code == 422
+        s = (await c.post("/api/sessions", json={"workspace": str(other)})).json()
+        assert s["workspace"] == str(other.resolve())
+        events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
+        assert events[-1]["outcome"] == "completed"
+        assert (other / "from-agent.txt").read_text() == "x"
+        listing = (await c.get("/api/workspaces")).json()
+        assert listing["default"]["root"] == str(h.get("workspace").root) and any(
+            w["root"] == str(other.resolve()) for w in listing["recent"]
+        )
+        browse = (await c.post("/api/workspaces/browse", json={"path": str(tmp_path)})).json()
+        assert any(d["name"] == "other" for d in browse["dirs"])
+        assert (await c.delete("/api/workspaces", params={"path": str(other)})).json()["forgotten"] is True
 
 
 async def test_agent_defaults_persist(profile):
-    async with Harness(profile, patch=patch([])) as h:
-        async with client(h) as c:
-            r = (
-                await c.put("/api/settings/agent", json={"default_preset": "creator", "default_mode": "read-only"})
-            ).json()
-            assert r["default_preset"] == "creator" and r["default_mode"] == "read-only"
-            s = (await c.post("/api/sessions", json={})).json()
-            assert (s["preset"], s["mode"]) == ("creator", "read-only")
-            assert (await c.put("/api/settings/agent", json={"default_mode": "nope"})).status_code == 422
+    async with Harness(profile, patch=patch([])) as h, client(h) as c:
+        r = (await c.put("/api/settings/agent", json={"default_preset": "creator", "default_mode": "read-only"})).json()
+        assert r["default_preset"] == "creator" and r["default_mode"] == "read-only"
+        s = (await c.post("/api/sessions", json={})).json()
+        assert (s["preset"], s["mode"]) == ("creator", "read-only")
+        assert (await c.put("/api/settings/agent", json={"default_mode": "nope"})).status_code == 422
     ops = yaml.safe_load(Path(profile.patch_path).read_text())
     loop_op = next(op for op in ops if op["id"] == "agent-loop")
     assert loop_op["config"] == {"default_preset": "creator", "default_mode": "read-only"} and loop_op["merge"] is True
@@ -234,23 +230,22 @@ async def test_native_picker_through_a_command(profile, tmp_path, monkeypatch):
 async def test_workspace_and_session_rename(profile, tmp_path):
     other = tmp_path / "other"
     other.mkdir()
-    async with Harness(profile, patch=patch([])) as h:
-        async with client(h) as c:
-            r = (await c.put("/api/workspaces", json={"path": str(other), "name": "Side project"})).json()
-            assert r["name"] == "Side project"
-            recent = (await c.get("/api/workspaces")).json()["recent"]
-            assert next(w for w in recent if w["root"] == str(other.resolve()))["name"] == "Side project"
-            # Remembering again (a new session) keeps the display name; an empty name restores the directory name.
-            await c.post("/api/sessions", json={"workspace": str(other)})
-            recent = (await c.get("/api/workspaces")).json()["recent"]
-            assert next(w for w in recent if w["root"] == str(other.resolve()))["name"] == "Side project"
-            r = (await c.put("/api/workspaces", json={"path": str(other), "name": ""})).json()
-            assert r["name"] == "other"
-            # The default workspace can be renamed too.
-            r = (await c.put("/api/workspaces", json={"path": None, "name": "Main"})).json()
-            assert (await c.get("/api/workspaces")).json()["recent"][0]["name"] == "Main"
-            assert (await c.put("/api/workspaces", json={"path": "relative", "name": "x"})).status_code == 422
-            s = (await c.post("/api/sessions", json={"title": "first"})).json()
-            assert (await c.put(f"/api/sessions/{s['id']}", json={"title": "  Renamed  "})).json()["title"] == "Renamed"
-            assert (await c.get(f"/api/sessions/{s['id']}")).json()["title"] == "Renamed"
-            assert (await c.put("/api/sessions/nope", json={"title": "x"})).status_code == 404
+    async with Harness(profile, patch=patch([])) as h, client(h) as c:
+        r = (await c.put("/api/workspaces", json={"path": str(other), "name": "Side project"})).json()
+        assert r["name"] == "Side project"
+        recent = (await c.get("/api/workspaces")).json()["recent"]
+        assert next(w for w in recent if w["root"] == str(other.resolve()))["name"] == "Side project"
+        # Remembering again (a new session) keeps the display name; an empty name restores the directory name.
+        await c.post("/api/sessions", json={"workspace": str(other)})
+        recent = (await c.get("/api/workspaces")).json()["recent"]
+        assert next(w for w in recent if w["root"] == str(other.resolve()))["name"] == "Side project"
+        r = (await c.put("/api/workspaces", json={"path": str(other), "name": ""})).json()
+        assert r["name"] == "other"
+        # The default workspace can be renamed too.
+        r = (await c.put("/api/workspaces", json={"path": None, "name": "Main"})).json()
+        assert (await c.get("/api/workspaces")).json()["recent"][0]["name"] == "Main"
+        assert (await c.put("/api/workspaces", json={"path": "relative", "name": "x"})).status_code == 422
+        s = (await c.post("/api/sessions", json={"title": "first"})).json()
+        assert (await c.put(f"/api/sessions/{s['id']}", json={"title": "  Renamed  "})).json()["title"] == "Renamed"
+        assert (await c.get(f"/api/sessions/{s['id']}")).json()["title"] == "Renamed"
+        assert (await c.put("/api/sessions/nope", json={"title": "x"})).status_code == 404

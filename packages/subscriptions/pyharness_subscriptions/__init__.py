@@ -22,6 +22,8 @@ Sessions, preferences and catalogs live under ``<profile data>/toolkit/subscript
 from the stored sessions and the last-known catalogs at start and after every login / logout / discovery.
 """
 
+from __future__ import annotations
+
 from .service import Config, SubscriptionsService
 
 __all__ = ["Config", "SubscriptionsService"]

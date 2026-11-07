@@ -20,6 +20,7 @@ def test_restart_into_broken_config_rolls_back(home, tmp_path):
         [sys.executable, "-m", "pyharness.cli", "--home", str(home), "run", "-p", "sup", "--boot-timeout", "60"],
         env=env,
         capture_output=True,
+        check=False,
         text=True,
         timeout=180,
     )

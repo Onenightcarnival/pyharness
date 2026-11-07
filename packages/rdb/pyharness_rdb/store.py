@@ -3,8 +3,8 @@ profile credential store under ``RDB_<ID>``."""
 
 from __future__ import annotations
 
+import contextlib
 import json
-import os
 import re
 import secrets
 import threading
@@ -14,7 +14,7 @@ from typing import Any
 
 from .driver import DEFAULT_PORT, KINDS, TARGETS, parse_hosts
 
-NAME_RE = re.compile(r"^[^\W_][\w .-]{0,63}$", re.U)
+NAME_RE = re.compile(r"^[^\W_][\w .-]{0,63}$", re.UNICODE)
 HOST_RE = re.compile(r"^(?:\[[0-9a-fA-F:.]+\]|[0-9a-fA-F:]*:[0-9a-fA-F:]*:[0-9a-fA-F.:]*|[A-Za-z0-9._-]+)$")
 SUMMARY_FIELDS = (
     "id",
@@ -77,7 +77,7 @@ def validate(profile: dict[str, Any]) -> None:
 
 def default_name(profile: dict[str, Any]) -> str:
     if profile["kind"] == "sqlite":
-        return os.path.basename(profile["file"].rstrip("/")) or "sqlite"
+        return Path(profile["file"].rstrip("/")).name or "sqlite"
     hosts = parse_hosts(profile["host"])
     return f"{profile['database']}@{hosts[0] if hosts else ''}"
 
@@ -123,13 +123,11 @@ class ProfileStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(".tmp")
         tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", "utf-8")
-        os.chmod(tmp, 0o600)
+        tmp.chmod(0o600)
         tmp.replace(self.path)
         for fn in self._listeners:
-            try:
+            with contextlib.suppress(Exception):
                 fn()
-            except Exception:  # noqa: BLE001
-                pass
 
     def subscribe(self, fn: Any) -> None:
         self._listeners.append(fn)
@@ -255,7 +253,5 @@ class ProfileStore:
                 raise StoreError(f"profile '{pid}' not found")
             data["profiles"] = [p for p in data["profiles"] if p["id"] != pid]
             self._write(data)
-            try:
+            with contextlib.suppress(Exception):
                 self.credentials.delete(ref(pid))
-            except Exception:  # noqa: BLE001
-                pass

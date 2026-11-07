@@ -350,18 +350,15 @@ class AntigravityProvider(Provider):
                     text = f"{bucket.get('displayName', '')} {bucket.get('window', '')} {bucket.get('bucketId', '')}"
                     kind = (
                         "weekly"
-                        if re.search(r"week|7.day|604800", text, re.I)
+                        if re.search(r"week|7.day|604800", text, re.IGNORECASE)
                         else "session"
-                        if re.search(r"5.hour|5h|18000|session", text, re.I)
+                        if re.search(r"5.hour|5h|18000|session", text, re.IGNORECASE)
                         else "other"
                     )
                     resets = None
                     if bucket.get("resetTime"):
                         try:
-                            resets = int(
-                                datetime.fromisoformat(str(bucket["resetTime"]).replace("Z", "+00:00")).timestamp()
-                                * 1000
-                            )
+                            resets = int(datetime.fromisoformat(str(bucket["resetTime"])).timestamp() * 1000)
                         except ValueError:
                             resets = None
                     windows.append(
@@ -380,13 +377,13 @@ class AntigravityProvider(Provider):
             paid = info.get("paidTier") or {}
             current = info.get("currentTier") or {}
             plan = paid.get("name") or paid.get("id") or current.get("name") or current.get("id") or plan
-            credits = (
+            credit_amount = (
                 (info.get("availableCredits") or [{}])[0].get("creditAmount")
                 if isinstance(info.get("availableCredits"), list) and info["availableCredits"]
                 else None
             )
-            if credits is not None:
-                plan = f"{plan} · {credits} credits"
+            if credit_amount is not None:
+                plan = f"{plan} · {credit_amount} credits"
         return {"supported": True, "plan": plan, "windows": windows}
 
     # ------------------------------------------------------------------ chat

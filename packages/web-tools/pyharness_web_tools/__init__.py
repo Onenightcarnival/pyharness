@@ -13,6 +13,8 @@ instruction to add it rather than failing the turn. Both tools prefix their outp
 untrusted external content.
 """
 
+from __future__ import annotations
+
 from .config import Config
 from .fetch import html_to_text
 from .search import format_search, parse_search_response

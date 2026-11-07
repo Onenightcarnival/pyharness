@@ -4,6 +4,7 @@ X search, image and video generation."""
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
 import re
 import time
@@ -29,7 +30,7 @@ SCOPE: str = _CFG["SCOPE"]
 API: str = _CFG["API"]
 PROXY: str = _CFG["PROXY"]
 TIERS: dict[int, str] = {int(t["level"]): str(t["name"]) for t in _CFG["TIERS"]}
-NON_CHAT = re.compile(r"imagine|image-|video|embed", re.I)
+NON_CHAT = re.compile(r"imagine|image-|video|embed", re.IGNORECASE)
 
 
 def tier_name(claims: dict[str, Any]) -> str | None:
@@ -200,7 +201,7 @@ class GrokProvider(Provider):
                     context_window=m.get("context_window") or 256000,
                     efforts=efforts,
                     default_effort=m.get("reasoning_effort") if efforts else None,
-                    input_modalities=["text"] if re.search(r"code|embed", mid, re.I) else ["text", "image"],
+                    input_modalities=["text"] if re.search(r"code|embed", mid, re.IGNORECASE) else ["text", "image"],
                 )
             )
         return out
@@ -234,10 +235,8 @@ class GrokProvider(Provider):
         if period or cfg.get("creditUsagePercent") is not None:
             resets = None
             if period.get("end"):
-                try:
-                    resets = int(datetime.fromisoformat(str(period["end"]).replace("Z", "+00:00")).timestamp() * 1000)
-                except ValueError:
-                    pass
+                with contextlib.suppress(ValueError):
+                    resets = int(datetime.fromisoformat(str(period["end"])).timestamp() * 1000)
             windows.append(
                 {
                     "kind": "weekly" if period.get("type") == "USAGE_PERIOD_TYPE_WEEKLY" else "other",

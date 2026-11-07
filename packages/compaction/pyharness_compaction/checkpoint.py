@@ -45,7 +45,7 @@ def command_of(message: BaseMessage) -> str | None:
 def summary_of(content: Any) -> str:
     """The summary text inside a checkpoint message."""
     text = _text(content)
-    match = re.search(re.escape(SUMMARY_OPEN) + r"\n?(.*?)\n?" + re.escape(SUMMARY_CLOSE), text, re.S)
+    match = re.search(re.escape(SUMMARY_OPEN) + r"\n?(.*?)\n?" + re.escape(SUMMARY_CLOSE), text, re.DOTALL)
     return match.group(1).strip() if match else text
 
 

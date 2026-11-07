@@ -3,6 +3,7 @@ and the CSV / model-facing renderings of a result."""
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 from dataclasses import dataclass
@@ -79,10 +80,8 @@ def table_info(driver: Driver, schema: str, name: str, kind: str = "table") -> T
     cols = driver.columns(schema, name)
     idx = driver.indexes(schema, name)
     est = None
-    try:
+    with contextlib.suppress(Exception):
         est = driver.estimated_rows(schema, name)
-    except Exception:  # noqa: BLE001
-        pass
     return TableInfo(
         {"schema": schema, "name": name, "kind": kind}, cols, idx, [c["name"] for c in cols if c["primaryKey"]], est
     )

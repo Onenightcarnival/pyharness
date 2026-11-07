@@ -32,7 +32,6 @@ import asyncio
 import contextlib
 import json
 import logging
-import os
 import time
 from collections.abc import AsyncIterator, Iterable
 from pathlib import Path
@@ -58,7 +57,7 @@ def _write_json(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    os.replace(tmp, path)
+    tmp.replace(path)
 
 
 class Lifecycle:
@@ -191,4 +190,4 @@ class Lifecycle:
         }
 
 
-__all__ = ["BOOT_FAILURE_EXIT_CODE", "Lifecycle", "RESTART_EXIT_CODE"]
+__all__ = ["BOOT_FAILURE_EXIT_CODE", "RESTART_EXIT_CODE", "Lifecycle"]

@@ -73,46 +73,45 @@ async def test_turn_changes_from_git_snapshots(home, tmp_path):
         {"content": "nothing to do"},
     ]
     profile = Profile.init("web", home=str(home))
-    async with Harness(profile, patch=patch(replies, ws)) as h:
-        async with client(h) as c:
-            s = (await c.post("/api/sessions", json={})).json()
-            events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
-            done = events[-1]
-            assert done["outcome"] == "completed", done
-            changes = done["extras"]["changes"]
-            assert [f["display"] for f in changes["files"]] == ["a.py", "new.txt"]  # ignored.txt is gitignored
-            a, new = changes["files"]
-            assert (a["status"], a["added"], a["deleted"], a["binary"]) == ("M", 1, 1, False)
-            assert new["status"] == "A" and (
-                changes["added"],
-                changes["deleted"],
-                changes["total"],
-                changes["seq"],
-            ) == (2, 1, 2, 1)
-            page = (await c.get(f"/api/sessions/{s['id']}")).json()
-            assert page["changes"][0]["run_id"] == changes["run_id"] and changes["after"] == len(page["messages"])
-            assert (await c.get(f"/api/sessions/{s['id']}/changes")).json()["changes"] == page["changes"]
-            d = (await c.get(f"/api/sessions/{s['id']}/changes/{changes['run_id']}/diff", params={"index": 0})).json()
-            assert d["available"] is True and d["status"] == "M" and len(d["hunks"]) == 1
-            lines = d["hunks"][0]["lines"]
-            assert [ln["kind"] for ln in lines] == ["ctx", "del", "add"]
-            assert (
-                lines[1]["text"] == "    return 1"
-                and lines[2]["text"] == "    return 2"
-                and lines[1]["old"] == 2
-                and lines[2]["new"] == 2
-            )
-            assert 'class="hl-k"' in lines[2]["html"] and 'class="hl-k"' in lines[1]["html"]
-            d = (await c.get(f"/api/sessions/{s['id']}/changes/{changes['run_id']}/diff", params={"index": 1})).json()
-            assert d["status"] == "A" and [ln["kind"] for ln in d["hunks"][0]["lines"]] == ["add"]
-            assert (
-                await c.get(f"/api/sessions/{s['id']}/changes/{changes['run_id']}/diff", params={"index": 5})
-            ).status_code == 404
-            assert (await c.get(f"/api/sessions/{s['id']}/changes/nope/diff")).status_code == 404
-            # A turn that changes nothing records no summary.
-            events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "again"})).text)
-            assert events[-1]["outcome"] == "completed" and "changes" not in events[-1]["extras"]
-            assert len((await c.get(f"/api/sessions/{s['id']}/changes")).json()["changes"]) == 1
+    async with Harness(profile, patch=patch(replies, ws)) as h, client(h) as c:
+        s = (await c.post("/api/sessions", json={})).json()
+        events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
+        done = events[-1]
+        assert done["outcome"] == "completed", done
+        changes = done["extras"]["changes"]
+        assert [f["display"] for f in changes["files"]] == ["a.py", "new.txt"]  # ignored.txt is gitignored
+        a, new = changes["files"]
+        assert (a["status"], a["added"], a["deleted"], a["binary"]) == ("M", 1, 1, False)
+        assert new["status"] == "A" and (
+            changes["added"],
+            changes["deleted"],
+            changes["total"],
+            changes["seq"],
+        ) == (2, 1, 2, 1)
+        page = (await c.get(f"/api/sessions/{s['id']}")).json()
+        assert page["changes"][0]["run_id"] == changes["run_id"] and changes["after"] == len(page["messages"])
+        assert (await c.get(f"/api/sessions/{s['id']}/changes")).json()["changes"] == page["changes"]
+        d = (await c.get(f"/api/sessions/{s['id']}/changes/{changes['run_id']}/diff", params={"index": 0})).json()
+        assert d["available"] is True and d["status"] == "M" and len(d["hunks"]) == 1
+        lines = d["hunks"][0]["lines"]
+        assert [ln["kind"] for ln in lines] == ["ctx", "del", "add"]
+        assert (
+            lines[1]["text"] == "    return 1"
+            and lines[2]["text"] == "    return 2"
+            and lines[1]["old"] == 2
+            and lines[2]["new"] == 2
+        )
+        assert 'class="hl-k"' in lines[2]["html"] and 'class="hl-k"' in lines[1]["html"]
+        d = (await c.get(f"/api/sessions/{s['id']}/changes/{changes['run_id']}/diff", params={"index": 1})).json()
+        assert d["status"] == "A" and [ln["kind"] for ln in d["hunks"][0]["lines"]] == ["add"]
+        assert (
+            await c.get(f"/api/sessions/{s['id']}/changes/{changes['run_id']}/diff", params={"index": 5})
+        ).status_code == 404
+        assert (await c.get(f"/api/sessions/{s['id']}/changes/nope/diff")).status_code == 404
+        # A turn that changes nothing records no summary.
+        events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "again"})).text)
+        assert events[-1]["outcome"] == "completed" and "changes" not in events[-1]["extras"]
+        assert len((await c.get(f"/api/sessions/{s['id']}/changes")).json()["changes"]) == 1
     # The repository itself was never touched: nothing staged, the edits are plain work-tree changes.
     status = git(ws, "status", "--porcelain")
     assert " M a.py" in status and "?? new.txt" in status and "A " not in status
@@ -130,58 +129,56 @@ async def test_non_git_workspace_records_nothing(home, tmp_path):
         {"content": "ok"},
     ]
     profile = Profile.init("web", home=str(home))
-    async with Harness(profile, patch=patch(replies, plain)) as h:
-        async with client(h) as c:
-            s = (await c.post("/api/sessions", json={})).json()
-            events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
-            assert events[-1]["outcome"] == "completed" and "changes" not in events[-1]["extras"]
-            turn = events[-1]["extras"]["turn"]
-            assert (
-                turn["stats"]["steps"] == 2
-                and turn["stats"]["tool_calls"] == 1
-                and [r["t"] for r in turn["records"]] == ["user", "step", "tool", "step", "end"]
-            )
-            assert (
-                turn["records"][2]["name"] == "write_file"
-                and turn["records"][2]["status"] == "success"
-                and turn["records"][2]["dur_ms"] >= 0
-            )
-            assert (await c.get(f"/api/sessions/{s['id']}/turns")).json()["turns"][0]["seq"] == 1
-            assert (await c.get(f"/api/sessions/{s['id']}")).json()["turns"][0]["after"] == 4
-            assert (await c.get(f"/api/sessions/{s['id']}")).json()["changes"] == []
-            assert (plain / "x.txt").read_text() == "x"
+    async with Harness(profile, patch=patch(replies, plain)) as h, client(h) as c:
+        s = (await c.post("/api/sessions", json={})).json()
+        events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
+        assert events[-1]["outcome"] == "completed" and "changes" not in events[-1]["extras"]
+        turn = events[-1]["extras"]["turn"]
+        assert (
+            turn["stats"]["steps"] == 2
+            and turn["stats"]["tool_calls"] == 1
+            and [r["t"] for r in turn["records"]] == ["user", "step", "tool", "step", "end"]
+        )
+        assert (
+            turn["records"][2]["name"] == "write_file"
+            and turn["records"][2]["status"] == "success"
+            and turn["records"][2]["dur_ms"] >= 0
+        )
+        assert (await c.get(f"/api/sessions/{s['id']}/turns")).json()["turns"][0]["seq"] == 1
+        assert (await c.get(f"/api/sessions/{s['id']}")).json()["turns"][0]["after"] == 4
+        assert (await c.get(f"/api/sessions/{s['id']}")).json()["changes"] == []
+        assert (plain / "x.txt").read_text() == "x"
 
 
 async def test_highlight_routes(home):
     profile = Profile.init("web", home=str(home))
-    async with Harness(profile, patch=[HTTP_OFF]) as h:
-        async with client(h) as c:
-            r = await c.post(
-                "/api/highlight",
-                json={
-                    "items": [
-                        {"code": "def f():\n    return 1", "lang": "python"},
-                        {"code": "x", "lang": "nope"},
-                        {"code": "a = 1", "filename": "x.toml"},
-                        {"code": "plain", "lang": "text"},
-                    ]
-                },
-            )
-            items = r.json()["items"]
-            assert (
-                'class="hl-k">def</span>' in items[0]["html"]
-                and items[0]["lang"] == "python"
-                and items[0]["html"].count("\n") == 1
-            )
-            assert items[1]["html"] == "" and items[3]["html"] == ""
-            assert "hl-" in items[2]["html"]
-            css = await c.get("/api/highlight.css")
-            assert (
-                css.headers["content-type"].startswith("text/css")
-                and ".hl .hl-k" in css.text
-                and '[data-theme="dark"] .hl .hl-k' in css.text
-            )
-            assert "background" not in css.text.split("\n")[0]
+    async with Harness(profile, patch=[HTTP_OFF]) as h, client(h) as c:
+        r = await c.post(
+            "/api/highlight",
+            json={
+                "items": [
+                    {"code": "def f():\n    return 1", "lang": "python"},
+                    {"code": "x", "lang": "nope"},
+                    {"code": "a = 1", "filename": "x.toml"},
+                    {"code": "plain", "lang": "text"},
+                ]
+            },
+        )
+        items = r.json()["items"]
+        assert (
+            'class="hl-k">def</span>' in items[0]["html"]
+            and items[0]["lang"] == "python"
+            and items[0]["html"].count("\n") == 1
+        )
+        assert items[1]["html"] == "" and items[3]["html"] == ""
+        assert "hl-" in items[2]["html"]
+        css = await c.get("/api/highlight.css")
+        assert (
+            css.headers["content-type"].startswith("text/css")
+            and ".hl .hl-k" in css.text
+            and '[data-theme="dark"] .hl .hl-k' in css.text
+        )
+        assert "background" not in css.text.split("\n")[0]
 
 
 def test_parse_unified():

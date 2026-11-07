@@ -23,7 +23,7 @@ import asyncio
 import base64
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -49,7 +49,7 @@ class ConfigCenterService(Service):
 
     key = "configCenter"
     name = "pyharness-config-center"
-    inject = ["http", "webui", "agentLoop"]
+    inject: ClassVar[list[str]] = ["http", "webui", "agentLoop"]
     Config = Config
 
     def __init__(self, ctx: Any, config: Config) -> None:

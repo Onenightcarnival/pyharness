@@ -50,7 +50,7 @@ async def test_mcp_tools_register_and_run(home):
         assert status["demo"]["state"] == "connected" and status["demo"]["tools"] == ["demo_add"]
         assert status["broken"]["state"] == "error" and status["off"]["state"] == "disabled"
         tool = next(t for t in h.get("tools").list() if t.name == "demo_add")
-        assert "mcp" in [tag for tag in (getattr(tool, "tags", None) or [])] or True
+        assert "mcp" in list(getattr(tool, "tags", None) or []) or True
         result = await tool.ainvoke({"a": 2, "b": 3})
         assert "5" in str(result)
         view = mcp.servers()
@@ -59,27 +59,30 @@ async def test_mcp_tools_register_and_run(home):
 
 async def test_mcp_settings_api_round_trip(home):
     profile = Profile.init("web", home=str(home))
-    async with Harness(profile, patch=[{"id": "http", "config": {"serve": False}}]) as h:
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t") as c:
-            assert (await c.get("/api/settings/mcp")).json() == {"servers": {}}
-            body = {
-                "servers": {
-                    "demo": {
-                        "command": sys.executable,
-                        "args": [str(SERVER)],
-                        "env": {"TOKEN": "secret"},
-                        "approval": True,
-                    }
+    async with (
+        Harness(profile, patch=[{"id": "http", "config": {"serve": False}}]) as h,
+        httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t") as c,
+    ):
+        assert (await c.get("/api/settings/mcp")).json() == {"servers": {}}
+        body = {
+            "servers": {
+                "demo": {
+                    "command": sys.executable,
+                    "args": [str(SERVER)],
+                    "env": {"TOKEN": "secret"},
+                    "approval": True,
                 }
             }
-            r = await c.put("/api/settings/mcp", json=body)
-            assert r.status_code == 200 and r.json()["application"] == "saved-restart-required"
-            assert (
-                await c.put("/api/settings/mcp", json={"servers": {"bad name": {"url": "http://x"}}})
-            ).status_code == 422
-            assert (
-                await c.put("/api/settings/mcp", json={"servers": {"x": {"command": "a", "url": "http://x"}}})
-            ).status_code == 422
+        }
+        r = await c.put("/api/settings/mcp", json=body)
+        assert r.status_code == 200 and r.json()["application"] == "saved-restart-required"
+        assert (
+            await c.put("/api/settings/mcp", json={"servers": {"bad name": {"url": "http://x"}}})
+        ).status_code == 422
+        assert (
+            await c.put("/api/settings/mcp", json={"servers": {"x": {"command": "a", "url": "http://x"}}})
+        ).status_code == 422
+
     ops = yaml.safe_load(Path(profile.patch_path).read_text())
     op = next(o for o in ops if o["id"] == "mcp")
     assert (

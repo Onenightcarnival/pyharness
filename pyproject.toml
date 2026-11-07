@@ -58,12 +58,36 @@ src = [".", "packages/*", "tests"]
 target-version = "py312"
 extend-exclude = [".venv", "examples/pyharness-audit/build"]
 
-[tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "TID251"]
-ignore = ["B008", "B904", "UP042"]
+[tool.ruff.format]
+docstring-code-format = true
 
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
-"typing.TYPE_CHECKING".msg = "No type-only import blocks: break the import cycle with a Protocol in the importing module, or move the class to a leaf module."
+[tool.ruff.lint]
+select = [
+    "E", "F", "W", "I", "UP", "B",      # pycodestyle, pyflakes, isort, pyupgrade, bugbear
+    "PLC0415",                          # imports at module top
+    "ISC",                              # no implicit or `+` string concatenation
+    "RUF022", "RUF012",                 # sorted __all__; ClassVar on mutable class attributes
+    "D212", "D415",                     # docstring shape: summary on the first line, closing punctuation
+    "SIM", "PTH", "FURB", "C4", "PIE", "RET", "PERF",
+    "PLE", "PLW", "PLC",                # pylint errors, warnings, conventions (not the PLR refactor metrics)
+    "A",                                # no shadowing of builtins
+    "T201",                             # no print outside the CLI
+    "TID251",                           # banned APIs
+]
+ignore = ["B008", "B904", "UP042", "RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.per-file-ignores]
+"packages/core/pyharness/cli.py" = ["T201"]
+"packages/core/pyharness/preflight.py" = ["T201"]
+"scripts/*" = ["T201"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["pyharness", "testkit"]
+required-imports = ["from __future__ import annotations"]
+combine-as-imports = true
+
+[tool.ruff.lint.flake8-builtins]
+builtins-ignorelist = ["id", "next"]  # route params; the waterfall listener keyword
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"typing.TYPE_CHECKING".msg = "No type-only import blocks: break the import cycle with a Protocol in the importing module, or move the class to a leaf module."

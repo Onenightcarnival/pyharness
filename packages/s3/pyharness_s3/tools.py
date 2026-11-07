@@ -66,7 +66,7 @@ def build_tools(service: Host) -> list[Any]:
             None, description='Key prefix to list under, e.g. "logs/2026/" (empty = root of the profile).'
         ),
         token: str | None = Field(None, description="Continuation token from a previous truncated page."),
-        max: int | None = Field(None, description="Max entries to return (default 200, cap 500)."),
+        max: int | None = Field(None, description="Max entries to return (default 200, cap 500)."),  # noqa: A002 — tool argument name (dsh-s3 shape)
         recursive: bool | None = Field(None, description="Walk all objects under the prefix (no folder grouping)."),
     ) -> str:
         cap = min(TOOL_LIST_MAX, max or TOOL_LIST_DEFAULT) if max is None or max > 0 else 1

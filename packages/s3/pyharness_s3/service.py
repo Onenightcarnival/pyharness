@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import warnings
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field
 
@@ -33,7 +33,7 @@ class S3Service(Service):
 
     key = "s3"
     name = "pyharness-s3"
-    inject = ["tools", "prompt", "http"]
+    inject: ClassVar[list[str]] = ["tools", "prompt", "http"]
     Config = Config
 
     def __init__(self, ctx: Any, config: Config) -> None:

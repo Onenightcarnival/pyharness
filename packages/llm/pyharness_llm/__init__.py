@@ -26,6 +26,8 @@ Each model entry carries its input modalities (``input``: ``text``, ``image``); 
 read them.
 """
 
+from __future__ import annotations
+
 from .catalog import CURATED, PRESETS, PROTOCOLS, translate_options, type_info
 from .config import LLMConfig, LLMConfigError, ModelEntry, ProviderConfig, mask_secret, split_spec
 from .service import EchoChatModel, LLMService

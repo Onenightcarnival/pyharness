@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import datetime as dt
 import mimetypes
-import os
 import re
 import time
 from collections.abc import Iterator
@@ -32,7 +31,7 @@ class S3Error(RuntimeError):
 
 
 def guess_mime(key: str) -> str:
-    ext = os.path.splitext(key.lower())[1]
+    ext = Path(key.lower()).suffix
     return MIME.get(ext) or mimetypes.guess_type(key)[0] or "application/octet-stream"
 
 
@@ -258,18 +257,17 @@ class Bucket:
         )
 
     def upload_file(self, local_path: str, key: str) -> dict[str, Any]:
-        size = os.stat(local_path).st_size
-        with open(local_path, "rb") as f:
+        size = Path(local_path).stat().st_size
+        with Path(local_path).open("rb") as f:
             self.upload_stream(key, f, guess_mime(local_path))
         return {"size": size}
 
     def download_file(self, key: str, local_path: str) -> dict[str, Any]:
         Path(local_path).parent.mkdir(parents=True, exist_ok=True)
         opened = self.open(key)
-        with open(local_path, "wb") as f:
-            for chunk in opened["body"].iter_chunks():
-                f.write(chunk)
-        return {"size": os.stat(local_path).st_size}
+        with Path(local_path).open("wb") as f:
+            f.writelines(opened["body"].iter_chunks())
+        return {"size": Path(local_path).stat().st_size}
 
     def mkdir(self, key: str) -> None:
         marker = clean_key(key).rstrip("/") + "/"

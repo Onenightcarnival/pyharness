@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
 from textwrap import dedent
 from typing import Any
@@ -43,10 +44,8 @@ class PgDriver(Driver):
         return SessionState(r["in_recovery"] in (True, "t", "true"), str(r["read_only"]).lower() == "on")
 
     def _timeout(self, ms: int | None) -> None:
-        try:
+        with contextlib.suppress(Exception):
             self.conn.execute(f"SET statement_timeout = {int(ms)}" if ms else "SET statement_timeout = DEFAULT")
-        except Exception:  # noqa: BLE001
-            pass
 
     def query(self, sql: str, params: list[Any] | None, max_rows: int, timeout_ms: int) -> QueryResult:
         with self.lock:
@@ -73,10 +72,8 @@ class PgDriver(Driver):
                 self.conn.execute("COMMIT")
                 return total
             except Exception:
-                try:
+                with contextlib.suppress(Exception):
                     self.conn.execute("ROLLBACK")
-                except Exception:  # noqa: BLE001
-                    pass
                 raise
 
     def list_schemas(self) -> list[str]:

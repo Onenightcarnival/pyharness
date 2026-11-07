@@ -1,5 +1,7 @@
 """A tiny stdio MCP server for tests: one `add` tool."""
 
+from __future__ import annotations
+
 from mcp.server.fastmcp import FastMCP
 
 server = FastMCP("demo")

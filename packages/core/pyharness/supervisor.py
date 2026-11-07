@@ -20,6 +20,7 @@ Events are appended to ``runtime/supervisor.log.jsonl``.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -78,10 +79,8 @@ class Supervisor:
     def _signal_worker(self, sig: int) -> None:
         if self.proc is not None and self.proc.poll() is None:
             self._signalled = True
-            try:
+            with contextlib.suppress(ProcessLookupError):
                 self.proc.send_signal(sig)
-            except ProcessLookupError:  # pragma: no cover
-                pass
 
     # ------------------------------------------------------------------ one generation
     def _spawn(self) -> tuple[subprocess.Popen[bytes], Path]:
@@ -107,7 +106,7 @@ class Supervisor:
         for patch in self.extra_patches:
             cmd += ["--patch", patch]
         env = dict(os.environ)
-        env.setdefault("PYH_CWD", os.getcwd())
+        env.setdefault("PYH_CWD", str(Path.cwd()))
         env["PYH_GENERATION"] = str(self.generation)
         log.info("starting generation %d", self.generation)
         self.proc = subprocess.Popen(cmd, env=env)
@@ -140,7 +139,7 @@ class Supervisor:
         item = {"generation": self.generation, "event": event, "at": time.time(), **data}
         self.history.append(item)
         self.profile.runtime.mkdir(parents=True, exist_ok=True)
-        with open(self.profile.runtime / "supervisor.log.jsonl", "a", encoding="utf-8") as fh:
+        with (self.profile.runtime / "supervisor.log.jsonl").open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(item, ensure_ascii=False) + "\n")
 
     # ------------------------------------------------------------------ loop

@@ -119,9 +119,11 @@ def make_tools(provider: Client, service: Any) -> list[Any]:
                     for block in item.get("content") or []:
                         if block.get("type") in ("output_text", "text") and block.get("text"):
                             texts.append(str(block["text"]))
-                        for ann in block.get("annotations") or []:
-                            if ann.get("type") == "url_citation" and ann.get("url"):
-                                citations.append(str(ann["url"]))
+                        citations.extend(
+                            str(ann["url"])
+                            for ann in block.get("annotations") or []
+                            if ann.get("type") == "url_citation" and ann.get("url")
+                        )
             answer = "\n\n".join(texts)
         seen: set[str] = set()
         urls = [u for u in citations if not (u in seen or seen.add(u))]

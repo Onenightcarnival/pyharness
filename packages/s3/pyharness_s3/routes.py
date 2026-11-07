@@ -4,7 +4,6 @@ delete, folder, presign, copy."""
 from __future__ import annotations
 
 import json
-import os
 import re
 import tempfile
 from typing import Any, Protocol
@@ -114,7 +113,10 @@ def build_router(service: Host) -> APIRouter:
 
     @router.get("/s3/list")
     async def list_objects(
-        id: str | None = None, prefix: str = "", token: str | None = None, max: int | None = None
+        id: str | None = None,
+        prefix: str = "",
+        token: str | None = None,
+        max: int | None = None,  # noqa: A002 — query parameter name of the page API
     ) -> dict[str, Any]:
         if not id:
             raise HTTPException(400, "id query parameter is required")
@@ -141,7 +143,7 @@ def build_router(service: Host) -> APIRouter:
         opened = await guarded(id, lambda b: b.open(key))
         ctype = str(opened["contentType"] or "application/octet-stream")
         previewable = bool(PREVIEWABLE.match(ctype.lower()))
-        name = os.path.basename(clean_key(key)) or "download"
+        name = clean_key(key).rsplit("/", 1)[-1] or "download"
         ascii_name = re.sub(r'[^\x20-\x7e]|["\\]', "_", name)
         kind = "inline" if inline == "1" and previewable else "attachment"
         headers = {
@@ -170,14 +172,11 @@ def build_router(service: Host) -> APIRouter:
             raise HTTPException(413, "upload body too large")
         ctype = request.headers.get("content-type") or ""
         content_type = ctype if ctype and ctype != "application/octet-stream" else guess_mime(key)
-        spool = tempfile.SpooledTemporaryFile(max_size=PREVIEW_TEXT_BYTES)
-        async for chunk in request.stream():
-            spool.write(chunk)
-        spool.seek(0)
-        try:
+        with tempfile.SpooledTemporaryFile(max_size=PREVIEW_TEXT_BYTES) as spool:
+            async for chunk in request.stream():
+                spool.write(chunk)
+            spool.seek(0)
             await guarded(id, lambda b: b.upload_stream(key, spool, content_type), 500)
-        finally:
-            spool.close()
         return {"ok": True, "key": clean_key(key)}
 
     @router.post("/s3/delete")

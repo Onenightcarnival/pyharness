@@ -199,7 +199,7 @@ class Profile:
             "home": str(self.home),
             "data_dir": str(self.data),
             "runtime_dir": str(self.runtime),
-            "cwd": cwd or os.environ.get("PYH_CWD") or os.getcwd(),
+            "cwd": cwd or os.environ.get("PYH_CWD") or str(Path.cwd()),
         }
 
     # ------------------------------------------------------------------ composition
@@ -214,8 +214,9 @@ class Profile:
             layers.append((f"bundle:{bundle}", info.ops))
         layers.append(("profile-patch", parse_ops(self.patch_ops_raw(), str(self.patch_path))))
         layers.append(("home-patch", parse_ops(load_yaml(self.home_patch_path, default=[]), str(self.home_patch_path))))
-        for path in extra_patches or []:
-            layers.append((f"patch:{path}", parse_ops(load_yaml(Path(path), default=[]), str(path))))
+        layers.extend(
+            (f"patch:{path}", parse_ops(load_yaml(Path(path), default=[]), str(path))) for path in extra_patches or []
+        )
         return layers, infos
 
     def compose(self, extra_patches: list[Path] | None = None) -> ComposeResult:
@@ -381,7 +382,7 @@ class Profile:
         """Exclusive cross-process lock on the profile (``flock``; no-op without ``fcntl``)."""
         self.runtime.mkdir(parents=True, exist_ok=True)
         lock_path = self.runtime / "profile.lock"
-        with open(lock_path, "w") as fh:
+        with lock_path.open("w") as fh:
             if fcntl is not None:
                 fcntl.flock(fh, fcntl.LOCK_EX)
             yield
@@ -391,7 +392,7 @@ class Profile:
         """:meth:`lock` for async code; waits by polling."""
         self.runtime.mkdir(parents=True, exist_ok=True)
         lock_path = self.runtime / "profile.lock"
-        with open(lock_path, "w") as fh:
+        with lock_path.open("w") as fh:
             if fcntl is None:  # pragma: no cover
                 yield
                 return

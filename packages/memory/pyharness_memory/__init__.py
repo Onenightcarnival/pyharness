@@ -16,7 +16,9 @@ during its own turns and by the user on the page. Routes under ``/api/memory``: 
 ``POST`` (commit), ``PATCH`` (agent access), ``DELETE`` (clear).
 """
 
-from .service import GUIDANCE, Config, MemoryService
-from .store import MemoryError, MemoryStore, sort_entries
+from __future__ import annotations
 
-__all__ = ["GUIDANCE", "Config", "MemoryError", "MemoryService", "MemoryStore", "sort_entries"]
+from .service import GUIDANCE, Config, MemoryService
+from .store import MemoryStore, MemoryStoreError, sort_entries
+
+__all__ = ["GUIDANCE", "Config", "MemoryService", "MemoryStore", "MemoryStoreError", "sort_entries"]

@@ -6,14 +6,14 @@ from __future__ import annotations
 import re
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field
 
 from pyharness import Service, package_prompts
 
 from .routes import build_router
-from .store import FIELDS, KIND_GUIDE, KINDS, MemoryError, MemoryStore, children_of
+from .store import FIELDS, KIND_GUIDE, KINDS, MemoryStore, MemoryStoreError, children_of
 from .tools import get_tool, save_tool
 
 PROMPT_ORDER = 155
@@ -56,7 +56,7 @@ def title_of(entry: dict[str, Any]) -> str:
 
 def brief(entry: dict[str, Any], entries: list[dict[str, Any]]) -> dict[str, Any]:
     f = entry.get("fields") or {}
-    out = {
+    return {
         "id": entry["id"],
         "kind": entry["kind"],
         "title": title_of(entry),
@@ -65,7 +65,6 @@ def brief(entry: dict[str, Any], entries: list[dict[str, Any]]) -> dict[str, Any
         "childCount": len(children_of(entries, entry["id"])),
         "truncatedFields": [k for k, v in f.items() if len(v) > BRIEF_CHARS],
     }
-    return out
 
 
 def ancestors_of(entry: dict[str, Any], entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -85,7 +84,7 @@ def ancestors_of(entry: dict[str, Any], entries: list[dict[str, Any]]) -> list[d
     return [{"id": a["id"], "kind": a["kind"], "title": title_of(a)} for a in chain]
 
 
-def _error_payload(exc: MemoryError, state: dict[str, Any] | None) -> dict[str, Any]:
+def _error_payload(exc: MemoryStoreError, state: dict[str, Any] | None) -> dict[str, Any]:
     error: dict[str, Any] = {"code": exc.code, "message": exc.message, "retryable": exc.retryable}
     if exc.detail:
         error["detail"] = exc.detail
@@ -102,7 +101,7 @@ class MemoryService(Service):
 
     key = "memory"
     name = "pyharness-memory"
-    inject = ["tools", "prompt", "http"]
+    inject: ClassVar[list[str]] = ["tools", "prompt", "http"]
     Config = Config
 
     def __init__(self, ctx: Any, config: Config) -> None:
@@ -165,10 +164,10 @@ class MemoryService(Service):
         state = self.store.state()
         try:
             if not state["agentTools"]:
-                raise MemoryError("disabled")
+                raise MemoryStoreError("disabled")
             node_id = "profile" if node_id is None else node_id
             if not isinstance(node_id, str):
-                raise MemoryError("invalid", "id")
+                raise MemoryStoreError("invalid", "id")
             off = 0 if offset is None else offset
             lim = PAGE_DEFAULT if limit is None else limit
             if (
@@ -179,11 +178,11 @@ class MemoryService(Service):
                 or isinstance(lim, bool)
                 or not 1 <= lim <= PAGE_MAX
             ):
-                raise MemoryError("invalid", "pagination")
+                raise MemoryStoreError("invalid", "pagination")
             entries = state["entries"]
             entry = next((e for e in entries if e["id"] == node_id), None)
             if entry is None:
-                raise MemoryError("missing", node_id)
+                raise MemoryStoreError("missing", node_id)
             kids = children_of(entries, node_id)
             page = kids[off : off + lim]
             return {
@@ -198,7 +197,7 @@ class MemoryService(Service):
                     "nextOffset": off + lim if off + lim < len(kids) else None,
                 },
             }
-        except MemoryError as exc:
+        except MemoryStoreError as exc:
             return _error_payload(exc, state)
 
     def save(self, state_token: str, summary: str, changes: list[dict[str, Any]], source: str) -> dict[str, Any]:
@@ -206,9 +205,9 @@ class MemoryService(Service):
         state = self.store.state()
         try:
             if state_token != f"r:{state['revision']}":
-                raise MemoryError("conflict")
+                raise MemoryStoreError("conflict")
             if not isinstance(changes, list) or not 1 <= len(changes) <= 100:
-                raise MemoryError("invalid", "changes")
+                raise MemoryStoreError("invalid", "changes")
             entries = {e["id"]: e for e in state["entries"]}
             resolved: list[tuple[dict[str, Any], str]] = []
             refs: dict[str, str] = {}
@@ -216,7 +215,7 @@ class MemoryService(Service):
             for change in changes:
                 kind = change.get("kind")
                 if kind not in (*KINDS, "remove"):
-                    raise MemoryError("invalid", "kind")
+                    raise MemoryStoreError("invalid", "kind")
                 allowed = (
                     {"kind", "id"}
                     if kind == "remove"
@@ -225,24 +224,24 @@ class MemoryService(Service):
                     else {"kind", "id", "ref", "fields"}
                 )
                 if set(change) - allowed:
-                    raise MemoryError("invalid", "change")
+                    raise MemoryStoreError("invalid", "change")
                 cid = change.get("id")
                 if "id" in change and (not isinstance(cid, str) or not cid):
-                    raise MemoryError("invalid", "id")
+                    raise MemoryStoreError("invalid", "id")
                 if kind == "remove" and cid is None:
-                    raise MemoryError("invalid", "id")
+                    raise MemoryStoreError("invalid", "id")
                 if cid is not None and cid not in entries:
-                    raise MemoryError("missing", cid)
+                    raise MemoryStoreError("missing", cid)
                 if cid is not None and kind != "remove" and entries[cid]["kind"] != kind:
-                    raise MemoryError("invalid", "kind")
+                    raise MemoryStoreError("invalid", "kind")
                 rid = "profile" if kind == "profile" else (cid or uuid.uuid4().hex)
                 if rid in seen:
-                    raise MemoryError("invalid", "duplicate entry")
+                    raise MemoryStoreError("invalid", "duplicate entry")
                 seen.add(rid)
                 ref = change.get("ref")
                 if ref is not None:
                     if cid is not None or not isinstance(ref, str) or not REF_RE.match(ref) or ref in refs:
-                        raise MemoryError("invalid", "ref")
+                        raise MemoryStoreError("invalid", "ref")
                     refs[ref] = rid
                 resolved.append((change, rid))
             out_changes = []
@@ -253,18 +252,19 @@ class MemoryService(Service):
                     continue
                 fields = change.get("fields")
                 if not isinstance(fields, dict) or not fields:
-                    raise MemoryError("invalid", "fields")
+                    raise MemoryStoreError("invalid", "fields")
                 clean: dict[str, str] = {}
-                for key, value in fields.items():
-                    if key not in FIELDS[kind] or not isinstance(value, str):
-                        raise MemoryError("invalid", key)
-                    if key in ("workId", "parentId") and value.startswith("@"):
-                        if value[1:] not in refs:
-                            raise MemoryError("reference", value)
-                        value = refs[value[1:]]
+                for key, raw in fields.items():
+                    if key not in FIELDS[kind] or not isinstance(raw, str):
+                        raise MemoryStoreError("invalid", key)
+                    value = raw
+                    if key in ("workId", "parentId") and raw.startswith("@"):
+                        if raw[1:] not in refs:
+                            raise MemoryStoreError("reference", raw)
+                        value = refs[raw[1:]]
                     clean[key] = value
                 if kind == "work" and rid not in entries and not (clean.get("organization") or "").strip():
-                    raise MemoryError("invalid", "organization")
+                    raise MemoryStoreError("invalid", "organization")
                 out_changes.append({"id": rid, "kind": kind, "fields": clean})
             new_state = self.store.commit(
                 {"baseRevision": state["revision"], "summary": summary, "changes": out_changes}, "agent", source
@@ -277,5 +277,5 @@ class MemoryService(Service):
                 "refs": refs,
                 "records": [{"id": rid, "kind": c["kind"], "removed": c["kind"] == "remove"} for c, rid in resolved],
             }
-        except MemoryError as exc:
+        except MemoryStoreError as exc:
             return _error_payload(exc, state)

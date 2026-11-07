@@ -18,6 +18,7 @@ import asyncio
 import json
 import os
 import sys
+from pathlib import Path
 from typing import Any
 
 from .harness import Harness
@@ -82,7 +83,7 @@ async def run_preflight(
     for patch in extra_patches or []:
         cmd += ["--patch", str(patch)]
     env = dict(os.environ)
-    env.setdefault("PYH_CWD", os.getcwd())
+    env.setdefault("PYH_CWD", str(Path.cwd()))
     env["PYH_LOG_LEVEL"] = env.get("PYH_PREFLIGHT_LOG_LEVEL", "WARNING")
     proc = await asyncio.create_subprocess_exec(
         *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=env
@@ -98,8 +99,8 @@ async def run_preflight(
             "entries": [],
         }
     text = out.decode("utf-8", "replace").strip().splitlines()
-    for line in reversed(text):
-        line = line.strip()
+    for raw in reversed(text):
+        line = raw.strip()
         if line.startswith("{"):
             try:
                 return json.loads(line)

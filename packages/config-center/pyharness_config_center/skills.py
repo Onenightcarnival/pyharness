@@ -177,7 +177,7 @@ class SkillStore:
         if not file.is_file():
             raise SkillError("not a file")
         size = file.stat().st_size
-        with open(file, "rb") as f:
+        with file.open("rb") as f:
             data = f.read(PREVIEW_LIMIT + 1)
         if b"\0" in data:
             raise SkillError("binary file cannot be previewed")
@@ -267,12 +267,12 @@ class SkillStore:
                         continue
                     dest = fenced(stage, rel)
                     dest.parent.mkdir(parents=True, exist_ok=True)
-                    with zf.open(info) as src, open(dest, "wb") as out:
+                    with zf.open(info) as src, dest.open("wb") as out:
                         head = src.read(2)
                         out.write(head)
                         shutil.copyfileobj(src, out)
                     if head == b"#!":
-                        os.chmod(dest, 0o755)
+                        dest.chmod(0o755)
                 target = self.enabled_dir / skill
                 backup = None
                 if skill in conflicts:

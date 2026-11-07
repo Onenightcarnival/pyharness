@@ -9,7 +9,7 @@ import random
 import re
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import httpx
 from fastapi import APIRouter, HTTPException, Request
@@ -28,7 +28,7 @@ class OtelService(Service):
 
     key = "otel"
     name = "pyharness-otel"
-    inject = ["http", "webui"]
+    inject: ClassVar[list[str]] = ["http", "webui"]
     Config = Config
 
     def __init__(self, ctx: Any, config: Config) -> None:

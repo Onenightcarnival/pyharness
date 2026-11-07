@@ -39,7 +39,7 @@ import json
 from collections.abc import Callable
 from pathlib import Path
 from textwrap import dedent
-from typing import Any
+from typing import Any, ClassVar
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
@@ -146,7 +146,7 @@ class WebUIService(Service):
 
     key = "webui"
     name = "pyharness-web-ui"
-    inject = ["http"]
+    inject: ClassVar[list[str]] = ["http"]
     Config = Config
 
     def __init__(self, ctx: Any, config: Config) -> None:

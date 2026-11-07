@@ -43,9 +43,11 @@ def http_error(label: str, status: int, body: str) -> LlmError:
         return LlmError("AUTH", message)
     if status == 429:
         return LlmError("RATE_LIMIT", message, retry_after_ms=reset_delay_ms(body))
-    if re.search(r"quota|insufficient", body or "", re.I):
+    if re.search(r"quota|insufficient", body or "", re.IGNORECASE):
         return LlmError("QUOTA_EXCEEDED", message)
-    if status == 400 and re.search(r"context[ _-]?(window|length)|too many tokens|maximum context", body or "", re.I):
+    if status == 400 and re.search(
+        r"context[ _-]?(window|length)|too many tokens|maximum context", body or "", re.IGNORECASE
+    ):
         return LlmError("CONTEXT_WINDOW_EXCEEDED", message)
     if status in (408, 504):
         return LlmError("TIMEOUT", message)

@@ -82,7 +82,7 @@ MESSAGES = {
 }
 
 
-class MemoryError(Exception):
+class MemoryStoreError(Exception):
     def __init__(self, code: str, detail: str = "") -> None:
         super().__init__(f"{code}: {detail}" if detail else code)
         self.code = code
@@ -152,14 +152,14 @@ def children_of(entries: list[dict[str, Any]], node_id: str) -> list[dict[str, A
 
 
 def validate_snapshot(entries: Any) -> None:
-    """Raise :class:`MemoryError` unless ``entries`` is a valid résumé."""
+    """Raise :class:`MemoryStoreError` unless ``entries`` is a valid résumé."""
     if not isinstance(entries, list) or len(entries) > MAX_ENTRIES:
-        raise MemoryError("invalid")
+        raise MemoryStoreError("invalid")
     seen: set[str] = set()
     profiles = 0
     for entry in entries:
         if not isinstance(entry, dict) or set(entry) - {"id", "kind", "fields", "createdAt"}:
-            raise MemoryError("invalid")
+            raise MemoryStoreError("invalid")
         eid, kind, fields = entry.get("id"), entry.get("kind"), entry.get("fields")
         if (
             not isinstance(eid, str)
@@ -168,49 +168,49 @@ def validate_snapshot(entries: Any) -> None:
             or kind not in KINDS
             or not isinstance(fields, dict)
         ):
-            raise MemoryError("invalid")
+            raise MemoryStoreError("invalid")
         seen.add(eid)
         created = entry.get("createdAt")
         if created is not None and (not isinstance(created, str) or not CREATED_RE.match(created)):
-            raise MemoryError("invalid", "createdAt")
+            raise MemoryStoreError("invalid", "createdAt")
         if kind == "profile":
             profiles += 1
             if eid != "profile":
-                raise MemoryError("content", eid)
+                raise MemoryStoreError("content", eid)
         for key, value in fields.items():
             if key not in FIELDS[kind] or not isinstance(value, str):
-                raise MemoryError("invalid", key)
+                raise MemoryStoreError("invalid", key)
             if len(value) > (MAX_HIGHLIGHTS if key == "highlights" else MAX_FIELD):
-                raise MemoryError("invalid", key)
+                raise MemoryStoreError("invalid", key)
             if (
                 key in ("startDate", "endDate")
                 and value
                 and not (key == "endDate" and value == "present")
                 and not valid_date(value)
             ):
-                raise MemoryError("date", key)
+                raise MemoryStoreError("date", key)
         start, end = fields.get("startDate") or "", fields.get("endDate") or ""
         if start and end and end != "present" and start > end:
-            raise MemoryError("dateRange")
+            raise MemoryStoreError("dateRange")
         if kind == "work" and not any(v.strip() for v in fields.values()):
-            raise MemoryError("content", eid)
+            raise MemoryStoreError("content", eid)
         if kind == "project" and not (fields.get("title") or "").strip():
-            raise MemoryError("content", eid)
+            raise MemoryStoreError("content", eid)
         if kind == "lesson" and not (fields.get("lesson") or "").strip():
-            raise MemoryError("content", eid)
+            raise MemoryStoreError("content", eid)
     if profiles != 1:
-        raise MemoryError("invalid")
+        raise MemoryStoreError("invalid")
     by_id = {e["id"]: e for e in entries}
     for entry in entries:
         fields = entry["fields"]
         if entry["kind"] == "lesson":
             parent = by_id.get(fields.get("parentId") or "")
             if parent is None or parent["kind"] != "project":
-                raise MemoryError("reference", entry["id"])
+                raise MemoryStoreError("reference", entry["id"])
         if entry["kind"] == "project" and (fields.get("workId") or ""):
             work = by_id.get(fields["workId"])
             if work is None or work["kind"] != "work":
-                raise MemoryError("reference", entry["id"])
+                raise MemoryStoreError("reference", entry["id"])
 
 
 def _copy(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -257,7 +257,7 @@ class MemoryStore:
                     self.db.execute("ROLLBACK")
                     raise
             elif self._meta("schemaVersion") != str(SCHEMA_VERSION):
-                raise MemoryError("invalid", "schemaVersion")
+                raise MemoryStoreError("invalid", "schemaVersion")
 
     def close(self) -> None:
         with self._lock:
@@ -351,64 +351,64 @@ class MemoryStore:
     def _transaction(self):
         return _Txn(self)
 
-    def commit(self, input: dict[str, Any], actor: str, source: str) -> dict[str, Any]:
+    def commit(self, payload: dict[str, Any], actor: str, source: str) -> dict[str, Any]:
         """Apply ``changes`` (and/or ``restore`` / ``imported``) at ``baseRevision``; returns the new state."""
-        if not isinstance(input, dict) or "agentTools" in input:
-            raise MemoryError("invalid")
-        base = input.get("baseRevision")
-        summary = input.get("summary")
+        if not isinstance(payload, dict) or "agentTools" in payload:
+            raise MemoryStoreError("invalid")
+        base = payload.get("baseRevision")
+        summary = payload.get("summary")
         if not isinstance(base, int) or isinstance(base, bool):
-            raise MemoryError("invalid")
+            raise MemoryStoreError("invalid")
         if not isinstance(summary, str) or not summary.strip() or len(summary) > MAX_SUMMARY:
-            raise MemoryError("invalid")
-        src = input.get("source", source)
+            raise MemoryStoreError("invalid")
+        src = payload.get("source", source)
         if not isinstance(src, str) or len(src) > MAX_SOURCE:
-            raise MemoryError("invalid")
-        changes = input.get("changes")
+            raise MemoryStoreError("invalid")
+        changes = payload.get("changes")
         if changes is not None and (not isinstance(changes, list) or len(changes) > MAX_CHANGES):
-            raise MemoryError("invalid")
+            raise MemoryStoreError("invalid")
         with self._lock, self._transaction():
             current_rev = int(self._meta("revision") or 0)
             if base != current_rev:
-                raise MemoryError("conflict")
+                raise MemoryStoreError("conflict")
             if actor == "agent" and self._meta("agentTools") != "1":
-                raise MemoryError("disabled")
-            if actor == "agent" and ("restore" in input or "imported" in input):
-                raise MemoryError("protected")
+                raise MemoryStoreError("disabled")
+            if actor == "agent" and ("restore" in payload or "imported" in payload):
+                raise MemoryStoreError("protected")
             current = self._entries()
             nxt = _copy(current)
-            if "restore" in input and input["restore"] is not None:
-                target = input["restore"]
+            if "restore" in payload and payload["restore"] is not None:
+                target = payload["restore"]
                 if not isinstance(target, int) or isinstance(target, bool):
-                    raise MemoryError("invalid")
+                    raise MemoryStoreError("invalid")
                 if target == 0:
                     nxt = _copy(EMPTY_ENTRIES)
                 else:
                     snap = self._snapshot(target)
                     if snap is None:
-                        raise MemoryError("missing")
+                        raise MemoryStoreError("missing")
                     nxt = snap
-            elif "imported" in input and input["imported"] is not None:
-                imported = input["imported"]
+            elif "imported" in payload and payload["imported"] is not None:
+                imported = payload["imported"]
                 if not isinstance(imported, dict):
-                    raise MemoryError("invalid")
+                    raise MemoryStoreError("invalid")
                 if imported.get("schemaVersion") not in (None, SCHEMA_VERSION):
-                    raise MemoryError("invalid", "schemaVersion")
+                    raise MemoryStoreError("invalid", "schemaVersion")
                 validate_snapshot(imported.get("entries"))
                 nxt = _copy(imported["entries"])
             now = now_iso()
             for change in changes or []:
                 if not isinstance(change, dict):
-                    raise MemoryError("invalid")
+                    raise MemoryStoreError("invalid")
                 cid, kind = change.get("id"), change.get("kind")
                 if not isinstance(cid, str) or not ID_RE.match(cid) or kind not in KINDS:
-                    raise MemoryError("invalid")
+                    raise MemoryStoreError("invalid")
                 existing = next((e for e in nxt if e["id"] == cid), None)
                 if existing is not None and existing["kind"] != kind:
-                    raise MemoryError("invalid")
+                    raise MemoryStoreError("invalid")
                 if change.get("remove"):
                     if existing is None or cid == "profile":
-                        raise MemoryError("invalid")
+                        raise MemoryStoreError("invalid")
                     nxt = [e for e in nxt if e["id"] != cid]
                     continue
                 if existing is None:
@@ -417,7 +417,7 @@ class MemoryStore:
                 fields = change.get("fields")
                 if fields is not None:
                     if not isinstance(fields, dict):
-                        raise MemoryError("invalid")
+                        raise MemoryStoreError("invalid")
                     for key, value in fields.items():
                         existing["fields"][key] = value
             validate_snapshot(nxt)
@@ -439,12 +439,12 @@ class MemoryStore:
 
     def clear(self, base_revision: Any) -> dict[str, Any]:
         if not isinstance(base_revision, int) or isinstance(base_revision, bool):
-            raise MemoryError("invalid")
+            raise MemoryStoreError("invalid")
         with self._lock:
             with self._transaction():
                 current_rev = int(self._meta("revision") or 0)
                 if base_revision != current_rev:
-                    raise MemoryError("conflict")
+                    raise MemoryStoreError("conflict")
                 if not self._history() and self._entries() == EMPTY_ENTRIES:
                     return self._state_locked()
                 self.db.execute("DELETE FROM entries")
@@ -457,7 +457,7 @@ class MemoryStore:
 
     def set_agent_tools(self, enabled: Any) -> dict[str, Any]:
         if not isinstance(enabled, bool):
-            raise MemoryError("invalid")
+            raise MemoryStoreError("invalid")
         with self._lock:
             self._set_meta("agentTools", "1" if enabled else "0")
             return self._state_locked()
@@ -481,7 +481,7 @@ class _Txn:
             self.store.db.execute("BEGIN IMMEDIATE")
         except sqlite3.OperationalError as exc:
             if "locked" in str(exc) or "busy" in str(exc):
-                raise MemoryError("busy") from exc
+                raise MemoryStoreError("busy") from exc
             raise
 
     def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
@@ -490,4 +490,4 @@ class _Txn:
         else:
             self.store.db.execute("ROLLBACK")
             if isinstance(exc, sqlite3.OperationalError) and ("locked" in str(exc) or "busy" in str(exc)):
-                raise MemoryError("busy") from exc
+                raise MemoryStoreError("busy") from exc

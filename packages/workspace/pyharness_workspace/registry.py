@@ -211,7 +211,9 @@ class Workspaces:
             raise WorkspaceError("no native directory picker on this host")
 
         def run() -> str | None:
-            proc = subprocess.run(command, capture_output=True, text=True, timeout=self.config.picker_timeout)
+            proc = subprocess.run(
+                command, capture_output=True, text=True, timeout=self.config.picker_timeout, check=False
+            )
             output = proc.stdout.strip()
             if proc.returncode != 0 or not output:
                 return None  # cancelled

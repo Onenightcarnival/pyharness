@@ -109,7 +109,7 @@ def test_credential_store(tmp_path, monkeypatch):
     }
     store.set("X_API_KEY", "secret-1")
     assert store.get("X_API_KEY") == "secret-1" and store.describe("X_API_KEY")["source"] == "store"
-    assert stat.S_IMODE(os.stat(tmp_path / "credentials.yaml").st_mode) == 0o600
+    assert stat.S_IMODE((tmp_path / "credentials.yaml").stat().st_mode) == 0o600
     monkeypatch.setenv("X_API_KEY", "from-env")
     assert store.get("X_API_KEY") == "from-env" and store.describe("X_API_KEY")["source"] == "env"
     monkeypatch.delenv("X_API_KEY")
@@ -124,106 +124,105 @@ def test_credential_store(tmp_path, monkeypatch):
 async def test_route_lifecycle_through_the_api(profile):
     replies = [{"content": "one"}, {"content": "two"}]
     scripted.CALLS.clear()
-    async with Harness(profile, patch=base_patch(replies=replies)) as h:
-        async with client(h) as c:
-            d = (await c.get("/api/settings/models")).json()
-            assert d["default"] == "scripted:test" and d["routes"] == [] and d["editable"] is True
-            assert [
-                c_["id"] for c_ in d["catalog"] if c_["id"] != "subscription"
-            ] == [  # the toolkit registers `subscription`
-                "openai",
-                "anthropic",
-                "deepseek",
-                "google_genai",
-                "openrouter",
-                "echo",
-                "scripted",
-            ]
-            assert all(c_["installed"] for c_ in d["catalog"])
-            assert [p["id"] for p in d["protocols"]] == ["openai-chat", "openai-responses", "anthropic-messages"]
+    async with Harness(profile, patch=base_patch(replies=replies)) as h, client(h) as c:
+        d = (await c.get("/api/settings/models")).json()
+        assert d["default"] == "scripted:test" and d["routes"] == [] and d["editable"] is True
+        assert [
+            c_["id"] for c_ in d["catalog"] if c_["id"] != "subscription"
+        ] == [  # the toolkit registers `subscription`
+            "openai",
+            "anthropic",
+            "deepseek",
+            "google_genai",
+            "openrouter",
+            "echo",
+            "scripted",
+        ]
+        assert all(c_["installed"] for c_ in d["catalog"])
+        assert [p["id"] for p in d["protocols"]] == ["openai-chat", "openai-responses", "anthropic-messages"]
 
-            # Create a route on the registered test provider; the key goes to the store, not the configuration.
-            r = await c.put(
-                "/api/settings/models/alt",
-                json={
-                    "type": "scripted",
-                    "title": "Alt",
-                    "api_key": "sk-alt-0001",
-                    "models": [{"id": "m1", "name": "Model one", "input": ["text", "image"]}, {"id": "m2"}],
-                },
-            )
-            assert r.status_code == 200, r.text
-            route = r.json()["route"]
-            assert route["api_key"] == {
-                "reference": "ALT_API_KEY",
-                "configured": True,
-                "source": "store",
-                "masked": "••••••••0001",
-                "required": True,
-            }
-            assert "sk-alt" not in r.text
-            assert yaml.safe_load(profile.credentials_path.read_text())["ALT_API_KEY"] == "sk-alt-0001"
-            patch = yaml.safe_load(profile.patch_path.read_text())
-            llm_op = next(op for op in patch if op["id"] == "llm")
-            assert llm_op["merge"] is False
-            assert llm_op["config"]["providers"]["alt"] == {
+        # Create a route on the registered test provider; the key goes to the store, not the configuration.
+        r = await c.put(
+            "/api/settings/models/alt",
+            json={
                 "type": "scripted",
                 "title": "Alt",
-                "api_key_env": "ALT_API_KEY",
+                "api_key": "sk-alt-0001",
                 "models": [{"id": "m1", "name": "Model one", "input": ["text", "image"]}, {"id": "m2"}],
-            }
-            assert '"api_key":' not in json.dumps(llm_op)
+            },
+        )
+        assert r.status_code == 200, r.text
+        route = r.json()["route"]
+        assert route["api_key"] == {
+            "reference": "ALT_API_KEY",
+            "configured": True,
+            "source": "store",
+            "masked": "••••••••0001",
+            "required": True,
+        }
+        assert "sk-alt" not in r.text
+        assert yaml.safe_load(profile.credentials_path.read_text())["ALT_API_KEY"] == "sk-alt-0001"
+        patch = yaml.safe_load(profile.patch_path.read_text())
+        llm_op = next(op for op in patch if op["id"] == "llm")
+        assert llm_op["merge"] is False
+        assert llm_op["config"]["providers"]["alt"] == {
+            "type": "scripted",
+            "title": "Alt",
+            "api_key_env": "ALT_API_KEY",
+            "models": [{"id": "m1", "name": "Model one", "input": ["text", "image"]}, {"id": "m2"}],
+        }
+        assert '"api_key":' not in json.dumps(llm_op)
 
-            # Default model and the selector directory.
-            d = (await c.put("/api/settings/models", json={"default": "alt:m1"})).json()
-            assert d["default"] == "alt:m1"
-            directory = (await c.get("/api/models")).json()
-            assert directory == {
-                "default": "alt:m1",
-                "groups": [
-                    {
-                        "id": "alt",
-                        "title": "Alt",
-                        "type": "scripted",
-                        "models": [
-                            {
-                                "id": "m1",
-                                "name": "Model one",
-                                "spec": "alt:m1",
-                                "input": ["text", "image"],
-                                "context_window": None,
-                            },
-                            {"id": "m2", "name": "m2", "spec": "alt:m2", "input": ["text"], "context_window": None},
-                        ],
-                    }
-                ],
-            }
+        # Default model and the selector directory.
+        d = (await c.put("/api/settings/models", json={"default": "alt:m1"})).json()
+        assert d["default"] == "alt:m1"
+        directory = (await c.get("/api/models")).json()
+        assert directory == {
+            "default": "alt:m1",
+            "groups": [
+                {
+                    "id": "alt",
+                    "title": "Alt",
+                    "type": "scripted",
+                    "models": [
+                        {
+                            "id": "m1",
+                            "name": "Model one",
+                            "spec": "alt:m1",
+                            "input": ["text", "image"],
+                            "context_window": None,
+                        },
+                        {"id": "m2", "name": "m2", "spec": "alt:m2", "input": ["text"], "context_window": None},
+                    ],
+                }
+            ],
+        }
 
-            # Per-session selection reaches the model factory; changing it applies to the next request.
-            s = (await c.post("/api/sessions", json={"model": "alt:m2"})).json()
-            assert s["model"] == "alt:m2"
-            events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
-            assert events[-1]["outcome"] == "completed"
-            assert [x["via"] for x in scripted.CALLS if "via" in x][-1] == "m2"
-            assert (await c.put(f"/api/sessions/{s['id']}/model", json={"model": "alt:m1"})).json()["model"] == "alt:m1"
-            await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "again"})
-            assert [x["via"] for x in scripted.CALLS if "via" in x][-1] == "m1"
-            assert (await c.get(f"/api/sessions/{s['id']}")).json()["model"] == "alt:m1"
+        # Per-session selection reaches the model factory; changing it applies to the next request.
+        s = (await c.post("/api/sessions", json={"model": "alt:m2"})).json()
+        assert s["model"] == "alt:m2"
+        events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
+        assert events[-1]["outcome"] == "completed"
+        assert [x["via"] for x in scripted.CALLS if "via" in x][-1] == "m2"
+        assert (await c.put(f"/api/sessions/{s['id']}/model", json={"model": "alt:m1"})).json()["model"] == "alt:m1"
+        await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "again"})
+        assert [x["via"] for x in scripted.CALLS if "via" in x][-1] == "m1"
+        assert (await c.get(f"/api/sessions/{s['id']}")).json()["model"] == "alt:m1"
 
-            # Edit keeps the stored key; '' removes it; delete removes the route, its key, and moves the default.
-            r = (await c.put("/api/settings/models/alt", json={"base_url": "http://alt.local"})).json()["route"]
-            assert r["api_key"]["configured"] is True and r["base_url"] == "http://alt.local"
-            r = (await c.put("/api/settings/models/alt", json={"api_key": ""})).json()["route"]
-            assert r["api_key"]["configured"] is False
-            assert (await c.put("/api/settings/models/Bad", json={"type": "scripted"})).status_code == 422
-            assert (await c.put("/api/settings/models/nope", json={"type": "no_such_type"})).status_code == 422
-            d = (await c.delete("/api/settings/models/alt")).json()
-            assert d["routes"] == [] and d["default"] == "echo:echo"
-            assert (await c.delete("/api/settings/models/alt")).status_code == 404
-            r = (await c.post("/api/settings/models/echo/discover", json={})).json()
-            assert r == {"ok": True, "supported": False, "models": []}
-            r = (await c.post("/api/settings/models/echo/test", json={"model": "echo"})).json()
-            assert r["ok"] is True and r["reply"].startswith("echo: Reply")
+        # Edit keeps the stored key; '' removes it; delete removes the route, its key, and moves the default.
+        r = (await c.put("/api/settings/models/alt", json={"base_url": "http://alt.local"})).json()["route"]
+        assert r["api_key"]["configured"] is True and r["base_url"] == "http://alt.local"
+        r = (await c.put("/api/settings/models/alt", json={"api_key": ""})).json()["route"]
+        assert r["api_key"]["configured"] is False
+        assert (await c.put("/api/settings/models/Bad", json={"type": "scripted"})).status_code == 422
+        assert (await c.put("/api/settings/models/nope", json={"type": "no_such_type"})).status_code == 422
+        d = (await c.delete("/api/settings/models/alt")).json()
+        assert d["routes"] == [] and d["default"] == "echo:echo"
+        assert (await c.delete("/api/settings/models/alt")).status_code == 404
+        r = (await c.post("/api/settings/models/echo/discover", json={})).json()
+        assert r == {"ok": True, "supported": False, "models": []}
+        r = (await c.post("/api/settings/models/echo/test", json={"model": "echo"})).json()
+        assert r["ok"] is True and r["reply"].startswith("echo: Reply")
 
     # The saved configuration is what the next generation boots with.
     async with Harness(profile, patch=[{"id": "http", "config": {"serve": False}}], generation=2) as h2:
@@ -233,19 +232,18 @@ async def test_route_lifecycle_through_the_api(profile):
 async def test_plain_key_in_the_configuration_moves_to_the_store_on_save(profile, monkeypatch):
     monkeypatch.delenv("ALT_API_KEY", raising=False)
     patch = base_patch({"providers": {"alt": {"type": "scripted", "api_key": "plain-9999", "models": [{"id": "m1"}]}}})
-    async with Harness(profile, patch=patch) as h:
-        async with client(h) as c:
-            route = next(r for r in (await c.get("/api/settings/models")).json()["routes"] if r["id"] == "alt")
-            assert route["api_key"]["source"] == "config" and route["api_key"]["masked"] == "••••••••9999"
-            r = (await c.put("/api/settings/models/alt", json={"title": "Alt"})).json()["route"]
-            assert r["api_key"] == {
-                "reference": "ALT_API_KEY",
-                "configured": True,
-                "source": "store",
-                "masked": "••••••••9999",
-                "required": True,
-            }
-            assert h.get("llm").options_for("alt")["api_key"] == "plain-9999"
+    async with Harness(profile, patch=patch) as h, client(h) as c:
+        route = next(r for r in (await c.get("/api/settings/models")).json()["routes"] if r["id"] == "alt")
+        assert route["api_key"]["source"] == "config" and route["api_key"]["masked"] == "••••••••9999"
+        r = (await c.put("/api/settings/models/alt", json={"title": "Alt"})).json()["route"]
+        assert r["api_key"] == {
+            "reference": "ALT_API_KEY",
+            "configured": True,
+            "source": "store",
+            "masked": "••••••••9999",
+            "required": True,
+        }
+        assert h.get("llm").options_for("alt")["api_key"] == "plain-9999"
     assert "plain-9999" not in profile.patch_path.read_text()
     assert yaml.safe_load(profile.credentials_path.read_text()) == {"ALT_API_KEY": "plain-9999"}
 
@@ -283,31 +281,30 @@ async def test_live_openai_compatible_service(profile, monkeypatch):
     """
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     body = {"type": "openai", "base_url": LIVE["BASE_URL"], "api_key": LIVE["API_KEY"]}
-    async with Harness(profile, patch=base_patch()) as h:
-        async with client(h) as c:
-            found = (await c.post("/api/settings/models/local/discover", json=body)).json()
-            assert found["ok"] is True and any(m["id"] == LIVE["MODEL"] for m in found["models"]), found
-            probe = (await c.post("/api/settings/models/local/test", json={**body, "model": LIVE["MODEL"]})).json()
-            assert probe["ok"] is True and probe["reply"], probe
-            bad = (
-                await c.post(
-                    "/api/settings/models/local/test", json={**body, "api_key": "wrong-key", "model": LIVE["MODEL"]}
-                )
-            ).json()
-            assert bad["ok"] is False
-            saved = (
-                await c.put(
-                    "/api/settings/models/local", json={**body, "title": "Local", "models": [{"id": LIVE["MODEL"]}]}
-                )
-            ).json()
-            assert saved["route"]["api_key"]["source"] == "store" and saved["default"] == f"local:{LIVE['MODEL']}"
-            # No restart: a session on the new route answers at once.
-            s = (await c.post("/api/sessions", json={"model": f"local:{LIVE['MODEL']}"})).json()
-            res = await c.post(
-                f"/api/sessions/{s['id']}/messages",
-                json={"content": "Reply with exactly the word PONG and nothing else."},
+    async with Harness(profile, patch=base_patch()) as h, client(h) as c:
+        found = (await c.post("/api/settings/models/local/discover", json=body)).json()
+        assert found["ok"] is True and any(m["id"] == LIVE["MODEL"] for m in found["models"]), found
+        probe = (await c.post("/api/settings/models/local/test", json={**body, "model": LIVE["MODEL"]})).json()
+        assert probe["ok"] is True and probe["reply"], probe
+        bad = (
+            await c.post(
+                "/api/settings/models/local/test", json={**body, "api_key": "wrong-key", "model": LIVE["MODEL"]}
             )
-            events = sse(res.text)
-            assert events[-1]["outcome"] == "completed", events
-            assert "PONG" in "".join(e["text"] for e in events if e["type"] == "token").upper()
+        ).json()
+        assert bad["ok"] is False
+        saved = (
+            await c.put(
+                "/api/settings/models/local", json={**body, "title": "Local", "models": [{"id": LIVE["MODEL"]}]}
+            )
+        ).json()
+        assert saved["route"]["api_key"]["source"] == "store" and saved["default"] == f"local:{LIVE['MODEL']}"
+        # No restart: a session on the new route answers at once.
+        s = (await c.post("/api/sessions", json={"model": f"local:{LIVE['MODEL']}"})).json()
+        res = await c.post(
+            f"/api/sessions/{s['id']}/messages",
+            json={"content": "Reply with exactly the word PONG and nothing else."},
+        )
+        events = sse(res.text)
+        assert events[-1]["outcome"] == "completed", events
+        assert "PONG" in "".join(e["text"] for e in events if e["type"] == "token").upper()
     assert LIVE["API_KEY"] not in profile.patch_path.read_text()

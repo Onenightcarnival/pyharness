@@ -16,6 +16,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from fastapi import APIRouter
+from langchain_core.messages import ToolMessage
 from pydantic import BaseModel, Field
 
 name = "pyharness-audit"
@@ -30,8 +32,6 @@ class Config(BaseModel):
 
 
 def apply(ctx: Any, config: Config) -> None:
-    from langchain_core.messages import ToolMessage
-
     log_path = Path(config.path)
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -64,8 +64,6 @@ def apply(ctx: Any, config: Config) -> None:
         http = ctx.get("http", None)
         if http is None:
             return
-        from fastapi import APIRouter
-
         router = APIRouter()
 
         @router.get("/audit")

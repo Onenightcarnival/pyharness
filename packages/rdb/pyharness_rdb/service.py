@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field
 
@@ -34,7 +34,7 @@ class RdbService(Service):
 
     key = "rdb"
     name = "pyharness-rdb"
-    inject = ["tools", "prompt", "http"]
+    inject: ClassVar[list[str]] = ["tools", "prompt", "http"]
     Config = Config
 
     def __init__(self, ctx: Any, config: Config) -> None:

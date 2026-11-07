@@ -3,6 +3,8 @@ OpenTelemetry export). ``builtin: true``: part of every profile, never switched 
 entries instead.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 
 BUNDLE = Path(__file__).with_name("bundle.yaml")
