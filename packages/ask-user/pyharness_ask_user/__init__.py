@@ -10,26 +10,18 @@ and no ``custom``. Question and answer shapes follow dsh's ``ask_user_question``
 from __future__ import annotations
 
 import json
-from textwrap import dedent
 from typing import Any
 
 from langchain_core.tools import tool
 from langgraph.types import interrupt
 from pydantic import BaseModel, Field
 
-from pyharness import Service
+from pyharness import Service, package_prompts
 
 KIND = "ask_user"
+PROMPTS = package_prompts(__file__)
 
-DESCRIPTION = dedent(
-    """
-    Ask the user brief, direct, self-contained questions when you need confirmation, a choice, or missing
-    information before proceeding. Use user-facing terms; assume no knowledge of background work or internal
-    names. Give each question a distinct stable id. Offer options when a choice is expected; put a recommended
-    option first with "(Recommended)" appended to its label. The run pauses until the user answers; a skipped
-    question comes back with an empty selection and no custom text.
-    """
-).strip()
+DESCRIPTION: str = PROMPTS["tools"]["ask_user_question"]
 
 
 class Option(BaseModel):

@@ -1,0 +1,6 @@
+# Model-visible text; tables are named after the module that uses them. Loaded with pyharness.package_prompts:
+# every string value is stripped of surrounding whitespace. Placeholders use string.Template syntax (${name}).
+
+[service]
+# Sent by `probe()` to check that a model answers.
+probe_prompt = "Reply with the single word OK."

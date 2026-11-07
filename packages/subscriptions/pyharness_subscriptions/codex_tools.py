@@ -5,14 +5,13 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
-from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Literal
 
 import httpx
 from langchain_core.tools import tool
 from pydantic import BaseModel, ConfigDict, Field
 
-from pyharness import package_toml
+from pyharness import package_prompts, package_toml
 
 from .common import LlmError, headers_with_ua, http_error
 from .media import dedupe_sources, describe_images, format_search, generate_images, read_reference, save_images
@@ -21,6 +20,7 @@ if TYPE_CHECKING:
     from .codex import CodexProvider
 
 _CFG = package_toml(__file__)
+PROMPTS = package_prompts(__file__)["codex_tools"]
 BACKEND: str = _CFG["codex"]["BACKEND"]
 SEARCH_MODEL: str = _CFG["codex_tools"]["SEARCH_MODEL"]
 IMAGE_MODEL: str = _CFG["codex_tools"]["IMAGE_MODEL"]
@@ -142,13 +142,7 @@ def validate_commands(args: SearchArgs) -> dict[str, Any]:
 def make_tools(provider: CodexProvider, service: Any) -> list[Any]:
     @tool(
         "codex_web_search",
-        description=dedent(
-            """
-            Web and image search, page opening, finance, weather, sports and time lookups through the Codex search
-            backend. Use search_query for ordinary searches; results carry ref ids that later open / click / find
-            commands reuse.
-            """
-        ).strip(),
+        description=PROMPTS["codex_web_search"],
         args_schema=SearchArgs,
     )
     async def codex_web_search(**kwargs: Any) -> str:
@@ -199,12 +193,7 @@ def make_tools(provider: CodexProvider, service: Any) -> list[Any]:
 
     @tool(
         "codex_image_generate",
-        description=dedent(
-            """
-            Generate an image with gpt-image-2 through the Codex subscription, or edit / combine up to 5 local
-            reference images. Saves PNG files and returns their paths and preview URLs.
-            """
-        ).strip(),
+        description=PROMPTS["codex_image_generate"],
         args_schema=ImageArgs,
     )
     async def codex_image_generate(**kwargs: Any) -> str:

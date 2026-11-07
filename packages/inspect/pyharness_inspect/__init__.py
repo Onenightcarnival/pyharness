@@ -25,7 +25,9 @@ from typing import Any, Literal
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 
-from pyharness import Service, unwrap
+from pyharness import Service, package_prompts, unwrap
+
+PROMPTS = package_prompts(__file__)
 
 name = "pyharness-inspect"
 inject = ["tools"]
@@ -252,19 +254,17 @@ def apply(ctx: Any, config: Config) -> None:
     inspector = Inspector(ctx)
 
     def harness_inspect(topic: Topic = "overview", name: str | None = None) -> str:
-        """Read-only view of the running harness.
-
-        topic: overview | services | events | plugins | config | tools | routes | prompt
-        name: filter; a service key, event name, entry id or tool name
-        topic=config with an entry id: the plugin's config JSON Schema and package_dir
-        """
         result = getattr(inspector, topic)(name)
         text = json.dumps(result, ensure_ascii=False, indent=1, default=str)
         if len(text) > config.max_chars:
             text = text[: config.max_chars] + f"\n... truncated ({len(text)} chars); `name` narrows the result."
         return text
 
-    ctx.tools.register(StructuredTool.from_function(harness_inspect, name="harness_inspect"))
+    ctx.tools.register(
+        StructuredTool.from_function(
+            harness_inspect, name="harness_inspect", description=PROMPTS["tools"]["harness_inspect"]
+        )
+    )
 
 
 __all__ = ["Config", "Inspector", "REDACTED", "Topic", "apply", "inject", "name"]

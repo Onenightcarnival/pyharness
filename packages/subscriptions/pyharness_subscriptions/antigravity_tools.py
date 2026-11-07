@@ -5,13 +5,12 @@ from __future__ import annotations
 
 import base64
 import uuid
-from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Literal
 
 from langchain_core.tools import tool
 from pydantic import BaseModel, ConfigDict, Field
 
-from pyharness import package_toml
+from pyharness import package_prompts, package_toml
 
 from .common import LlmError
 from .media import dedupe_sources, describe_images, format_search, read_reference, save_images
@@ -21,6 +20,7 @@ if TYPE_CHECKING:
     from .antigravity import AntigravityProvider
 
 _CFG = package_toml(__file__)["antigravity_tools"]
+PROMPTS = package_prompts(__file__)["antigravity_tools"]
 SEARCH_MODEL: str = _CFG["SEARCH_MODEL"]
 IMAGE_MODEL: str = _CFG["IMAGE_MODEL"]
 
@@ -51,7 +51,7 @@ def make_tools(provider: AntigravityProvider, service: Any) -> list[Any]:
 
     @tool(
         "antigravity_web_search",
-        description="Google web search through the Antigravity subscription: a grounded answer with its sources.",
+        description=PROMPTS["antigravity_web_search"],
         args_schema=SearchArgs,
     )
     async def antigravity_web_search(query: str) -> str:
@@ -84,22 +84,14 @@ def make_tools(provider: AntigravityProvider, service: Any) -> list[Any]:
                 raw_sources.append({"url": web.get("uri"), "title": web.get("title")})
         sources = dedupe_sources(raw_sources, limit=8)
         if not sources:
-            return (
-                "Error: Antigravity returned no grounded web sources; "
-                "search may be unavailable for this account or model"
-            )
+            return PROMPTS["no_sources"]
         content = "\n".join(texts)
         truncated = len(content) > 64 * 1024
         return format_search(content[: 64 * 1024], sources, truncated)
 
     @tool(
         "antigravity_image_generate",
-        description=dedent(
-            """
-            Generate or edit an image with Gemini 3.1 Flash Image through the Antigravity subscription.
-            Saves the images and returns their paths and preview URLs.
-            """
-        ).strip(),
+        description=PROMPTS["antigravity_image_generate"],
         args_schema=ImageArgs,
     )
     async def antigravity_image_generate(

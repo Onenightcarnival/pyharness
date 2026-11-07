@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 import uuid
+from string import Template
 from typing import Any
 
 from langchain.agents.middleware import AgentMiddleware
@@ -14,7 +15,7 @@ from langgraph.config import get_config
 from langgraph.graph.message import REMOVE_ALL_MESSAGES
 from pydantic import BaseModel, Field
 
-from pyharness import Service
+from pyharness import Service, package_prompts
 
 from .checkpoint import (
     INSTRUCTION,
@@ -26,6 +27,8 @@ from .checkpoint import (
     measure,
     transcript,
 )
+
+PROMPTS = package_prompts(__file__)
 
 
 class Config(BaseModel):
@@ -167,9 +170,8 @@ class CompactionService(Service):
         prompt = [
             SystemMessage(content=SUMMARY_SYSTEM),
             HumanMessage(
-                content=(
-                    f"Conversation transcript:\n\n{transcript(messages, self.config.tool_result_chars)}"
-                    f"\n\n---\n\n{INSTRUCTION}"
+                content=Template(PROMPTS["service"]["summary_request"]).substitute(
+                    transcript=transcript(messages, self.config.tool_result_chars), instruction=INSTRUCTION
                 )
             ),
         ]

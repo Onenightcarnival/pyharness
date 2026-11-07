@@ -12,14 +12,14 @@
 
 from __future__ import annotations
 
-from textwrap import dedent
 from typing import Any
 
 from pydantic import BaseModel, Field
 
-from pyharness import package_toml
+from pyharness import package_prompts, package_toml
 
 _CFG = package_toml(__file__)
+PROMPTS = package_prompts(__file__)
 
 SKILLS_MOUNT = "/skills"
 
@@ -27,12 +27,7 @@ MODES: dict[str, dict[str, str]] = {
     id: {"title": m["title"], "description": m["description"]} for id, m in _CFG["modes"].items()
 }
 
-DEFAULT_SYSTEM_PROMPT = dedent(
-    """
-    Role: agent inside pyharness, a plugin-based agent harness.
-    Style: direct answers; tools where they help; failures reported plainly.
-    """
-).strip()
+DEFAULT_SYSTEM_PROMPT: str = PROMPTS["config"]["default_system_prompt"]
 
 
 class PresetConfig(BaseModel):

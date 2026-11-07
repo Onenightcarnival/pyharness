@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from textwrap import dedent
+from string import Template
 from typing import TYPE_CHECKING, Any, Literal
 from urllib.parse import quote
 
@@ -12,7 +12,7 @@ import httpx
 from langchain_core.tools import tool
 from pydantic import BaseModel, ConfigDict, Field
 
-from pyharness import package_toml
+from pyharness import package_prompts, package_toml
 
 from .common import LlmError, http_error
 from .media import describe_images, generate_images, read_reference, save_images
@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from .grok import GrokProvider
 
 _CFG = package_toml(__file__)
+PROMPTS = package_prompts(__file__)["grok_tools"]
 API: str = _CFG["grok"]["API"]
 SEARCH_MODEL: str = _CFG["grok_tools"]["SEARCH_MODEL"]
 IMAGE_MODEL: str = _CFG["grok_tools"]["IMAGE_MODEL"]
@@ -59,12 +60,7 @@ class VideoArgs(BaseModel):
 def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
     @tool(
         "grok_x_search",
-        description=dedent(
-            """
-            Search X (Twitter) posts, profiles and threads through the Grok subscription;
-            returns an answer with citation URLs.
-            """
-        ).strip(),
+        description=PROMPTS["grok_x_search"],
         args_schema=XSearchArgs,
     )
     async def grok_x_search(**kwargs: Any) -> str:
@@ -122,16 +118,11 @@ def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
             answer = "\n\n".join(texts)
         seen: set[str] = set()
         urls = [u for u in citations if not (u in seen or seen.add(u))]
-        return answer + ("\n\nSources:\n" + "\n".join(f"- {u}" for u in urls) if urls else "")
+        return answer + ("\n\n" + PROMPTS["sources"] + "\n" + "\n".join(f"- {u}" for u in urls) if urls else "")
 
     @tool(
         "grok_image_generate",
-        description=dedent(
-            """
-            Generate an image with grok-imagine-image-2.0 through the Grok subscription, or edit local reference
-            images. Saves the images and returns their paths and preview URLs.
-            """
-        ).strip(),
+        description=PROMPTS["grok_image_generate"],
         args_schema=ImageArgs,
     )
     async def grok_image_generate(**kwargs: Any) -> str:
@@ -170,12 +161,7 @@ def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
 
     @tool(
         "grok_video_generate",
-        description=dedent(
-            """
-            Generate a 1–15 second video with grok-imagine-video-1.5 through the Grok subscription (text-to-video,
-            or image-to-video with image_url). Saves an MP4 and returns its path and preview URL.
-            """
-        ).strip(),
+        description=PROMPTS["grok_video_generate"],
         args_schema=VideoArgs,
     )
     async def grok_video_generate(**kwargs: Any) -> str:
@@ -235,12 +221,8 @@ def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
         path = service.media.video_path()
         path.write_bytes(download.content)
         duration = video.get("duration")
-        return dedent(
-            f"""
-            Saved video to {path}{f" ({duration}s)" if duration else ""}
-            Preview URL: {service.media_url(path)}
-            Temporary provider URL (expires soon): {url}
-            """
-        ).strip()
+        return Template(PROMPTS["saved_video"]).substitute(
+            path=path, duration=f" ({duration}s)" if duration else "", preview_url=service.media_url(path), url=url
+        )
 
     return [grok_x_search, grok_image_generate, grok_video_generate]

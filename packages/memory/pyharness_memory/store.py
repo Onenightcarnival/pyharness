@@ -18,6 +18,9 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
+from pyharness import package_prompts
+
+PROMPTS = package_prompts(__file__)
 KINDS = ("profile", "work", "project", "lesson")
 FIELDS: dict[str, tuple[str, ...]] = {
     "profile": ("name", "position", "specialties", "abilities"),
@@ -25,17 +28,7 @@ FIELDS: dict[str, tuple[str, ...]] = {
     "project": ("title", "startDate", "endDate", "role", "highlights", "workId"),
     "lesson": ("parentId", "lesson"),
 }
-KIND_GUIDE = {
-    "profile": "The single global profile: who this agent is and what it can do.",
-    "work": dedent(
-        """
-        One position: one role under one job description for one organization or principal over a continuous
-        period. A new role or a new principal is a new work entry.
-        """
-    ).strip(),
-    "project": "One deliverable or body of work carried out within a position. An independent project has no work.",
-    "lesson": "One reusable conclusion drawn from a project, stated so that it applies without the original context.",
-}
+KIND_GUIDE: dict[str, str] = PROMPTS["store"]["kind_guide"]
 FIELD_DESCRIPTIONS = {
     "name": "Confirmed agent identity; never infer a name.",
     "position": "Professional focus.",

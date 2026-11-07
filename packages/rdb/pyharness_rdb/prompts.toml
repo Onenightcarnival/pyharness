@@ -1,0 +1,43 @@
+# Model-visible text of pyharness_rdb; loaded with pyharness.package_prompts(__file__).
+
+[service]
+guidance = '''
+The database workbench (SQLite / PostgreSQL / MySQL / GaussDB) is installed and the user allowed its tools.
+db_connections lists the connections the user configured on the Database page (refer to them by name);
+db_schema shows schemas, tables, or one table's columns / indexes / DDL (look before writing SQL); db_query runs
+ONE read-only statement (SELECT / WITH / EXPLAIN / SHOW; rows are capped, so add WHERE / LIMIT on large tables);
+db_explain shows the plan; db_execute runs write statements in one transaction, only on connections where the
+user enabled agent writes, and only after you showed the user the exact SQL and they agreed (then call with
+confirm=true; a failure rolls everything back). Credentials are configured in the UI; tools never return or need
+passwords. When the user mentions databases, tables, SQL, PostgreSQL, MySQL, GaussDB or SQLite they mean this
+workbench.
+'''
+
+[tools]
+db_connections = '''
+List the database connections configured in the Database page (name, kind, host, database,
+whether writes are allowed). Every other db_* tool takes one of these names. Triggers: database, SQL, table,
+query, PostgreSQL, MySQL, MariaDB, GaussDB, SQLite, 数据库, 查表.
+'''
+db_schema = '''
+Inspect structure: without `table`, list schemas and the tables/views of one schema (default
+schema when omitted); with `table`, return its columns (type, nullable, default, primary key), indexes and
+DDL. Call this before writing SQL against a table you have not seen.
+'''
+db_query = '''
+Run ONE read-only SQL statement (SELECT / WITH / EXPLAIN / SHOW) and return the rows. Anything
+that writes is refused — use db_execute. Results are capped (default 200 rows, max 500); add WHERE/LIMIT for
+large tables.
+'''
+db_explain = '''
+Show the execution plan of one SELECT (EXPLAIN; PostgreSQL/GaussDB and MySQL use EXPLAIN, SQLite
+uses EXPLAIN QUERY PLAN). Read-only.
+'''
+db_execute = '''
+Run write statements (INSERT / UPDATE / DELETE / DDL) inside ONE transaction; all succeed or none
+apply. Only works on connections where the user enabled writes, and only with confirm=true — show the user
+the exact SQL and get agreement first. Prefer WHERE clauses on primary keys; check with db_query before and
+after.
+'''
+# db_execute result on a connection whose profile has no agent writes; ${name} is the connection name
+read_only = "execute failed (rolled back): refused: connection '${name}' is read-only for the agent (the user can enable writes in the database panel)"

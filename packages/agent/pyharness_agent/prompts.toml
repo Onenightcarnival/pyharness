@@ -1,0 +1,16 @@
+# Model-visible text; tables are named after the module that uses them. Loaded with pyharness.package_prompts:
+# every string value is stripped of surrounding whitespace. Placeholders use string.Template syntax (${name}).
+
+[service]
+# Continuation message sent to listed sessions after a supervised restart; ${rollback} is empty or a newline
+# followed by rollback_note.
+default_resume = '''
+[pyharness] Restarted into generation ${generation}.
+Reason: ${reasons}.${rollback}
+Task: the task in progress continues. Tools of newly enabled plugins are available;
+harness_inspect shows the active plugins.
+'''
+rollback_note = '''
+Rollback: generation ${gen} failed to boot (${err}). The previous configuration is active;
+the change is not applied.
+'''

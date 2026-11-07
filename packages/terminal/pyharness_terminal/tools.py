@@ -4,15 +4,20 @@ from __future__ import annotations
 
 import json
 import time
+from string import Template
 from typing import TYPE_CHECKING, Any
 
 from langchain_core.tools import tool
 from langgraph.config import get_config
 
+from pyharness import package_prompts
+
 from .shell import clip
 
 if TYPE_CHECKING:
     from .service import TerminalService
+
+PROMPTS = package_prompts(__file__)
 
 
 def _thread_id() -> str | None:
@@ -23,21 +28,15 @@ def _thread_id() -> str | None:
 
 
 def bash_tool(service: TerminalService) -> Any:
-    @tool("bash")
+    @tool("bash", description=PROMPTS["tools"]["bash"])
     async def bash(command: str, timeout: int | None = None) -> str:
-        """Run a bash command in this session's persistent shell. The working directory and environment variables
-        persist between calls (the shell starts in the workspace root); stdin is /dev/null. Returns stdout and
-        stderr with the exit code; long output is clipped. `timeout` is in seconds (default 120). For commands
-        that run longer than a few minutes or servers, use run_in_background instead."""
         if not command.strip():
             return "Error: command must be a non-empty string."
         r = await service.run(command, session_id=_thread_id(), timeout=timeout)
         body = clip(r["output"], service.config.max_output_chars)
         if r["timed_out"]:
-            return (
-                f"{body}\n\n[timed out after {min(timeout or service.config.timeout, service.config.max_timeout)}s; "
-                f"the shell was killed and restarts in {r['cwd']}. Use run_in_background for long commands.]"
-            )
+            seconds = min(timeout or service.config.timeout, service.config.max_timeout)
+            return f"{body}\n\n" + Template(PROMPTS["tools"]["timed_out"]).substitute(seconds=seconds, cwd=r["cwd"])
         if r["exit_code"] is None:
             return f"{body}\n\n[the shell exited; a new one starts in {r['cwd']} on the next call]"
         return (
@@ -50,11 +49,8 @@ def bash_tool(service: TerminalService) -> Any:
 
 
 def background_tool(service: TerminalService) -> Any:
-    @tool("run_in_background")
+    @tool("run_in_background", description=PROMPTS["tools"]["run_in_background"])
     async def run_in_background(command: str, name: str | None = None) -> str:
-        """Start a long-running bash command (a build, a test suite, a dev server) as a background job in the
-        shell's current directory and return its job id at once. Read its output later with job_output, list
-        jobs with job_list, stop it with job_kill. Output goes to a log file, not to the chat."""
         if not command.strip():
             return "Error: command must be a non-empty string."
         job = await service.start_job(command, session_id=_thread_id(), name=name)
@@ -66,10 +62,8 @@ def background_tool(service: TerminalService) -> Any:
 
 
 def job_tools(service: TerminalService) -> list[Any]:
-    @tool("job_output")
+    @tool("job_output", description=PROMPTS["tools"]["job_output"])
     async def job_output(job_id: str, tail_lines: int | None = None, wait: bool = False, timeout: int = 60) -> str:
-        """Read a background job's output (the last `tail_lines` lines, default 200) and its status. With `wait`
-        the call blocks until the job finishes or `timeout` seconds pass; a timed-out wait leaves it running."""
         job = service.jobs.get(job_id)
         if job is None:
             return f"Error: no job {job_id}. job_list shows the known jobs."
@@ -84,9 +78,8 @@ def job_tools(service: TerminalService) -> list[Any]:
             else f"[job {job.id} {job.name!r}: {status}; no output yet]"
         )
 
-    @tool("job_list")
+    @tool("job_list", description=PROMPTS["tools"]["job_list"])
     async def job_list() -> str:
-        """List background jobs (running and finished) with their ids, names and statuses."""
         jobs = service.jobs.list()
         if not jobs:
             return "No background jobs."
@@ -95,9 +88,8 @@ def job_tools(service: TerminalService) -> list[Any]:
             for j in jobs
         )
 
-    @tool("job_kill")
+    @tool("job_kill", description=PROMPTS["tools"]["job_kill"])
     async def job_kill(job_id: str) -> str:
-        """Stop a running background job."""
         if await service.jobs.kill(job_id):
             return f"job {job_id} stopped"
         return f"job {job_id} is not running" if service.jobs.get(job_id) else f"Error: no job {job_id}"

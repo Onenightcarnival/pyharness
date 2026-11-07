@@ -12,17 +12,21 @@
 
 from __future__ import annotations
 
-from textwrap import dedent
+from string import Template
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import httpx
 from langchain_core.tools import tool
 
+from pyharness import package_prompts
+
 from .common import NOTICE
 
 if TYPE_CHECKING:
     from .service import WebToolsService  # type-only: .service imports this module
+
+PROMPTS = package_prompts(__file__)
 
 
 def format_search(answer: str, sources: list[dict[str, Any]], truncated: bool) -> str:
@@ -86,14 +90,7 @@ async def search(service: WebToolsService, query: str) -> dict[str, Any]:
     config = service.config
     key = service.api_key()
     if not key:
-        raise RuntimeError(
-            dedent(
-                f"""
-                web_search has no API key: store {config.api_key_env} in Settings → Models (DeepSeek route credential)
-                or export it in the environment of the harness. Say so to the user and continue without the search.
-                """
-            ).strip()
-        )
+        raise RuntimeError(Template(PROMPTS["search"]["no_api_key"]).substitute(api_key_env=config.api_key_env))
     body = {
         "model": config.model,
         "max_tokens": config.max_tokens,
@@ -137,10 +134,8 @@ async def search(service: WebToolsService, query: str) -> dict[str, Any]:
 
 
 def search_tool(service: WebToolsService) -> Any:
-    @tool("web_search")
+    @tool("web_search", description=PROMPTS["tools"]["web_search"])
     async def web_search(query: str) -> str:
-        """Search the web for current information (DeepSeek native search). Returns an answer with its sources:
-        title, URL, snippet and date. Use specific queries; cite the URLs in your reply."""
         query = (query or "").strip()
         if not query:
             return "Error: query must be a non-empty string."

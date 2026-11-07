@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
-from textwrap import dedent
 from typing import TYPE_CHECKING, Any
 
 from langchain_core.tools import tool
 from pydantic import BaseModel, ConfigDict, Field
+
+from pyharness import package_prompts
 
 from .engine import Bucket, error_text, human
 
 if TYPE_CHECKING:
     from .service import S3Service  # type-only: .service imports this module
 
+PROMPTS = package_prompts(__file__)
 TOOL_LIST_MAX = 500
 TOOL_LIST_DEFAULT = 200
 PROFILE_DOC = "Bucket profile name (or id) from s3_buckets."
@@ -33,13 +35,7 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_buckets",
-        description=dedent(
-            """
-            List the S3-compatible bucket profiles configured in the S3 panel (name, bucket, endpoint,
-            region, key prefix). Every other s3_* tool takes one of these profile names. Triggers: S3, bucket, object
-            storage, MinIO, OSS, COS, R2, cloud storage files.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["s3_buckets"],
     )
     def s3_buckets() -> str:
         assert service.store is not None
@@ -55,13 +51,7 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_list",
-        description=dedent(
-            """
-            List one "directory" level of a bucket profile: sub-prefixes (folders) and objects directly under
-            `prefix` (delimiter "/"). Paginated — pass `token` from the previous result to continue. Set `recursive` to
-            walk every object under the prefix instead (capped by `max`). Keys are relative to the profile prefix.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["s3_list"],
     )
     async def s3_list(
         profile: str = Field(description=PROFILE_DOC),
@@ -108,7 +98,7 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_stat",
-        description="HEAD one object: size, content type, last modified, ETag, storage class, user metadata.",
+        description=PROMPTS["tools"]["s3_stat"],
     )
     async def s3_stat(
         profile: str = Field(description=PROFILE_DOC),
@@ -135,12 +125,7 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_get",
-        description=dedent(
-            """
-            Read a TEXT object (config, log, CSV, JSON, HTML…) from a bucket and return its content. Bounded
-            by maxBytes (default 200 KiB, cap 2097152); binary objects are rejected — use s3_download for those.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["s3_get"],
     )
     async def s3_get(
         profile: str = Field(description=PROFILE_DOC),
@@ -159,12 +144,7 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_put",
-        description=dedent(
-            """
-            Write a text object (create or overwrite) with the given content. For files already on this
-            machine use s3_upload instead. Overwrites silently — s3_stat first if the key may exist.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["s3_put"],
     )
     async def s3_put(
         profile: str = Field(description=PROFILE_DOC),
@@ -180,12 +160,7 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_upload",
-        description=dedent(
-            """
-            Upload a file FROM this machine (the harness host) to a bucket. Large files use multipart upload
-            automatically.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["s3_upload"],
     )
     async def s3_upload(
         profile: str = Field(description=PROFILE_DOC),
@@ -200,12 +175,7 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_download",
-        description=dedent(
-            """
-            Download one object to a path on this machine (the harness host); parent directories are
-            created. Use this for binary objects or anything larger than s3_get allows.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["s3_download"],
     )
     async def s3_download(
         profile: str = Field(description=PROFILE_DOC),
@@ -220,12 +190,7 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_copy",
-        description=dedent(
-            """
-            Server-side copy (or move/rename with move=true) of one object inside the same bucket profile.
-            Objects above 5 GiB are not supported.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["s3_copy"],
         args_schema=CopyArgs,
     )
     async def s3_copy(profile: str, from_: str, to: str, move: bool | None = None) -> str:
@@ -237,12 +202,7 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_presign",
-        description=dedent(
-            """
-            Create a time-limited presigned URL for one object: GET to share a download link, PUT to let
-            someone upload to that key. The URL is the only credential-free way to hand an object to a third party.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["s3_presign"],
     )
     async def s3_presign(
         profile: str = Field(description=PROFILE_DOC),
@@ -260,12 +220,7 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_mkdir",
-        description=dedent(
-            """
-            Create an empty "folder" marker (zero-byte object with a trailing slash) so the prefix shows up
-            in listings before it has objects.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["s3_mkdir"],
     )
     async def s3_mkdir(
         profile: str = Field(description=PROFILE_DOC),
@@ -279,13 +234,7 @@ def build_tools(service: S3Service) -> list[Any]:
 
     @tool(
         "s3_delete",
-        description=dedent(
-            """
-            PERMANENTLY delete objects. A key ending in "/" deletes everything under that prefix (recursive).
-            Irreversible unless bucket versioning is on — list first, show the user exactly what will be deleted, and
-            only call with confirm=true after they agree.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["s3_delete"],
     )
     async def s3_delete(
         profile: str = Field(description=PROFILE_DOC),

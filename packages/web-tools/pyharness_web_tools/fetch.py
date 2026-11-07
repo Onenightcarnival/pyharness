@@ -23,10 +23,14 @@ from urllib.parse import urljoin, urlparse
 import httpx
 from langchain_core.tools import tool
 
+from pyharness import package_prompts
+
 from .common import NOTICE
 
 if TYPE_CHECKING:
     from .service import WebToolsService  # type-only: .service imports this module
+
+PROMPTS = package_prompts(__file__)
 
 BLOCK_TAGS = {
     "p",
@@ -204,10 +208,8 @@ async def fetch(service: WebToolsService, url: str, max_chars: int | None = None
 
 
 def fetch_tool(service: WebToolsService) -> Any:
-    @tool("web_fetch")
+    @tool("web_fetch", description=PROMPTS["tools"]["web_fetch"])
     async def web_fetch(url: str, max_chars: int | None = None) -> str:
-        """Fetch a web page or file by URL and return its readable text (HTML reduced to text with links kept,
-        JSON and plain text verbatim). ``max_chars`` caps the returned text."""
         try:
             r = await service.fetch(url, max_chars)
         except RuntimeError as exc:

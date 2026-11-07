@@ -10,7 +10,7 @@ from typing import Any
 
 from langchain_core.messages import BaseMessage
 
-from pyharness import package_toml
+from pyharness import package_prompts, package_toml
 
 from .codex_tools import make_tools
 from .common import PermanentRefreshError, headers_with_ua, http_error, jwt_claims, session_uuid
@@ -28,9 +28,8 @@ NPM_LATEST_URL: str = _CFG["NPM_LATEST_URL"]
 CLIENT_VERSION_FLOOR: str = _CFG["CLIENT_VERSION_FLOOR"]
 PERMANENT: set[str] = set(_CFG["PERMANENT"])
 EFFORT_NAMES: dict[str, str] = dict(_CFG["EFFORT_NAMES"])
-DEFAULT_INSTRUCTIONS = (
-    "You are Codex, a coding agent based on GPT-5. Help the user with their software engineering tasks."
-)
+PROMPTS = package_prompts(__file__)
+DEFAULT_INSTRUCTIONS: str = PROMPTS["codex"]["default_instructions"]
 
 
 def effort_name(effort: str) -> str:

@@ -13,24 +13,19 @@ The guidance text is value-free; the values follow as a list.
 from __future__ import annotations
 
 from pathlib import Path
-from textwrap import dedent
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 import pyharness
+from pyharness import package_prompts
+
+PROMPTS = package_prompts(__file__)
 
 name = "pyharness-dev-context"
 inject = ["prompt"]
 
-GUIDANCE = dedent(
-    """
-    ## This harness
-    The harness implementation is installed outside the workspace; its files are not workspace files.
-    "This page" or "the Web UI" means the pyharness Web UI served by this process; its data comes from the API.
-    Profile files change only through `plugin_manager`.
-    """
-).strip()
+GUIDANCE: str = PROMPTS["dev_context"]["guidance"]
 
 
 class Config(BaseModel):

@@ -1,0 +1,43 @@
+# Model-visible text; tables are named after the module that uses them. Loaded with pyharness.package_prompts:
+# every string value is stripped of surrounding whitespace. Placeholders use string.Template syntax (${name}).
+
+[plugin_manager]
+# System-prompt section for the presets without the plugin-authoring skills.
+guidance = '''
+## Extending this harness
+Plugins are Python distributions mounted in this profile's configuration tree. `harness_inspect` shows the live API;
+`plugin_manager` writes starter files, installs bundles (approval, preflight in a separate process, restart after
+the turn) and toggles entries; profile files change only through it. The Creator preset adds skills with the full
+procedure.
+'''
+# `next` of a saved mutation result, by `application`.
+restart_scheduled = '''
+Saved. Restart after this turn; this session continues in the new generation.
+Turn end: one-line status.
+'''
+saved_restart_required = "Saved. Unsupervised harness: the change applies on the next start (`pyh run` supervises restarts)."
+
+[dev_context]
+# System-prompt section `dev-context`; the installation, profile, workspace and Web UI lines follow it.
+guidance = '''
+## This harness
+The harness implementation is installed outside the workspace; its files are not workspace files.
+"This page" or "the Web UI" means the pyharness Web UI served by this process; its data comes from the API.
+Profile files change only through `plugin_manager`.
+'''
+
+[tools]
+plugin_manager = '''
+Plugins and bundles of this harness profile.
+
+action                                              effect
+list                                                entries with state; installed bundles
+template target=<name> [variant=basic|tool-and-route|ui-panel] starter bundle files; variant default basic
+install_bundle target=<dir | package>               install a bundle from a workspace directory or PyPI
+uninstall_bundle target=<bundle>                    remove an installed bundle
+set_bundle_enabled target=<bundle> enabled=<bool>   enable or disable a bundle
+set_plugin_enabled target=<entry id> enabled=<bool> enable or disable an entry
+restart                                             restart after this turn
+
+Mutations are preflighted in a separate process; a rejected mutation changes nothing.
+'''

@@ -8,7 +8,6 @@ import asyncio
 import hashlib
 import json
 from collections.abc import AsyncIterator, Iterator
-from textwrap import dedent
 from typing import Any
 
 import httpx
@@ -19,14 +18,12 @@ from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResu
 from langchain_core.utils.function_calling import convert_to_openai_tool
 from langgraph.config import get_config
 
+from pyharness import package_prompts
+
 from .common import LlmError, http_error, iter_sse, read_error
 
-UNKNOWN_OUTCOME = dedent(
-    """
-    The tool call has no recorded result. Its outcome is unknown; verify external state before retrying any
-    operation that may have side effects.
-    """
-).strip()
+PROMPTS = package_prompts(__file__)
+UNKNOWN_OUTCOME: str = PROMPTS["responses"]["unknown_outcome"]
 
 
 # ---------------------------------------------------------------------- input building

@@ -25,14 +25,15 @@ import json
 import re
 from collections.abc import Iterator
 from pathlib import Path
-from textwrap import dedent
 from typing import Any, Literal
 
 from langchain.tools import ToolRuntime
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 
-from pyharness import manage
+from pyharness import manage, package_prompts
+
+PROMPTS = package_prompts(__file__)
 
 name = "pyharness-plugin-manager"
 inject = ["tools", "prompt", "agentLoop"]
@@ -67,15 +68,7 @@ class Config(BaseModel):
     )
 
 
-GUIDANCE = dedent(
-    """
-    ## Extending this harness
-    Plugins are Python distributions mounted in this profile's configuration tree. `harness_inspect` shows the live API;
-    `plugin_manager` writes starter files, installs bundles (approval, preflight in a separate process, restart after
-    the turn) and toggles entries; profile files change only through it. The Creator preset adds skills with the full
-    procedure.
-    """
-).strip()
+GUIDANCE: str = PROMPTS["plugin_manager"]["guidance"]
 
 
 def template_variants() -> list[str]:
@@ -135,17 +128,10 @@ def apply(ctx: Any, config: Config) -> None:
         if lifecycle.supervised:
             lifecycle.request_restart(reason, resume=[session_id] if session_id else [])
             result["application"] = "restart-scheduled"
-            result["next"] = dedent(
-                """
-                Saved. Restart after this turn; this session continues in the new generation.
-                Turn end: one-line status.
-                """
-            ).strip()
+            result["next"] = PROMPTS["plugin_manager"]["restart_scheduled"]
         else:
             result["application"] = "saved-restart-required"
-            result["next"] = (
-                "Saved. Unsupervised harness: the change applies on the next start (`pyh run` supervises restarts)."
-            )
+            result["next"] = PROMPTS["plugin_manager"]["saved_restart_required"]
         return result
 
     async def plugin_manager(
@@ -155,19 +141,6 @@ def apply(ctx: Any, config: Config) -> None:
         enabled: bool | None = None,
         variant: str | None = None,
     ) -> str:
-        """Plugins and bundles of this harness profile.
-
-        action                                              effect
-        list                                                entries with state; installed bundles
-        template target=<name> [variant=basic|tool-and-route|ui-panel] starter bundle files; variant default basic
-        install_bundle target=<dir | package>               install a bundle from a workspace directory or PyPI
-        uninstall_bundle target=<bundle>                    remove an installed bundle
-        set_bundle_enabled target=<bundle> enabled=<bool>   enable or disable a bundle
-        set_plugin_enabled target=<entry id> enabled=<bool> enable or disable an entry
-        restart                                             restart after this turn
-
-        Mutations are preflighted in a separate process; a rejected mutation changes nothing.
-        """
         profile = ctx.get("profile", None)
         if profile is None:
             return json.dumps({"error": "no profile: plugin management unavailable"})
@@ -240,7 +213,9 @@ def apply(ctx: Any, config: Config) -> None:
             result = {"error": f"unknown action {action}"}
         return json.dumps(result, ensure_ascii=False, indent=1, default=str)
 
-    tool = StructuredTool.from_function(coroutine=plugin_manager, name="plugin_manager")
+    tool = StructuredTool.from_function(
+        coroutine=plugin_manager, name="plugin_manager", description=PROMPTS["tools"]["plugin_manager"]
+    )
     approval: Any = False
     if config.require_approval:
         approval = {

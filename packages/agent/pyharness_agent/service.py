@@ -5,14 +5,14 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from textwrap import dedent
+from string import Template
 from typing import Any
 
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
 from langgraph.types import Command
 from pydantic import BaseModel, Field
 
-from pyharness import Service
+from pyharness import Service, package_prompts
 
 from .messages import (
     _checkpoint,
@@ -28,20 +28,16 @@ from .messages import (
 from .runs import TURNS, RestartPending, RunHandle, SessionBusy, Turn, TurnRecorder
 
 NAMESPACE = ("pyharness", "sessions")
+PROMPTS = package_prompts(__file__)
 
-DEFAULT_RESUME = dedent(
-    """
-    [pyharness] Restarted into generation {generation}.
-    Reason: {reasons}.{rollback}
-    Task: the task in progress continues. Tools of newly enabled plugins are available;
-    harness_inspect shows the active plugins.
-    """
-).strip()
+DEFAULT_RESUME: str = PROMPTS["service"]["default_resume"]
 
 
 class AgentConfig(BaseModel):
     resume_on_restart: bool = Field(True, description="Send a continuation message to listed sessions after a restart.")
-    resume_message: str = DEFAULT_RESUME
+    resume_message: str = Field(
+        DEFAULT_RESUME, description="Continuation message; placeholders ${generation}, ${reasons}, ${rollback}."
+    )
     title_chars: int = 60
 
 
@@ -410,23 +406,18 @@ class AgentService(Service):
         rollback = state.get("rollback")
         rollback_note = ""
         if rollback:
-            note = dedent(
-                """
-                Rollback: generation {gen} failed to boot ({err}). The previous configuration is active;
-                the change is not applied.
-                """
-            ).strip()
-            rollback_note = "\n" + note.format(gen=rollback.get("failed_generation"), err=rollback.get("error"))
+            note = Template(PROMPTS["service"]["rollback_note"])
+            rollback_note = "\n" + note.substitute(gen=rollback.get("failed_generation"), err=rollback.get("error"))
         fields = _SafeFields(
             generation=lifecycle.generation,
             reasons="; ".join(state.get("reasons") or ["unspecified"]),
             rollback=rollback_note,
         )
         try:
-            message = self.config.resume_message.format_map(fields)
-        except (ValueError, IndexError):
-            self.ctx.logger.warning("resume_message: invalid format string; default in use")
-            message = DEFAULT_RESUME.format_map(fields)
+            message = Template(self.config.resume_message).substitute(fields)
+        except (ValueError, KeyError):
+            self.ctx.logger.warning("resume_message: invalid template; default in use")
+            message = Template(DEFAULT_RESUME).substitute(fields)
         for session_id in state.get("resume") or []:
             try:
                 if await self.get_session(session_id) is None:
@@ -453,4 +444,4 @@ class AgentService(Service):
 
 class _SafeFields(dict):
     def __missing__(self, key: str) -> str:
-        return "{" + key + "}"
+        return "${" + key + "}"

@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import re
 import warnings
+from string import Template
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any
 
 from langchain_core.tools import tool
 from pydantic import Field
+
+from pyharness import package_prompts
 
 from .driver import DEFAULT_TIMEOUT_MS, Driver, host_entries
 from .query import human_table, run_query, table_info
@@ -16,6 +19,7 @@ from .query import human_table, run_query, table_info
 if TYPE_CHECKING:
     from .service import RdbService  # type-only: .service imports this module
 
+PROMPTS = package_prompts(__file__)
 TOOL_MAX_ROWS = 500
 TOOL_DEFAULT_ROWS = 200
 
@@ -30,13 +34,7 @@ def _target_of(p: dict[str, Any]) -> str:
 def connections_tool(service: RdbService):
     @tool(
         "db_connections",
-        description=dedent(
-            """
-            List the database connections configured in the Database page (name, kind, host, database,
-            whether writes are allowed). Every other db_* tool takes one of these names. Triggers: database, SQL, table,
-            query, PostgreSQL, MySQL, MariaDB, GaussDB, SQLite, 数据库, 查表.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["db_connections"],
     )
     def db_connections() -> str:
         assert service.store is not None
@@ -62,13 +60,7 @@ def schema_tool(service: RdbService):
 def _make_schema_tool(service: RdbService):
     @tool(
         "db_schema",
-        description=dedent(
-            """
-            Inspect structure: without `table`, list schemas and the tables/views of one schema (default
-            schema when omitted); with `table`, return its columns (type, nullable, default, primary key), indexes and
-            DDL. Call this before writing SQL against a table you have not seen.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["db_schema"],
     )
     async def db_schema(
         connection: str = Field(description="Connection name (or id) from db_connections."),
@@ -139,13 +131,7 @@ def _make_schema_tool(service: RdbService):
 def query_tool(service: RdbService):
     @tool(
         "db_query",
-        description=dedent(
-            """
-            Run ONE read-only SQL statement (SELECT / WITH / EXPLAIN / SHOW) and return the rows. Anything
-            that writes is refused — use db_execute. Results are capped (default 200 rows, max 500); add WHERE/LIMIT for
-            large tables.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["db_query"],
     )
     async def db_query(
         connection: str = Field(description="Connection name (or id) from db_connections."),
@@ -169,12 +155,7 @@ def query_tool(service: RdbService):
 def explain_tool(service: RdbService):
     @tool(
         "db_explain",
-        description=dedent(
-            """
-            Show the execution plan of one SELECT (EXPLAIN; PostgreSQL/GaussDB and MySQL use EXPLAIN, SQLite
-            uses EXPLAIN QUERY PLAN). Read-only.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["db_explain"],
     )
     async def db_explain(
         connection: str = Field(description="Connection name (or id) from db_connections."),
@@ -198,14 +179,7 @@ def explain_tool(service: RdbService):
 def execute_tool(service: RdbService):
     @tool(
         "db_execute",
-        description=dedent(
-            """
-            Run write statements (INSERT / UPDATE / DELETE / DDL) inside ONE transaction; all succeed or none
-            apply. Only works on connections where the user enabled writes, and only with confirm=true — show the user
-            the exact SQL and get agreement first. Prefer WHERE clauses on primary keys; check with db_query before and
-            after.
-            """
-        ).strip(),
+        description=PROMPTS["tools"]["db_execute"],
     )
     async def db_execute(
         connection: str = Field(description="Connection name (or id) from db_connections."),
@@ -219,10 +193,7 @@ def execute_tool(service: RdbService):
         try:
             profile = service.profile(connection)
             if not profile.get("allowWrite"):
-                return (
-                    f"execute failed (rolled back): refused: connection '{profile['name']}' is read-only for the agent "
-                    "(the user can enable writes in the database panel)"
-                )
+                return Template(PROMPTS["tools"]["read_only"]).substitute(name=profile["name"])
             affected = await service.run(
                 connection, lambda d: d.transaction([{"sql": s} for s in statements], DEFAULT_TIMEOUT_MS)
             )

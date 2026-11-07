@@ -14,13 +14,14 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
-from pyharness import Service
+from pyharness import Service, package_prompts
 from pyharness.credentials import reference_for
 
 from .catalog import PRESETS, PROTOCOLS, translate_options, type_info
 from .config import LLMConfig, LLMConfigError, ModelFactory, ProviderConfig, _freeze, mask_secret, split_spec
 
-PROBE_PROMPT = "Reply with the single word OK."
+PROMPTS = package_prompts(__file__)
+PROBE_PROMPT: str = PROMPTS["service"]["probe_prompt"]
 
 
 class EchoChatModel(BaseChatModel):

@@ -1,0 +1,11 @@
+# Model-visible text; tables are named after the module that uses them. Loaded with pyharness.package_prompts:
+# every string value is stripped of surrounding whitespace. Placeholders use string.Template syntax (${name}).
+
+[tools]
+ask_user_question = '''
+Ask the user brief, direct, self-contained questions when you need confirmation, a choice, or missing
+information before proceeding. Use user-facing terms; assume no knowledge of background work or internal
+names. Give each question a distinct stable id. Offer options when a choice is expected; put a recommended
+option first with "(Recommended)" appended to its label. The run pauses until the user answers; a skipped
+question comes back with an empty selection and no custom text.
+'''

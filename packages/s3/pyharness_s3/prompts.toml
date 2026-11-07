@@ -1,0 +1,60 @@
+# Model-visible text of pyharness_s3; loaded with pyharness.package_prompts(__file__).
+
+[service]
+guidance = '''
+The S3 object storage browser is installed and the user allowed its tools. s3_buckets lists the bucket profiles
+the user configured on the S3 page (refer to them by profile name); s3_list lists objects one level at a time or
+recursively (paginated; narrow large buckets with prefix); s3_stat reads metadata; s3_get reads a text object;
+s3_put writes a text object; s3_upload / s3_download move files between this machine and the bucket; s3_copy
+copies or moves server-side; s3_presign makes a time-limited share link; s3_mkdir creates a folder marker;
+s3_delete deletes (irreversible: list first, confirm each item with the user, then call with confirm=true). All
+keys are relative to the profile's prefix; credentials are configured in the UI and tools never return or need
+them. Local files use the local read / write / edit / bash tools; s3_* only touch objects in the bucket. When the
+user mentions S3, buckets, object storage, MinIO, OSS, COS, R2 or cloud storage files they mean this browser.
+'''
+
+[tools]
+s3_buckets = '''
+List the S3-compatible bucket profiles configured in the S3 panel (name, bucket, endpoint,
+region, key prefix). Every other s3_* tool takes one of these profile names. Triggers: S3, bucket, object
+storage, MinIO, OSS, COS, R2, cloud storage files.
+'''
+s3_list = '''
+List one "directory" level of a bucket profile: sub-prefixes (folders) and objects directly under
+`prefix` (delimiter "/"). Paginated — pass `token` from the previous result to continue. Set `recursive` to
+walk every object under the prefix instead (capped by `max`). Keys are relative to the profile prefix.
+'''
+s3_stat = "HEAD one object: size, content type, last modified, ETag, storage class, user metadata."
+s3_get = '''
+Read a TEXT object (config, log, CSV, JSON, HTML…) from a bucket and return its content. Bounded
+by maxBytes (default 200 KiB, cap 2097152); binary objects are rejected — use s3_download for those.
+'''
+s3_put = '''
+Write a text object (create or overwrite) with the given content. For files already on this
+machine use s3_upload instead. Overwrites silently — s3_stat first if the key may exist.
+'''
+s3_upload = '''
+Upload a file FROM this machine (the harness host) to a bucket. Large files use multipart upload
+automatically.
+'''
+s3_download = '''
+Download one object to a path on this machine (the harness host); parent directories are
+created. Use this for binary objects or anything larger than s3_get allows.
+'''
+s3_copy = '''
+Server-side copy (or move/rename with move=true) of one object inside the same bucket profile.
+Objects above 5 GiB are not supported.
+'''
+s3_presign = '''
+Create a time-limited presigned URL for one object: GET to share a download link, PUT to let
+someone upload to that key. The URL is the only credential-free way to hand an object to a third party.
+'''
+s3_mkdir = '''
+Create an empty "folder" marker (zero-byte object with a trailing slash) so the prefix shows up
+in listings before it has objects.
+'''
+s3_delete = '''
+PERMANENTLY delete objects. A key ending in "/" deletes everything under that prefix (recursive).
+Irreversible unless bucket versioning is on — list first, show the user exactly what will be deleted, and
+only call with confirm=true after they agree.
+'''

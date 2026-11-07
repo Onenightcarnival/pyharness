@@ -5,12 +5,11 @@ from __future__ import annotations
 import asyncio
 import warnings
 from pathlib import Path
-from textwrap import dedent
 from typing import Any
 
 from pydantic import BaseModel, Field
 
-from pyharness import Service
+from pyharness import Service, package_prompts
 
 from . import engine as eng
 from .engine import Bucket, S3Error
@@ -20,19 +19,8 @@ from .tools import build_tools
 
 PROMPT_ORDER = 152
 
-GUIDANCE = dedent(
-    """
-    The S3 object storage browser is installed and the user allowed its tools. s3_buckets lists the bucket profiles
-    the user configured on the S3 page (refer to them by profile name); s3_list lists objects one level at a time or
-    recursively (paginated; narrow large buckets with prefix); s3_stat reads metadata; s3_get reads a text object;
-    s3_put writes a text object; s3_upload / s3_download move files between this machine and the bucket; s3_copy
-    copies or moves server-side; s3_presign makes a time-limited share link; s3_mkdir creates a folder marker;
-    s3_delete deletes (irreversible: list first, confirm each item with the user, then call with confirm=true). All
-    keys are relative to the profile's prefix; credentials are configured in the UI and tools never return or need
-    them. Local files use the local read / write / edit / bash tools; s3_* only touch objects in the bucket. When the
-    user mentions S3, buckets, object storage, MinIO, OSS, COS, R2 or cloud storage files they mean this browser.
-    """
-).strip()
+PROMPTS = package_prompts(__file__)
+GUIDANCE: str = PROMPTS["service"]["guidance"]
 
 
 class Config(BaseModel):

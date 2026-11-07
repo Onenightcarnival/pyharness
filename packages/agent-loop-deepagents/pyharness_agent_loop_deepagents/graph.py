@@ -17,13 +17,14 @@ the model reads a skill with ``read_file``.
 
 from __future__ import annotations
 
-from textwrap import dedent
+from string import Template
 from typing import TYPE_CHECKING, Any
 
 from deepagents import FilesystemPermission, create_deep_agent
 from deepagents.backends import CompositeBackend, FilesystemBackend, StateBackend
 from deepagents.middleware.subagents import GENERAL_PURPOSE_SUBAGENT
 
+from pyharness import package_prompts
 from pyharness_llm import LLMConfigError
 
 from .config import MODES, SKILLS_MOUNT
@@ -31,6 +32,8 @@ from .middleware import HarnessMiddleware
 
 if TYPE_CHECKING:
     from .service import DeepAgentsLoop
+
+PROMPTS = package_prompts(__file__)
 
 
 def backend_and_skills(
@@ -128,14 +131,12 @@ async def build(
     permissions = [*permissions, *rules]
     interrupt_on = {} if mode == "full-access" else {**ctx.tools.interrupt_on(), **loop.config.interrupt_on}
     root = ws.root if ws is not None and hasattr(ws, "root") else "(none)"
-    policy = dedent(
-        f"""
-        ## Session policy
-        Permission mode: {MODES[mode]["title"]}. {MODES[mode]["description"]}
-        Agent preset: {preset_cfg.title}. Workspace root: {root};
-        the file tools address it as `/` (paths inside the workspace are relative to that root).
-        """
-    ).strip()
+    policy = Template(PROMPTS["graph"]["session_policy"]).substitute(
+        mode_title=MODES[mode]["title"],
+        mode_description=MODES[mode]["description"],
+        preset_title=preset_cfg.title,
+        root=root,
+    )
     kwargs: dict[str, Any] = {
         "model": model,
         "tools": tools,

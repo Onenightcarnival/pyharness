@@ -1,0 +1,22 @@
+# Model-visible text of pyharness_terminal; loaded with pyharness.package_prompts(__file__).
+
+[tools]
+bash = '''
+Run a bash command in this session's persistent shell. The working directory and environment variables
+persist between calls (the shell starts in the workspace root); stdin is /dev/null. Returns stdout and
+stderr with the exit code; long output is clipped. `timeout` is in seconds (default 120). For commands
+that run longer than a few minutes or servers, use run_in_background instead.
+'''
+run_in_background = '''
+Start a long-running bash command (a build, a test suite, a dev server) as a background job in the
+shell's current directory and return its job id at once. Read its output later with job_output, list
+jobs with job_list, stop it with job_kill. Output goes to a log file, not to the chat.
+'''
+job_output = '''
+Read a background job's output (the last `tail_lines` lines, default 200) and its status. With `wait`
+the call blocks until the job finishes or `timeout` seconds pass; a timed-out wait leaves it running.
+'''
+job_list = "List background jobs (running and finished) with their ids, names and statuses."
+job_kill = "Stop a running background job."
+# bash result trailer when the command hit its timeout; ${seconds} is the effective timeout, ${cwd} the shell's directory
+timed_out = "[timed out after ${seconds}s; the shell was killed and restarts in ${cwd}. Use run_in_background for long commands.]"
