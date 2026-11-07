@@ -68,7 +68,7 @@ class Config(BaseModel):
     )
 
 
-GUIDANCE: str = PROMPTS["plugin_manager"]["guidance"]
+GUIDANCE: str = PROMPTS["plugin_manager"]["GUIDANCE"]
 
 
 def template_variants() -> list[str]:

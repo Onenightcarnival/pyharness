@@ -25,7 +25,7 @@ PROMPTS = package_prompts(__file__)
 name = "pyharness-dev-context"
 inject = ["prompt"]
 
-GUIDANCE: str = PROMPTS["dev_context"]["guidance"]
+GUIDANCE: str = PROMPTS["dev_context"]["GUIDANCE"]
 
 
 class Config(BaseModel):

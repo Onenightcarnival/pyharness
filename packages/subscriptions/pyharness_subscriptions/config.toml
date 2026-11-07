@@ -71,35 +71,35 @@ API = "https://api.x.ai/v1"
 PROXY = "https://cli-chat-proxy.grok.com/v1"
 
 # Subscription tier names by the ``tier`` claim of the access token.
-[[grok.tiers]]
+[[grok.TIERS]]
 level = 0
 name = "Free"
 
-[[grok.tiers]]
+[[grok.TIERS]]
 level = 1
 name = "SuperGrok"
 
-[[grok.tiers]]
+[[grok.TIERS]]
 level = 2
 name = "X Basic"
 
-[[grok.tiers]]
+[[grok.TIERS]]
 level = 3
 name = "X Premium"
 
-[[grok.tiers]]
+[[grok.TIERS]]
 level = 4
 name = "X Premium+"
 
-[[grok.tiers]]
+[[grok.TIERS]]
 level = 5
 name = "SuperGrok Heavy"
 
-[[grok.tiers]]
+[[grok.TIERS]]
 level = 6
 name = "SuperGrok Lite"
 
-[[grok.tiers]]
+[[grok.TIERS]]
 level = 7
 name = "SuperGrok Plus"
 

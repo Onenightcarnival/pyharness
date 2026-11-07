@@ -19,9 +19,9 @@ SUMMARY_OPEN = "<compacted-summary>"
 SUMMARY_CLOSE = "</compacted-summary>"
 PROMPTS = package_prompts(__file__)
 
-PREAMBLE: str = PROMPTS["checkpoint"]["preamble"]
-SUMMARY_SYSTEM: str = PROMPTS["checkpoint"]["summary_system"]
-INSTRUCTION: str = Template(PROMPTS["checkpoint"]["instruction"]).substitute(summary_open=SUMMARY_OPEN)
+PREAMBLE: str = PROMPTS["checkpoint"]["PREAMBLE"]
+SUMMARY_SYSTEM: str = PROMPTS["checkpoint"]["SUMMARY_SYSTEM"]
+INSTRUCTION: str = Template(PROMPTS["checkpoint"]["INSTRUCTION"]).substitute(summary_open=SUMMARY_OPEN)
 
 
 def marker_of(message: BaseMessage) -> dict[str, Any] | None:

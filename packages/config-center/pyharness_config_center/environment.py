@@ -24,14 +24,14 @@ from pyharness import package_toml
 
 _ENVIRONMENT = package_toml(__file__)["environment"]
 
-BUN_VERSION: str = _ENVIRONMENT["bun_version"]
-RELEASE: str = _ENVIRONMENT["release"]
+BUN_VERSION: str = _ENVIRONMENT["BUN_VERSION"]
+RELEASE: str = _ENVIRONMENT["RELEASE"]
 DOWNLOAD_LIMIT = 200 * 1024 * 1024
 DOWNLOAD_TIMEOUT = 300.0
 LOCK_WAIT = 360.0
 
 # ``(sys.platform, machine)`` → bun release target.
-TARGETS: dict[tuple[str, str], str] = {(t["system"], t["machine"]): t["target"] for t in _ENVIRONMENT["targets"]}
+TARGETS: dict[tuple[str, str], str] = {(t["system"], t["machine"]): t["target"] for t in _ENVIRONMENT["TARGETS"]}
 MESSAGES = {
     "unsupported": "This operating system or architecture is not supported.",
     "broken": "Installed bun cannot run. Repair the environment.",

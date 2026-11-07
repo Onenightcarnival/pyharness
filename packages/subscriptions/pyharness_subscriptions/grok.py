@@ -28,7 +28,7 @@ AUTHORIZE_URL: str = _CFG["AUTHORIZE_URL"]
 SCOPE: str = _CFG["SCOPE"]
 API: str = _CFG["API"]
 PROXY: str = _CFG["PROXY"]
-TIERS: dict[int, str] = {int(t["level"]): str(t["name"]) for t in _CFG["tiers"]}
+TIERS: dict[int, str] = {int(t["level"]): str(t["name"]) for t in _CFG["TIERS"]}
 NON_CHAT = re.compile(r"imagine|image-|video|embed", re.I)
 
 

@@ -20,7 +20,7 @@ from .tools import build_tools
 PROMPT_ORDER = 152
 
 PROMPTS = package_prompts(__file__)
-GUIDANCE: str = PROMPTS["service"]["guidance"]
+GUIDANCE: str = PROMPTS["service"]["GUIDANCE"]
 
 
 class Config(BaseModel):

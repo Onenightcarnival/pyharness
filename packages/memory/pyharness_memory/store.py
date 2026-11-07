@@ -28,7 +28,7 @@ FIELDS: dict[str, tuple[str, ...]] = {
     "project": ("title", "startDate", "endDate", "role", "highlights", "workId"),
     "lesson": ("parentId", "lesson"),
 }
-KIND_GUIDE: dict[str, str] = PROMPTS["store"]["kind_guide"]
+KIND_GUIDE: dict[str, str] = PROMPTS["store"]["KIND_GUIDE"]
 FIELD_DESCRIPTIONS = {
     "name": "Confirmed agent identity; never infer a name.",
     "position": "Professional focus.",

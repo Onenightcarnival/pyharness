@@ -3,4 +3,4 @@
 
 [service]
 # Sent by `probe()` to check that a model answers.
-probe_prompt = "Reply with the single word OK."
+PROBE_PROMPT = "Reply with the single word OK."

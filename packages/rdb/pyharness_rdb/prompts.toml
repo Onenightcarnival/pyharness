@@ -1,7 +1,7 @@
 # Model-visible text of pyharness_rdb; loaded with pyharness.package_prompts(__file__).
 
 [service]
-guidance = '''
+GUIDANCE = '''
 The database workbench (SQLite / PostgreSQL / MySQL / GaussDB) is installed and the user allowed its tools.
 db_connections lists the connections the user configured on the Database page (refer to them by name);
 db_schema shows schemas, tables, or one table's columns / indexes / DDL (look before writing SQL); db_query runs

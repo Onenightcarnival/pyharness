@@ -23,7 +23,7 @@ PRESIGN_MAX = 604800
 DELETE_BATCH = 1000
 PART_SIZE = 8 * 1024 * 1024
 
-MIME: dict[str, str] = package_toml(__file__)["engine"]["mime"]  # file extension -> media type
+MIME: dict[str, str] = package_toml(__file__)["engine"]["MIME"]  # file extension -> media type
 PREVIEWABLE = re.compile(r"^(image/(png|jpeg|gif|webp|bmp|avif)|application/pdf|video/|audio/)")
 
 

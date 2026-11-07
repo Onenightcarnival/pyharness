@@ -24,10 +24,10 @@ PROMPTS = package_prompts(__file__)
 SKILLS_MOUNT = "/skills"
 
 MODES: dict[str, dict[str, str]] = {
-    id: {"title": m["title"], "description": m["description"]} for id, m in _CFG["modes"].items()
+    id: {"title": m["title"], "description": m["description"]} for id, m in _CFG["MODES"].items()
 }
 
-DEFAULT_SYSTEM_PROMPT: str = PROMPTS["config"]["default_system_prompt"]
+DEFAULT_SYSTEM_PROMPT: str = PROMPTS["config"]["DEFAULT_SYSTEM_PROMPT"]
 
 
 class PresetConfig(BaseModel):
@@ -38,7 +38,7 @@ class PresetConfig(BaseModel):
     order: int = 100
 
 
-DEFAULT_PRESETS: dict[str, PresetConfig] = {id: PresetConfig(**p) for id, p in _CFG["presets"].items()}
+DEFAULT_PRESETS: dict[str, PresetConfig] = {id: PresetConfig(**p) for id, p in _CFG["DEFAULT_PRESETS"].items()}
 
 
 class LoopConfig(BaseModel):

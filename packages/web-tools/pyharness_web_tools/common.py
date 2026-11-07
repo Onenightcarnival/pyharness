@@ -9,5 +9,5 @@
 from pyharness import package_prompts
 
 PROMPTS = package_prompts(__file__)
-NOTICE: str = PROMPTS["common"]["notice"]
+NOTICE: str = PROMPTS["common"]["NOTICE"]
 USER_AGENT = "pyharness/0.1 (+https://github.com/pyharness)"

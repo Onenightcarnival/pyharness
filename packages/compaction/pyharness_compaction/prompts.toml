@@ -3,16 +3,16 @@
 
 [checkpoint]
 # Opens every checkpoint message, ahead of the <compacted-summary> block.
-preamble = '''
+PREAMBLE = '''
 This is an automatically generated checkpoint condensing an earlier span of the conversation to free up
 context. Treat the captured context as established background and build on it without restating it. Continue
 the task directly from the messages that follow, without acknowledging this checkpoint.
 '''
-summary_system = '''
+SUMMARY_SYSTEM = '''
 You are a compaction engine for an AI coding assistant.
 You condense a conversation transcript into a structured checkpoint.
 '''
-instruction = '''
+INSTRUCTION = '''
 Condense the conversation transcript ABOVE into a structured checkpoint that lets another model resume the work with no loss of essential context.
 
 Output EXACTLY the Markdown structure below: keep every section, in order. Use terse bullets, not prose paragraphs. Write "(none)" for an empty section — never drop a section.

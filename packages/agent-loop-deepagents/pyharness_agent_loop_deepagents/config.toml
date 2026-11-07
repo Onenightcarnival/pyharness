@@ -1,25 +1,25 @@
 # Permission modes and the built-in agent presets. ``config.py`` loads this file with ``package_toml(__file__)``;
 # tables keep their document order, which is the order selectors show.
 
-[modes.read-only]
+[MODES.read-only]
 title = "Read only"
 description = "File tools read the workspace; writes and the shell are unavailable."
 
-[modes.workspace-write]
+[MODES.workspace-write]
 title = "Workspace write"
 description = "File tools write inside the workspace; gated tools ask for approval."
 
-[modes.full-access]
+[MODES.full-access]
 title = "Full access"
 description = "Workspace writes and the shell without approval prompts."
 
-[presets.standard]
+[DEFAULT_PRESETS.standard]
 title = "Standard"
 description = "Everyday work in the workspace: files, shell, subagents. Plugin management stays out of the way."
 exclude_tools = ["plugin_manager", "harness_inspect"]
 order = 1
 
-[presets.creator]
+[DEFAULT_PRESETS.creator]
 title = "Creator"
 description = "Standard plus harness inspection, plugin management and the plugin-authoring skills: extend the harness itself."
 order = 2

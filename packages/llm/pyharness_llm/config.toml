@@ -1,53 +1,53 @@
 # Provider catalog of pyharness-llm; loaded by catalog.py.
 #
-# [protocols.<id>]  wire protocols for custom endpoints: title, LangChain type, model options, models listing API
-# presets           provider types the settings page offers; their integration packages are dependencies of this plugin
-# [curated.<type>]  facts per LangChain provider type; a missing `models_api` means no model listing
+# [PROTOCOLS.<id>]  wire protocols for custom endpoints: title, LangChain type, model options, models listing API
+# PRESETS           provider types the settings page offers; their integration packages are dependencies of this plugin
+# [CURATED.<type>]  facts per LangChain provider type; a missing `models_api` means no model listing
 
-presets = ["openai", "anthropic", "deepseek", "google_genai", "openrouter"]
+PRESETS = ["openai", "anthropic", "deepseek", "google_genai", "openrouter"]
 
-[protocols.openai-chat]
+[PROTOCOLS.openai-chat]
 title = "OpenAI Chat Completions"
 type = "openai"
 options = { use_responses_api = false }
 models_api = "openai"
 
-[protocols.openai-responses]
+[PROTOCOLS.openai-responses]
 title = "OpenAI Responses"
 type = "openai"
 options = { use_responses_api = true }
 models_api = "openai"
 
-[protocols.anthropic-messages]
+[PROTOCOLS.anthropic-messages]
 title = "Anthropic Messages"
 type = "anthropic"
 options = {}
 models_api = "anthropic"
 
-[curated.openai]
+[CURATED.openai]
 title = "OpenAI"
 env = "OPENAI_API_KEY"
 base_url = "https://api.openai.com/v1"
 models_api = "openai"
 
-[curated.openrouter]
+[CURATED.openrouter]
 title = "OpenRouter"
 env = "OPENROUTER_API_KEY"
 base_url = "https://openrouter.ai/api/v1"
 models_api = "openai"
 
-[curated.azure_openai]
+[CURATED.azure_openai]
 title = "Azure OpenAI"
 env = "AZURE_OPENAI_API_KEY"
 keys = { base_url = "azure_endpoint" }
 
-[curated.anthropic]
+[CURATED.anthropic]
 title = "Anthropic"
 env = "ANTHROPIC_API_KEY"
 base_url = "https://api.anthropic.com"
 models_api = "anthropic"
 
-[curated.deepseek]
+[CURATED.deepseek]
 title = "DeepSeek"
 env = "DEEPSEEK_API_KEY"
 base_url = "https://api.deepseek.com"
@@ -57,125 +57,125 @@ models = [
     { id = "deepseek-reasoner", name = "DeepSeek Reasoner" },
 ]
 
-[curated.google_genai]
+[CURATED.google_genai]
 title = "Google Gemini"
 env = "GOOGLE_API_KEY"
 keys = { api_key = "google_api_key" }
 
-[curated.google_vertexai]
+[CURATED.google_vertexai]
 title = "Google Vertex AI"
 credentials = false
 
-[curated.google_anthropic_vertex]
+[CURATED.google_anthropic_vertex]
 title = "Anthropic on Vertex AI"
 credentials = false
 
-[curated.bedrock]
+[CURATED.bedrock]
 title = "Amazon Bedrock"
 credentials = false
 
-[curated.bedrock_converse]
+[CURATED.bedrock_converse]
 title = "Amazon Bedrock Converse"
 credentials = false
 
-[curated.anthropic_bedrock]
+[CURATED.anthropic_bedrock]
 title = "Anthropic on Bedrock"
 credentials = false
 
-[curated.groq]
+[CURATED.groq]
 title = "Groq"
 env = "GROQ_API_KEY"
 base_url = "https://api.groq.com/openai/v1"
 models_api = "openai"
 
-[curated.mistralai]
+[CURATED.mistralai]
 title = "Mistral AI"
 env = "MISTRAL_API_KEY"
 base_url = "https://api.mistral.ai/v1"
 keys = { base_url = "endpoint" }
 models_api = "openai"
 
-[curated.fireworks]
+[CURATED.fireworks]
 title = "Fireworks AI"
 env = "FIREWORKS_API_KEY"
 base_url = "https://api.fireworks.ai/inference/v1"
 models_api = "openai"
 
-[curated.together]
+[CURATED.together]
 title = "Together AI"
 env = "TOGETHER_API_KEY"
 base_url = "https://api.together.xyz/v1"
 models_api = "openai"
 
-[curated.xai]
+[CURATED.xai]
 title = "xAI"
 env = "XAI_API_KEY"
 base_url = "https://api.x.ai/v1"
 models_api = "openai"
 
-[curated.perplexity]
+[CURATED.perplexity]
 title = "Perplexity"
 env = "PPLX_API_KEY"
 base_url = "https://api.perplexity.ai"
 models_api = "openai"
 
-[curated.ollama]
+[CURATED.ollama]
 title = "Ollama"
 credentials = false
 base_url = "http://localhost:11434"
 models_api = "ollama"
 
-[curated.cohere]
+[CURATED.cohere]
 title = "Cohere"
 env = "COHERE_API_KEY"
 keys = { api_key = "cohere_api_key" }
 
-[curated.huggingface]
+[CURATED.huggingface]
 title = "Hugging Face"
 env = "HUGGINGFACEHUB_API_TOKEN"
 
-[curated.nvidia]
+[CURATED.nvidia]
 title = "NVIDIA"
 env = "NVIDIA_API_KEY"
 
-[curated.ibm]
+[CURATED.ibm]
 title = "IBM watsonx"
 env = "WATSONX_APIKEY"
 
-[curated.litellm]
+[CURATED.litellm]
 title = "LiteLLM"
 credentials = false
 
-[curated.upstage]
+[CURATED.upstage]
 title = "Upstage"
 env = "UPSTAGE_API_KEY"
 
-[curated.baseten]
+[CURATED.baseten]
 title = "Baseten"
 env = "BASETEN_API_KEY"
 
-[curated.meta]
+[CURATED.meta]
 title = "Meta Llama API"
 env = "LLAMA_API_KEY"
 
-[curated.azure_ai]
+[CURATED.azure_ai]
 title = "Azure AI"
 env = "AZURE_AI_CREDENTIAL"
 keys = { base_url = "endpoint", api_key = "credential" }
 
-[curated.langsmith]
+[CURATED.langsmith]
 title = "LangSmith"
 env = "LANGSMITH_API_KEY"
 
-[curated.bedrock_mantle_anthropic]
+[CURATED.bedrock_mantle_anthropic]
 title = "Bedrock Mantle (Anthropic)"
 credentials = false
 
-[curated.bedrock_mantle_openai]
+[CURATED.bedrock_mantle_openai]
 title = "Bedrock Mantle (OpenAI)"
 credentials = false
 
-[curated.echo]
+[CURATED.echo]
 title = "Echo (placeholder, no credentials)"
 credentials = false
 models = [{ id = "echo", name = "Echo" }]

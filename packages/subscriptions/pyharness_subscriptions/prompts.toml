@@ -2,10 +2,10 @@
 # every string value is stripped of surrounding whitespace. Placeholders use string.Template syntax (${name}).
 
 [codex]
-default_instructions = "You are Codex, a coding agent based on GPT-5. Help the user with their software engineering tasks."
+DEFAULT_INSTRUCTIONS = "You are Codex, a coding agent based on GPT-5. Help the user with their software engineering tasks."
 
 [responses]
-unknown_outcome = '''
+UNKNOWN_OUTCOME = '''
 The tool call has no recorded result. Its outcome is unknown; verify external state before retrying any
 operation that may have side effects.
 '''

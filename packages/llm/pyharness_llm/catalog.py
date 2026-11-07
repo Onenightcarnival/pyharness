@@ -14,15 +14,15 @@ except ImportError:  # older langchain without the table
 
 _CATALOG = package_toml(__file__)
 
-# ``[protocols.<id>]``: title, LangChain type, model options, models listing API.
-PROTOCOLS: dict[str, dict[str, Any]] = _CATALOG["protocols"]
+# ``[PROTOCOLS.<id>]``: title, LangChain type, model options, models listing API.
+PROTOCOLS: dict[str, dict[str, Any]] = _CATALOG["PROTOCOLS"]
 
 # Provider types the settings page offers; their integration packages are dependencies of pyharness-llm.
-PRESETS: list[str] = _CATALOG["presets"]
+PRESETS: list[str] = _CATALOG["PRESETS"]
 
 # Curated facts per LangChain provider type. Missing types fall back to generic ``api_key`` / ``base_url`` keywords;
 # a missing ``models_api`` means no model listing.
-CURATED: dict[str, dict[str, Any]] = _CATALOG["curated"]
+CURATED: dict[str, dict[str, Any]] = _CATALOG["CURATED"]
 
 
 def builtin_types() -> dict[str, tuple[str, str]]:

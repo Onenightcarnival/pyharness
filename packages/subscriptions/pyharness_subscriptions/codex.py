@@ -29,7 +29,7 @@ CLIENT_VERSION_FLOOR: str = _CFG["CLIENT_VERSION_FLOOR"]
 PERMANENT: set[str] = set(_CFG["PERMANENT"])
 EFFORT_NAMES: dict[str, str] = dict(_CFG["EFFORT_NAMES"])
 PROMPTS = package_prompts(__file__)
-DEFAULT_INSTRUCTIONS: str = PROMPTS["codex"]["default_instructions"]
+DEFAULT_INSTRUCTIONS: str = PROMPTS["codex"]["DEFAULT_INSTRUCTIONS"]
 
 
 def effort_name(effort: str) -> str:

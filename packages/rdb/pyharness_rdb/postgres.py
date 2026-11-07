@@ -13,7 +13,7 @@ from pyharness import package_toml
 from .driver import CONNECT_TIMEOUT_S, Driver, EngineError, QueryResult, SessionState, _Cursor
 
 # pg_type oid -> type name of result columns
-PG_TYPES: dict[int, str] = {int(oid): name for oid, name in package_toml(__file__)["postgres"]["types"].items()}
+PG_TYPES: dict[int, str] = {int(oid): name for oid, name in package_toml(__file__)["postgres"]["PG_TYPES"].items()}
 
 
 class PgDriver(Driver):

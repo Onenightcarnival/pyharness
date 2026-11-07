@@ -20,7 +20,7 @@ from .tools import connections_tool, execute_tool, explain_tool, query_tool, sch
 PROMPT_ORDER = 153
 
 PROMPTS = package_prompts(__file__)
-GUIDANCE: str = PROMPTS["service"]["guidance"]
+GUIDANCE: str = PROMPTS["service"]["GUIDANCE"]
 
 
 class Config(BaseModel):

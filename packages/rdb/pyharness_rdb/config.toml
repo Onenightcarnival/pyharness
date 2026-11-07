@@ -1,14 +1,14 @@
 # Data of pyharness_rdb; loaded with pyharness.package_toml(__file__).
 
 # driver.DEFAULT_PORT: default port per connection kind (0 for sqlite)
-[driver.default_port]
+[driver.DEFAULT_PORT]
 sqlite = 0
 postgres = 5432
 gaussdb = 8000
 mysql = 3306
 
 # postgres.PG_TYPES: pg_type oid -> type name of result columns
-[postgres.types]
+[postgres.PG_TYPES]
 16 = "bool"
 17 = "bytea"
 18 = "char"
@@ -39,7 +39,7 @@ mysql = 3306
 1015 = "varchar[]"
 
 # mysql.MYSQL_TYPES: field type code -> type name of result columns
-[mysql.types]
+[mysql.MYSQL_TYPES]
 0 = "decimal"
 1 = "tinyint"
 2 = "smallint"

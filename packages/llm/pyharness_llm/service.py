@@ -21,7 +21,7 @@ from .catalog import PRESETS, PROTOCOLS, translate_options, type_info
 from .config import LLMConfig, LLMConfigError, ModelFactory, ProviderConfig, _freeze, mask_secret, split_spec
 
 PROMPTS = package_prompts(__file__)
-PROBE_PROMPT: str = PROMPTS["service"]["probe_prompt"]
+PROBE_PROMPT: str = PROMPTS["service"]["PROBE_PROMPT"]
 
 
 class EchoChatModel(BaseChatModel):

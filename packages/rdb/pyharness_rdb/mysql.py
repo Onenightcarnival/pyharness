@@ -13,7 +13,7 @@ from pyharness import package_toml
 from .driver import CONNECT_TIMEOUT_S, DEFAULT_TIMEOUT_MS, Driver, EngineError, QueryResult, SessionState, _Cursor
 
 # field type code -> type name of result columns
-MYSQL_TYPES: dict[int, str] = {int(code): name for code, name in package_toml(__file__)["mysql"]["types"].items()}
+MYSQL_TYPES: dict[int, str] = {int(code): name for code, name in package_toml(__file__)["mysql"]["MYSQL_TYPES"].items()}
 
 
 class MySQLDriver(Driver):

@@ -30,7 +30,7 @@ from .runs import TURNS, RestartPending, RunHandle, SessionBusy, Turn, TurnRecor
 NAMESPACE = ("pyharness", "sessions")
 PROMPTS = package_prompts(__file__)
 
-DEFAULT_RESUME: str = PROMPTS["service"]["default_resume"]
+DEFAULT_RESUME: str = PROMPTS["service"]["DEFAULT_RESUME"]
 
 
 class AgentConfig(BaseModel):

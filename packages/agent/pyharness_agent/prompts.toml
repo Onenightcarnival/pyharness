@@ -4,7 +4,7 @@
 [service]
 # Continuation message sent to listed sessions after a supervised restart; ${rollback} is empty or a newline
 # followed by rollback_note.
-default_resume = '''
+DEFAULT_RESUME = '''
 [pyharness] Restarted into generation ${generation}.
 Reason: ${reasons}.${rollback}
 Task: the task in progress continues. Tools of newly enabled plugins are available;

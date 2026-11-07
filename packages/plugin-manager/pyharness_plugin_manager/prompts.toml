@@ -3,7 +3,7 @@
 
 [plugin_manager]
 # System-prompt section for the presets without the plugin-authoring skills.
-guidance = '''
+GUIDANCE = '''
 ## Extending this harness
 Plugins are Python distributions mounted in this profile's configuration tree. `harness_inspect` shows the live API;
 `plugin_manager` writes starter files, installs bundles (approval, preflight in a separate process, restart after
@@ -19,7 +19,7 @@ saved_restart_required = "Saved. Unsupervised harness: the change applies on the
 
 [dev_context]
 # System-prompt section `dev-context`; the installation, profile, workspace and Web UI lines follow it.
-guidance = '''
+GUIDANCE = '''
 ## This harness
 The harness implementation is installed outside the workspace; its files are not workspace files.
 "This page" or "the Web UI" means the pyharness Web UI served by this process; its data comes from the API.

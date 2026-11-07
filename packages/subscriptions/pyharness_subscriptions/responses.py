@@ -23,7 +23,7 @@ from pyharness import package_prompts
 from .common import LlmError, http_error, iter_sse, read_error
 
 PROMPTS = package_prompts(__file__)
-UNKNOWN_OUTCOME: str = PROMPTS["responses"]["unknown_outcome"]
+UNKNOWN_OUTCOME: str = PROMPTS["responses"]["UNKNOWN_OUTCOME"]
 
 
 # ---------------------------------------------------------------------- input building

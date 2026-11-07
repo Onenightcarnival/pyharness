@@ -17,8 +17,8 @@ if TYPE_CHECKING:
     from .service import MemoryService  # type-only: .service imports this module
 
 PROMPTS = package_prompts(__file__)
-GET_DESCRIPTION: str = PROMPTS["tools"]["get_description"]
-SAVE_DESCRIPTION: str = PROMPTS["tools"]["save_description"]
+GET_DESCRIPTION: str = PROMPTS["tools"]["GET_DESCRIPTION"]
+SAVE_DESCRIPTION: str = PROMPTS["tools"]["SAVE_DESCRIPTION"]
 
 
 # ---------------------------------------------------------------------- change schemas (one per kind, as dsh-memory)

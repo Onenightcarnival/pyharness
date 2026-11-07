@@ -19,7 +19,7 @@ MAX_ROWS_CAP = 100000
 DEFAULT_TIMEOUT_MS = 30000
 COUNT_TIMEOUT_MS = 10000
 CONNECT_TIMEOUT_S = 15
-DEFAULT_PORT: dict[str, int] = package_toml(__file__)["driver"]["default_port"]  # kind -> port (0 for sqlite)
+DEFAULT_PORT: dict[str, int] = package_toml(__file__)["driver"]["DEFAULT_PORT"]  # kind -> port (0 for sqlite)
 KINDS = ("sqlite", "postgres", "gaussdb", "mysql")
 TARGETS = ("any", "read-write", "read-only", "primary", "standby", "prefer-standby")
 

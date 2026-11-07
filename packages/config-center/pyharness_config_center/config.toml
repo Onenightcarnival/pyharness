@@ -1,44 +1,44 @@
 # Managed bun runtime of pyharness-config-center; loaded by environment.py.
 #
-# bun_version  the pinned bun release
-# release      download URL template of a release asset (`{version}`, `{asset}`); SHASUMS256.txt comes from the same place
-# targets      (system, machine) → bun release target; a platform not listed is unsupported
+# BUN_VERSION  the pinned bun release
+# RELEASE      download URL template of a release asset (`{version}`, `{asset}`); SHASUMS256.txt comes from the same place
+# TARGETS      (system, machine) → bun release target; a platform not listed is unsupported
 
 [environment]
-bun_version = "1.4.4"
-release = "https://github.com/oven-sh/bun/releases/download/bun-v{version}/{asset}"
+BUN_VERSION = "1.4.4"
+RELEASE = "https://github.com/oven-sh/bun/releases/download/bun-v{version}/{asset}"
 
-[[environment.targets]]
+[[environment.TARGETS]]
 system = "darwin"
 machine = "arm64"
 target = "darwin-aarch64"
 
-[[environment.targets]]
+[[environment.TARGETS]]
 system = "darwin"
 machine = "x86_64"
 target = "darwin-x64"
 
-[[environment.targets]]
+[[environment.TARGETS]]
 system = "linux"
 machine = "x86_64"
 target = "linux-x64"
 
-[[environment.targets]]
+[[environment.TARGETS]]
 system = "linux"
 machine = "aarch64"
 target = "linux-aarch64"
 
-[[environment.targets]]
+[[environment.TARGETS]]
 system = "linux"
 machine = "arm64"
 target = "linux-aarch64"
 
-[[environment.targets]]
+[[environment.TARGETS]]
 system = "win32"
 machine = "amd64"
 target = "windows-x64"
 
-[[environment.targets]]
+[[environment.TARGETS]]
 system = "win32"
 machine = "x86_64"
 target = "windows-x64"
