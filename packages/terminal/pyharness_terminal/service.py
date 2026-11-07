@@ -1,4 +1,4 @@
-"""``TerminalService``: configuration, shells per session, jobs, terminals, tool and route registration."""
+"""``TerminalService``: shells per session, jobs, terminals, tool and route registration."""
 
 from __future__ import annotations
 
@@ -8,10 +8,9 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field
-
 from pyharness import Service
 
+from .config import Config
 from .jobs import Job, JobRegistry
 from .pty import Terminal, pty_available
 from .routes import make_router
@@ -19,22 +18,6 @@ from .shell import ShellSession
 from .tools import background_tool, bash_tool, job_tools
 
 
-class Config(BaseModel):
-    shell_tool: bool = True
-    shell: str = Field("bash", description="Executable of the persistent shell (bash semantics expected).")
-    timeout: int = Field(120, ge=1)
-    max_timeout: int = Field(900, ge=1)
-    max_output_chars: int = Field(16_000, ge=1000)
-    approval: bool | dict[str, Any] = Field(default_factory=lambda: {"allowed_decisions": ["approve", "reject"]})
-    jobs_tool: bool = True
-    job_tail_lines: int = Field(200, ge=10)
-    terminal_tab: bool = True
-    terminal_shell: str | None = Field(None, description="Interactive shell for PTY terminals; default $SHELL.")
-    scrollback_bytes: int = Field(200_000, ge=10_000)
-    max_shells: int = Field(16, ge=1)
-
-
-# ---------------------------------------------------------------------- service
 class TerminalService(Service):
     key = "terminal"
     name = "pyharness-terminal"

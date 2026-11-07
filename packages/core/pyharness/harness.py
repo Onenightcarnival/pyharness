@@ -20,8 +20,9 @@ from pathlib import Path
 from typing import Any
 
 from .config import Tree, compose, parse_ops
+from .context import Root
 from .lifecycle import Lifecycle
-from .loader import EntryState, Loader, Root
+from .loader import EntryState, Loader
 from .profile import Profile
 
 

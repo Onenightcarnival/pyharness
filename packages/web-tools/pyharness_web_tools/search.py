@@ -13,7 +13,7 @@
 from __future__ import annotations
 
 from string import Template
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from urllib.parse import urlparse
 
 import httpx
@@ -21,10 +21,7 @@ from langchain_core.tools import tool
 
 from pyharness import package_prompts
 
-from .common import NOTICE
-
-if TYPE_CHECKING:
-    from .service import WebToolsService  # type-only: .service imports this module
+from .common import NOTICE, Host
 
 PROMPTS = package_prompts(__file__)
 
@@ -85,7 +82,7 @@ def parse_search_response(body: dict[str, Any]) -> tuple[str, list[dict[str, Any
     return "".join(answer), sources
 
 
-async def search(service: WebToolsService, query: str) -> dict[str, Any]:
+async def search(service: Host, query: str) -> dict[str, Any]:
     """``{"answer", "sources", "truncated"}``; raises ``RuntimeError`` with a user-facing message on failure."""
     config = service.config
     key = service.api_key()
@@ -108,7 +105,7 @@ async def search(service: WebToolsService, query: str) -> dict[str, Any]:
         "content-type": "application/json",
         "accept": "application/json",
     }
-    async with service._client(config.search_timeout) as client:
+    async with service.client(config.search_timeout) as client:
         try:
             response = await client.post(endpoint, json=body, headers=headers)
         except httpx.HTTPError as exc:
@@ -133,14 +130,14 @@ async def search(service: WebToolsService, query: str) -> dict[str, Any]:
     return {"answer": answer, "sources": sources[: config.max_results], "truncated": truncated}
 
 
-def search_tool(service: WebToolsService) -> Any:
+def search_tool(service: Host) -> Any:
     @tool("web_search", description=PROMPTS["tools"]["web_search"])
     async def web_search(query: str) -> str:
         query = (query or "").strip()
         if not query:
             return "Error: query must be a non-empty string."
         try:
-            result = await service.search(query)
+            result = await search(service, query)
         except RuntimeError as exc:
             return f"Error: {exc}"
         return format_search(result["answer"], result["sources"], result["truncated"])

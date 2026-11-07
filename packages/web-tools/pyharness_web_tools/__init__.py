@@ -13,8 +13,9 @@ instruction to add it rather than failing the turn. Both tools prefix their outp
 untrusted external content.
 """
 
+from .config import Config
 from .fetch import html_to_text
 from .search import format_search, parse_search_response
-from .service import Config, WebToolsService
+from .service import WebToolsService
 
 __all__ = ["Config", "WebToolsService", "format_search", "html_to_text", "parse_search_response"]

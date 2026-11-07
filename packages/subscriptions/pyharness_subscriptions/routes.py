@@ -21,19 +21,30 @@ from __future__ import annotations
 import json
 import mimetypes
 import re
-from typing import TYPE_CHECKING, Any
+from typing import Any, Protocol
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 
 from .providers import Provider
-from .store import PROVIDERS
-
-if TYPE_CHECKING:
-    from .service import SubscriptionsService
+from .store import PROVIDERS, MediaStore, ModelDefaults, ProviderSettings
 
 
-def build_router(service: SubscriptionsService) -> APIRouter:
+class Host(Protocol):
+    """The service, as the routes use it."""
+
+    providers: dict[str, Provider]
+    settings: ProviderSettings | None
+    defaults: ModelDefaults | None
+    media: MediaStore | None
+
+    async def status(self) -> dict[str, Any]: ...
+    async def catalog(self, provider_id: str, force: bool = False) -> dict[str, Any]: ...
+    async def sync_routes(self, discover: bool = True) -> None: ...
+    def sync_tools(self) -> None: ...
+
+
+def build_router(service: Host) -> APIRouter:
     router = APIRouter()
 
     async def body(request: Request) -> dict[str, Any]:

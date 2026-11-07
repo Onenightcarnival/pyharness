@@ -59,8 +59,11 @@ target-version = "py312"
 extend-exclude = [".venv", "examples/pyharness-audit/build"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B"]
+select = ["E", "F", "W", "I", "UP", "B", "TID251"]
 ignore = ["B008", "B904", "UP042"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"typing.TYPE_CHECKING".msg = "No type-only import blocks: break the import cycle with a Protocol in the importing module, or move the class to a leaf module."
 
 [tool.ruff.lint.isort]
 known-first-party = ["pyharness", "testkit"]

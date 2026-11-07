@@ -12,9 +12,10 @@ The shell tools carry the ``shell`` tag: the agent loop leaves them out in read-
 PTY terminals need ``pty`` (POSIX); elsewhere the terminal tab reports itself unavailable.
 """
 
+from .config import Config
 from .jobs import Job, JobRegistry
 from .pty import Terminal, pty_available
-from .service import Config, TerminalService
+from .service import TerminalService
 from .shell import ShellSession, clip
 
 __all__ = ["Config", "Job", "JobRegistry", "ShellSession", "Terminal", "TerminalService", "clip", "pty_available"]

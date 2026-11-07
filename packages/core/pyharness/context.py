@@ -6,6 +6,7 @@
 | registration | ``provide``, ``on``, ``effect``, ``enter``, ``on_dispose``; owned by the plugin   |
 | teardown     | the plugin's registrations are undone in reverse order                            |
 | caller       | inside a :class:`Service` method, ``self.caller`` is the calling plugin's context |
+| root         | :class:`Root`: the event bus, lifecycle, variables, profile and host context shared by all contexts |
 """
 
 from __future__ import annotations
@@ -14,13 +15,14 @@ import inspect
 import logging
 from collections.abc import Callable, Iterable
 from contextvars import ContextVar
-from typing import TYPE_CHECKING, Any, ClassVar
+from textwrap import dedent
+from typing import Any, ClassVar
 
 from pydantic import BaseModel
 
-if TYPE_CHECKING:  # pragma: no cover
-    from .events import EventBus  # annotations only
-    from .loader import EntryRuntime, Root  # annotations only; import cycle with loader
+from .config import Entry
+from .events import EventBus
+from .lifecycle import Lifecycle
 
 Disposer = Callable[[], Any]
 
@@ -79,27 +81,74 @@ class Scope:
         return seen
 
 
+class Root:
+    """Process-wide state shared by all contexts."""
+
+    def __init__(self, lifecycle: Lifecycle, variables: dict[str, str], profile: Any = None) -> None:
+        self.events = EventBus()
+        self.lifecycle = lifecycle
+        self.variables = dict(variables)
+        self.profile = profile
+        self.scope = Scope(label="root")
+        self.host = Context(self, self.scope)
+        for name, mode, doc in CORE_EVENTS:
+            self.events.define(name, mode, doc, owner="<core>")
+        self.scope.services["lifecycle"] = (lifecycle, "<core>")
+        self.scope.services["events"] = (self.events, "<core>")
+        if profile is not None:
+            self.scope.services["profile"] = (profile, "<core>")
+
+
+CORE_EVENTS = [
+    (
+        "app/ready",
+        "series",
+        dedent(
+            """
+            All plugins are applied. Listeners finish wiring and bind no external resources;
+            preflight runs this event. A listener error fails the boot.
+            """
+        ).strip(),
+    ),
+    (
+        "app/serve",
+        "series",
+        "Listeners start accepting external input. Runs after app/ready. A listener error fails the boot.",
+    ),
+    (
+        "app/started",
+        "parallel",
+        dedent(
+            """
+            The generation is committed: ready marker written, last-known-good saved, hand-off consumed.
+            Listeners start background work. Listener errors are logged.
+            """
+        ).strip(),
+    ),
+    ("app/stopping", "parallel", "Plugins are about to be torn down."),
+]
+
+
 class Context:
     """Per-plugin view of the harness. Unknown attributes resolve to services (``ctx.tools``)."""
 
-    def __init__(self, root: Root, runtime: EntryRuntime | None, scope: Scope) -> None:
+    def __init__(self, root: Root, scope: Scope, entry: Entry | None = None) -> None:
         self._root = root
-        self._runtime = runtime
         self._scope = scope
-        self._host_disposers: list[Disposer] = []
-        name = runtime.entry.id if runtime else "<host>"
-        self.logger = logging.getLogger(f"pyharness.plugin.{name}")
+        self._entry = entry
+        self.disposers: list[Disposer] = []
+        self.logger = logging.getLogger(f"pyharness.plugin.{self.entry_id}")
 
     # ------------------------------------------------------------------ identity
     @property
     def entry_id(self) -> str:
-        return self._runtime.entry.id if self._runtime else "<host>"
+        return self._entry.id if self._entry else "<host>"
 
     @property
     def plugin_name(self) -> str:
-        if self._runtime is None:
+        if self._entry is None:
             return "<host>"
-        return self._runtime.entry.name or self._runtime.entry.id
+        return self._entry.name or self._entry.id
 
     @property
     def root(self) -> Root:
@@ -190,7 +239,7 @@ class Context:
     # ------------------------------------------------------------------ effects
     def on_dispose(self, fn: Callable[[], Any]) -> Disposer:
         """Register a sync or async disposer; it runs when this plugin stops."""
-        bucket = self._runtime.disposers if self._runtime is not None else self._host_disposers
+        bucket = self.disposers
         bucket.append(fn)
 
         def dispose() -> Any:
@@ -223,13 +272,13 @@ class Context:
             return value
         raise TypeError(f"{cm!r} is not a context manager")
 
-    async def aclose_host(self) -> None:
-        """Dispose registrations made through the host context. Disposer errors are logged."""
-        while self._host_disposers:
+    async def aclose(self) -> None:
+        """Run the registered disposers in reverse order. Disposer errors are logged."""
+        while self.disposers:
             try:
-                await _maybe_await(self._host_disposers.pop()())
+                await _maybe_await(self.disposers.pop()())
             except Exception:
-                self.logger.exception("host disposer failed")
+                self.logger.exception("disposer of %s failed", self.entry_id)
 
     def __repr__(self) -> str:
         return f"<Context {self.entry_id}>"

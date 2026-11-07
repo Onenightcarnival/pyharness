@@ -22,14 +22,12 @@ import sys
 import time
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from deepagents.backends import FilesystemBackend, LocalShellBackend
 
+from .config import Config
 from .workspace import Workspace, WorkspaceError
-
-if TYPE_CHECKING:
-    from .plugin import Config  # annotations only; import cycle with plugin
 
 NAMESPACE = ("pyharness", "workspaces")
 

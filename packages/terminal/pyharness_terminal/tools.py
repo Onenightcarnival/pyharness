@@ -4,18 +4,33 @@ from __future__ import annotations
 
 import json
 import time
+from pathlib import Path
 from string import Template
-from typing import TYPE_CHECKING, Any
+from typing import Any, Protocol
 
 from langchain_core.tools import tool
 from langgraph.config import get_config
 
 from pyharness import package_prompts
 
+from .config import Config
+from .jobs import Job, JobRegistry
 from .shell import clip
 
-if TYPE_CHECKING:
-    from .service import TerminalService
+
+class Host(Protocol):
+    """The service, as the tools use it."""
+
+    config: Config
+    jobs: JobRegistry
+
+    async def run(
+        self, command: str, *, session_id: str | None = None, timeout: int | None = None, cwd: Path | None = None
+    ) -> dict[str, Any]: ...
+    async def start_job(
+        self, command: str, *, session_id: str | None = None, cwd: str | None = None, name: str | None = None
+    ) -> Job: ...
+
 
 PROMPTS = package_prompts(__file__)
 
@@ -27,7 +42,7 @@ def _thread_id() -> str | None:
         return None
 
 
-def bash_tool(service: TerminalService) -> Any:
+def bash_tool(service: Host) -> Any:
     @tool("bash", description=PROMPTS["tools"]["bash"])
     async def bash(command: str, timeout: int | None = None) -> str:
         if not command.strip():
@@ -48,7 +63,7 @@ def bash_tool(service: TerminalService) -> Any:
     return bash
 
 
-def background_tool(service: TerminalService) -> Any:
+def background_tool(service: Host) -> Any:
     @tool("run_in_background", description=PROMPTS["tools"]["run_in_background"])
     async def run_in_background(command: str, name: str | None = None) -> str:
         if not command.strip():
@@ -61,7 +76,7 @@ def background_tool(service: TerminalService) -> Any:
     return run_in_background
 
 
-def job_tools(service: TerminalService) -> list[Any]:
+def job_tools(service: Host) -> list[Any]:
     @tool("job_output", description=PROMPTS["tools"]["job_output"])
     async def job_output(job_id: str, tail_lines: int | None = None, wait: bool = False, timeout: int = 60) -> str:
         job = service.jobs.get(job_id)

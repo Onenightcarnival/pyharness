@@ -9,18 +9,25 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any, Protocol
 
-from .providers import DiscoveredModel
-from .store import PROVIDER_TOOLS
+from .providers import DiscoveredModel, Provider
+from .store import PROVIDER_TOOLS, ModelDefaults, ProviderSettings
 
-if TYPE_CHECKING:
-    from .service import SubscriptionsService
+
+class Host(Protocol):
+    """The service, as the catalog functions use it."""
+
+    ctx: Any
+    providers: dict[str, Provider]
+    settings: ProviderSettings | None
+    defaults: ModelDefaults | None
+
 
 ROUTE_TYPE = "subscription"
 
 
-async def provider_catalog(service: SubscriptionsService, provider_id: str, force: bool = False) -> dict[str, Any]:
+async def provider_catalog(service: Host, provider_id: str, force: bool = False) -> dict[str, Any]:
     assert service.settings is not None
     provider = service.providers[provider_id]
     prefs = service.settings.get(provider_id)
@@ -70,7 +77,7 @@ async def provider_catalog(service: SubscriptionsService, provider_id: str, forc
     }
 
 
-async def cached_catalog(service: SubscriptionsService, provider_id: str) -> dict[str, Any]:
+async def cached_catalog(service: Host, provider_id: str) -> dict[str, Any]:
     """The catalog from the last-known models only (no network): used when routes are rebuilt after a change."""
     assert service.settings is not None
     provider = service.providers[provider_id]
@@ -99,7 +106,7 @@ async def cached_catalog(service: SubscriptionsService, provider_id: str) -> dic
     return {"models": rows}
 
 
-async def rebuild_routes(service: SubscriptionsService, discover: bool = True) -> None:
+async def rebuild_routes(service: Host, discover: bool = True) -> None:
     """Rebuild the ``codex`` / ``chatgpt`` / ``antigravity`` / ``grok`` routes of ``ctx.llm`` from the catalogs."""
     assert service.settings is not None
     routes = dict(service.ctx.llm.config.model_dump(mode="python")["providers"])

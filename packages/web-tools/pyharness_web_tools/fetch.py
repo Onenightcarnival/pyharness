@@ -17,7 +17,7 @@ import html
 import json
 import re
 from html.parser import HTMLParser
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import httpx
@@ -25,10 +25,7 @@ from langchain_core.tools import tool
 
 from pyharness import package_prompts
 
-from .common import NOTICE
-
-if TYPE_CHECKING:
-    from .service import WebToolsService  # type-only: .service imports this module
+from .common import NOTICE, Host
 
 PROMPTS = package_prompts(__file__)
 
@@ -150,14 +147,14 @@ def html_to_text(markup: str, base: str = "") -> tuple[str | None, str]:
     return title or None, parser.text()
 
 
-async def fetch(service: WebToolsService, url: str, max_chars: int | None = None) -> dict[str, Any]:
+async def fetch(service: Host, url: str, max_chars: int | None = None) -> dict[str, Any]:
     """``{"url", "status", "content_type", "title", "text", "truncated"}``; raises ``RuntimeError`` on failure."""
     config = service.config
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https") or not parsed.netloc:
         raise RuntimeError(f"web_fetch needs an http(s) URL; got {url!r}")
     limit = max(1, min(max_chars or config.fetch_max_chars, config.fetch_max_chars))
-    async with service._client(config.fetch_timeout) as client:
+    async with service.client(config.fetch_timeout) as client:
         try:
             async with client.stream(
                 "GET",
@@ -207,11 +204,11 @@ async def fetch(service: WebToolsService, url: str, max_chars: int | None = None
     }
 
 
-def fetch_tool(service: WebToolsService) -> Any:
+def fetch_tool(service: Host) -> Any:
     @tool("web_fetch", description=PROMPTS["tools"]["web_fetch"])
     async def web_fetch(url: str, max_chars: int | None = None) -> str:
         try:
-            r = await service.fetch(url, max_chars)
+            r = await fetch(service, url, max_chars)
         except RuntimeError as exc:
             return f"Error: {exc}"
         head = f"{NOTICE}\n\nURL: {r['url']}\nStatus: {r['status']}" + (f"\nTitle: {r['title']}" if r["title"] else "")

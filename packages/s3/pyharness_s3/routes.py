@@ -7,7 +7,7 @@ import json
 import os
 import re
 import tempfile
-from typing import TYPE_CHECKING, Any
+from typing import Any, Protocol
 from urllib.parse import quote
 
 from fastapi import APIRouter, HTTPException, Request
@@ -17,14 +17,21 @@ from . import engine as eng
 from .engine import PREVIEWABLE, clean_key, error_text, guess_mime
 from .store import ProfileStore, StoreError
 
-if TYPE_CHECKING:
-    from .service import S3Service  # type-only: .service imports this module
+
+class Host(Protocol):
+    """The service, as the routes use it."""
+
+    store: ProfileStore | None
+
+    async def run(self, id_or_name: str, fn: Any) -> Any: ...
+    def sync(self) -> bool: ...
+
 
 PREVIEW_TEXT_BYTES = 512 * 1024
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024 * 1024
 
 
-def build_router(service: S3Service) -> APIRouter:
+def build_router(service: Host) -> APIRouter:
     """The S3 page routes bound to a service."""
     router = APIRouter()
 

@@ -5,15 +5,27 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
-from typing import TYPE_CHECKING, Any
+from typing import Any, Protocol
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
-from .pty import pty_available
+from .config import Config
+from .jobs import JobRegistry
+from .pty import Terminal, pty_available
 
-if TYPE_CHECKING:
-    from .service import TerminalService
+
+class Host(Protocol):
+    """The service, as the routes use it."""
+
+    ctx: Any
+    config: Config
+    jobs: JobRegistry
+    terminals: dict[str, Terminal]
+
+    def status(self) -> dict[str, Any]: ...
+    def open_terminal(self, cwd: str | None, cols: int = 80, rows: int = 24, title: str | None = None) -> Terminal: ...
+    async def close_terminal(self, terminal_id: str) -> bool: ...
 
 
 class NewTerminal(BaseModel):
@@ -28,7 +40,7 @@ class Resize(BaseModel):
     rows: int = Field(ge=1, le=300)
 
 
-def make_router(service: TerminalService) -> APIRouter:
+def make_router(service: Host) -> APIRouter:
     router = APIRouter()
 
     @router.get("/terminal/status")

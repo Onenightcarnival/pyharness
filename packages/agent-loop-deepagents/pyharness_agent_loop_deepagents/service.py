@@ -175,4 +175,14 @@ class DeepAgentsLoop(Service):
     # ------------------------------------------------------------------ build
     async def build(self, workspace: str | None = None, mode: str | None = None, preset: str | None = None) -> Any:
         """Graph for a workspace root (``None``: the default), a permission mode and an agent preset."""
-        return await build_graph(self, workspace, mode, preset)
+        preset_id, preset_cfg = self.preset(preset)
+        return await build_graph(
+            self.ctx,
+            self.config,
+            mode=self.mode(mode),
+            preset=(preset_id, preset_cfg),
+            mounts=[(s, p) for s, p, _, presets in self._skills if presets is None or preset_id in presets],
+            subagents=[s for s, _ in self._subagents],
+            middleware=[m for m, _ in self._middleware],
+            workspace=workspace,
+        )

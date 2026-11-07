@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Protocol
 
 from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.config import get_config
@@ -13,8 +13,13 @@ from pyharness import package_prompts
 
 from .store import FIELD_DESCRIPTIONS, FIELDS, KIND_GUIDE
 
-if TYPE_CHECKING:
-    from .service import MemoryService  # type-only: .service imports this module
+
+class Host(Protocol):
+    """The service, as the tools use it."""
+
+    def read(self, node_id: str | None, offset: int | None, limit: int | None) -> dict[str, Any]: ...
+    def save(self, state_token: str, summary: str, changes: list[dict[str, Any]], source: str) -> dict[str, Any]: ...
+
 
 PROMPTS = package_prompts(__file__)
 GET_DESCRIPTION: str = PROMPTS["tools"]["GET_DESCRIPTION"]
@@ -85,7 +90,7 @@ def _dump(data: dict[str, Any]) -> str:
     return json.dumps(data, ensure_ascii=False)
 
 
-def get_tool(service: MemoryService):
+def get_tool(service: Host):
     @tool("memory_get", description=GET_DESCRIPTION)
     def memory_get(
         id: str | None = Field(None, description="Node id. Omit or pass profile for the root."),
@@ -97,7 +102,7 @@ def get_tool(service: MemoryService):
     return memory_get
 
 
-def save_tool(service: MemoryService):
+def save_tool(service: Host):
     @tool("memory_save", description=SAVE_DESCRIPTION)
     def memory_save(
         stateToken: str = Field(

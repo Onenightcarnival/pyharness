@@ -31,14 +31,16 @@
 
 | module        | content                                                   |
 |---------------|-----------------------------------------------------------|
-| ``plugin``    | ``Config``, ``apply``                                     |
+| ``config``    | ``Config``                                                |
+| ``plugin``    | ``apply``                                                 |
 | ``workspace`` | ``Workspace``, ``WorkspaceError``                         |
 | ``registry``  | ``Workspaces``: open, backends, recent, picker, browse    |
 """
 
 from __future__ import annotations
 
-from .plugin import Config, apply, inject, name
+from .config import Config
+from .plugin import apply, inject, name
 from .registry import Workspaces
 from .workspace import Workspace, WorkspaceError
 

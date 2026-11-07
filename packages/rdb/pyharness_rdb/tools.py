@@ -6,7 +6,7 @@ import re
 import warnings
 from string import Template
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any
+from typing import Any, Protocol
 
 from langchain_core.tools import tool
 from pydantic import Field
@@ -15,9 +15,17 @@ from pyharness import package_prompts
 
 from .driver import DEFAULT_TIMEOUT_MS, Driver, host_entries
 from .query import human_table, run_query, table_info
+from .store import ProfileStore
 
-if TYPE_CHECKING:
-    from .service import RdbService  # type-only: .service imports this module
+
+class Host(Protocol):
+    """The service, as the tools use it."""
+
+    store: ProfileStore | None
+
+    def profile(self, id_or_name: str) -> dict[str, Any]: ...
+    async def run(self, id_or_name: str, fn: Any) -> Any: ...
+
 
 PROMPTS = package_prompts(__file__)
 TOOL_MAX_ROWS = 500
@@ -31,7 +39,7 @@ def _target_of(p: dict[str, Any]) -> str:
     return text + (f" (target {p['targetSessionAttrs']})" if p.get("targetSessionAttrs", "any") != "any" else "")
 
 
-def connections_tool(service: RdbService):
+def connections_tool(service: Host):
     @tool(
         "db_connections",
         description=PROMPTS["tools"]["db_connections"],
@@ -51,13 +59,13 @@ def connections_tool(service: RdbService):
     return db_connections
 
 
-def schema_tool(service: RdbService):
+def schema_tool(service: Host):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")  # the `schema` parameter (dsh's name) shadows a BaseModel attribute
         return _make_schema_tool(service)
 
 
-def _make_schema_tool(service: RdbService):
+def _make_schema_tool(service: Host):
     @tool(
         "db_schema",
         description=PROMPTS["tools"]["db_schema"],
@@ -128,7 +136,7 @@ def _make_schema_tool(service: RdbService):
     return db_schema
 
 
-def query_tool(service: RdbService):
+def query_tool(service: Host):
     @tool(
         "db_query",
         description=PROMPTS["tools"]["db_query"],
@@ -152,7 +160,7 @@ def query_tool(service: RdbService):
     return db_query
 
 
-def explain_tool(service: RdbService):
+def explain_tool(service: Host):
     @tool(
         "db_explain",
         description=PROMPTS["tools"]["db_explain"],
@@ -176,7 +184,7 @@ def explain_tool(service: RdbService):
     return db_explain
 
 
-def execute_tool(service: RdbService):
+def execute_tool(service: Host):
     @tool(
         "db_execute",
         description=PROMPTS["tools"]["db_execute"],

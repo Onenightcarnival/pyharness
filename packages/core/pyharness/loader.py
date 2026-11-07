@@ -13,19 +13,14 @@
 from __future__ import annotations
 
 import enum
-import inspect
 import logging
 import time
 import traceback
-from collections.abc import Callable
 from dataclasses import dataclass, field
-from textwrap import dedent
 from typing import Any
 
 from .config import Entry, Tree, interpolate
-from .context import Context, Scope, _maybe_await
-from .events import EventBus
-from .lifecycle import Lifecycle
+from .context import Context, Root, Scope, _maybe_await
 from .plugin import PluginError, PluginSpec, call_apply, load_plugin
 
 log = logging.getLogger("pyharness.loader")
@@ -51,7 +46,6 @@ class EntryRuntime:
     error: str | None = None
     missing: list[str] = field(default_factory=list)
     disabled_reason: str | None = None
-    disposers: list[Callable[[], Any]] = field(default_factory=list)
     ctx: Context | None = None
     started_at: float | None = None
     order: int | None = None
@@ -84,62 +78,12 @@ class EntryRuntime:
         return data
 
 
-class Root:
-    """Process-wide state shared by all contexts."""
-
-    def __init__(self, lifecycle: Lifecycle, variables: dict[str, str], profile: Any = None) -> None:
-        self.events = EventBus()
-        self.lifecycle = lifecycle
-        self.variables = dict(variables)
-        self.profile = profile
-        self.scope = Scope(label="root")
-        self.loader: Loader | None = None
-        self.host = Context(self, None, self.scope)
-        for name, mode, doc in CORE_EVENTS:
-            self.events.define(name, mode, doc, owner="<core>")
-        self.scope.services["lifecycle"] = (lifecycle, "<core>")
-        self.scope.services["events"] = (self.events, "<core>")
-        if profile is not None:
-            self.scope.services["profile"] = (profile, "<core>")
-
-
-CORE_EVENTS = [
-    (
-        "app/ready",
-        "series",
-        dedent(
-            """
-            All plugins are applied. Listeners finish wiring and bind no external resources;
-            preflight runs this event. A listener error fails the boot.
-            """
-        ).strip(),
-    ),
-    (
-        "app/serve",
-        "series",
-        "Listeners start accepting external input. Runs after app/ready. A listener error fails the boot.",
-    ),
-    (
-        "app/started",
-        "parallel",
-        dedent(
-            """
-            The generation is committed: ready marker written, last-known-good saved, hand-off consumed.
-            Listeners start background work. Listener errors are logged.
-            """
-        ).strip(),
-    ),
-    ("app/stopping", "parallel", "Plugins are about to be torn down."),
-]
-
-
 class Loader:
     def __init__(self, root: Root, tree: Tree) -> None:
         self.root = root
         self.tree = tree
         self.runtimes: list[EntryRuntime] = []
         self._started: list[EntryRuntime] = []
-        root.loader = self
         root.scope.services["loader"] = (self, "<core>")
         self._plan(tree, (), root.scope, disabled_by=None)
 
@@ -210,7 +154,7 @@ class Loader:
 
     async def _start_one(self, rt: EntryRuntime) -> None:
         assert rt.spec is not None
-        ctx = Context(self.root, rt, rt.scope)
+        ctx = Context(self.root, rt.scope, rt.entry)
         rt.ctx = ctx
         rt.missing = []
         spec = rt.spec
@@ -243,17 +187,11 @@ class Loader:
             await self._dispose(rt)
             rt.state = EntryState.STOPPED
         self._started.clear()
-        await self.root.host.aclose_host()
+        await self.root.host.aclose()
 
     async def _dispose(self, rt: EntryRuntime) -> None:
-        while rt.disposers:
-            fn = rt.disposers.pop()
-            try:
-                result = fn()
-                if inspect.isawaitable(result):
-                    await result
-            except Exception:
-                log.exception("disposer of %s failed", rt.entry.id)
+        if rt.ctx is not None:
+            await rt.ctx.aclose()
 
     def _fail(self, rt: EntryRuntime, message: str, exc: BaseException | None = None) -> None:
         rt.state = EntryState.FAILED

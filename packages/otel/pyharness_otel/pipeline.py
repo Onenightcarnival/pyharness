@@ -7,7 +7,7 @@ import os
 import re
 import time
 from collections import deque
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from opentelemetry.exporter.otlp.proto.http import Compression
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -15,12 +15,9 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExportResult
 
+from .config import DEFAULT_SERVICE, Config
 from .spans import AGENT_SYSTEM
 
-if TYPE_CHECKING:
-    from .service import Config
-
-DEFAULT_SERVICE = "pyharness"
 LANGFUSE_RE = re.compile(r"langfuse", re.I)
 
 

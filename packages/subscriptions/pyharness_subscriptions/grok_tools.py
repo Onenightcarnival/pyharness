@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 from string import Template
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal, Protocol
 from urllib.parse import quote
 
 import httpx
@@ -14,11 +14,18 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from pyharness import package_prompts, package_toml
 
-from .common import LlmError, http_error
+from .common import LlmError, TokenManager, http_error
 from .media import describe_images, generate_images, read_reference, save_images
 
-if TYPE_CHECKING:
-    from .grok import GrokProvider
+
+class Client(Protocol):
+    """The Grok provider, as the tools use it."""
+
+    http: httpx.AsyncClient
+
+    def token_manager(self, key: str | None = None) -> TokenManager: ...
+    def headers(self, session: dict[str, Any], proxy: bool = False, **extra: str) -> dict[str, str]: ...
+
 
 _CFG = package_toml(__file__)
 PROMPTS = package_prompts(__file__)["grok_tools"]
@@ -57,7 +64,7 @@ class VideoArgs(BaseModel):
     image_url: str | None = Field(None, description="Public URL or data URL of a still image (image-to-video).")
 
 
-def make_tools(provider: GrokProvider, service: Any) -> list[Any]:
+def make_tools(provider: Client, service: Any) -> list[Any]:
     @tool(
         "grok_x_search",
         description=PROMPTS["grok_x_search"],

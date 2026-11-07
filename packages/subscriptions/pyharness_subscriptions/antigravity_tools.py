@@ -5,19 +5,35 @@ from __future__ import annotations
 
 import base64
 import uuid
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal, Protocol
 
 from langchain_core.tools import tool
 from pydantic import BaseModel, ConfigDict, Field
 
 from pyharness import package_prompts, package_toml
 
-from .common import LlmError
+from .common import LlmError, TokenManager
 from .media import dedupe_sources, describe_images, format_search, read_reference, save_images
 from .store import image_extension
 
-if TYPE_CHECKING:
-    from .antigravity import AntigravityProvider
+
+class Client(Protocol):
+    """The Antigravity provider, as the tools use it."""
+
+    config: dict[str, Any]
+
+    def token_manager(self, key: str | None = None) -> TokenManager: ...
+    async def call(
+        self,
+        session: dict[str, Any],
+        method: str,
+        body: dict[str, Any],
+        *,
+        tolerate_404: bool = False,
+        single_origin: bool = False,
+        timeout: float = 10.0,
+    ) -> dict[str, Any]: ...
+
 
 _CFG = package_toml(__file__)["antigravity_tools"]
 PROMPTS = package_prompts(__file__)["antigravity_tools"]
@@ -37,7 +53,7 @@ class ImageArgs(BaseModel):
     reasoning_effort: Literal["minimal", "high"] | None = None
 
 
-def make_tools(provider: AntigravityProvider, service: Any) -> list[Any]:
+def make_tools(provider: Client, service: Any) -> list[Any]:
     def request(session: dict[str, Any], model: str, req: dict[str, Any]) -> dict[str, Any]:
         project = (provider.config.get("antigravity") or {}).get("projectId") or session.get("projectId")
         return {

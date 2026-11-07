@@ -6,20 +6,29 @@ from __future__ import annotations
 import asyncio
 import json
 import re
-from typing import TYPE_CHECKING, Any
+from typing import Any, Protocol
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
 
 from .driver import DEFAULT_TIMEOUT_MS, EngineError, QueryResult
+from .pool import Pool
 from .query import grid_changes, page_rows, run_query, table_info, to_csv
 from .store import ProfileStore, StoreError
 
-if TYPE_CHECKING:
-    from .service import RdbService  # type-only: .service imports this module
+
+class Host(Protocol):
+    """The service, as the routes use it."""
+
+    store: ProfileStore | None
+    pool: Pool
+
+    async def run(self, id_or_name: str, fn: Any) -> Any: ...
+    async def test(self, pid: str) -> dict[str, Any]: ...
+    def sync(self) -> bool: ...
 
 
-def build_router(service: RdbService) -> APIRouter:
+def build_router(service: Host) -> APIRouter:
     """The Database page routes bound to a service."""
     router = APIRouter()
 

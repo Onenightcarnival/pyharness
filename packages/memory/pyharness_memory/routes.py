@@ -5,19 +5,25 @@ from __future__ import annotations
 
 import json
 import re
-from typing import TYPE_CHECKING, Any
+from typing import Any, Protocol
 
 from fastapi import APIRouter, HTTPException, Request
 
-from .store import MemoryError
+from .store import MemoryError, MemoryStore
 
-if TYPE_CHECKING:
-    from .service import MemoryService  # type-only: .service imports this module
+
+class Host(Protocol):
+    """The service, as the routes use it."""
+
+    store: MemoryStore | None
+
+    def sync(self) -> bool: ...
+
 
 MAX_BODY = 2 * 1024 * 1024
 
 
-def build_router(service: MemoryService) -> APIRouter:
+def build_router(service: Host) -> APIRouter:
     """The Memory page routes bound to a service."""
     router = APIRouter()
 

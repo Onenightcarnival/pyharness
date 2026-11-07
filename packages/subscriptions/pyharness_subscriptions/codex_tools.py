@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal, Protocol
 
 import httpx
 from langchain_core.tools import tool
@@ -13,11 +13,18 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from pyharness import package_prompts, package_toml
 
-from .common import LlmError, headers_with_ua, http_error
+from .common import LlmError, TokenManager, headers_with_ua, http_error
 from .media import dedupe_sources, describe_images, format_search, generate_images, read_reference, save_images
 
-if TYPE_CHECKING:
-    from .codex import CodexProvider
+
+class Client(Protocol):
+    """The Codex provider, as the tools use it."""
+
+    http: httpx.AsyncClient
+
+    def token_manager(self, key: str | None = None) -> TokenManager: ...
+    def headers(self, session: dict[str, Any], **extra: str) -> dict[str, str]: ...
+
 
 _CFG = package_toml(__file__)
 PROMPTS = package_prompts(__file__)["codex_tools"]
@@ -139,7 +146,7 @@ def validate_commands(args: SearchArgs) -> dict[str, Any]:
     return commands
 
 
-def make_tools(provider: CodexProvider, service: Any) -> list[Any]:
+def make_tools(provider: Client, service: Any) -> list[Any]:
     @tool(
         "codex_web_search",
         description=PROMPTS["codex_web_search"],

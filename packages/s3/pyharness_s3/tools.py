@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any, Protocol
 
 from langchain_core.tools import tool
 from pydantic import BaseModel, ConfigDict, Field
@@ -10,9 +10,16 @@ from pydantic import BaseModel, ConfigDict, Field
 from pyharness import package_prompts
 
 from .engine import Bucket, error_text, human
+from .store import ProfileStore
 
-if TYPE_CHECKING:
-    from .service import S3Service  # type-only: .service imports this module
+
+class Host(Protocol):
+    """The service, as the tools use it."""
+
+    store: ProfileStore | None
+
+    async def run(self, id_or_name: str, fn: Any) -> Any: ...
+
 
 PROMPTS = package_prompts(__file__)
 TOOL_LIST_MAX = 500
@@ -30,7 +37,7 @@ class CopyArgs(BaseModel):
     move: bool | None = Field(None, description="Delete the source after copying (rename).")
 
 
-def build_tools(service: S3Service) -> list[Any]:
+def build_tools(service: Host) -> list[Any]:
     """The eleven ``s3_*`` tools bound to a service."""
 
     @tool(
