@@ -26,7 +26,8 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 | 路径 | 内容 |
 |---|---|
 | `packages/core` | 内核：服务容器、事件、组合、Loader、生命周期、CLI |
-| `packages/*` | 内核插件；每个包一个 entry point |
+| `packages/*` | 内核插件；每个包一个 entry point；`packages/<dir>/<module>/` 平铺，无 `src/` 层 |
+| `packages/*/docs/design.md` | 包的模块设计：模块、对外 API、服务、事件 / 工具 / 路由、数据 |
 | `packages/bundle-base` | `base` bundle |
 | `packages/bundle-creator` | `creator` bundle：插件编写 skills |
 | `packages/plugin-manager/pyharness_plugin_manager/skills` | agent 可读的 skills；`references/packages.md` 由 `scripts/gen_packages.py` 生成 |
@@ -37,6 +38,18 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 | `tests/testkit` | 测试用插件 |
 | `docs/` | 设计文档 |
 | `.github/workflows/ci.yml` | CI，Python 3.12：全量测试；Postgres 测试 |
+
+## 代码规范
+
+| 规则 | 内容 |
+|---|---|
+| 行宽 | 120 字符；`ruff format` 与 `E501` 共同约束，字符串与注释手动折行 |
+| 包布局 | `packages/<dir>/pyproject.toml` + `packages/<dir>/<module>/`；`[tool.hatch.build.targets.wheel] packages = ["<module>"]` |
+| `__init__.py` | 模块文档字符串（契约表）+ 从子模块导入 + `__all__`；不放逻辑 |
+| `__all__` | 对外承诺的稳定 API：Service 类、Config、被其他包或测试导入的名字；其余为私有 |
+| 子模块 | 按职责拆分：`service.py`、`routes.py`、`tools.py`、领域模块；子模块之间直接相互导入，不从包的 `__init__` 导入 |
+| 依赖 | `pyproject.toml` 的 `dependencies` 与 dev 组全部 `==` 锁定到 `uv.lock` 的版本；升级 = 改 pin + `uv lock` |
+| 设计文档 | 每个包一份 `docs/design.md`，结构固定：模块、对外 API、服务、事件 / 工具 / 路由 / 提示段、数据 |
 
 ## 写作规范
 
