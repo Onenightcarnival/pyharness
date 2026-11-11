@@ -7,6 +7,7 @@ facts (``base_url``, ``api_key_env``), and its model catalog. A model spec is ``
 | method                | purpose                                                                 |
 |-----------------------|-------------------------------------------------------------------------|
 | ``resolve(spec)``     | chat model for ``route:model``; instances cached until ``update``       |
+| ``build(spec, ...)``  | a new chat model with per-request overrides; not cached                 |
 | ``update(...)``       | replace the live configuration; the next request uses it               |
 | ``describe()``        | routes with credential state (never the value) and the provider catalog |
 | ``directory()``       | model choices for selectors, grouped by route                           |

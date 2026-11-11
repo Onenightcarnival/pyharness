@@ -21,6 +21,7 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 | `pyharness-compaction` | service | compaction | agentLoop, llm | yes | Plugin that provides one service under ``key``. |
 | `pyharness-config-center` | service | configCenter | http, webui, agentLoop | yes | MCP page, skills and the managed runtime. |
 | `pyharness-dev-context` | function |  | prompt | yes | Prompt section ``dev-context``: where this harness runs. |
+| `pyharness-gateway` | service | gateway | llm, http, webui | yes | Local LLM API gateway over the routes of ``ctx.llm``. |
 | `pyharness-http` | service | http |  | yes | FastAPI root application and uvicorn server. |
 | `pyharness-inspect` | function |  | tools | yes | ``harness_inspect`` tool: read-only view of the running harness. |
 | `pyharness-llm` | service | llm |  | yes | Chat-model routes; resolves ``route:model`` specs. |
@@ -45,5 +46,5 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 |---|---|---|---|
 | `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `mcp`, `ask-user`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `compaction`, `workspace-changes`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui`, `terminal` |
 | `creator` | Creator | New sessions start in the Creator preset (plugin-authoring skills, plugin manager and inspection tools). | `agent-loop` |
-| `toolkit` | Toolkit | Built-in toolkit; sidebar entries can be hidden in Settings → General. | `memory`, `rdb`, `s3`, `config-center`, `otel`, `subscriptions` |
+| `toolkit` | Toolkit | Built-in toolkit; sidebar entries can be hidden in Settings → General. | `memory`, `rdb`, `s3`, `config-center`, `otel`, `subscriptions`, `gateway` |
 | `web` | Web | web_search (DeepSeek native search; needs DEEPSEEK_API_KEY) and web_fetch tools for the agent. Preset; switch it off on the Plugins page. | `web-tools` |

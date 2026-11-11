@@ -1,0 +1,50 @@
+# Listener defaults, limits and wire-level tables. One table per module; each module loads its table with
+# ``package_toml(__file__)``.
+
+[settings]
+DEFAULT_HOST = "127.0.0.1"
+DEFAULT_PORT = 8766
+# Aliases and prices accepted in one settings object.
+MAX_ENTRIES = 500
+
+[keys]
+KEY_PREFIX = "pyhg_"
+MAX_KEYS = 100
+MAX_NAME = 80
+# Models accepted in one key allowlist.
+MAX_MODELS = 200
+# A key's `lastUsedAt` is written at most once per this interval.
+TOUCH_INTERVAL_MS = 60000
+
+[usage]
+# Detail rows returned per usage query.
+DETAIL_LIMIT = 200
+# Rows older than this are deleted on each insert.
+RETENTION_DAYS = 400
+
+[images]
+MEDIA_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"]
+MAX_IMAGE_BYTES = 20971520
+FETCH_TIMEOUT_S = 15.0
+
+[backend]
+# Route types whose chat models take `reasoning_effort`; other types ignore the request's effort.
+REASONING_EFFORT_TYPES = ["openai", "azure_openai", "subscription"]
+
+[server]
+DEFAULT_MAX_BODY_BYTES = 33554432
+
+[server.PROTOCOL_PATHS]
+"/v1/chat/completions" = "chat"
+"/v1/responses" = "responses"
+"/v1/messages" = "messages"
+
+[server.CORS_HEADERS]
+access-control-allow-origin = "*"
+access-control-allow-methods = "GET, POST, OPTIONS"
+access-control-allow-headers = "authorization, content-type, x-api-key, anthropic-version, anthropic-beta, openai-beta"
+access-control-max-age = "600"
+
+[listener]
+KEEP_ALIVE_S = 65
+SHUTDOWN_TIMEOUT_S = 5

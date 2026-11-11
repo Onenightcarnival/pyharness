@@ -21,6 +21,7 @@ members = [
     "pyharness-compaction",
     "pyharness-config-center",
     "pyharness-core",
+    "pyharness-gateway",
     "pyharness-http",
     "pyharness-inspect",
     "pyharness-llm",
@@ -1912,6 +1913,35 @@ requires-dist = [
 ]
 
 [[package]]
+name = "pyharness-gateway"
+version = "0.1.0"
+source = { editable = "packages/gateway" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "langchain-core" },
+    { name = "pydantic" },
+    { name = "pyharness-core" },
+    { name = "pyharness-http" },
+    { name = "pyharness-llm" },
+    { name = "pyharness-web-ui" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "pydantic", specifier = "==2.14.1" },
+    { name = "pyharness-core", editable = "packages/core" },
+    { name = "pyharness-http", editable = "packages/http" },
+    { name = "pyharness-llm", editable = "packages/llm" },
+    { name = "pyharness-web-ui", editable = "packages/web-ui" },
+    { name = "uvicorn", specifier = "==0.54.0" },
+]
+
+[[package]]
 name = "pyharness-http"
 version = "0.1.0"
 source = { editable = "packages/http" }
@@ -2038,6 +2068,7 @@ dependencies = [
     { name = "pyharness-compaction" },
     { name = "pyharness-config-center" },
     { name = "pyharness-core" },
+    { name = "pyharness-gateway" },
     { name = "pyharness-http" },
     { name = "pyharness-inspect" },
     { name = "pyharness-llm" },
@@ -2081,6 +2112,7 @@ requires-dist = [
     { name = "pyharness-compaction", editable = "packages/compaction" },
     { name = "pyharness-config-center", editable = "packages/config-center" },
     { name = "pyharness-core", editable = "packages/core" },
+    { name = "pyharness-gateway", editable = "packages/gateway" },
     { name = "pyharness-http", editable = "packages/http" },
     { name = "pyharness-inspect", editable = "packages/inspect" },
     { name = "pyharness-llm", editable = "packages/llm" },

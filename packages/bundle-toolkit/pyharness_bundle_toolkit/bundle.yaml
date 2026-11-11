@@ -26,3 +26,8 @@ patch:
   - id: subscriptions
     name: pyharness-subscriptions
     after: otel
+  # Local LLM API gateway (OpenAI Chat Completions / Responses, Anthropic Messages) over the model routes, with API
+  # keys and usage accounting: ctx.gateway, the API gateway page.
+  - id: gateway
+    name: pyharness-gateway
+    after: subscriptions

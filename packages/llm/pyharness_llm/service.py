@@ -187,36 +187,44 @@ class LLMService(Service):
                 options["api_key"] = value
         return options
 
-    def resolve(self, spec: str | None = None, **overrides: Any) -> BaseChatModel:
-        """Chat model for ``spec`` (``route:model``); ``None`` selects ``config.default``. Instances are cached."""
+    def _plan(self, spec: str | None, overrides: dict[str, Any]) -> tuple[str, str, str, dict[str, Any]]:
+        """``(spec, route, model, options)`` of a model request; ``None`` selects ``config.default``."""
         spec = spec or self.config.default
         if not spec:
             raise LLMConfigError("no model: llm.config.default unset (PYH_MODEL, or the Web UI settings)")
         route, model = split_spec(spec)
         if not route:
             raise LLMConfigError(f"model spec {spec!r} needs the form route:model")
-        options = self.options_for(route, model, **overrides)
-        key = (spec, _freeze(options))
-        if key in self._cache:
-            return self._cache[key]
+        return spec, route, model, self.options_for(route, model, **overrides)
+
+    def _construct(self, spec: str, route: str, model: str, options: dict[str, Any]) -> BaseChatModel:
         kind = self.route_type(route)
         if kind in self._providers:
-            chat = self._providers[kind][0](model, **translate_options("", options))
-        else:
-            info = type_info(kind)
-            if info["package"] is None:
-                raise LLMConfigError(f"unknown provider type {kind!r} for route {route!r}")
-            if not info["installed"]:
-                raise LLMConfigError(
-                    f"provider {kind!r} needs the {info['package']} package "
-                    f"(pip install {info['package'].replace('_', '-')})"
-                )
-            try:
-                chat = init_chat_model(model, model_provider=kind, **translate_options(kind, options))
-            except Exception as exc:
-                raise LLMConfigError(f"cannot initialise model {spec!r}: {exc}") from exc
-        self._cache[key] = chat
-        return chat
+            return self._providers[kind][0](model, **translate_options("", options))
+        info = type_info(kind)
+        if info["package"] is None:
+            raise LLMConfigError(f"unknown provider type {kind!r} for route {route!r}")
+        if not info["installed"]:
+            raise LLMConfigError(
+                f"provider {kind!r} needs the {info['package']} package "
+                f"(pip install {info['package'].replace('_', '-')})"
+            )
+        try:
+            return init_chat_model(model, model_provider=kind, **translate_options(kind, options))
+        except Exception as exc:
+            raise LLMConfigError(f"cannot initialise model {spec!r}: {exc}") from exc
+
+    def resolve(self, spec: str | None = None, **overrides: Any) -> BaseChatModel:
+        """Chat model for ``spec`` (``route:model``); ``None`` selects ``config.default``. Instances are cached."""
+        spec, route, model, options = self._plan(spec, overrides)
+        key = (spec, _freeze(options))
+        if key not in self._cache:
+            self._cache[key] = self._construct(spec, route, model, options)
+        return self._cache[key]
+
+    def build(self, spec: str | None = None, **overrides: Any) -> BaseChatModel:
+        """A new chat model for ``spec`` with ``overrides``; not cached. For per-request parameters."""
+        return self._construct(*self._plan(spec, overrides))
 
     # ------------------------------------------------------------------ settings support
     def catalog(self) -> list[dict[str, Any]]:
