@@ -16,7 +16,7 @@ Read the references below and inspect the proposed or existing plugin against th
 ## Deliver a working plugin first
 
 1. Resolve the requested result: a tool, a listener on an event, a prompt section, an HTTP route, a service, or a combination. Choose a small first version; install it before refinement.
-2. Discover only the APIs that version needs: `harness_inspect topic=services name=<key>` for methods and signatures, `topic=events` for event names and dispatch modes, `topic=config name=<entry id>` for a config schema and the package directory, `topic=tools` and `topic=routes` for what exists. Read `references/practices.md` before choosing an extension point for anything beyond a plain tool.
+2. Discover only the APIs that version needs: `harness_inspect topic=services name=<key>` for methods and signatures, `topic=events` for event names and dispatch modes, `topic=config name=<entry id>` for a config schema and the package directory, `topic=tools` and `topic=routes` for what exists. Read `references/practices.md` before choosing an extension point for anything beyond a plain tool, and `references/conventions.md` before a plugin grows beyond one file.
 3. `plugin_manager action=template target=<name>` returns starter files (`variant=tool-and-route` adds a listener and a route; `variant=ui-panel` adds a Web UI panel with a browser module). Write them under `/plugins/<name>/` with the file tools, then edit. The same files are in this skill's `templates/` directory with `__DIST__`, `__MODULE__`, `__BUNDLE__`, `__TITLE__` tokens. Check the module imports (`python -c "import ..."` through the shell when available) before installing.
 4. `plugin_manager action=install_bundle target=/plugins/<name>`. Read the result's `application`:
    - `rejected`: `stage` and `errors` say why; the profile is unchanged. Fix and install again.
@@ -47,6 +47,7 @@ Paths are relative to this skill's directory, which the skill catalog shows. Rea
 |---|---|
 | Bundle layout, entry points, plugin forms, `inject`, `Config`, ownership of registrations | `references/host-plugin.md` |
 | Choosing extension points: tool pipeline, events, prompt, services, stability rules | `references/practices.md` |
+| Code conventions: module layout beyond one file, `__all__`, Protocols instead of import cycles, `config.toml` / `prompts.toml`, pinned dependencies | `references/conventions.md` |
 | HTTP routes and pages on `ctx.http` | `references/http.md` |
 | Web UI panels, sidebar rows, settings and right-sidebar tabs: browser module, slots, `ctx.host.call` | `references/ui-plugin.md` |
 | What can be verified after the restart, and what cannot | `references/verification.md` |

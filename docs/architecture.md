@@ -39,7 +39,7 @@ def apply(ctx, config: Config):
 ```python
 class Cache(Service):
     key = "cache"
-    inject = ["store"]
+    inject: ClassVar[list[str]] = ["store"]
 
     async def start(self): ...
 

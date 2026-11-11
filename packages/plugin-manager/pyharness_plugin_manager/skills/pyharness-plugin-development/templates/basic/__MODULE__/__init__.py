@@ -32,8 +32,7 @@ def apply(ctx: Any, config: Config) -> None:
     # async def audit(call, result):
     #     ctx.logger.info("tool %s finished", call.name)
 
-    # HTTP routes, with "http" in `inject`:
-    # from fastapi import APIRouter
+    # HTTP routes, with "http" in `inject` and `from fastapi import APIRouter` at the top of the file:
     # router = APIRouter()
     # @router.get("/status")
     # async def status() -> dict:

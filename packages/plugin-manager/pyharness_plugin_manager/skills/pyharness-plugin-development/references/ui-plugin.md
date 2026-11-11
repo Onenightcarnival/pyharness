@@ -26,7 +26,7 @@ window.__PyhModules__.load({
 });
 ```
 
-`require("pyharness")`: `h(tag, attrs, ...children)` builds elements (`class`, `style` object, `onClick`-style handlers); `icon(name)` returns the SVG markup of a page icon (`box`, `folder`, `file`, `eye`, `plug`, `gear`, `terminal`, `refresh`, `copy`, `pencil`, `x-circle`, …; the sprite in the page lists them as `id="i-<name>"`); `esc(text)` escapes HTML; `toast(text)`; `api(path, init)` fetches `/api<path>` as JSON; `markdown(text)` renders Markdown to HTML; `locale` is `zh` or `en`.
+`require("pyharness")`: `h(tag, attrs, ...children)` builds elements (`class`, `style` object, `onClick`-style handlers); `icon(name)` returns the SVG markup of a page icon (`box`, `folder`, `file`, `eye`, `plug`, `gear`, `terminal`, `refresh`, `copy`, `pencil`, `x-circle`, …; the sprite in the page lists them as `id="i-<name>"`); `esc(text)` escapes HTML; `toast(text)`; `api(path, init)` fetches `/api<path>` and resolves to the `Response`, `json(path, init)` to its parsed JSON body; both reject with an `Error` whose `message` is the response's `detail` and whose `status` is the HTTP status; `markdown(text)` renders Markdown to HTML; `locale` is `zh` or `en`.
 
 `ctx` passed to `apply`:
 
@@ -34,7 +34,7 @@ window.__PyhModules__.load({
 |---|---|
 | `ctx.slots.register(spec, mount?)` | fill a slot; `spec.slot` names it; returns the disposer |
 | `ctx.host.call(method, args)` | `POST /plugins/<entry>/call/<method>`; resolves to the handler's result; rejects with the error detail |
-| `ctx.api(path, init)` | same as `require("pyharness").api` |
+| `ctx.api(path, init)` | same as `require("pyharness").json`: the parsed JSON body |
 | `ctx.on("session" \| "run" \| "health", fn)` | current session changed (record or `null`); a run event (`{type: "token" \| "tool_call" \| "tool_result" \| "done" …}`); health polled; returns the disposer |
 | `ctx.effect(cleanup)` | register a cleanup run when the module is disposed |
 | `ctx.session()` | the current session record or `null` |
@@ -58,7 +58,7 @@ A keyed slot refuses a second registration with the same key (the error names th
 
 ## Page classes
 
-Reuse the page's styles instead of shipping CSS where possible: `page`, `pageHead`, `pageTitle`, `pageIntro`, `group`, `groupHead`, `groupTitle`, `groupMeta`, `cards`, `pcard`, `kvTable`, `btn` (`primary`, `outline`, `sm`), `iconButton`, `tag` (`data-tone` of `info`, `success`, `danger`, `outline`), `tip`. Colors are CSS variables (`--label-primary`, `--label-secondary`, `--label-tertiary`, `--bg-base`, `--hover`, `--border-l2`, `--info`, `--danger`, `--mono`) and follow the theme.
+Reuse the page's styles instead of shipping CSS where possible: `page`, `pageHead`, `pageTitle`, `pageIntro`, `group`, `groupHead`, `groupTitle`, `groupMeta`, `cards`, `pcard`, `kvTable`, `btn` (`primary`, `outline`, `sm`), `iconButton`, `tag` (`data-tone` of `info`, `success`, `danger`, `outline`), `tip`. Colors are CSS variables (`--label-primary`, `--label-secondary`, `--label-tertiary`, `--bg-base`, `--bg-layer-1` … `--bg-layer-3`, `--hover`, `--border-l2`, `--info`, `--error`, `--mono`) and follow the theme.
 
 ## Verify after the restart
 

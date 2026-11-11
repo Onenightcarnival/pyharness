@@ -6,7 +6,7 @@ Confirm every service method, event name, and dispatch mode named here with `har
 
 1. **Registrations are effects owned by a context.** Register through `ctx`; the entry's stop undoes them. State kept elsewhere (module globals, files, threads) needs `ctx.on_dispose`.
 2. **Use the weakest mechanism that suffices.** From weakest to strongest: a new tool; a `tools/result` listener (observe); an approval gate (`ctx.tools.require_approval`); a `tools/execute` listener (can replace a call); an `agent/model-request` listener (can rewrite the model request); replacing the `agent-loop` entry. The stronger the mechanism, the more of other plugins' behavior it must preserve.
-3. **Configuration belongs in `Config`.** Users change it in the profile patch, which survives upgrades; constants in code do not.
+3. **Configuration belongs in `Config`.** Users change it in the profile patch, which survives upgrades; constants in code do not. Constants a user does not configure and model-visible text live in `config.toml` and `prompts.toml` beside the module (`conventions.md`).
 4. **Services are shared.** A service another plugin consumes belongs in the base composition order before its consumers (`after:` position); `inject` makes the consumer wait for it.
 5. **Every change goes through preflight.** Code that fails at import, at `apply`, or at `app/ready` rejects the installation. Keep `apply` cheap and fail early with a clear message.
 

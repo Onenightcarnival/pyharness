@@ -9,6 +9,8 @@
   <module>/bundle.yaml          # mount position: patch ops over the profile tree
 ```
 
+A plugin that outgrows `__init__.py` splits into modules (`service.py`, `tools.py`, `routes.py`, `config.toml`, `prompts.toml`); `conventions.md` gives the layout and its rules.
+
 `pyproject.toml` declares:
 
 | entry-point group | value | meaning |
@@ -16,7 +18,7 @@
 | `pyharness.plugins` | `<dist> = "<module>"` | the plugin; an entry's `name` refers to it |
 | `pyharness.bundles` | `<bundle> = "<module>:BUNDLE"` | `BUNDLE` is the path of `bundle.yaml` |
 
-`dependencies` lists only packages the harness does not provide. Provided: `pyharness-core`, `pydantic`, `langchain-core`, `langchain`, `fastapi`. A dependency is installed with `pip --target` into the profile `site/`; an unavailable package rejects the installation.
+`dependencies` lists only packages the harness does not provide, each pinned to an exact version (`httpx==0.28.1`). Provided: `pyharness-core`, `pydantic`, `langchain-core`, `langchain`, `fastapi`. A dependency is installed with `pip --target` into the profile `site/`; an unavailable package rejects the installation.
 
 `bundle.yaml`:
 
@@ -51,12 +53,14 @@ def apply(ctx, config): ...  # sync or async; returns nothing
 `Service` subclass, providing one service under `key`:
 
 ```python
+from typing import ClassVar
+
 from pyharness import Service
 
 
 class AuditService(Service):
     key = "audit"  # ctx.audit for other plugins
-    inject = ["tools"]
+    inject: ClassVar[list[str]] = ["tools"]
     Config = AuditConfig
 
     async def start(self): ...
