@@ -1,17 +1,29 @@
-"""``web_search``: DeepSeek native search through one Anthropic-format Messages call.
+"""``web_search``: DeepSeek search.
+
+| ``search_provider``     | request                                                                         |
+|-------------------------|---------------------------------------------------------------------------------|
+| ``deepseek-search-api`` | ``POST {search_base_url}/search`` ``{query, count, need_content: false}``: one  |
+|                         | direct request, paced to ``search_requests_per_second``; sources carry a summary |
+| ``deepseek-legacy``     | one Anthropic-format Messages call with the ``web_search_20250305`` server tool: |
+|                         | an answer with cited sources                                                    |
 
 | function                    | contract                                                                       |
 |-----------------------------|--------------------------------------------------------------------------------|
 | ``search()``                | ``{"answer", "sources", "truncated"}``; ``RuntimeError`` with a user-facing message on |
 |                             | failure                                                                        |
-| ``parse_search_response()`` | answer text and deduplicated sources of a response with ``web_search_tool_result`` |
-|                             | blocks                                                                         |
-| ``format_search()``         | the tool result: notice, answer, ``Sources:`` list, citation instruction        |
+| ``map_search_response()``   | sources of a Search API response: url, title, snippet, summary, published_at   |
+| ``parse_search_response()`` | answer text and deduplicated sources of a Messages response with                |
+|                             | ``web_search_tool_result`` blocks                                               |
+| ``format_search()``         | the tool result: notice, answer, ``Sources:`` list with each source's summary  |
+|                             | or snippet, citation instruction                                               |
 | ``search_tool()``           | the ``web_search`` LangChain tool bound to the service                          |
+
+A redirect of the Search API endpoint and an HTTP 429 fail the search.
 """
 
 from __future__ import annotations
 
+import re
 from string import Template
 from typing import Any
 from urllib.parse import urlparse
@@ -24,6 +36,7 @@ from pyharness import package_prompts
 from .common import NOTICE, Host
 
 PROMPTS = package_prompts(__file__)
+ELLIPSIS = "…"
 
 
 def format_search(answer: str, sources: list[dict[str, Any]], truncated: bool) -> str:
@@ -34,9 +47,8 @@ def format_search(answer: str, sources: list[dict[str, Any]], truncated: bool) -
         lines = []
         for s in sources:
             label = s.get("title") or (urlparse(s["url"]).hostname or s["url"])
-            meta = " ".join(
-                x for x in [s.get("snippet", ""), f"({s['published_at']})" if s.get("published_at") else ""] if x
-            )
+            excerpt = s.get("summary") or s.get("snippet", "")
+            meta = " ".join(x for x in [excerpt, f"({s['published_at']})" if s.get("published_at") else ""] if x)
             lines.append(f"- [{label}]({s['url']})" + (f" — {meta}" if meta else ""))
         parts.append("Sources:\n" + "\n".join(lines))
     elif not answer.strip():
@@ -82,12 +94,72 @@ def parse_search_response(body: dict[str, Any]) -> tuple[str, list[dict[str, Any
     return "".join(answer), sources
 
 
-async def search(service: Host, query: str) -> dict[str, Any]:
-    """``{"answer", "sources", "truncated"}``; raises ``RuntimeError`` with a user-facing message on failure."""
+def _bounded(text: str, limit: int) -> str:
+    """``text`` with whitespace collapsed, cut to ``limit`` characters including the ellipsis that marks a cut."""
+    text = re.sub(r"\s+", " ", text).strip()
+    return text if len(text) <= limit else text[: limit - len(ELLIPSIS)] + ELLIPSIS
+
+
+def map_search_response(body: Any, summary_max_chars: int) -> list[dict[str, Any]]:
+    """Sources of a Search API response, in provider order; raises ``ValueError`` on an invalid body."""
+    results = body.get("results") if isinstance(body, dict) else None
+    if not isinstance(results, list):
+        raise ValueError("no results list")
+    sources = []
+    for item in results:
+        if not isinstance(item, dict) or not isinstance(item.get("url"), str) or not item["url"]:
+            raise ValueError("a result without a url")
+        source = {"url": item["url"]}
+        for field, key in (("title", "title"), ("snippet", "snippet"), ("date", "published_at")):
+            if isinstance(item.get(field), str) and item[field]:
+                source[key] = item[field]
+        if isinstance(item.get("summary"), str) and item["summary"].strip():
+            source["summary"] = _bounded(item["summary"], summary_max_chars)
+        sources.append(source)
+    return sources
+
+
+def _error_detail(response: httpx.Response) -> str:
+    try:
+        body = response.json()
+    except ValueError:
+        return response.text[:300]
+    if not isinstance(body, dict):
+        return ""
+    err = body.get("error")
+    detail = err if isinstance(err, str) else err.get("message") if isinstance(err, dict) else body.get("message")
+    return detail if isinstance(detail, str) else ""
+
+
+def _http_error(response: httpx.Response, endpoint: str) -> RuntimeError:
+    detail = _error_detail(response)
+    return RuntimeError(
+        f"DeepSeek API error (HTTP {response.status_code}){': ' + detail if detail else ''} at {endpoint}"
+    )
+
+
+async def _search_api(service: Host, query: str, key: str) -> dict[str, Any]:
     config = service.config
-    key = service.api_key()
-    if not key:
-        raise RuntimeError(Template(PROMPTS["search"]["no_api_key"]).substitute(api_key_env=config.api_key_env))
+    endpoint = config.search_base_url.rstrip("/") + "/search"
+    body = {"query": query, "count": config.max_results, "need_content": False}
+    headers = {"authorization": f"Bearer {key}", "content-type": "application/json", "accept": "application/json"}
+    await service.pacer.wait(config.search_requests_per_second)
+    async with service.client(config.search_timeout) as client:
+        try:
+            response = await client.post(endpoint, json=body, headers=headers, follow_redirects=False)
+        except httpx.HTTPError as exc:
+            raise RuntimeError(f"DeepSeek search request failed ({endpoint}): {exc}") from exc
+    if not response.is_success:
+        raise _http_error(response, endpoint)
+    try:
+        sources = map_search_response(response.json(), config.summary_max_chars)
+    except ValueError as exc:
+        raise RuntimeError(f"DeepSeek returned an invalid response body: {exc}") from exc
+    return {"answer": "", "sources": sources[: config.max_results], "truncated": False}
+
+
+async def _search_legacy(service: Host, query: str, key: str) -> dict[str, Any]:
+    config = service.config
     body = {
         "model": config.model,
         "max_tokens": config.max_tokens,
@@ -111,15 +183,7 @@ async def search(service: Host, query: str) -> dict[str, Any]:
         except httpx.HTTPError as exc:
             raise RuntimeError(f"DeepSeek search request failed ({endpoint}): {exc}") from exc
     if response.status_code >= 400:
-        detail = ""
-        try:
-            err = response.json().get("error")
-            detail = err if isinstance(err, str) else (err or {}).get("message") or ""
-        except Exception:  # noqa: BLE001
-            detail = response.text[:300]
-        raise RuntimeError(
-            f"DeepSeek API error (HTTP {response.status_code}){': ' + detail if detail else ''} at {endpoint}"
-        )
+        raise _http_error(response, endpoint)
     try:
         answer, sources = parse_search_response(response.json())
     except Exception as exc:  # noqa: BLE001
@@ -128,6 +192,17 @@ async def search(service: Host, query: str) -> dict[str, Any]:
         raise RuntimeError("DeepSeek returned no search results; the request may not have triggered native web search")
     truncated = len(sources) > config.max_results
     return {"answer": answer, "sources": sources[: config.max_results], "truncated": truncated}
+
+
+async def search(service: Host, query: str) -> dict[str, Any]:
+    """``{"answer", "sources", "truncated"}``; raises ``RuntimeError`` with a user-facing message on failure."""
+    config = service.config
+    key = service.api_key()
+    if not key:
+        raise RuntimeError(Template(PROMPTS["search"]["no_api_key"]).substitute(api_key_env=config.api_key_env))
+    if config.search_provider == "deepseek-legacy":
+        return await _search_legacy(service, query, key)
+    return await _search_api(service, query, key)
 
 
 def search_tool(service: Host) -> Any:

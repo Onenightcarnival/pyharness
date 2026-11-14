@@ -34,7 +34,7 @@ import httpx
 
 from pyharness import Service
 
-from .common import USER_AGENT
+from .common import USER_AGENT, Pacer
 from .config import Config
 from .fetch import fetch as fetch_url, fetch_tool
 from .search import search as search_web, search_tool
@@ -49,6 +49,7 @@ class WebToolsService(Service):
     def __init__(self, ctx: Any, config: Config) -> None:
         super().__init__(ctx, config)
         self.transport: Any = None  # httpx transport override (tests)
+        self.pacer = Pacer()
 
     async def start(self) -> None:
         if self.config.search:
@@ -66,6 +67,7 @@ class WebToolsService(Service):
 
     def status(self) -> dict[str, Any]:
         ref = self.config.api_key_env
+        legacy = self.config.search_provider == "deepseek-legacy"
         profile = self.ctx.get("profile", None)
         described = (
             profile.credentials.describe(ref)
@@ -80,8 +82,9 @@ class WebToolsService(Service):
             "search": {
                 **described,
                 "enabled": self.config.search,
-                "model": self.config.model,
-                "base_url": self.config.base_url,
+                "provider": self.config.search_provider,
+                "model": self.config.model if legacy else None,
+                "base_url": self.config.base_url if legacy else self.config.search_base_url,
             },
             "fetch": {"enabled": self.config.fetch},
         }

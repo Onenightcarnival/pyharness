@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import json
+import time
 from textwrap import dedent
 
 import httpx
+import pytest
 import yaml
 
 from pyharness import Harness, Profile
-from pyharness_web_tools import format_search, html_to_text, parse_search_response
+from pyharness_web_tools import format_search, html_to_text, map_search_response, parse_search_response
+from pyharness_web_tools.common import Pacer
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 PAGE = dedent(
@@ -20,6 +23,19 @@ PAGE = dedent(
       block</pre><img alt="diagram"></body></html>
     """  # noqa: E501
 ).strip()
+
+API_RESPONSE = {
+    "results": [
+        {
+            "url": "https://a.test/1",
+            "title": "Result A",
+            "snippet": "short",
+            "summary": "A long   summary of the page\nwith details",
+            "date": "2026-10-01",
+        },
+        {"url": "https://b.test/2", "title": "", "snippet": "", "date": None},
+    ]
+}
 
 SEARCH_RESPONSE = {
     "content": [
@@ -53,6 +69,37 @@ def test_html_to_text_and_search_parsing():
     ]
     out = format_search(answer, sources, False)
     assert out.startswith("External web content") and "- [Result A](https://a.test/1) — hi from A (2026-10-01)" in out
+    # Search API: sources in provider order; the summary is collapsed and capped, and wins over the snippet.
+    mapped = map_search_response(API_RESPONSE, 20)
+    assert mapped == [
+        {
+            "url": "https://a.test/1",
+            "title": "Result A",
+            "snippet": "short",
+            "published_at": "2026-10-01",
+            "summary": "A long summary of t…",
+        },
+        {"url": "https://b.test/2"},
+    ]
+    listed = format_search("", mapped, False)
+    assert (
+        "- [Result A](https://a.test/1) — A long summary of t… (2026-10-01)" in listed
+        and "- [b.test](https://b.test/2)" in listed
+    )
+    assert "No results found." in format_search("", [], False)
+    for body in ({}, {"results": "x"}, {"results": [{"title": "no url"}]}, []):
+        with pytest.raises(ValueError):
+            map_search_response(body, 800)
+
+
+async def test_pacer():
+    pacer = Pacer()
+    started = time.monotonic()
+    for _ in range(3):
+        await pacer.wait(3)
+    assert time.monotonic() - started < 0.5
+    await pacer.wait(3)  # the fourth start waits for the window to move
+    assert time.monotonic() - started >= 1.0
 
 
 async def test_tools_over_mock_transport_and_optional_bundle(home, monkeypatch):
@@ -62,6 +109,14 @@ async def test_tools_over_mock_transport_and_optional_bundle(home, monkeypatch):
 
     def handler(request: httpx.Request) -> httpx.Response:
         seen.append(request)
+        if request.url.path == "/v1/tools/search":
+            assert request.headers["authorization"] == "Bearer sk-test" and "x-api-key" not in request.headers
+            assert json.loads(request.content) == {"query": "pyharness", "count": 10, "need_content": False}
+            if request.url.host == "moved.test":
+                return httpx.Response(302, headers={"location": "https://elsewhere.test/"})
+            if request.url.host == "busy.test":
+                return httpx.Response(429, json={"error": {"message": "slow down"}})
+            return httpx.Response(200, json=API_RESPONSE)
         if request.url.path.endswith("/messages"):
             assert request.headers["x-api-key"] == "sk-test" and request.headers["anthropic-version"] == "2023-06-01"
             body = json.loads(request.content)
@@ -89,13 +144,29 @@ async def test_tools_over_mock_transport_and_optional_bundle(home, monkeypatch):
         assert missing.startswith("Error:") and "DEEPSEEK_API_KEY" in missing
         assert web.status()["search"]["configured"] is False
         profile.credentials.set("DEEPSEEK_API_KEY", "sk-test")
+        # Default provider: one direct Search API request; the sources carry their summaries.
+        out = await tools["web_search"].ainvoke({"query": "pyharness"})
+        assert "- [Result A](https://a.test/1) — A long summary of the page with details (2026-10-01)" in out
+        assert "- [b.test](https://b.test/2)" in out and "Cite the relevant URLs" in out
+        assert seen[-1].url == "https://api.deepseek.com/v1/tools/search"
+        status = web.status()["search"]
+        assert status["configured"] is True and status["source"] == "store"
+        assert status["provider"] == "deepseek-search-api" and status["base_url"] == "https://api.deepseek.com/v1/tools"
+        # A redirect and a rate limit fail the search with the endpoint named.
+        web.config.search_base_url = "https://moved.test/v1/tools"
+        moved = await tools["web_search"].ainvoke({"query": "pyharness"})
+        assert moved.startswith("Error: DeepSeek API error (HTTP 302)") and "moved.test" in moved
+        web.config.search_base_url = "https://busy.test/v1/tools/"
+        assert "HTTP 429): slow down" in await tools["web_search"].ainvoke({"query": "pyharness"})
+        # The legacy provider: a Messages call with the web_search server tool, an answer with cited sources.
+        web.config.search_provider = "deepseek-legacy"
         out = await tools["web_search"].ainvoke({"query": "pyharness"})
         assert (
             "A says hi. B too." in out
             and "[Result A](https://a.test/1)" in out
             and "[Result B](https://b.test/2)" in out
         )
-        assert web.status()["search"]["configured"] is True and web.status()["search"]["source"] == "store"
+        assert web.status()["search"]["provider"] == "deepseek-legacy" and web.status()["search"]["model"]
         page = await tools["web_fetch"].ainvoke({"url": "https://x.test/page"})
         assert "Title: Hello & welcome" in page and "# Heading" in page and "[a link](https://x.test/doc)" in page
         data = await tools["web_fetch"].ainvoke({"url": "https://x.test/data.json"})

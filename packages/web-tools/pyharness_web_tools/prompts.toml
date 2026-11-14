@@ -13,8 +13,8 @@ or export it in the environment of the harness. Say so to the user and continue 
 
 [tools]
 web_search = '''
-Search the web for current information (DeepSeek native search). Returns an answer with its sources:
-title, URL, snippet and date. Use specific queries; cite the URLs in your reply.
+Search the web for current information (DeepSeek search). Returns the sources: title, URL, a summary
+or snippet, and date. Use specific queries; cite the URLs in your reply.
 '''
 web_fetch = '''
 Fetch a web page or file by URL and return its readable text (HTML reduced to text with links kept,
