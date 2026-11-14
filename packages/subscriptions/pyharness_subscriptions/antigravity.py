@@ -7,7 +7,6 @@ import asyncio
 import hashlib
 import json
 import os
-import platform
 import re
 import sys
 import time
@@ -23,6 +22,7 @@ from langchain_core.outputs import ChatGenerationChunk
 
 from pyharness import package_toml
 
+from .antigravity_client import CliVersion, build_user_agent
 from .antigravity_tools import make_tools
 from .antigravity_wire import (
     DEFAULT_ORIGIN,
@@ -87,6 +87,7 @@ class AntigravityProvider(Provider):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.client_file = JsonFile(self.auth.file.path.parent / "antigravity-oauth-client.json", {})
+        self.cli = CliVersion()
 
     # ------------------------------------------------------------------ oauth client
     def oauth_client(self) -> tuple[str, str | None]:
@@ -109,11 +110,14 @@ class AntigravityProvider(Provider):
         return [str(base).rstrip("/")] if base else [DEFAULT_ORIGIN, FALLBACK_ORIGIN]
 
     def user_agent(self) -> str:
+        """``antigravity.userAgent`` when configured, else the CLI signature with the version in use."""
         custom = (self.config.get("antigravity") or {}).get("userAgent")
-        arch = {"x86_64": "amd64", "amd64": "amd64", "arm64": "arm64", "aarch64": "arm64"}.get(
-            platform.machine().lower(), platform.machine().lower()
-        )
-        return str(custom) if custom else f"antigravity/1.15.8 {sys.platform.replace('win32', 'windows')}/{arch}"
+        return str(custom) if custom else build_user_agent(self.cli.current)
+
+    async def signed(self) -> None:
+        """Read the stable CLI version before the first signed request; a configured User-Agent needs none."""
+        if not (self.config.get("antigravity") or {}).get("userAgent"):
+            await self.cli.prime(self.http)
 
     def headers(self, session: dict[str, Any], stream: bool = False) -> dict[str, str]:
         return {
@@ -136,6 +140,7 @@ class AntigravityProvider(Provider):
         timeout: float = 10.0,
     ) -> dict[str, Any]:
         """``POST {origin}/v1internal:{method}`` with the origin fallback rule."""
+        await self.signed()
         last: Exception | None = None
         for origin in self.origins()[: 1 if single_origin else None]:
             try:
@@ -279,6 +284,7 @@ class AntigravityProvider(Provider):
         project = (self.config.get("antigravity") or {}).get("projectId") or session.get("projectId")
         merged: dict[str, Any] = {}
         origins = self.origins()
+        await self.signed()
 
         async def one(origin: str) -> dict[str, Any]:
             res = await self.http.post(
@@ -415,6 +421,7 @@ class AntigravityChatModel(ResponsesChatModel):
         provider: AntigravityProvider = self.provider_ref
         manager = provider.token_manager(self.account_key)
         session = await manager.session()
+        await provider.signed()
         session_id = self._session_id(kwargs)
         for attempt in (1, 2):
             project = (provider.config.get("antigravity") or {}).get("projectId") or session.get("projectId")

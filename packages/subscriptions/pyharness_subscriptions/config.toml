@@ -133,6 +133,25 @@ PROJECT_KEYS = [
 ]
 PROJECT_LISTS = ["projects", "projectIds", "cloudaicompanionProjects"]
 
+[antigravity_client]
+# CLI version used until the auto-updater answers.
+CLI_VERSION_FALLBACK = "1.5.3"
+# Changelist carried by the CLI signature.
+CLI_CHANGE_LIST = "962369648"
+# Plain-text endpoint announcing the current stable CLI version.
+CLI_VERSION_URL = "https://antigravity-cli-auto-updater-974169037036.us-central1.run.app"
+VERSION_FETCH_TIMEOUT_S = 5.0
+
+# platform.machine() → arch of the signature; other values pass through.
+[antigravity_client.ARCH_NAMES]
+x86_64 = "amd64"
+amd64 = "amd64"
+aarch64 = "arm64"
+arm64 = "arm64"
+i386 = "386"
+i686 = "386"
+x86 = "386"
+
 [antigravity_tools]
 SEARCH_MODEL = "gemini-3-flash"
 IMAGE_MODEL = "gemini-3.1-flash-image"
@@ -142,3 +161,5 @@ DEFAULT_ORIGIN = "https://cloudcode-pa.googleapis.com"
 FALLBACK_ORIGIN = "https://daily-cloudcode-pa.sandbox.googleapis.com"
 # HTTP statuses after which the next origin is tried.
 FALLBACK_STATUSES = [403, 404, 429, 500, 502, 503, 504]
+# The backend answers a rejected client signature with HTTP 200 and this text as the only content.
+UNSUPPORTED_CLIENT_PATTERN = "^\\s*This version of Antigravity is no longer supported"

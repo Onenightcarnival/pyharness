@@ -16,6 +16,8 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, Tool
 
 from pyharness import Harness, Profile
 from pyharness_subscriptions import SubscriptionsService
+from pyharness_subscriptions.antigravity import AntigravityProvider
+from pyharness_subscriptions.antigravity_client import CLI_VERSION_FALLBACK, build_user_agent, parse_cli_version
 from pyharness_subscriptions.antigravity_wire import (
     AntigravityTranslator,
     build_request,
@@ -344,6 +346,52 @@ def test_antigravity_wire():
                 json.dumps({"candidates": [{"content": {"parts": [{"text": "x"}]}, "finishReason": "SAFETY"}]})
             )
         )
+
+
+async def test_antigravity_cli_signature(tmp_path):
+    assert (
+        build_user_agent("1.5.3", "win32", "AMD64")
+        == "antigravity/cli/1.5.3 (aidev_client; os_type=windows; arch=amd64; cl=962369648; auth_method=consumer)"
+    )
+    assert parse_cli_version("Antigravity CLI auto updater is running! Stable Version: 1.6.0. Rolled out") == "1.6.0"
+    assert parse_cli_version("maintenance") is None
+    calls: list[str] = []
+    answer = {"status": 200, "text": "Stable Version: 1.6.0."}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(str(request.url))
+        if request.url.host.startswith("antigravity-cli-auto-updater"):
+            return httpx.Response(answer["status"], text=answer["text"])
+        return httpx.Response(200, json={"ua": request.headers["user-agent"]})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http:
+        provider = AntigravityProvider(AuthStore(tmp_path), CatalogCache(tmp_path), http)
+        assert provider.user_agent().startswith(f"antigravity/cli/{CLI_VERSION_FALLBACK} (aidev_client; os_type=")
+        # The first signed request reads the stable version once; later requests reuse it.
+        reply = await provider.call({"accessToken": "t"}, "loadCodeAssist", {}, single_origin=True)
+        assert reply["ua"].startswith("antigravity/cli/1.6.0 (aidev_client; ")
+        await provider.call({"accessToken": "t"}, "loadCodeAssist", {}, single_origin=True)
+        assert sum("auto-updater" in url for url in calls) == 1
+        # A failed read keeps the pinned version; a configured User-Agent replaces the signature and reads nothing.
+        answer["status"] = 503
+        down = AntigravityProvider(AuthStore(tmp_path), CatalogCache(tmp_path), http)
+        assert (await down.call({"accessToken": "t"}, "x", {}, single_origin=True))["ua"].startswith(
+            f"antigravity/cli/{CLI_VERSION_FALLBACK} "
+        )
+        before = len(calls)
+        custom = AntigravityProvider(
+            AuthStore(tmp_path), CatalogCache(tmp_path), http, {"antigravity": {"userAgent": "my-agent/1"}}
+        )
+        assert (await custom.call({"accessToken": "t"}, "x", {}, single_origin=True))["ua"] == "my-agent/1"
+        assert len(calls) == before + 1
+    # A rejected signature is answered with HTTP 200 and a notice as the only content.
+    notice = "This version of Antigravity is no longer supported. Please download and install the latest version"
+    part = {"response": {"candidates": [{"content": {"parts": [{"text": notice}]}, "finishReason": "STOP"}]}}
+    with pytest.raises(LlmError, match="rejected the client signature") as info:
+        list(AntigravityTranslator("ag").feed(json.dumps(part)))
+    assert info.value.code == "UNSUPPORTED_CLIENT"
+    fine = {"response": {"candidates": [{"content": {"parts": [{"text": "This version of the plan is fine."}]}}]}}
+    assert list(AntigravityTranslator("ag").feed(json.dumps(fine)))[0].content == "This version of the plan is fine."
 
 
 def test_codex_search_commands():

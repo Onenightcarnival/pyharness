@@ -23,6 +23,8 @@ _CFG = package_toml(__file__)["antigravity_wire"]
 DEFAULT_ORIGIN: str = _CFG["DEFAULT_ORIGIN"]
 FALLBACK_ORIGIN: str = _CFG["FALLBACK_ORIGIN"]
 FALLBACK_STATUSES: set[int] = set(_CFG["FALLBACK_STATUSES"])
+UNSUPPORTED_CLIENT = re.compile(_CFG["UNSUPPORTED_CLIENT_PATTERN"], re.IGNORECASE)
+UNSUPPORTED_CLIENT_CODE = "UNSUPPORTED_CLIENT"
 
 
 # ---------------------------------------------------------------------- efforts and thinking
@@ -324,8 +326,12 @@ class AntigravityTranslator:
                     self.saw_content = True
                     yield AIMessageChunk(content="", additional_kwargs={"reasoning_content": str(part["text"])})
                 elif part.get("text"):
+                    text = str(part["text"])
+                    if not self.saw_content and UNSUPPORTED_CLIENT.match(text):
+                        notice = text.strip()[:200]
+                        raise LlmError(UNSUPPORTED_CLIENT_CODE, f"Antigravity rejected the client signature: {notice}")
                     self.saw_content = True
-                    yield AIMessageChunk(content=str(part["text"]))
+                    yield AIMessageChunk(content=text)
                 elif part.get("inlineData"):
                     inline = part["inlineData"]
                     self.saw_content = True

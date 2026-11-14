@@ -13,6 +13,8 @@ and Grok (xAI), signed in through their OAuth flows.
 | ``codexClientVersion`` | pin the Codex client version sent with catalog requests        |
 | ``antigravity``        | ``clientId``, ``clientSecret``, ``baseURL``, ``userAgent``, ``projectId``, ``onboard``, |
 |                        | ``maxTokens``                                                  |
+|                        | ``userAgent`` replaces the Antigravity CLI signature, whose version is read once per start |
+|                        | from the CLI auto-updater (a pinned version when the read fails) |
 | ``models`` / ``chatgpt.models`` / ``grok.models`` | static catalogs (non-empty disables discovery for Codex / Grok) |
 | ``stream_idle_timeout`` | seconds without data before a stream fails                   |
 
