@@ -1,6 +1,19 @@
 """User skills: ``<profile data>/toolkit/skills/<name>/SKILL.md`` (enabled, mounted for the agent at ``/skills/user/``)
 and ``<profile data>/toolkit/disabled-skills/`` (kept, not mounted). Install from ZIP, enable / disable by moving the
-directory, remove, read files."""
+directory, remove, read files.
+
+| ZIP install      | rule                                                                                  |
+|------------------|---------------------------------------------------------------------------------------|
+| extraction       | every entry keeps its path and bytes; file contents are not read                      |
+| install unit     | one per top-level entry, named after it; an existing entry of that name is replaced as a whole |
+| top-level ``.md``| stored as ``<name>/SKILL.md``: the agent loop mounts skills in that layout only       |
+| executable bit   | applied when the archive records one (Unix or macOS host)                             |
+| ``__MACOSX``     | not extracted                                                                         |
+| limits           | 32 MB archive, 100 MB and 4000 entries extracted                                      |
+
+A skill name is one visible, portable path segment of at most 128 characters; the list shows the directories that
+hold a ``SKILL.md``.
+"""
 
 from __future__ import annotations
 
@@ -17,7 +30,6 @@ from typing import Any
 
 import yaml
 
-NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 FRONTMATTER_RE = re.compile(r"^﻿?---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)")
 ZIP_LIMIT = 32 * 1024 * 1024
 EXPAND_LIMIT = 100 * 1024 * 1024
@@ -25,6 +37,8 @@ ENTRY_LIMIT = 4000
 PREVIEW_LIMIT = 256 * 1024
 WALK_DEPTH = 12
 WALK_ENTRIES = 400
+NAME_LIMIT = 128
+UNIX_HOSTS = (3, 19)  # ``create_system`` of archives written on Unix and macOS
 RESERVED = {"con", "prn", "aux", "nul", *(f"com{i}" for i in range(1, 10)), *(f"lpt{i}" for i in range(1, 10))}
 
 
@@ -32,27 +46,28 @@ class SkillError(ValueError):
     pass
 
 
+def unsafe_part(part: str) -> bool:
+    """A path segment that is empty, relative, or not portable across file systems."""
+    return (
+        part in ("", ".", "..")
+        or ":" in part
+        or any(ord(c) < 32 for c in part)
+        or part[-1] in ". "
+        or part.lower().split(".")[0] in RESERVED
+    )
+
+
 def valid_name(name: str) -> bool:
-    return bool(name) and len(name) <= 64 and bool(NAME_RE.match(name))
-
-
-def normalize_name(raw: str) -> str:
-    base = re.sub(r"\.(zip|md)$", "", raw.lower())
-    return re.sub(r"^-+|-+$", "", re.sub(r"[^a-z0-9]+", "-", base))
+    return (
+        len(name) <= NAME_LIMIT and not name.startswith(".") and not re.search(r"[\\/]", name) and not unsafe_part(name)
+    )
 
 
 def fenced(root: Path, rel: str) -> Path:
     """``root / rel`` when every part is a plain name and no symlink sits on the way."""
     parts = [p for p in rel.replace("\\", "/").split("/") if p]
-    for part in parts:
-        if (
-            part in (".", "..")
-            or ":" in part
-            or any(ord(c) < 32 for c in part)
-            or part[-1] in ". "
-            or part.lower().split(".")[0] in RESERVED
-        ):
-            raise SkillError("invalid path")
+    if any(unsafe_part(part) for part in parts):
+        raise SkillError("invalid path")
     path = root
     for part in parts:
         path = path / part
@@ -89,6 +104,23 @@ def describe(text: str) -> tuple[str, str, dict[str, Any]]:
     if version is None and isinstance(fm.get("metadata"), dict):
         version = fm["metadata"].get("version")
     return description[:2000], "" if version is None else str(version), fm
+
+
+def entry_path(info: zipfile.ZipInfo) -> str:
+    """Archive entry path with ``/`` separators; a UTF-8 name stored without the ZIP UTF-8 flag is decoded."""
+    name = info.filename
+    if not info.flag_bits & 0x800:
+        try:
+            name = name.encode("cp437").decode("utf-8")
+        except UnicodeError:
+            name = info.filename
+    return re.sub(r"^(?:\./)+", "", name.replace("\\", "/"))
+
+
+def is_executable(info: zipfile.ZipInfo) -> bool:
+    """The archive records a Unix mode with an executable bit for a regular file."""
+    mode = info.external_attr >> 16
+    return info.create_system in UNIX_HOSTS and mode & 0o170000 != 0o120000 and bool(mode & 0o111)
 
 
 class SkillStore:
@@ -212,91 +244,96 @@ class SkillStore:
     def exists(self, name: str) -> bool:
         return any((root / name).is_dir() for root in (self.enabled_dir, self.disabled_dir))
 
-    def install_zip(self, data: bytes, filename: str, policy: str = "ask") -> dict[str, Any]:
-        """Install the skills of a ZIP: a root ``SKILL.md`` (one skill named after the file), ``<dir>/SKILL.md``
-        bundles,
-        and top-level ``*.md`` files (each becomes ``<name>/SKILL.md``). ``policy``: ask (report conflicts, write
-        nothing), skip (keep existing), replace (overwrite and enable)."""
+    def _occupants(self, name: str) -> list[Path]:
+        """Existing entries named ``name`` in the enabled and the disabled directory."""
+        return [root / name for root in (self.enabled_dir, self.disabled_dir) if os.path.lexists(root / name)]
+
+    def install_zip(self, data: bytes, policy: str = "ask") -> dict[str, Any]:
+        """Extract a ZIP into the enabled directory (the rules of the module table). ``policy``: ask (report
+        conflicts, write nothing), skip (keep existing entries), replace (overwrite)."""
         if len(data) > ZIP_LIMIT:
             raise SkillError("ZIP size limit: 32 MB")
         try:
             zf = zipfile.ZipFile(io.BytesIO(data))
         except zipfile.BadZipFile as exc:
             raise SkillError("not a ZIP file") from exc
-        infos = [i for i in zf.infolist() if not i.is_dir()]
+        infos = zf.infolist()
         if len(infos) > ENTRY_LIMIT or sum(i.file_size for i in infos) > EXPAND_LIMIT:
             raise SkillError("extracted contents exceed the limit")
-        names = [i.filename.replace("\\", "/") for i in infos]
-        for n in names:
-            if n.startswith("/") or ".." in n.split("/"):
-                raise SkillError("invalid path")
-        candidates: dict[str, list[tuple[str, zipfile.ZipInfo]]] = {}
-        if "SKILL.md" in names:
-            skill = normalize_name(filename)
-            if not valid_name(skill):
+        directories: list[str] = []
+        files: dict[str, zipfile.ZipInfo] = {}
+        for info in infos:
+            path = entry_path(info)
+            if not path or "__MACOSX" in path.split("/"):
+                continue
+            fenced(self.enabled_dir, path)
+            if info.is_dir():
+                directories.append(path.rstrip("/"))
+            else:
+                files[path] = info
+        # Top-level entry -> install name.
+        units: dict[str, str] = {}
+        for path in [*directories, *files]:
+            top = path.split("/")[0]
+            units[top] = top[:-3] if top == path and path in files and top.endswith(".md") else top
+        if not units:
+            raise SkillError("no files to extract in ZIP")
+        seen: set[str] = set()
+        for name in units.values():
+            if not valid_name(name):
                 raise SkillError("invalid skill name")
-            candidates[skill] = [(n, i) for n, i in zip(names, infos, strict=True)]
-        else:
-            for n, i in zip(names, infos, strict=True):
-                parts = n.split("/")
-                top = parts[0]
-                if len(parts) >= 2 and not top.startswith(".") and top != "__MACOSX":
-                    if f"{top}/SKILL.md" in names:
-                        skill = normalize_name(top)
-                        if skill in candidates or valid_name(skill):
-                            candidates.setdefault(skill, []).append(("/".join(parts[1:]), i))
-                elif len(parts) == 1 and n.lower().endswith(".md") and n.lower() != "readme.md":
-                    skill = normalize_name(n)
-                    if valid_name(skill):
-                        candidates[skill] = [("SKILL.md", i)]
-        candidates = {k: v for k, v in candidates.items() if valid_name(k)}
-        if not candidates:
-            raise SkillError("no skills found in ZIP")
-        conflicts = sorted(k for k in candidates if self.exists(k))
+            if name.lower() in seen:
+                raise SkillError(f"duplicate skill name in ZIP: {name}")
+            seen.add(name.lower())
+        occupants = {top: self._occupants(name) for top, name in units.items()}
+        conflicts = [name for top, name in units.items() if occupants[top]]
         if conflicts and policy == "ask":
             return {"installed": [], "skipped": [], "conflicts": conflicts}
         installed, skipped = [], []
-        for skill, members in candidates.items():
-            if skill in conflicts and policy == "skip":
-                skipped.append(skill)
-                continue
-            stage = Path(tempfile.mkdtemp(prefix=".install-", dir=self.disabled_dir))
-            try:
-                for rel, info in members:
-                    if not rel:
-                        continue
-                    dest = fenced(stage, rel)
-                    dest.parent.mkdir(parents=True, exist_ok=True)
-                    with zf.open(info) as src, dest.open("wb") as out:
-                        head = src.read(2)
-                        out.write(head)
-                        shutil.copyfileobj(src, out)
-                    if head == b"#!":
-                        dest.chmod(0o755)
-                target = self.enabled_dir / skill
-                backup = None
-                if skill in conflicts:
-                    old = (
-                        (self.enabled_dir / skill)
-                        if (self.enabled_dir / skill).exists()
-                        else (self.disabled_dir / skill)
-                    )
-                    backup = old.with_name(f".{skill}.backup")
-                    if backup.exists():
-                        shutil.rmtree(backup)
-                    shutil.move(str(old), str(backup))
+        stage = Path(tempfile.mkdtemp(prefix=".install-", dir=self.disabled_dir))
+        extracted, replaced = stage / "new", stage / "old"
+        keep_stage = False
+        try:
+            # Complete extraction before replacing installed entries.
+            replaced.mkdir()
+            for path in directories:
+                fenced(extracted, path).mkdir(parents=True, exist_ok=True)
+            for path, info in files.items():
+                dest = fenced(extracted, path)
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                with zf.open(info) as src, dest.open("wb") as out:
+                    shutil.copyfileobj(src, out)
+                if sys.platform != "win32" and is_executable(info):
+                    dest.chmod(0o755)
+            for top, name in units.items():
+                if name in conflicts and policy == "skip":
+                    skipped.append(name)
+                    continue
+                backups: list[tuple[Path, Path]] = []
                 try:
-                    shutil.move(str(stage), str(target))
-                except Exception:
-                    if backup is not None:
-                        shutil.move(str(backup), str(target))
-                    raise
-                if backup is not None and backup.exists():
-                    shutil.rmtree(backup)
-                installed.append(skill)
-            finally:
-                if stage.exists():
-                    shutil.rmtree(stage, ignore_errors=True)
+                    for path in occupants[top]:
+                        backup = replaced / f"{len(backups)}-{name}"
+                        shutil.move(path, backup)
+                        backups.append((backup, path))
+                    target = self.enabled_dir / name
+                    if name == top:
+                        shutil.move(extracted / top, target)
+                    else:  # a top-level markdown file becomes the entry file of its own bundle
+                        target.mkdir()
+                        shutil.move(extracted / top, target / "SKILL.md")
+                    installed.append(name)
+                except Exception as exc:
+                    try:
+                        for backup, original in reversed(backups):
+                            shutil.rmtree(original, ignore_errors=True)
+                            shutil.move(backup, original)
+                    except OSError as restore:
+                        keep_stage = True
+                        raise SkillError(f"restore failed; the previous files are kept in {stage}") from restore
+                    raise exc
+        finally:
+            if not keep_stage:
+                shutil.rmtree(stage, ignore_errors=True)
         return {"installed": installed, "skipped": skipped, "conflicts": []}
 
     def open_folder(self, name: str | None) -> None:

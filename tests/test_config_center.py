@@ -16,7 +16,7 @@ import pytest
 from pyharness import Harness, Profile
 from pyharness_config_center import ConfigCenterService
 from pyharness_config_center.environment import BunManager
-from pyharness_config_center.skills import SkillError, SkillStore, normalize_name
+from pyharness_config_center.skills import SkillError, SkillStore
 from pyharness_mcp import ServerConfig, connection_of
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
@@ -24,54 +24,71 @@ MCP_SERVER = Path(__file__).with_name("testkit") / "mcp_server.py"
 SKILL = '---\nname: {name}\ndescription: {desc}\nmetadata:\n  version: "1.0"\n---\n# {name}\n\nDo the thing.\n'
 
 
-def make_zip(files: dict[str, bytes]) -> bytes:
+def make_zip(files: dict[str, bytes], modes: dict[str, int] | None = None) -> bytes:
+    """A ZIP of ``files``; ``modes`` are Unix modes recorded for entries; a name ending in ``/`` is a directory."""
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
         for name, data in files.items():
-            zf.writestr(name, data)
+            info = zipfile.ZipInfo(name)
+            info.create_system = 3
+            info.external_attr = (modes or {}).get(name, 0o755 if name.endswith("/") else 0o644) << 16
+            zf.writestr(info, data)
     return buf.getvalue()
 
 
 def test_skill_store(tmp_path):
     store = SkillStore(tmp_path)
-    assert store.list() == [] and normalize_name("My Skill.ZIP") == "my-skill"
-    # A multi-skill ZIP: two bundles, a flat markdown file, a README that is skipped.
+    assert store.list() == []
+    # Plain extraction: two bundles, a top-level markdown file, an entry without SKILL.md, macOS resource forks.
     bundle = make_zip(
         {
             "web-research/SKILL.md": SKILL.format(name="web-research", desc="Research the web").encode(),
-            "web-research/helper.py": b"print(1)\n",
-            "web-research/run.sh": b"#!/bin/sh\necho hi\n",
+            "web-research/helper.py": b"#!/usr/bin/env python\nprint(1)\n",
+            "web-research/bin/run.sh": b"echo hi\n",
+            "web-research/empty/": b"",
             "Data Clean/SKILL.md": SKILL.format(name="data-clean", desc="Clean data").encode(),
             "notes.md": b"# Notes\n\nFirst line of body.\n",
-            "README.md": b"ignored",
-        }
+            "README.txt": b"kept as it is",
+            "__MACOSX/web-research/._SKILL.md": b"fork",
+        },
+        modes={"web-research/bin/run.sh": 0o755},
     )
-    r = store.install_zip(bundle, "skills.zip")
-    assert r == {"installed": ["web-research", "data-clean", "notes"], "skipped": [], "conflicts": []}
-    assert [s["name"] for s in store.list()] == ["data-clean", "notes", "web-research"]
+    r = store.install_zip(bundle)
+    assert r == {"installed": ["web-research", "Data Clean", "notes", "README.txt"], "skipped": [], "conflicts": []}
+    # The list shows the directories that hold a SKILL.md; names stay as the archive wrote them.
+    assert [s["name"] for s in store.list()] == ["Data Clean", "notes", "web-research"]
+    assert (store.enabled_dir / "README.txt").read_bytes() == b"kept as it is"
+    assert (store.enabled_dir / "web-research" / "empty").is_dir() and not (store.enabled_dir / "__MACOSX").exists()
     notes = next(s for s in store.list() if s["name"] == "notes")
     assert notes["description"] == "First line of body." and notes["enabled"] is True
-    assert os.access(store.enabled_dir / "web-research" / "run.sh", os.X_OK)
+    # The executable bit follows the archive's mode, not a shebang in the file.
+    assert os.access(store.enabled_dir / "web-research" / "bin" / "run.sh", os.X_OK)
+    assert not os.access(store.enabled_dir / "web-research" / "helper.py", os.X_OK)
     d = store.detail("web-research")
     assert (
         d["version"] == "1.0"
         and d["enabled"]
-        and [f["path"] for f in d["files"]] == ["SKILL.md", "helper.py", "run.sh"]
+        and [f["path"] for f in d["files"]] == ["SKILL.md", "helper.py", "bin/run.sh"]
         and d["frontmatter"]["name"] == "web-research"
     )
-    assert store.read_file("web-research", "helper.py") == {"text": "print(1)\n", "size": 9, "truncated": False}
+    assert store.detail("Data Clean")["frontmatter"]["name"] == "data-clean"
+    assert store.read_file("web-research", "bin/run.sh") == {"text": "echo hi\n", "size": 8, "truncated": False}
     with pytest.raises(SkillError, match="invalid path"):
         store.read_file("web-research", "../notes/SKILL.md")
     with pytest.raises(SkillError, match="not a file"):
         store.read_file("web-research", "nope.txt")
-    # Disable moves the directory; a second install of the same name conflicts unless replaced.
+    # Disable moves the directory; a second install of the same name conflicts unless replaced, wherever it lives.
     store.set_enabled("notes", False)
     assert (store.disabled_dir / "notes" / "SKILL.md").exists() and not (store.enabled_dir / "notes").exists()
     assert next(s for s in store.list() if s["name"] == "notes")["enabled"] is False
-    single = make_zip({"SKILL.md": SKILL.format(name="notes", desc="Replaced").encode()})
-    assert store.install_zip(single, "notes.zip") == {"installed": [], "skipped": [], "conflicts": ["notes"]}
-    assert store.install_zip(single, "notes.zip", "skip") == {"installed": [], "skipped": ["notes"], "conflicts": []}
-    assert store.install_zip(single, "notes.zip", "replace") == {"installed": ["notes"], "skipped": [], "conflicts": []}
+    again = make_zip(
+        {"notes/SKILL.md": SKILL.format(name="notes", desc="Replaced").encode(), "extra/SKILL.md": b"# x\n"}
+    )
+    assert store.install_zip(again) == {"installed": [], "skipped": [], "conflicts": ["notes"]}
+    assert not (store.enabled_dir / "extra").exists()
+    assert store.install_zip(again, "skip") == {"installed": ["extra"], "skipped": ["notes"], "conflicts": []}
+    assert next(s for s in store.list() if s["name"] == "notes")["description"] == "First line of body."
+    assert store.install_zip(again, "replace") == {"installed": ["notes", "extra"], "skipped": [], "conflicts": []}
     assert next(s for s in store.list() if s["name"] == "notes") == {
         "name": "notes",
         "description": "Replaced",
@@ -79,16 +96,22 @@ def test_skill_store(tmp_path):
         "kind": "bundle",
         "enabled": True,
     }
-    assert not (store.disabled_dir / "notes").exists()
-    store.remove("data-clean")
+    assert not (store.disabled_dir / "notes").exists() and not list(store.disabled_dir.glob(".install-*"))
+    # A UTF-8 name stored without the ZIP UTF-8 flag is decoded.
+    unflagged = make_zip({"AAAAAA/SKILL.md": b"# s\n\nbody\n"}).replace(b"AAAAAA", "技能".encode())
+    assert store.install_zip(unflagged)["installed"] == ["技能"] and (store.enabled_dir / "技能" / "SKILL.md").exists()
+    store.remove("Data Clean")
     with pytest.raises(SkillError, match="not found"):
-        store.remove("data-clean")
-    with pytest.raises(SkillError, match="no skills"):
-        store.install_zip(make_zip({"x.txt": b"x"}), "x.zip")
-    with pytest.raises(SkillError, match="not a ZIP"):
-        store.install_zip(b"nope", "x.zip")
-    with pytest.raises(SkillError, match="invalid path"):
-        store.install_zip(make_zip({"../evil/SKILL.md": b"x"}), "x.zip")
+        store.remove("Data Clean")
+    for archive, message in (
+        (make_zip({"__MACOSX/x": b"x"}), "no files to extract"),
+        (b"nope", "not a ZIP"),
+        (make_zip({"../evil/SKILL.md": b"x"}), "invalid path"),
+        (make_zip({"a/SKILL.md": b"x", "A.md": b"y"}), "duplicate skill name in ZIP: A"),
+        (make_zip({".hidden/SKILL.md": b"x"}), "invalid skill name"),
+    ):
+        with pytest.raises(SkillError, match=message):
+            store.install_zip(archive)
 
 
 def test_bun_manager_install_with_mocked_release(tmp_path, monkeypatch):
@@ -180,11 +203,9 @@ async def test_routes(home, tmp_path):
                 "skills": [],
             }
             z = base64.b64encode(
-                make_zip({"SKILL.md": SKILL.format(name="demo-skill", desc="A demo").encode()})
+                make_zip({"demo-skill/SKILL.md": SKILL.format(name="demo-skill", desc="A demo").encode()})
             ).decode()
-            r = await c.post(
-                "/api/config-center/skills/install", json={"filename": "demo-skill.zip", "data": z, "policy": "ask"}
-            )
+            r = await c.post("/api/config-center/skills/install", json={"data": z, "policy": "ask"})
             assert r.json() == {"installed": ["demo-skill"], "skipped": [], "conflicts": []}
             d = (await c.get("/api/config-center/skills/detail", params={"name": "demo-skill"})).json()
             assert d["enabled"] is True and d["files"] == [
@@ -200,9 +221,7 @@ async def test_routes(home, tmp_path):
             assert (await c.post("/api/config-center/skills", json={"name": "demo-skill"})).status_code == 400
             assert (await c.get("/api/config-center/skills/detail", params={"name": "nope"})).status_code == 400
             assert (
-                await c.post(
-                    "/api/config-center/skills/install", json={"filename": "x.zip", "data": "!!", "policy": "ask"}
-                )
+                await c.post("/api/config-center/skills/install", json={"data": "!!", "policy": "ask"})
             ).status_code == 400
             assert (await c.delete("/api/config-center/skills", params={"name": "demo-skill"})).json()["skills"] == []
             # environment

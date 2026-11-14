@@ -200,19 +200,15 @@ class ConfigCenterService(Service):
         @router.post("/skills/install")
         async def skills_install(request: Request) -> dict[str, Any]:
             data = await body(request, ZIP_BODY_LIMIT)
-            filename, encoded, policy = data.get("filename"), data.get("data"), data.get("policy", "ask")
-            if (
-                not isinstance(filename, str)
-                or not isinstance(encoded, str)
-                or policy not in ("ask", "skip", "replace")
-            ):
+            encoded, policy = data.get("data"), data.get("policy", "ask")
+            if not isinstance(encoded, str) or policy not in ("ask", "skip", "replace"):
                 raise HTTPException(400, "invalid installation parameters")
             try:
                 raw = base64.b64decode(encoded, validate=True)
             except Exception as exc:  # noqa: BLE001
                 raise HTTPException(400, "invalid installation parameters") from exc
             try:
-                return await asyncio.to_thread(skills().install_zip, raw, filename, policy)
+                return await asyncio.to_thread(skills().install_zip, raw, policy)
             except SkillError as exc:
                 raise skill_error(exc) from exc
 

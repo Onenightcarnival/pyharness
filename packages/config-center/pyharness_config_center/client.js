@@ -262,7 +262,7 @@ window.__PyhModules__.load({
           const st = { skills: null, selected: null, detail: null, file: null, fileText: null, conflicts: null, pending: null };
           const root = h("div", { class: "ccPage" }); el.replaceChildren(root);
           const noticeBox = h("div");
-          const fileInput = h("input", { type: "file", accept: ".zip", hidden: true, onChange: async (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) await install(f, "ask"); } });
+          const fileInput = h("input", { type: "file", accept: ".zip,.skill", hidden: true, onChange: async (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) await install(f, "ask"); } });
           async function load() { try { const d = await call("/skills"); if (!alive) return; st.skills = d.skills; if (st.selected && !st.skills.find((s) => s.name === st.selected)) st.selected = null; if (!st.selected && st.skills.length) st.selected = st.skills[0].name; render(); await loadDetail(); } catch (err) { notice(noticeBox, "error", err.message); render(); } }
           async function loadDetail() {
             if (!st.selected) { st.detail = null; render(); return; }
@@ -281,7 +281,7 @@ window.__PyhModules__.load({
             if (file.size > 32 * 1024 * 1024) { notice(noticeBox, "error", t.zipLimit); return; }
             const data = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result).split(",")[1] || ""); r.onerror = () => reject(r.error); r.readAsDataURL(file); });
             try {
-              const r = await call("/skills/install", { method: "POST", body: JSON.stringify({ filename: file.name, data, policy }) });
+              const r = await call("/skills/install", { method: "POST", body: JSON.stringify({ data, policy }) });
               if (r.conflicts && r.conflicts.length) { st.conflicts = r.conflicts; st.pending = file; render(); return; }
               st.conflicts = null; st.pending = null; notice(noticeBox, "ok", t.installed(r.installed.length, r.skipped.length)); if (r.installed.length) st.selected = r.installed[0]; await load();
             } catch (err) { notice(noticeBox, "error", err.message); }
