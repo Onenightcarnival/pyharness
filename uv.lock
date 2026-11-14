@@ -23,6 +23,7 @@ members = [
     "pyharness-core",
     "pyharness-gateway",
     "pyharness-http",
+    "pyharness-http-client",
     "pyharness-inspect",
     "pyharness-llm",
     "pyharness-mcp",
@@ -1959,6 +1960,35 @@ requires-dist = [
 ]
 
 [[package]]
+name = "pyharness-http-client"
+version = "0.1.0"
+source = { editable = "packages/http-client" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "langchain-core" },
+    { name = "pydantic" },
+    { name = "pyharness-core" },
+    { name = "pyharness-http" },
+    { name = "pyharness-prompt" },
+    { name = "pyharness-tools" },
+    { name = "pyharness-web-ui" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "pydantic", specifier = "==2.14.1" },
+    { name = "pyharness-core", editable = "packages/core" },
+    { name = "pyharness-http", editable = "packages/http" },
+    { name = "pyharness-prompt", editable = "packages/prompt" },
+    { name = "pyharness-tools", editable = "packages/tools" },
+    { name = "pyharness-web-ui", editable = "packages/web-ui" },
+]
+
+[[package]]
 name = "pyharness-inspect"
 version = "0.1.0"
 source = { editable = "packages/inspect" }
@@ -2070,6 +2100,7 @@ dependencies = [
     { name = "pyharness-core" },
     { name = "pyharness-gateway" },
     { name = "pyharness-http" },
+    { name = "pyharness-http-client" },
     { name = "pyharness-inspect" },
     { name = "pyharness-llm" },
     { name = "pyharness-mcp" },
@@ -2114,6 +2145,7 @@ requires-dist = [
     { name = "pyharness-core", editable = "packages/core" },
     { name = "pyharness-gateway", editable = "packages/gateway" },
     { name = "pyharness-http", editable = "packages/http" },
+    { name = "pyharness-http-client", editable = "packages/http-client" },
     { name = "pyharness-inspect", editable = "packages/inspect" },
     { name = "pyharness-llm", editable = "packages/llm" },
     { name = "pyharness-mcp", editable = "packages/mcp" },

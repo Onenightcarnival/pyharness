@@ -69,6 +69,7 @@ bundle 中条目的位置（`after` / `before` / `parent`）对应 mount 路径�
 | 可观测（dsh-toolkit otel） | 有：`pyharness-otel`，同样的 trace 结构与属性名、Langfuse 端点处理与测试流程；由本轮记录生成 span 而不是在调用链里实时打点，没有指标导出 |
 | AI 订阅（dsh-toolkit subscriptions） | 有：`pyharness-subscriptions`，四个提供方的登录、目录、用量、聊天与七个工具；未做多账号配额感知的池化路由与出站代理设置，每个提供方用默认账号 |
 | API 网关（dsh-toolkit gateway） | 有：`pyharness-gateway`，同样的三种协议端点、参数取舍、错误形状、API key、用量账本与页面；模型请求走 LangChain `astream` 而不是 dsh 的流式块协议，图片不经附件存储而是直接以 data URL 传给模型；`reasoning_effort` 只传给 `openai`、`azure_openai`、`subscription` 类型的路由；管理路由没有 dsh 的浏览器会话与回环校验 |
+| HTTP 请求工具（dsh-toolkit http） | 有：`pyharness-http-client`，同样的目标、保存的请求、历史、host 与内网策略、重定向规则、遮罩、事件流读取和三个 agent 工具；包名与路由前缀换成 `http-client`（`pyharness-http` 已是 FastAPI 服务）；管理路由没有 dsh 的浏览器会话与回环校验；出站请求走 httpx，遵循环境变量里的代理设置 |
 | MCP 客户端 | 有：`pyharness-mcp`，stdio / HTTP / SSE，左侧栏 MCP 页配置；未做 MCP resources 与 prompts |
 | 轨迹视图 | 有：按轮次的记录表、时间概览、详情面板；dsh 的虚拟滚动、分页加载与完整输入输出检查未做（记录只存摘要尺寸） |
 | 每会话 agent preset（preset + isolate realm） | 预设是 `agent-loop` 的配置（工具子集、skills、提示词片段），每会话一张图；没有 realm 级的服务隔离 |

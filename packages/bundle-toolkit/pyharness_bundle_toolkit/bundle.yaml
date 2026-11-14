@@ -31,3 +31,8 @@ patch:
   - id: gateway
     name: pyharness-gateway
     after: subscriptions
+  # HTTP API request tool (targets with injected auth, saved requests, history, event streams): ctx.httpClient,
+  # http_* tools, the HTTP page.
+  - id: http-client
+    name: pyharness-http-client
+    after: gateway

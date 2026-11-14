@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "pyharness workspace: kernel and kernel plugins"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-agent", "pyharness-agent-loop-deepagents", "pyharness-api", "pyharness-ask-user", "pyharness-bundle-base", "pyharness-bundle-creator", "pyharness-bundle-toolkit", "pyharness-bundle-web", "pyharness-checkpoint-postgres", "pyharness-checkpoint-sqlite", "pyharness-compaction", "pyharness-config-center", "pyharness-core", "pyharness-gateway", "pyharness-http", "pyharness-inspect", "pyharness-llm", "pyharness-mcp", "pyharness-memory", "pyharness-otel", "pyharness-plugin-manager", "pyharness-terminal", "pyharness-prompt", "pyharness-rdb", "pyharness-s3", "pyharness-subscriptions", "pyharness-tools", "pyharness-web-tools", "pyharness-web-ui", "pyharness-workspace", "pyharness-workspace-changes"]
+dependencies = ["pyharness-agent", "pyharness-agent-loop-deepagents", "pyharness-api", "pyharness-ask-user", "pyharness-bundle-base", "pyharness-bundle-creator", "pyharness-bundle-toolkit", "pyharness-bundle-web", "pyharness-checkpoint-postgres", "pyharness-checkpoint-sqlite", "pyharness-compaction", "pyharness-config-center", "pyharness-core", "pyharness-gateway", "pyharness-http", "pyharness-http-client", "pyharness-inspect", "pyharness-llm", "pyharness-mcp", "pyharness-memory", "pyharness-otel", "pyharness-plugin-manager", "pyharness-terminal", "pyharness-prompt", "pyharness-rdb", "pyharness-s3", "pyharness-subscriptions", "pyharness-tools", "pyharness-web-tools", "pyharness-web-ui", "pyharness-workspace", "pyharness-workspace-changes"]
 
 [dependency-groups]
 dev = ["pytest==9.2.0", "pytest-asyncio==1.4.1", "httpx==0.28.1", "pip==26.2.2", "ruff==0.17.3"]
@@ -26,6 +26,7 @@ pyharness-checkpoint-sqlite = { workspace = true }
 pyharness-core = { workspace = true }
 pyharness-gateway = { workspace = true }
 pyharness-http = { workspace = true }
+pyharness-http-client = { workspace = true }
 pyharness-inspect = { workspace = true }
 pyharness-llm = { workspace = true }
 pyharness-mcp = { workspace = true }

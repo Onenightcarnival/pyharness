@@ -1,0 +1,73 @@
+# Limits, defaults and wire-level tables. One table per module; each module loads its table with
+# ``package_toml(__file__)``.
+
+[protocol]
+# Scope id of requests sent without a target; target ids are 12 hex characters and never equal it.
+DIRECT_TARGET_ID = "direct"
+HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+# Methods the agent may use without the target's mutation switch and without confirm.
+SAFE_METHODS = ["GET", "HEAD", "OPTIONS"]
+HTTP_AUTH_TYPES = ["none", "bearer", "basic", "header", "query"]
+HTTP_BODY_MODES = ["none", "json", "text", "form"]
+DEFAULT_TIMEOUT_MS = 30000
+MIN_TIMEOUT_MS = 1000
+MAX_TIMEOUT_MS = 120000
+DEFAULT_HISTORY_LIMIT = 200
+MIN_HISTORY_LIMIT = 10
+MAX_HISTORY_LIMIT = 1000
+# Response body cap for the panel.
+PANEL_BODY_BYTES = 1048576
+# Body cap kept per exchange in the history file.
+HISTORY_BODY_BYTES = 32768
+
+[store]
+MAX_ENTRIES = 50
+MAX_HOSTS = 20
+MAX_VALUE_LENGTH = 8192
+MAX_REQUESTS_PER_TARGET = 500
+MAX_REQUEST_ROWS = 100
+MAX_REQUEST_BODY_BYTES = 262144
+MAX_REQUEST_NAME = 120
+MAX_REQUEST_PATH = 8192
+# Request headers the transport owns. Lower-case.
+FORBIDDEN_HEADERS = [
+    "host",
+    "content-length",
+    "transfer-encoding",
+    "connection",
+    "upgrade",
+    "te",
+    "trailer",
+    "keep-alive",
+    "proxy-connection",
+]
+
+[engine]
+MAX_REDIRECTS = 5
+# Request body cap stored in an exchange.
+REQUEST_BODY_BYTES = 65536
+MASK = "••••••"
+USER_AGENT = "pyharness-http-client/0.1"
+# Request headers whose values are credentials. Lower-case.
+CREDENTIAL_HEADERS = [
+    "authorization",
+    "proxy-authorization",
+    "cookie",
+    "x-api-key",
+    "api-key",
+    "x-auth-token",
+    "x-access-token",
+]
+
+[tools]
+# Response body cap handed to the model.
+TOOL_BODY_BYTES = 65536
+TOOL_HISTORY_MAX = 50
+TOOL_HISTORY_DEFAULT = 20
+
+[routes]
+# Send bodies (request JSON including the body string) above this are refused.
+MAX_SEND_BYTES = 4194304
+MAX_HISTORY_PAGE = 500
+# Saved request payloads above this are refused.
+MAX_REQUEST_BYTES = 524288

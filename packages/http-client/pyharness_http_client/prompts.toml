@@ -1,0 +1,45 @@
+# Model-visible text of pyharness_http_client; loaded with pyharness.package_prompts(__file__).
+
+[service]
+GUIDANCE = '''
+The HTTP API request tool is installed and the user allowed its tools. http_targets lists the API targets the user
+configured on the HTTP page (refer to them by name: base URL, auth type, fixed headers, {{variables}}, extra allowed
+hosts, whether state-changing methods are allowed); http_request sends a request to a target (the path joins below
+the base URL, the harness injects the auth, the response body comes back truncated); http_history shows the recent
+requests the user or the agent sent to the targets (requests the user sent without a target are not listed and
+cannot be called). GET / HEAD / OPTIONS run directly. POST / PUT / PATCH / DELETE change server state: they work
+only on a target with "allow mutations" on, and only with confirm=true after the complete request (method, URL,
+headers, body) was shown to the user and the user agreed. Credentials are configured in the UI; the tools never
+return or need a token or password, and none belongs in a header or the query. A URL outside the targets goes
+through web_fetch; a configured API goes through these tools. When the user mentions an API, an endpoint, calling
+an interface, a request, Postman or curl they mean this tool.
+'''
+
+[tools]
+http_targets = '''
+List the HTTP API targets the user configured on the HTTP page: name, base URL, auth type (credentials are
+injected by the harness and never shown), fixed headers, {{variables}}, extra allowed hosts and whether non-GET
+methods are allowed. Every other http_* tool takes one of these names. Triggers: API, HTTP request, REST,
+endpoint, webhook, curl, Postman.
+'''
+http_request = '''
+Send an HTTP request to a configured target. The harness joins `path` below the target base URL, applies the
+target's {{variables}}, fixed headers and auth, and returns status, headers and the decoded body (capped at
+${body_kib} KiB). GET / HEAD / OPTIONS run directly. POST / PUT / PATCH / DELETE change server state: they only
+work on targets where the user enabled mutations, and only with confirm=true after you showed the user the exact
+request and they agreed. A server-sent event stream is read until it ends, the body cap or the target timeout, and
+returned as its text. Never put credentials in headers or query: the target auth does that.
+'''
+http_history = '''
+Recent requests sent to a configured target, by the user from the HTTP page or by the agent: method, URL, status,
+duration and a body preview. Use it to see how the user called an endpoint before composing a similar request.
+'''
+no_targets = "no HTTP targets configured (the user adds them on the HTTP page)"
+no_history = "no requests recorded yet"
+mutations_off = '''
+refused: target '${name}' allows GET/HEAD/OPTIONS only for the agent (the user can enable mutations on the HTTP
+page)
+'''
+confirm_required = '''
+refused: confirm must be true for a state-changing request (show the user the exact request and ask first)
+'''
