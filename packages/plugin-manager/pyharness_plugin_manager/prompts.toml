@@ -14,6 +14,13 @@ Every loaded package is mounted read-only at `/harness/<module>/`: its `AGENTS.m
 `ls /harness` lists the packages.
 `harness_inspect topic=config name=<entry id>` returns both paths: `docs` and `package_dir`.
 '''
+# System-prompt section for the presets with the plugin-source mount; ${path} is the directory on disk.
+PLUGINS = '''
+## Plugin sources
+`/plugins/<name>/` holds the sources of this profile's own plugins, in every session whatever its workspace.
+File tools address it as `/plugins/...`; the shell reaches it on disk at `${path}`.
+A workspace directory named `plugins` is hidden behind it.
+'''
 # `next` of a saved mutation result, by `application`.
 restart_scheduled = '''
 Saved. Restart after this turn; this session continues in the new generation.
@@ -37,7 +44,7 @@ Plugins and bundles of this harness profile.
 action                                              effect
 list                                                entries with state; installed bundles
 template target=<name> [variant=basic|tool-and-route|ui-panel] starter bundle files; variant default basic
-install_bundle target=<dir | package>               install a bundle from a workspace directory or PyPI
+install_bundle target=<dir | package>               install a bundle from a directory (/plugins/<name>) or PyPI
 uninstall_bundle target=<bundle>                    remove an installed bundle
 set_bundle_enabled target=<bundle> enabled=<bool>   enable or disable a bundle
 set_plugin_enabled target=<entry id> enabled=<bool> enable or disable an entry

@@ -4,6 +4,7 @@ import json
 import re
 from collections.abc import Iterator
 from pathlib import Path
+from string import Template
 from typing import Any, Literal
 
 from langchain.tools import ToolRuntime
@@ -16,12 +17,14 @@ from pyharness import manage, package_prompts, package_root
 PROMPTS = package_prompts(__file__)
 
 name = "pyharness-plugin-manager"
-doc = "``plugin_manager`` tool, the plugin-authoring skills, the read-only package mounts, and the prompt sections."
+doc = "``plugin_manager`` tool, the plugin-authoring skills, the package and plugin-source mounts, the prompt sections."
 inject = ["tools", "prompt", "agentLoop"]
 
 SKILLS_DIR = Path(__file__).with_name("skills")
 TEMPLATES_DIR = SKILLS_DIR / "pyharness-plugin-development" / "templates"
 SOURCES_MOUNT = "/harness"
+PLUGINS_MOUNT = "/plugins"
+PLUGINS_DIR = "plugins"  # under the profile's Documents directory
 TOKENS = ("__DIST__", "__MODULE__", "__BUNDLE__", "__TITLE__")
 
 Action = Literal[
@@ -50,12 +53,14 @@ class Config(BaseModel):
         description="Mount every loaded package read-only at /harness/<module>/ for the presets in skills_presets.",
     )
     skills_presets: list[str] = Field(
-        default_factory=lambda: ["creator"], description="Agent presets that see the skills and the sources."
+        default_factory=lambda: ["creator"],
+        description="Agent presets that see the skills, the package sources and the profile's plugin sources.",
     )
 
 
 GUIDANCE: str = PROMPTS["plugin_manager"]["GUIDANCE"]
 SOURCES: str = PROMPTS["plugin_manager"]["SOURCES"]
+PLUGINS: str = PROMPTS["plugin_manager"]["PLUGINS"]
 
 
 def source_roots(ctx: Any) -> dict[str, Path]:
@@ -108,6 +113,13 @@ def apply(ctx: Any, config: Config) -> None:
         for module, root in source_roots(ctx).items():
             ctx.agentLoop.add_mount(f"{SOURCES_MOUNT}/{module}", root, presets=config.skills_presets)
         ctx.prompt.add("harness-sources", SOURCES, order=55, presets=config.skills_presets or None)
+    profile = ctx.get("profile", None)
+    if profile is not None:
+        plugins = profile.documents / PLUGINS_DIR
+        plugins.mkdir(parents=True, exist_ok=True)
+        ctx.agentLoop.add_mount(PLUGINS_MOUNT, plugins, presets=config.skills_presets, writable=True)
+        section = Template(PLUGINS).substitute(path=plugins)
+        ctx.prompt.add("plugin-sources", section, order=56, presets=config.skills_presets or None)
     if config.guidance:
         presets = ctx.agentLoop.preset_ids()
         without_skills = [p for p in presets if p not in config.skills_presets] if config.skills else None
@@ -120,9 +132,17 @@ def apply(ctx: Any, config: Config) -> None:
         except AttributeError:
             return None
 
-    def resolve_path(target: str) -> Path:
-        workspace = ctx.get("workspace", None)
-        return workspace.resolve(target) if workspace is not None else Path(target).expanduser()
+    async def resolve_path(target: str, session_id: str | None) -> Path:
+        """Path on disk of an install target: inside a mount, else in the session's workspace."""
+        mounted = ctx.agentLoop.mount_target(target)
+        if mounted is not None:
+            return mounted
+        workspaces = ctx.get("workspace", None)
+        if workspaces is None:
+            return Path(target).expanduser()
+        agents = ctx.get("agents", None)
+        record = await agents.get_session(session_id) if agents is not None and session_id else None
+        return workspaces.open((record or {}).get("workspace")).resolve(target)
 
     def finish(result: dict[str, Any], reason: str, session_id: str | None) -> dict[str, Any]:
         if result.get("application") != "saved":
@@ -173,7 +193,7 @@ def apply(ctx: Any, config: Config) -> None:
         elif action == "install_bundle":
             if not target:
                 return json.dumps({"error": "install_bundle: target=<directory> required"})
-            path = resolve_path(target)
+            path = await resolve_path(target, session_id)
             if manage.looks_like_path(target) or Path(str(path)).exists():
                 result = finish(
                     await manage.install_bundle(profile, path, baseline=baseline),

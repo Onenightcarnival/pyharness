@@ -92,9 +92,9 @@ async def test_bundle_without_entry_point_is_rejected(profile, tmp_path):
     assert profile.site_distributions() == []
 
 
-async def test_agent_installs_a_bundle_through_the_tool(profile, example_bundle, workspace):
-    """plugin_manager on an existing directory, through approval."""
-    shutil.copytree(example_bundle, workspace / "plugins" / "audit")
+async def test_agent_installs_a_bundle_through_the_tool(profile, example_bundle):
+    """plugin_manager on a directory of the profile's plugin sources, through approval."""
+    shutil.copytree(example_bundle, profile.documents / "plugins" / "audit")
     replies = [
         {
             "content": "",
@@ -121,6 +121,21 @@ async def test_agent_installs_a_bundle_through_the_tool(profile, example_bundle,
         assert h.lifecycle.exit_code == 75  # turn ended: restart due
         resume = json.loads((profile.runtime / "resume.json").read_text())
         assert resume["resume"] == [session["id"]]
+    assert "audit" in profile.bundles()
+
+
+async def test_install_target_resolves_in_the_session_workspace(profile, example_bundle, tmp_path):
+    other = tmp_path / "other"
+    shutil.copytree(example_bundle, other / "mine" / "audit")
+    install = {"name": "plugin_manager", "args": {"action": "install_bundle", "target": "/mine/audit"}, "id": "pm1"}
+    replies = [{"content": "", "tool_calls": [install]}, {"content": "installed"}]
+    async with Harness(profile, patch=patch_for(replies), supervised=True) as h:
+        agents = h.get("agents")
+        session = await agents.create_session(preset="creator", workspace=str(other))
+        await agents.start_run(session["id"], "install the audit plugin").wait()
+        events = await agents.start_run(session["id"], decisions=[{"type": "approve"}]).wait()
+        result = json.loads(next(e for e in events if e["type"] == "tool_result")["content"])
+        assert result["application"] == "restart-scheduled", result
     assert "audit" in profile.bundles()
 
 

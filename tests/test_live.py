@@ -43,9 +43,9 @@ def wait_for(fn, timeout=60.0, step=0.25):
     raise AssertionError("condition not met in time")
 
 
-def test_agent_extends_itself_across_a_restart(home, example_bundle, workspace):
+def test_agent_extends_itself_across_a_restart(home, example_bundle):
     profile = Profile.init("web", home=str(home))
-    shutil.copytree(example_bundle, workspace / "plugins" / "audit")
+    shutil.copytree(example_bundle, profile.documents / "plugins" / "audit")
     port = free_port()
     install = {"name": "plugin_manager", "args": {"action": "install_bundle", "target": "/plugins/audit"}, "id": "pm1"}
     use = {"name": "shout", "args": {"text": "after restart"}, "id": "s1"}

@@ -3,7 +3,7 @@
 ## Bundle layout
 
 ```
-/plugins/<name>/
+/plugins/<name>/                 # the profile's plugin source directory
   AGENTS.md                     # design of the plugin
   pyproject.toml                # distribution; two entry points
   <module>/__init__.py          # imports of the public names; no other code

@@ -23,7 +23,7 @@ class Workspace:
         return self.root.name or str(self.root)
 
     def resolve(self, path: str) -> Path:
-        """Real path of an agent path (``/plugins/x``); raises ``ValueError`` outside the root or inside the home."""
+        """Real path of an agent path (``/notes/x``); raises ``ValueError`` outside the root or inside the home."""
         raw = Path(path)
         candidate = (
             (self.root / str(path).lstrip("/")).resolve()

@@ -53,4 +53,4 @@ A saved change restarts the process: module state is lost, `app/*` runs again. W
 
 ## Workspace
 
-`ctx.workspace.resolve(agent_path)` maps `/plugins/x` to a real path and refuses paths outside the root or inside the harness home. `ctx.backend` is the deepagents backend of the file tools.
+`ctx.workspace.resolve(agent_path)` maps `/notes/x` to a real path and refuses paths outside the root or inside the harness home. `ctx.backend` is the deepagents backend of the file tools.

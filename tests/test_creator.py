@@ -184,11 +184,47 @@ async def test_creator_preset_reads_the_mounted_packages(home):
         assert "# pyharness-llm" not in results["r3"]["content"]
 
 
+async def test_creator_preset_writes_the_profile_plugin_sources(home, tmp_path):
+    profile = Profile.init("creator", template="creator", home=str(home))
+    sources = profile.documents / "plugins"
+    other = tmp_path / "other"
+    (other / "plugins").mkdir(parents=True)
+    (other / "plugins" / "local.md").write_text("workspace file", encoding="utf-8")
+    note = "/plugins/demo/note.md"
+    replies = [
+        {
+            "content": "",
+            "tool_calls": [{"name": "write_file", "args": {"file_path": note, "content": "src"}, "id": "w1"}],
+        },
+        {"content": "", "tool_calls": [{"name": "ls", "args": {"path": "/plugins"}, "id": "l1"}]},
+        {"content": "done"},
+        {"content": "", "tool_calls": [{"name": "read_file", "args": {"file_path": note}, "id": "r1"}]},
+        {"content": "done"},
+    ]
+    async with Harness(profile, patch=patch_for(replies)) as h:
+        loop, agents, prompt = h.get("agentLoop"), h.get("agents"), h.get("prompt")
+        mount = next(m for m in loop.mounts() if m["mount"] == "/plugins/")
+        assert (mount["path"], mount["writable"], mount["presets"]) == (str(sources.resolve()), True, ["creator"])
+        assert f"`{sources}`" in prompt.render("creator") and "## Plugin sources" not in prompt.render("standard")
+
+        session = await agents.create_session(workspace=str(other))  # any workspace: the same directory
+        events = await agents.start_run(session["id"], "go").wait()
+        results = {e["id"]: e for e in events if e["type"] == "tool_result"}
+        assert results["w1"]["status"] == "success" and (sources / "demo" / "note.md").read_text() == "src"
+        assert "/plugins/demo/" in results["l1"]["content"] and "local.md" not in results["l1"]["content"]
+
+        session = await agents.create_session(preset="standard")
+        events = await agents.start_run(session["id"], "go").wait()
+        results = {e["id"]: e for e in events if e["type"] == "tool_result"}
+        assert "src" not in results["r1"]["content"]
+    assert not (other / "plugins" / "demo").exists()
+
+
 async def test_sources_off_leaves_paths_on_disk(home):
     profile = Profile.init("creator", template="creator", home=str(home))
     patch = [*patch_for([]), {"id": "plugin-manager", "config": {"sources": False}}]
     async with Harness(profile, patch=patch) as h:
-        assert h.get("agentLoop").mounts() == []
+        assert [m["mount"] for m in h.get("agentLoop").mounts()] == ["/plugins/"]
         assert "## Harness sources" not in h.get("prompt").render("creator")
         inspect = next(t for t in h.get("tools").list() if t.name == "harness_inspect")
         config = json.loads(inspect.invoke({"topic": "config", "name": "llm"}))

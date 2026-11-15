@@ -24,6 +24,3 @@ htmlcov/
 
 # Claude desktop app
 .claude/
-
-# Agent workspace output when the workspace root is this checkout
-/plugins/

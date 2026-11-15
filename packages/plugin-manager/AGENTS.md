@@ -1,6 +1,6 @@
 # pyharness-plugin-manager
 
-`plugin_manager` 工具、插件编写技能、包的只读挂载、系统提示词段。
+`plugin_manager` 工具、插件编写技能、包的只读挂载、插件源码目录、系统提示词段。
 
 | 条目 | entry point | 插件 | 注入 |
 |---|---|---|---|
@@ -12,7 +12,7 @@
 | 文件 | 内容 |
 |---|---|
 | `__init__.py` | 导出 |
-| `plugin.py` | `plugin_manager` 工具、技能挂载、包的只读挂载、提示词段 |
+| `plugin.py` | `plugin_manager` 工具、技能挂载、包的只读挂载、插件源码目录的挂载、提示词段 |
 | `dev_context.py` | 提示词段 `dev-context` |
 | `reference.py` | 技能 `pyharness-composition-reference` 的 `references/packages.md` 的渲染 |
 | `prompts.toml` | 模型可见的文本 |
@@ -44,7 +44,25 @@
 | 路径的出处 | `harness_inspect topic=config` 的 `docs` 与 `package_dir` |
 | 提示词段 `harness-sources` | 挂载点与路径的出处；order 55 |
 
+## 插件源码目录
+
+| 项 | 契约 |
+|---|---|
+| 目录 | `profile.documents` 下的 `plugins/`：`~/Documents/pyharness/<profile>/plugins/`；不存在时创建 |
+| 挂载点 | `/plugins/`，经 `ctx.agentLoop.add_mount(..., writable=True)`；面向 `skills_presets`（`creator`） |
+| 会话的工作区 | 不参与：每个会话是同一个目录 |
+| 工作区里同名的 `plugins/` | 在这些预设的会话里被挂载遮住 |
+| shell | 用磁盘路径；提示词段 `plugin-sources` 给出，order 56 |
+| 没有 profile 的 harness | 不挂载 |
+
 ## `plugin_manager` 工具
+
+| 安装目标 | 解析 |
+|---|---|
+| 挂载内的路径（`/plugins/<name>`） | 挂载的磁盘路径：`ctx.agentLoop.mount_target` |
+| 其他目录 | 会话工作区内的路径 |
+| 包需求 | 包索引 |
+
 
 | 步骤 | 结果 |
 |---|---|

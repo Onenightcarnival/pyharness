@@ -13,7 +13,7 @@ agent 编写插件、安装进自己的 profile，在下一代中使用。
 
 ```
 agent ──harness_inspect──────────────▶ 服务方法、事件模式、配置 schema、工具、路由
-      ──plugin_manager template───────▶ bundle 模板 → 工作区 /plugins/<name>/
+      ──plugin_manager template───────▶ bundle 模板 → /plugins/<name>/（profile 的插件源码目录）
       ──plugin_manager install_bundle─▶ [人工批准] → 安装到 profile site/
                                          → 预检（独立进程）
                                             ├ 拒绝：恢复快照，错误返回 agent
@@ -43,6 +43,15 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 | 内容 | 包的 `AGENTS.md` 与源码 |
 | 路径 | `harness_inspect topic=config name=<条目 id>` 的 `docs`、`package_dir` |
 | 接口 | `ctx.agentLoop.add_mount(mount, directory, presets=None)`；其他插件同样可挂载自己的只读目录 |
+
+### 插件源码目录
+
+| 项 | 内容 |
+|---|---|
+| 目录 | `~/Documents/pyharness/<profile>/plugins/`；在 harness home 与工作区之外 |
+| 挂载点 | `creator` 预设会话的 `/plugins/`；可写，只读模式除外 |
+| 归属 | profile：与会话的工作区无关；安装进同一个 profile 的 `site/` |
+| 接口 | `ctx.agentLoop.add_mount(mount, directory, presets, writable=True)` |
 | 对照 dsh | 源码随包分发、agent 可读；pyharness 只读，扩展经插件完成 |
 
 每个 `SKILL.md` 小于 8000 字符。其他插件：`ctx.agentLoop.add_skills(directory, label, presets=None)` 挂载自己的 skills 目录，随插件停止卸载；`ctx.agentLoop.add_preset(id, title, description, tools=…, exclude_tools=…)` 添加预设；`ctx.prompt.add(..., presets=[…])` 限定提示词片段。
@@ -73,7 +82,7 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 |---|---|---|---|
 | `list` | — | 否 | 条目与状态；已安装 bundle |
 | `template` | `target=<name>`、`variant=basic\|tool-and-route\|ui-panel` | 否 | bundle 模板文件；来自 skill 的 `templates/`；`ui-panel` 含浏览器模块 `client.js`，注册主区面板与侧边栏行 |
-| `install_bundle` | `target=<dir 或 包需求>` | 是 | 从工作区目录安装 bundle，或从 PyPI 按包名安装（如 `pyh-example==0.1.0`） |
+| `install_bundle` | `target=<dir 或 包需求>` | 是 | 从目录安装 bundle（`/plugins/<name>`，或会话工作区内的目录），或从 PyPI 按包名安装（如 `pyh-example==0.1.0`） |
 | `uninstall_bundle` | `target=<bundle>` | 是 | 移除已安装的 bundle |
 | `set_bundle_enabled` | `target=<bundle> enabled=<bool>` | 是 | 启用 / 停用 bundle |
 | `set_plugin_enabled` | `target=<entry id> enabled=<bool>` | 是 | 启用 / 停用条目 |
@@ -92,7 +101,7 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 | `guidance` | `true` | 没有 skills 的预设的三行插件编写片段 |
 | `skills` | `true` | 挂载插件编写 skills 到 `/skills/pyharness/` |
 | `sources` | `true` | 已加载的包只读挂载到 `/harness/<模块名>/` |
-| `skills_presets` | `["creator"]` | 看到 skills 与包挂载的预设 |
+| `skills_presets` | `["creator"]` | 看到 skills、包挂载与插件源码目录的预设 |
 
 ### `dev-context` 提示词段
 
