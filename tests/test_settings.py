@@ -230,6 +230,40 @@ async def test_route_lifecycle_through_the_api(profile):
         assert h2.get("llm").default == "echo:echo" and h2.get("llm").config.providers == {}
 
 
+async def test_published_routes_resolve_but_are_not_configuration(profile):
+    """A plugin's published routes: usable and selectable, absent from the settings routes and from the saved file."""
+    scripted.CALLS.clear()
+    async with Harness(profile, patch=base_patch()) as h, client(h) as c:
+        llm = h.get("llm")
+        dispose = llm.publish({"pub": {"type": "scripted", "title": "Published", "models": [{"id": "p1"}]}})
+        assert llm.published() == {"pub": "<host>"} and "pub" in llm.routes() and "pub" not in llm.config.providers
+        assert llm.resolve("pub:p1").model_name == "p1" and llm.context_window("pub:p1") is None
+        assert any(g["id"] == "pub" for g in llm.directory()["groups"])
+
+        d = (await c.get("/api/settings/models")).json()
+        assert [r["id"] for r in d["routes"]] == []  # not a settings route
+        assert any(g["id"] == "pub" and g["models"][0]["spec"] == "pub:p1" for g in d["groups"])  # still selectable
+        r = await c.put("/api/settings/models/pub", json={"type": "scripted", "models": [{"id": "x"}]})
+        assert r.status_code == 409 and "published" in r.json()["detail"]
+        assert (await c.delete("/api/settings/models/pub")).status_code == 404
+
+        # A published model is a valid default; saving another route keeps it and does not write the published one.
+        d = (await c.put("/api/settings/models", json={"default": "pub:p1"})).json()
+        assert d["default"] == "pub:p1"
+        d = (await c.put("/api/settings/models/alt", json={"type": "scripted", "models": [{"id": "m1"}]})).json()
+        assert d["default"] == "pub:p1" and [r["id"] for r in d["routes"]] == ["alt"]
+        saved = next(e for e in yaml.safe_load(profile.patch_path.read_text()) if e["id"] == "llm")["config"]
+        assert list(saved["providers"]) == ["alt"] and saved["default"] == "pub:p1"
+
+        # A published route takes the place of a configured one of the same id; publishing again replaces the set.
+        llm.update(providers={"pub": {"type": "echo"}, "alt": {"type": "scripted", "models": [{"id": "m1"}]}})
+        assert llm.route("pub").type == "scripted" and [r["id"] for r in llm.describe()["routes"]] == ["alt"]
+        llm.publish({"other": {"type": "scripted", "models": [{"id": "o1"}]}})
+        assert llm.published() == {"other": "<host>"} and llm.route("pub").type == "echo"
+        dispose()
+        assert llm.published() == {} and "other" not in llm.routes()
+
+
 async def test_plain_key_in_the_configuration_moves_to_the_store_on_save(profile, monkeypatch):
     monkeypatch.delenv("ALT_API_KEY", raising=False)
     patch = base_patch({"providers": {"alt": {"type": "scripted", "api_key": "plain-9999", "models": [{"id": "m1"}]}}})

@@ -35,9 +35,7 @@ class GatewayService(Service):
         self.keys = KeyStore(base / "keys.json")
         self.usage = UsageStore(base / "usage.sqlite")
         self.images = ImageResolver()
-        self.catalog = ModelCatalog(
-            lambda: ctx.llm.directory()["groups"], lambda: ctx.llm.config.providers, self.settings.get
-        )
+        self.catalog = ModelCatalog(lambda: ctx.llm.directory()["groups"], ctx.llm.routes, self.settings.get)
         self.app = create_app(
             GatewayDeps(
                 generate=LangChainBackend(ctx.llm).stream,

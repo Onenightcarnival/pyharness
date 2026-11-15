@@ -3251,7 +3251,7 @@ function routeRow(r) {
 function renderModels() {
   const d = models.data; const view = $('settingsContent');
   const opts = [`<option value="">${esc(T.noDefault)}</option>`];
-  for (const r of d.routes) if (r.models.length) opts.push(`<optgroup label="${esc(r.title)}">${r.models.map((m) => `<option value="${esc(r.id + ':' + m.id)}" ${r.id + ':' + m.id === d.default ? 'selected' : ''}>${esc(m.name || m.id)}</option>`).join('')}</optgroup>`);
+  for (const g of d.groups) opts.push(`<optgroup label="${esc(g.title)}">${g.models.map((m) => `<option value="${esc(m.spec)}" ${m.spec === d.default ? 'selected' : ''}>${esc(m.name || m.id)}</option>`).join('')}</optgroup>`);
   if (d.default && !opts.join('').includes(`value="${esc(d.default)}" selected`)) opts.push(`<option value="${esc(d.default)}" selected>${esc(d.default)}</option>`);
   view.innerHTML = `
     <h3 class="sectionTitle">${esc(T.modelsTitle)}</h3><p class="sectionIntro">${esc(T.settingsIntro)}</p>

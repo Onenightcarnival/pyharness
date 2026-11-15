@@ -28,7 +28,7 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Google Anti
 | `grok.py` | Grok（xAI）：OIDC 发现的 OAuth、`api.x.ai` 与 CLI 代理的目录、账单用量、Responses 聊天、X 搜索、图像与视频生成 |
 | `grok_tools.py` | Grok 的工具 |
 | `responses.py` | Codex、ChatGPT、Grok 共用的 OpenAI Responses 线路格式：LangChain 消息 → `input` 条目、工具定义、Responses SSE 事件 → `AIMessageChunk`（文本、推理、工具调用、用量）的流式转换 |
-| `catalog.py` | 各 provider 的模型目录，以及由它们重建的 `ctx.llm` 路由 |
+| `catalog.py` | 各 provider 的模型目录，以及由它们发布到 `ctx.llm` 的路由 |
 | `oauth.py` | OAuth 回环流程：每次登录尝试一个临时 HTTP 服务器（PKCE S256、state、nonce）；浏览器无法访问 harness 时手动输入回调；超时与取消 |
 | `common.py` | 共用部分：错误码、HTTP 错误映射、SSE 解析、JWT claims、token 管理器（刷新共享进行中的调用，识别永久性错误）、请求归属 |
 | `store.py` | 数据根下的本地状态 |
@@ -76,7 +76,7 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Google Anti
 |---|---|
 | `provider_catalog()` | 每个账号发现的模型，合并，带已存的上下文窗口与推理强度 |
 | `cached_catalog()` | 同样的行，只取最近一次已知的目录；不访问网络 |
-| `rebuild_routes()` | 重写 `ctx.llm` 的 `codex` / `chatgpt` / `antigravity` / `grok` 路由 |
+| `rebuild_routes()` | 以 `ctx.llm.publish` 发布 `codex` / `chatgpt` / `antigravity` / `grok` 路由：已登录的 provider 各一条；配置里类型为 `subscription` 的路由从运行中的配置移除 |
 
 | 项 | 规则 |
 |---|---|

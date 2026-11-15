@@ -29,7 +29,7 @@ def split_id(model_id: str) -> Target | None:
 
 
 class ModelCatalog:
-    """``groups()`` are the route groups of ``ctx.llm.directory()``; ``routes()`` the configured route ids."""
+    """``groups()`` are the route groups of ``ctx.llm.directory()``; ``routes()`` the ids of the routes in effect."""
 
     def __init__(
         self,

@@ -118,10 +118,10 @@
 | PUT | `/settings/agent` | `{"default_preset"?, "default_mode"?}` | 新会话的默认值；持久化 | `put_agent_defaults` |
 | GET | `/settings/compaction` | | 压缩设置 | `get_compaction_settings` |
 | PUT | `/settings/compaction` | `{"auto"?, "threshold_ratio"?, "retain_ratio"?, "default_context_window"?, "summary_model"?}` | 压缩设置；立即生效；持久化 | `put_compaction_settings` |
-| GET | `/settings/models` | | 路由及其凭据状态、目录 | `get_model_settings` |
+| GET | `/settings/models` | | 已配置的路由及其凭据状态、目录、`groups`（全部可选模型，含插件发布的路由） | `get_model_settings` |
 | PUT | `/settings/models` | `{"default"}` | 新会话的默认模型 | `put_default_model` |
 | PUT | `/settings/model-retry` | `{"retry"}` | 没有自有策略的路由的重试策略 | `put_model_retry` |
-| PUT | `/settings/models/{route}` | `route settings` | 创建或编辑一条路由；立即生效 | `put_route` |
+| PUT | `/settings/models/{route}` | `route settings` | 创建或编辑一条路由；立即生效；route id 属于插件发布的路由 → 409 | `put_route` |
 | DELETE | `/settings/models/{route}` | | 删除一条路由及其已存的凭据 | `delete_route` |
 | POST | `/settings/models/{route}/discover` | `route settings` | 端点提供的模型 id | `discover_models` |
 | POST | `/settings/models/{route}/test` | `route settings` | 用 `model` 做一次短补全 | `test_route` |

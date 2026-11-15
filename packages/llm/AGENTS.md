@@ -35,6 +35,18 @@
 | 其余 LangChain 内置 | 配置中接受（`langchain.chat_models.base._BUILTIN_PROVIDERS`） |
 | 已注册 | `LLMService.register`（内置 `echo`） |
 
+## 路由的两种来源
+
+| 来源 | 在 `config` 中 | `describe()` 列出 | 被保存 | 可解析、进 `directory()` |
+|---|---|---|---|---|
+| 已配置：`config.providers` | 是 | 是 | 是 | 是 |
+| 已发布：插件 `publish()` | 否 | 否 | 否 | 是 |
+
+| 同一个 route id | 结果 |
+|---|---|
+| 已配置与已发布 | 已发布的生效；`describe()` 不列出这条已配置的 |
+| 两个插件发布 | `LLMConfigError` |
+
 ## 服务
 
 | 方法 | 契约 |
@@ -42,8 +54,11 @@
 | `resolve(spec)` | `route:model` 的聊天模型；实例缓存到下一次 `update` |
 | `build(spec, ...)` | 带单次请求覆盖项的新聊天模型；不缓存 |
 | `update(...)` | 替换运行中的配置；下一次请求生效 |
-| `describe()` | 路由及凭据状态（不含值）、provider 目录 |
-| `directory()` | 选择器用的模型选项，按路由分组 |
+| `publish(routes)` | 设定调用方插件发布的路由，替换它此前发布的；返回 disposer |
+| `published()` | 已发布的路由：`route id -> 所属条目` |
+| `routes()` | 生效的全部路由：已配置的，加上已发布的 |
+| `describe()` | 已配置的路由及凭据状态（不含值）、provider 目录 |
+| `directory()` | 选择器用的模型选项，按生效的路由分组 |
 | `probe(...)` | 一次简短补全 |
 | `list_models(...)` | 端点提供的模型 id（OpenAI、Anthropic、Gemini、Ollama 的列表接口） |
 | `retry_policy(spec)` | spec 所属路由的 `RetryPolicy`，否则全局策略，否则 `None` |

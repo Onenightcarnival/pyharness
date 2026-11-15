@@ -66,6 +66,8 @@ class LLMService(Service):
     def __init__(self, ctx: Any, config: LLMConfig) -> None:
         super().__init__(ctx, config)
         self._providers: dict[str, tuple[ModelFactory, str]] = {}
+        self._published: dict[str, tuple[ProviderConfig, str]] = {}  # route id -> (route, owning entry)
+        self._publishers: dict[str, Callable[[], Any]] = {}  # owning entry -> disposer of its routes
         self._cache: dict[Any, BaseChatModel] = {}
 
     async def start(self) -> None:
@@ -87,6 +89,34 @@ class LLMService(Service):
     def providers(self) -> dict[str, str]:
         """Registered provider types: ``type -> owning entry``."""
         return {name: owner for name, (_, owner) in self._providers.items()}
+
+    def publish(self, routes: dict[str, Any]) -> Callable[[], Any]:
+        """Set the routes the calling plugin publishes, replacing its earlier ones; returns the disposer."""
+        owner = self.caller.entry_id
+        validated = LLMConfig.model_validate({"providers": routes}).providers
+        for route in validated:
+            taken = self._published.get(route)
+            if taken is not None and taken[1] != owner:
+                raise LLMConfigError(f"route {route!r} is already published by {taken[1]!r}")
+        self._published = {r: v for r, v in self._published.items() if v[1] != owner}
+        self._published.update({route: (cfg, owner) for route, cfg in validated.items()})
+        self._cache.clear()
+        if owner not in self._publishers:
+            self._publishers[owner] = self.caller.on_dispose(lambda: self._unpublish(owner))
+        return self._publishers[owner]
+
+    def _unpublish(self, owner: str) -> None:
+        self._published = {r: v for r, v in self._published.items() if v[1] != owner}
+        self._publishers.pop(owner, None)
+        self._cache.clear()
+
+    def published(self) -> dict[str, str]:
+        """Published routes: ``route id -> owning entry``."""
+        return {route: owner for route, (_, owner) in self._published.items()}
+
+    def routes(self) -> dict[str, ProviderConfig]:
+        """Every route in effect: the configured ones, then the published ones (which win on the same id)."""
+        return {**self.config.providers, **{route: cfg for route, (cfg, _) in self._published.items()}}
 
     @property
     def default(self) -> str | None:
@@ -119,8 +149,11 @@ class LLMService(Service):
 
     # ------------------------------------------------------------------ routes
     def route(self, route: str) -> ProviderConfig:
-        """Configured route, or an implicit one whose ``type`` is the id (``openai:gpt-4o`` without configuration)."""
-        return self.config.providers.get(route) or ProviderConfig(type=route)
+        """
+        Route in effect (configured or published), or an implicit one whose ``type`` is the id
+        (``openai:gpt-4o`` without configuration).
+        """
+        return self.routes().get(route) or ProviderConfig(type=route)
 
     def route_type(self, route: str) -> str:
         cfg = self.route(route)
@@ -173,7 +206,7 @@ class LLMService(Service):
     def accepts_images(self, spec: str | None) -> bool | None:
         """Whether the model of ``spec`` declares image input; ``None`` when the model is not in a catalog."""
         route, model = split_spec(spec or self.config.default)
-        cfg = self.config.providers.get(route)
+        cfg = self.routes().get(route)
         if cfg is None:
             return None
         entry = next((m for m in cfg.models if m.id == model), None)
@@ -182,7 +215,7 @@ class LLMService(Service):
     def context_window(self, spec: str | None) -> int | None:
         """Declared context window of the model of ``spec``; ``None`` when unknown."""
         route, model = split_spec(spec or self.config.default)
-        cfg = self.config.providers.get(route)
+        cfg = self.routes().get(route)
         if cfg is None:
             return None
         entry = next((m for m in cfg.models if m.id == model), None)
@@ -285,6 +318,7 @@ class LLMService(Service):
             "retry": cfg.retry.model_dump(mode="json") if cfg.retry else None,
             "type_info": info,
             "configured": route in self.config.providers,
+            "published_by": self.published().get(route),
         }
 
     def describe(self) -> dict[str, Any]:
@@ -293,7 +327,7 @@ class LLMService(Service):
             "default": self.config.default,
             "provider": route,
             "model": model,
-            "routes": [self.describe_route(r) for r in self.config.providers],
+            "routes": [self.describe_route(r) for r in self.config.providers if r not in self._published],
             "catalog": self.catalog(),
             "registered": self.providers(),
             "retry": self.config.retry.model_dump(mode="json") if self.config.retry else None,
@@ -304,7 +338,7 @@ class LLMService(Service):
     def directory(self) -> dict[str, Any]:
         """Selector view: routes with their model catalogs and the default spec."""
         groups = []
-        for route, cfg in self.config.providers.items():
+        for route, cfg in self.routes().items():
             models = [
                 {
                     "id": m.id,

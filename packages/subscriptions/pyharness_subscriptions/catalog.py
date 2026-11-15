@@ -98,13 +98,20 @@ async def cached_catalog(service: Host, provider_id: str) -> dict[str, Any]:
 
 
 async def rebuild_routes(service: Host, discover: bool = True) -> None:
-    """Rebuild the ``codex`` / ``chatgpt`` / ``antigravity`` / ``grok`` routes of ``ctx.llm`` from the catalogs."""
+    """
+    Publish the ``codex`` / ``chatgpt`` / ``antigravity`` / ``grok`` routes to ``ctx.llm`` from the catalogs: one
+    per signed-in provider. A configured route of type ``subscription`` is removed from the live configuration.
+    """
     assert service.settings is not None
-    routes = dict(service.ctx.llm.config.model_dump(mode="python")["providers"])
+    llm = service.ctx.llm
+    configured = llm.config.model_dump(mode="python")["providers"]
+    kept = {route: cfg for route, cfg in configured.items() if cfg.get("type") != ROUTE_TYPE}
+    if len(kept) != len(configured):
+        llm.update(providers=kept)
+    routes: dict[str, Any] = {}
     for provider_id, provider in service.providers.items():
         keys = provider.auth.ordered_keys(provider_id)
         if not keys:
-            routes.pop(provider_id, None)
             continue
         cat = (
             await provider_catalog(service, provider_id, force=False)
@@ -135,4 +142,4 @@ async def rebuild_routes(service: Host, discover: bool = True) -> None:
             "models": models,
             "options": {"provider": provider_id},
         }
-    service.ctx.llm.update(providers=routes)
+    llm.publish(routes)

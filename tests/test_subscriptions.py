@@ -606,9 +606,10 @@ async def test_service_routes_and_model_routes(home, tmp_path, monkeypatch):
     async with Harness(profile, patch=[HTTP_OFF]) as h:
         service: SubscriptionsService = h.get("subscriptions")
         assert set(service.providers) == {"codex", "chatgpt", "antigravity", "grok"}
-        assert "subscription" in h.get("llm").providers() and not any(
-            r in h.get("llm").config.providers for r in service.providers
-        )
+        llm = h.get("llm")
+        assert "subscription" in llm.providers() and not any(r in llm.routes() for r in service.providers)
+        # A subscription route saved in the configuration by an earlier version is dropped from it.
+        llm.update(providers={"codex": {"type": "subscription", "models": [{"id": "old"}]}, "kept": {"type": "echo"}})
         # A stored Grok session with a cached catalog becomes a model route and registers the Grok tools.
         grok = service.providers["grok"]
         grok.auth.save(
@@ -636,7 +637,10 @@ async def test_service_routes_and_model_routes(home, tmp_path, monkeypatch):
         )
         await service.sync_routes(discover=False)
         service.sync_tools()
-        route = h.get("llm").config.providers["grok"]
+        # The route is published, not configured: the settings view does not list it and nothing saves it.
+        assert list(llm.config.providers) == ["kept"] and llm.published() == {"grok": "subscriptions"}
+        assert [r["id"] for r in llm.describe()["routes"]] == ["kept"]
+        route = llm.routes()["grok"]
         assert (
             route.type == "subscription"
             and [m.id for m in route.models] == ["grok-4", "grok-code-fast-1"]
@@ -686,7 +690,7 @@ async def test_service_routes_and_model_routes(home, tmp_path, monkeypatch):
                 },
             )
             assert r.json() == {"ok": True}
-            route = h.get("llm").config.providers["grok"]
+            route = h.get("llm").routes()["grok"]
             assert [m.id for m in route.models] == ["grok-4"] and route.models[0].context_window == 128000
             assert (
                 service.tool_enabled("grok", "x_search") is False
@@ -712,7 +716,7 @@ async def test_service_routes_and_model_routes(home, tmp_path, monkeypatch):
             r = await c.post("/api/subscriptions/logout", json={"provider": "grok", "account": "ann@x.ai"})
             assert (
                 r.json() == {"ok": True}
-                and "grok" not in h.get("llm").config.providers
+                and "grok" not in h.get("llm").routes()
                 and not any(t.name.startswith("grok_") for t in h.get("tools").list())
             )
         assert any(cl["entry"] == "subscriptions" for cl in h.get("webui").clients())

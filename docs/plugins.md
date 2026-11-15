@@ -5,7 +5,7 @@
 | 包 | 条目 id | 服务 | 职责 |
 |---|---|---|---|
 | `pyharness-core` | — | `loader`、`lifecycle`、`profile`、`events` | 内核：容器、事件、组合、Loader、worker、supervisor、预检、CLI |
-| `pyharness-llm` | `llm` | `llm` | 模型提供方注册表；`resolve("provider:model")`；内置 `echo`；自定义端点协议（OpenAI Chat / Responses、Anthropic Messages、Gemini）；失败代码（`failure_code(exc)`）与重试策略（`retry_policy(spec)`：路由自己的，否则全局的，否则不重试） |
+| `pyharness-llm` | `llm` | `llm` | 模型提供方注册表；`resolve("provider:model")`；内置 `echo`；插件用 `publish(routes)` 发布路由（可解析、进模型菜单，不进配置、不出现在「设置 → 模型」、不被保存）；自定义端点协议（OpenAI Chat / Responses、Anthropic Messages、Gemini）；失败代码（`failure_code(exc)`）与重试策略（`retry_policy(spec)`：路由自己的，否则全局的，否则不重试） |
 | `pyharness-tools` | `tools` | `tools` | 工具注册表、执行管线、审批闸门 |
 | `pyharness-mcp` | `mcp` | `mcp` | MCP 服务器的工具注册进 `ctx.tools`（stdio 或 HTTP / SSE），工具名加服务器前缀；连接失败不影响启动，`status()` 可查；stdio 命令为裸 `bun` / `bunx` 且配置中心装了受管 bun 时改走它（`managed_bun`）；`probe()` 给配置中心的连接测试；命令、参数、环境变量、工作目录、地址、请求头里可以写 `${credential:REF}`，连接时从环境变量 `REF` 或 profile 凭据文件取值，缺值的服务器状态为 `waiting-credentials`、不连接，已解析的值在状态 / 测试 / 日志的错误文本里显示为 `[redacted]` |
 | `pyharness-prompt` | `prompt` | `prompt` | 有序的系统提示词片段 |

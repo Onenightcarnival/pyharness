@@ -37,6 +37,7 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
         lifecycle = ctx.lifecycle
         return {
             **service.describe(),
+            "groups": service.directory()["groups"],
             "protocols": [{"id": k, "title": v["title"], "type": v["type"]} for k, v in PROTOCOLS.items()],
             "entry": llm_entry,
             "generation": lifecycle.generation,
@@ -125,6 +126,9 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
     async def put_route(route: str, body: RouteSettings) -> dict[str, Any]:
         service = llm()
         store = profile().credentials
+        owner = service.published().get(route)
+        if owner is not None:
+            raise HTTPException(409, f"route {route!r} is published by the {owner!r} plugin and is managed there")
         current = service.config.providers.get(route)
         data = current.model_dump(mode="python", exclude_none=True) if current is not None else {}
         data.pop("api_key", None)
@@ -167,7 +171,7 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
                 route: cfg.model_dump(mode="python", exclude_none=True),
             }
             default = service.config.default
-            if not default or (cfg.models and split_spec(default)[0] not in providers):
+            if not default or (cfg.models and split_spec(default)[0] not in {**providers, **service.published()}):
                 default = f"{route}:{cfg.models[0].id}" if cfg.models else default
             service.update(providers=providers, default=default)
         except (ValueError, LLMConfigError) as exc:
