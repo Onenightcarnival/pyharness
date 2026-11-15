@@ -88,7 +88,7 @@ uv run pyh run
 | [docs/self-extension.md](docs/self-extension.md) | agent 自扩展流程、工具、审批边界 |
 | [docs/web-ui.md](docs/web-ui.md) | Web 界面、HTTP API |
 | [docs/dsh-comparison.md](docs/dsh-comparison.md) | 与 dsh 的对照 |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | 开发环境、目录、测试、写作规范 |
+| [AGENTS.md](AGENTS.md) | 开发环境、目录、测试、统一风格要求 |
 
 ## 许可证
 
