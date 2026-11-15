@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Iterable, Iterator
 from typing import Any
 
 import httpx
@@ -17,7 +17,7 @@ from pydantic import ConfigDict, Field
 
 from pyharness import package_prompts
 
-from .common import STREAM_IDLE_TIMEOUT, LlmError, http_error, iter_sse, read_error
+from .common import STREAM_IDLE_TIMEOUT, LlmError, SseEvent, http_error, iter_sse, read_error
 
 PROMPTS = package_prompts(__file__)
 UNKNOWN_OUTCOME: str = PROMPTS["responses"]["UNKNOWN_OUTCOME"]
@@ -354,6 +354,21 @@ class ResponsesChatModel(BaseChatModel):
             ]
         )
 
+    def _chunks(self, translator: Any, event: SseEvent) -> Iterable[AIMessageChunk]:
+        """Message chunks the translator yields for one SSE event."""
+        return translator.feed(event.event, event.data)
+
+    async def _generations(
+        self, res: httpx.Response, translator: Any, run_manager: AsyncCallbackManagerForLLMRun | None
+    ) -> AsyncIterator[ChatGenerationChunk]:
+        """Generation chunks of an SSE response body; text is reported to ``run_manager`` as new tokens."""
+        async for event in iter_sse(res, self.label, self.stream_idle_timeout):
+            for chunk in self._chunks(translator, event):
+                gen = ChatGenerationChunk(message=chunk)
+                if run_manager is not None and isinstance(chunk.content, str) and chunk.content:
+                    await run_manager.on_llm_new_token(chunk.content, chunk=gen)
+                yield gen
+
     async def _astream(
         self,
         messages: list[BaseMessage],
@@ -377,12 +392,8 @@ class ResponsesChatModel(BaseChatModel):
                         continue
                     if res.status_code >= 400:
                         raise http_error(self.label, res.status_code, await read_error(res))
-                    async for event in iter_sse(res, self.label, self.stream_idle_timeout):
-                        for chunk in translator.feed(event.event, event.data):
-                            gen = ChatGenerationChunk(message=chunk)
-                            if run_manager is not None and isinstance(chunk.content, str) and chunk.content:
-                                await run_manager.on_llm_new_token(chunk.content, chunk=gen)
-                            yield gen
+                    async for gen in self._generations(res, translator, run_manager):
+                        yield gen
                 if not translator.completed:
                     raise LlmError("STREAM_CLOSED", f"{self.label} stream ended before completion")
                 return

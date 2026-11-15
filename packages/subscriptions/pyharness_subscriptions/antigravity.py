@@ -8,13 +8,13 @@ import re
 import sys
 import time
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterable
 from datetime import datetime
 from typing import Any
 
 import httpx
 from langchain_core.callbacks import AsyncCallbackManagerForLLMRun
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import AIMessageChunk, BaseMessage
 from langchain_core.outputs import ChatGenerationChunk
 
 from pyharness import package_toml
@@ -29,7 +29,7 @@ from .antigravity_wire import (
     build_request,
     efforts_for,
 )
-from .common import LlmError, PermanentRefreshError, http_error, iter_sse, read_error
+from .common import LlmError, PermanentRefreshError, SseEvent, http_error, read_error
 from .oauth import FlowSpec, LoginAttempt
 from .providers import DiscoveredModel, Provider
 from .responses import ResponsesChatModel
@@ -409,6 +409,9 @@ class AntigravityChatModel(ResponsesChatModel):
     label: str = "antigravity"
     temperature: float | None = None
 
+    def _chunks(self, translator: Any, event: SseEvent) -> Iterable[AIMessageChunk]:
+        return translator.feed(event.data)
+
     async def _astream(
         self,
         messages: list[BaseMessage],
@@ -457,12 +460,8 @@ class AntigravityChatModel(ResponsesChatModel):
                             continue
                         if res.status_code >= 400:
                             raise http_error(self.label, res.status_code, await read_error(res))
-                        async for event in iter_sse(res, self.label, self.stream_idle_timeout):
-                            for chunk in translator.feed(event.data):
-                                gen = ChatGenerationChunk(message=chunk)
-                                if run_manager is not None and isinstance(chunk.content, str) and chunk.content:
-                                    await run_manager.on_llm_new_token(chunk.content, chunk=gen)
-                                yield gen
+                        async for gen in self._generations(res, translator, run_manager):
+                            yield gen
                         done = True
                         if not translator.finished:
                             raise LlmError("STREAM_CLOSED", f"{self.label} stream ended before completion")

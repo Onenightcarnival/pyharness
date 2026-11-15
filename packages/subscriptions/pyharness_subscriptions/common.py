@@ -116,7 +116,7 @@ async def iter_sse(
     lines = res.aiter_lines()
     while True:
         try:
-            line = await asyncio.wait_for(lines.__anext__(), idle_timeout)
+            line = await asyncio.wait_for(anext(lines), idle_timeout)
         except StopAsyncIteration:
             return
         except TimeoutError:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 import logging
 from collections.abc import Callable, Iterable
+from contextlib import AsyncExitStack
 from contextvars import ContextVar
 from textwrap import dedent
 from typing import Any, ClassVar
@@ -251,15 +252,15 @@ class Context:
 
     async def enter(self, cm: Any) -> Any:
         """Enter a sync or async context manager; it exits when this plugin stops."""
+        stack = AsyncExitStack()
         if hasattr(cm, "__aenter__"):
-            value = await cm.__aenter__()
-            self.on_dispose(lambda: cm.__aexit__(None, None, None))
-            return value
-        if hasattr(cm, "__enter__"):
-            value = cm.__enter__()
-            self.on_dispose(lambda: cm.__exit__(None, None, None))
-            return value
-        raise TypeError(f"{cm!r} is not a context manager")
+            value = await stack.enter_async_context(cm)
+        elif hasattr(cm, "__enter__"):
+            value = stack.enter_context(cm)
+        else:
+            raise TypeError(f"{cm!r} is not a context manager")
+        self.on_dispose(stack.aclose)
+        return value
 
     async def aclose(self) -> None:
         """Run the registered disposers in reverse order. Disposer errors are logged."""
