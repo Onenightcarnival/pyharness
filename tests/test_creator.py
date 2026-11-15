@@ -158,6 +158,7 @@ async def test_creator_preset_reads_the_mounted_packages(home):
             "path": str(ROOT / "packages" / "llm"),
             "owner": "plugin-manager",
             "presets": ["creator"],
+            "writable": False,
         }
         assert all(m["owner"] == "plugin-manager" for m in mounts.values())
         assert "## Harness sources" in h.get("prompt").render("creator")

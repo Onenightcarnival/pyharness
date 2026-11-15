@@ -26,7 +26,8 @@ class DeepAgentsLoop(Service):
         self._subagents: list[tuple[dict[str, Any], str]] = []
         self._middleware: list[tuple[AgentMiddleware, str]] = []
         self._skills: list[tuple[str, Path, str, tuple[str, ...] | None]] = []  # (label, directory, owner, presets)
-        self._mounts: list[tuple[str, Path, str, tuple[str, ...] | None]] = []  # (mount, directory, owner, presets)
+        # (mount, directory, owner, presets, writable)
+        self._mounts: list[tuple[str, Path, str, tuple[str, ...] | None, bool]] = []
         self._presets: dict[str, tuple[PresetConfig, str]] = {}  # plugin-added presets: id -> (config, owner)
         if self.config.default_mode not in MODES:
             raise ValueError(f"unknown default_mode {self.config.default_mode!r}; one of {', '.join(MODES)}")
@@ -102,10 +103,12 @@ class DeepAgentsLoop(Service):
             for s, p, o, pr in self._skills
         ]
 
-    def add_mount(self, mount: str, directory: str | Path, presets: list[str] | None = None) -> Any:
+    def add_mount(
+        self, mount: str, directory: str | Path, presets: list[str] | None = None, *, writable: bool = False
+    ) -> Any:
         """
-        Mount ``directory`` read-only at the virtual path ``mount`` for ``presets`` (``None``: all); returns the
-        disposer.
+        Mount ``directory`` at the virtual path ``mount`` for ``presets`` (``None``: all), read-only unless
+        ``writable``; returns the disposer.
         """
         path = Path(directory).expanduser().resolve()
         if not path.is_dir():
@@ -116,26 +119,35 @@ class DeepAgentsLoop(Service):
         virtual = "/" + "/".join(parts) + "/"
         if virtual.startswith(f"{SKILLS_MOUNT}/"):
             raise ValueError(f"{SKILLS_MOUNT}/ is mounted through add_skills")
-        if any(existing == virtual for existing, _, _, _ in self._mounts):
+        if any(existing == virtual for existing, *_ in self._mounts):
             raise ValueError(f"mount path {virtual!r} is already mounted")
-        item = (virtual, path, self.caller.entry_id, tuple(presets) if presets else None)
+        item = (virtual, path, self.caller.entry_id, tuple(presets) if presets else None, writable)
         self._mounts.append(item)
         return self.caller.on_dispose(lambda: self._mounts.remove(item) if item in self._mounts else None)
 
     def mounts(self) -> list[dict[str, Any]]:
-        """Read-only mounts: ``mount``, ``path``, ``owner``, ``presets``."""
+        """Mounts: ``mount``, ``path``, ``owner``, ``presets``, ``writable``."""
         return [
-            {"mount": m, "path": str(p), "owner": o, "presets": list(pr) if pr else None}
-            for m, p, o, pr in self._mounts
+            {"mount": m, "path": str(p), "owner": o, "presets": list(pr) if pr else None, "writable": w}
+            for m, p, o, pr, w in self._mounts
         ]
 
     def mounted(self, path: str | Path) -> str | None:
         """Virtual path of a path on disk that lies inside a mount; ``None`` outside every mount."""
         real = Path(path).expanduser().resolve()
-        for mount, root, _, _ in sorted(self._mounts, key=lambda item: len(item[1].parts), reverse=True):
+        for mount, root, *_ in sorted(self._mounts, key=lambda item: len(item[1].parts), reverse=True):
             if real == root or root in real.parents:
                 inner = real.relative_to(root).as_posix()
                 return mount if inner == "." else mount + inner + ("/" if real.is_dir() else "")
+        return None
+
+    def mount_target(self, path: str) -> Path | None:
+        """Path on disk of a virtual path that lies inside a mount; ``None`` outside every mount."""
+        virtual = "/" + str(path).strip("/") + "/"
+        for mount, root, *_ in sorted(self._mounts, key=lambda item: len(item[0]), reverse=True):
+            if virtual.startswith(mount):
+                real = (root / virtual[len(mount) :]).resolve()
+                return real if real == root or root in real.parents else None
         return None
 
     # ------------------------------------------------------------------ presets and modes
@@ -208,7 +220,7 @@ class DeepAgentsLoop(Service):
                 for s, p, _, presets in self._skills
                 if presets is None or preset_id in presets
             ],
-            mounts=[(m, p) for m, p, _, presets in self._mounts if presets is None or preset_id in presets],
+            mounts=[(m, p, w) for m, p, _, presets, w in self._mounts if presets is None or preset_id in presets],
             subagents=[s for s, _ in self._subagents],
             middleware=[m for m, _ in self._middleware],
             workspace=workspace,

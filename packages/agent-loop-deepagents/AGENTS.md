@@ -14,7 +14,7 @@
 |---|---|
 | `__init__.py` | 公开名称 |
 | `service.py` | `DeepAgentsLoop`：`agentLoop` 服务；扩展点、预设与模式、`build()` |
-| `graph.py` | 图的构建：带技能与只读挂载的 backend、写入拒绝规则、子 agent 解析、`create_deep_agent` |
+| `graph.py` | 图的构建：带技能与挂载的 backend、写入拒绝规则、子 agent 解析、`create_deep_agent` |
 | `middleware.py` | `HarnessMiddleware`：LangChain middleware，模型调用与工具调用经 harness 走 |
 | `config.py` | 权限模式、agent 预设、loop 配置 |
 | `config.toml` | 权限模式与内置 agent 预设 |
@@ -39,7 +39,7 @@
 | `add_subagent()` | 声明式子 agent spec，归调用方插件所有；返回 disposer |
 | `add_middleware()` | LangChain `AgentMiddleware`，排在 `HarnessMiddleware` 之后；返回 disposer |
 | `add_skills()` | 技能目录，只读挂载到 `/skills/<label>/`；返回 disposer |
-| `add_mount()` | 目录，只读挂载到给定的虚拟路径；挂载点之上的各级目录列出其下的挂载，不含其他内容；返回 disposer |
+| `add_mount()` | 目录，挂载到给定的虚拟路径；只读，`writable=True` 时可写；挂载点之上的各级目录列出其下的挂载，不含其他内容；返回 disposer |
 | `add_preset()` | agent 预设，归调用方插件所有；返回 disposer |
 | `preset()` | 给定预设 id 或默认预设的 `(id, config)`；未知 id 抛出 `ValueError` |
 | `mode()` | 给定的权限模式 id 或默认模式；未知 id 抛出 `ValueError` |
@@ -47,8 +47,9 @@
 | `presets()` | 供选择器的名单：`id`、`title`、`description`、`order`、`default`、`owner` |
 | `modes()` | 供选择器的名单：`id`、`title`、`description`、`default` |
 | `skills()` | 已挂载的技能目录：`label`、`path`、`mount`、`owner`、`presets` |
-| `mounts()` | 只读挂载：`mount`、`path`、`owner`、`presets` |
+| `mounts()` | 挂载：`mount`、`path`、`owner`、`presets`、`writable` |
 | `mounted(path)` | 磁盘路径在挂载内对应的虚拟路径；不在任何挂载内：`None` |
+| `mount_target(path)` | 虚拟路径在挂载内对应的磁盘路径；不在任何挂载内：`None` |
 | `subagents()` | 每个已添加子 agent 的 `name` 与 `owner` |
 | `recursion_limit` | `config.recursion_limit` |
 
@@ -79,7 +80,7 @@
 | `tools` | 预设保留的已注册工具名（`None`：全部） |
 | `exclude_tools` | 预设去掉的已注册工具名 |
 | 技能 | `add_skills(..., presets=[...])`：为预设挂载的技能目录 |
-| 只读挂载 | `add_mount(..., presets=[...])`：为预设挂载的目录 |
+| 挂载 | `add_mount(..., presets=[...])`：为预设挂载的目录 |
 | 提示词 section | `ctx.prompt.add(..., presets=[...])`：section 只对这些预设生效 |
 
 ## `build()` 的输入
@@ -94,14 +95,14 @@
 | 审批 | `ctx.tools.interrupt_on()` 与 `config.interrupt_on` |
 | 子 agent | `config.subagents` 与 `DeepAgentsLoop.add_subagent` |
 | 技能 | `config.skills` 与 `DeepAgentsLoop.add_skills` |
-| 只读挂载 | `DeepAgentsLoop.add_mount` |
+| 挂载 | `DeepAgentsLoop.add_mount` |
 
 ## 图的构建（`graph.py`）
 
 | 函数 | 契约 |
 |---|---|
-| `backend_and_skills()` | workspace 与模式对应的 backend（技能目录与只读挂载已路由进去）、技能来源、写入拒绝规则 |
-| `mount_tree()` | 只读挂载的 backend：每个目录在其路径上，其上的各级目录为 `MountDirectory` |
+| `backend_and_skills()` | workspace 与模式对应的 backend（技能目录与挂载已路由进去）、技能来源、写入拒绝规则：技能与只读挂载拒绝写入，可写挂载只在只读模式下拒绝 |
+| `mount_tree()` | 挂载的 backend：每个目录在其路径上，其上的各级目录为 `MountDirectory` |
 | `resolve_subagent()` | 一个子 agent spec 内：工具名 → 已注册的工具，model spec → 模型 |
 | `built_model()` | 构建图所用的 `(spec, model)`；默认模型在启动时不可用：`echo:echo` |
 | `build()` | 编译好的 deepagents 图，取自 loop 的 context、配置与扩展状态 |

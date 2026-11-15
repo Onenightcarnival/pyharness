@@ -180,6 +180,7 @@ async def test_read_only_mount_serves_one_preset(profile, tmp_path):
                 "path": str(reference.resolve()),
                 "owner": "<host>",
                 "presets": ["creator"],
+                "writable": False,
             }
         ]
         assert loop.mounted(reference / "inner" / "note.md") == "/ref/docs/inner/note.md"
@@ -206,6 +207,49 @@ async def test_read_only_mount_serves_one_preset(profile, tmp_path):
         events = await agents.start_run(session["id"], "go").wait()
         results = {e["id"]: e for e in events if e["type"] == "tool_result"}
         assert "mounted text" not in results["r2"]["content"]
+
+
+async def test_writable_mount_takes_writes_outside_read_only_mode(profile, tmp_path):
+    out, notes, docs = tmp_path / "out", tmp_path / "notes", tmp_path / "docs"
+    for directory in (out, notes, docs):
+        directory.mkdir()
+
+    def write(id, path):
+        return {
+            "content": "",
+            "tool_calls": [{"name": "write_file", "args": {"file_path": path, "content": id}, "id": id}],
+        }
+
+    replies = [
+        write("w1", "/out/a.md"),
+        write("w2", "/ref/notes/b.md"),
+        write("w3", "/ref/docs/c.md"),  # read-only beside a writable mount of the same route
+        {"content": "done"},
+        write("w4", "/out/d.md"),
+        {"content": "done"},
+    ]
+    async with Harness(profile, patch=scripted_patch(replies)) as h:
+        loop, agents = h.get("agentLoop"), h.get("agents")
+        loop.add_mount("/out", out, writable=True)
+        loop.add_mount("/ref/notes", notes, writable=True)
+        loop.add_mount("/ref/docs", docs)
+        assert [m["writable"] for m in loop.mounts() if m["owner"] == "<host>"] == [True, True, False]
+        assert loop.mount_target("/out/a.md") == out.resolve() / "a.md"
+        assert loop.mount_target("/ref/notes") == notes.resolve()
+        assert loop.mount_target("/out/../a.md") is None and loop.mount_target("/elsewhere/a.md") is None
+
+        session = await agents.create_session()
+        events = await agents.start_run(session["id"], "go").wait()
+        results = {e["id"]: e for e in events if e["type"] == "tool_result"}
+        assert results["w1"]["status"] == "success" and (out / "a.md").read_text() == "w1"
+        assert results["w2"]["status"] == "success" and (notes / "b.md").read_text() == "w2"
+        assert results["w3"]["status"] == "error" and "denied" in results["w3"]["content"]
+
+        session = await agents.create_session(mode="read-only")
+        events = await agents.start_run(session["id"], "go").wait()
+        results = {e["id"]: e for e in events if e["type"] == "tool_result"}
+        assert results["w4"]["status"] == "error" and "denied" in results["w4"]["content"]
+    assert not (docs / "c.md").exists() and not (out / "d.md").exists()
 
 
 async def test_inspect_tool_reports_live_api(profile):

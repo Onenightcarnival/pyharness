@@ -56,18 +56,24 @@ def mount_tree(mounts: list[tuple[list[str], Path]]) -> Any:
     return CompositeBackend(default=default, routes={f"/{name}/": mount_tree(sub) for name, sub in below.items()})
 
 
+def route_of(mount: str) -> str:
+    """Composite route of a mount: its first path segment."""
+    return "/" + mount.strip("/").split("/")[0] + "/"
+
+
 def backend_and_skills(
     ctx: Any,
     config: LoopConfig,
     skills: list[tuple[str, Path]],
-    mounts: list[tuple[str, Path]],
+    mounts: list[tuple[str, Path, bool]],
     workspace: str | None,
     mode: str,
 ) -> tuple[Any, list[str], list[Any]]:
     """
-    Backend for the workspace and mode with the ``skills`` and ``mounts`` (``(virtual path, directory)``) routed
-    in read-only, the skill sources, and the write-deny rules. A mount's first path segment is one route: the
-    directories above a mount list the mounts below and hold nothing else.
+    Backend for the workspace and mode with the ``skills`` (``(virtual path, directory)``) and ``mounts``
+    (``(virtual path, directory, writable)``) routed in, the skill sources, and the write-deny rules: skills and
+    mounts are read-only unless ``writable``. A mount's first path segment is one route: the directories above a
+    mount list the mounts below and hold nothing else.
     """
     workspaces = ctx.get("workspace", None)
     if workspaces is not None and hasattr(workspaces, "backend_for"):
@@ -82,12 +88,17 @@ def backend_and_skills(
         return backend, sources, rules
     routes: dict[str, Any] = {}
     if mounts:
-        routes.update(mount_tree([(mount.strip("/").split("/"), path) for mount, path in mounts]).routes)
+        routes.update(mount_tree([(mount.strip("/").split("/"), path) for mount, path, _ in mounts]).routes)
     routes.update({mount: FilesystemBackend(root_dir=path, virtual_mode=True) for mount, path in skills})
-    # One deny rule per route: rules scoped to composite routes are accepted even when the workspace backend runs
-    # commands.
+    # Deny rules lie under composite routes: such rules are accepted even when the workspace backend runs commands.
+    # A route is denied as a whole; one that holds a writable mount is denied mount by mount.
+    open_routes = {route_of(mount) for mount, _, writable in mounts if writable}
+    read_only = [
+        mount if route_of(mount) in open_routes else route_of(mount) for mount, _, writable in mounts if not writable
+    ]
     rules.extend(
-        FilesystemPermission(operations=["write"], paths=[route, f"{route}**"], mode="deny") for route in routes
+        FilesystemPermission(operations=["write"], paths=[path, f"{path}**"], mode="deny")
+        for path in dict.fromkeys([*read_only, *(mount for mount, _ in skills)])
     )
     composite = CompositeBackend(default=backend if backend is not None else StateBackend(), routes=routes)
     return composite, sources, rules
@@ -137,7 +148,7 @@ async def build(
     mode: str,
     preset: tuple[str, PresetConfig],
     skills: list[tuple[str, Path]],
-    mounts: list[tuple[str, Path]],
+    mounts: list[tuple[str, Path, bool]],
     subagents: list[dict[str, Any]],
     middleware: list[AgentMiddleware],
     workspace: str | None = None,
