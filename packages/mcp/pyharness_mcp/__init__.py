@@ -3,6 +3,7 @@
 | config                 | meaning                                                                          |
 |------------------------|----------------------------------------------------------------------------------|
 | ``servers.<name>``     | stdio: ``command``, ``args``, ``env``, ``cwd``; HTTP / SSE transports: ``url``, ``headers`` |
+| ``${credential:REF}``  | inside any of those strings: a credential, resolved at connection (:mod:`.templates`) |
 | ``servers.<name>.enabled`` | ``false`` keeps the server configured but unconnected                         |
 | ``servers.<name>.approval`` | gate for every tool of the server: ``true`` or a LangChain ``InterruptOnConfig`` |
 | ``servers.<name>.prefix`` | tool names become ``<server>_<tool>`` (default) to keep servers apart        |
@@ -13,8 +14,17 @@ A stdio server whose command is a bare ``bun`` / ``bunx`` runs through the bun r
 
 A server that fails to connect is reported in :meth:`MCPService.status` and skipped; the harness boots without it.
 Tools run through the ``tools/execute`` pipeline like any registered tool, so permission modes and approvals apply.
-Secrets in ``env`` and ``headers`` come from the profile configuration (``${env:VAR}`` interpolation keeps them out of
-files).
+
+Secrets in ``env`` and ``headers`` stay out of the configuration file:
+
+| written as             | value                                                                            |
+|------------------------|----------------------------------------------------------------------------------|
+| ``${credential:REF}``  | environment variable ``REF``, else the profile credential store (``credentials.yaml``) |
+| ``${env:VAR}``         | environment variable ``VAR``, interpolated at boot                               |
+
+- Without a profile, a credential resolves from the environment only.
+- A server with an unresolved credential has the state ``waiting-credentials`` and is not connected.
+- A resolved credential value reads ``[redacted]`` in status errors, probe errors and logs.
 """
 
 from __future__ import annotations
@@ -23,35 +33,16 @@ import asyncio
 import os
 import re
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar
 
 from langchain_mcp_adapters.client import MultiServerMCPClient
-from pydantic import BaseModel, Field
 
 from pyharness import Service
 
-
-class ServerConfig(BaseModel):
-    transport: Literal["stdio", "streamable_http", "sse"] | None = Field(
-        None, description="Defaults to stdio with `command`, else streamable_http."
-    )
-    command: str | None = Field(None, description="Executable of a stdio server.")
-    args: list[str] = Field(default_factory=list)
-    env: dict[str, str] = Field(default_factory=dict)
-    cwd: str | None = None
-    url: str | None = Field(None, description="Endpoint of an HTTP (streamable_http) or SSE server.")
-    headers: dict[str, str] = Field(default_factory=dict)
-    enabled: bool = True
-    approval: bool | dict[str, Any] = Field(False, description="Approval gate for the server's tools.")
-    prefix: bool = Field(True, description="Prefix tool names with the server name.")
-
-
-class Config(BaseModel):
-    servers: dict[str, ServerConfig] = Field(default_factory=dict)
-    connect_timeout: float = Field(
-        20.0, description="Seconds to connect and list tools before a server counts as failed."
-    )
+from .config import Config, ServerConfig
+from .templates import expand, has_template, redact, references
 
 
 def slug(name: str) -> str:
@@ -118,11 +109,17 @@ class MCPService(Service):
             if not cfg.enabled:
                 self._status[name] = {"state": "disabled", "tools": []}
                 continue
+            expanded, values, missing = expand(cfg, self._lookup())
+            if missing:
+                self._status[name] = {"state": "waiting-credentials", "missing": missing, "tools": []}
+                self.ctx.logger.warning("mcp server %s waits for credentials: %s", name, ", ".join(missing))
+                continue
             try:
-                tools = await asyncio.wait_for(self._load(name, cfg), self.config.connect_timeout)
+                tools = await asyncio.wait_for(self._load(name, expanded), self.config.connect_timeout)
             except Exception as exc:  # noqa: BLE001 - one server must not stop the boot
-                self._status[name] = {"state": "error", "error": f"{type(exc).__name__}: {exc}"[:500], "tools": []}
-                self.ctx.logger.warning("mcp server %s unavailable: %s", name, exc)
+                error = redact(f"{type(exc).__name__}: {exc}", values)
+                self._status[name] = {"state": "error", "error": error[:500], "tools": []}
+                self.ctx.logger.warning("mcp server %s unavailable: %s", name, error)
                 continue
             registered: list[str] = []
             for tool in tools:
@@ -132,7 +129,9 @@ class MCPService(Service):
                     self.ctx.tools.register(tool, approval=cfg.approval, tags=("mcp", name))
                     registered.append(tool.name)
                 except Exception as exc:  # noqa: BLE001 - name clash with another plugin's tool
-                    self.ctx.logger.warning("mcp tool %s of %s not registered: %s", tool.name, name, exc)
+                    self.ctx.logger.warning(
+                        "mcp tool %s of %s not registered: %s", tool.name, name, redact(str(exc), values)
+                    )
             self._status[name] = {"state": "connected", "tools": registered}
 
     async def _load(self, name: str, cfg: ServerConfig) -> list[Any]:
@@ -143,10 +142,35 @@ class MCPService(Service):
         profile = self.ctx.get("profile", None)
         return Path(profile.data) if profile is not None and hasattr(profile, "data") else None
 
+    def _lookup(self) -> Callable[[str], str | None]:
+        """Value of a credential reference: the profile credential store; without a profile, the environment."""
+        profile = self.ctx.get("profile", None)
+        if profile is not None and hasattr(profile, "credentials"):
+            return profile.credentials.get
+        return lambda reference: os.environ.get(reference) or None
+
+    def _describe(self, reference: str) -> dict[str, Any]:
+        """``reference``, ``configured`` and ``source`` (``env``, ``store`` or ``None``) of a credential reference."""
+        profile = self.ctx.get("profile", None)
+        if profile is not None and hasattr(profile, "credentials"):
+            return profile.credentials.describe(reference)
+        configured = bool(os.environ.get(reference))
+        return {"reference": reference, "configured": configured, "source": "env" if configured else None}
+
     async def probe(self, cfg: ServerConfig, timeout: float | None = None) -> dict[str, Any]:
-        """Connect to a server configuration without registering anything: ``{"ok", "tools": [names], "error"?}``."""
+        """Connect to a server configuration without registering anything: ``{"ok", "tools": [names]}``.
+
+        | failure               | ``ok`` is ``False``, with                                                      |
+        |-----------------------|--------------------------------------------------------------------------------|
+        | unresolved credential | ``"code": "waiting-credentials"``, ``"error": "missing credentials: A, B"``    |
+        | no handshake in time  | ``"code": "timeout"``, ``error``                                               |
+        | any other             | ``"code": "error"``, ``error``                                                 |
+        """
+        expanded, values, missing = expand(cfg, self._lookup())
+        if missing:
+            return {"ok": False, "code": "waiting-credentials", "error": f"missing credentials: {', '.join(missing)}"}
         try:
-            tools = await asyncio.wait_for(self._load("probe", cfg), timeout or self.config.connect_timeout)
+            tools = await asyncio.wait_for(self._load("probe", expanded), timeout or self.config.connect_timeout)
             return {"ok": True, "tools": [t.name for t in tools]}
         except TimeoutError:
             return {
@@ -155,20 +179,28 @@ class MCPService(Service):
                 "error": f"no MCP handshake within {timeout or self.config.connect_timeout:g} s",
             }
         except Exception as exc:  # noqa: BLE001
-            return {"ok": False, "code": "error", "error": f"{type(exc).__name__}: {exc}"[:600]}
+            return {"ok": False, "code": "error", "error": redact(f"{type(exc).__name__}: {exc}", values)[:600]}
 
     # ------------------------------------------------------------------ views
     def status(self) -> dict[str, dict[str, Any]]:
-        """Per server: ``state`` (connected / error / disabled), ``tools`` (registered names), ``error``."""
+        """Per server: ``state`` (connected / error / disabled / waiting-credentials), ``tools`` (registered names),
+        ``error``, ``missing`` (unresolved credential references)."""
         return {name: dict(value) for name, value in self._status.items()}
 
     def servers(self) -> dict[str, dict[str, Any]]:
-        """Configured servers with ``env`` and ``headers`` values masked, plus their status."""
+        """Configured servers with their status.
+
+        | field                     | value                                                                      |
+        |---------------------------|----------------------------------------------------------------------------|
+        | ``env``, ``headers``      | a value with a credential template as written; any other value :data:`MASK` |
+        | ``credentials``           | ``{reference, configured, source}`` per referenced credential, no value    |
+        """
         out = {}
         for name, cfg in self.config.servers.items():
             data = cfg.model_dump()
-            data["env"] = dict.fromkeys(cfg.env, MASK)
-            data["headers"] = dict.fromkeys(cfg.headers, MASK)
+            data["env"] = {key: value if has_template(value) else MASK for key, value in cfg.env.items()}
+            data["headers"] = {key: value if has_template(value) else MASK for key, value in cfg.headers.items()}
+            data["credentials"] = [self._describe(reference) for reference in references(cfg)]
             out[name] = {
                 **data,
                 **self._status.get(name, {"state": "disabled" if not cfg.enabled else "unknown", "tools": []}),
@@ -176,4 +208,15 @@ class MCPService(Service):
         return out
 
 
-__all__ = ["Config", "MCPService", "ServerConfig", "connection_of", "managed_bun", "slug"]
+__all__ = [
+    "MASK",
+    "Config",
+    "MCPService",
+    "ServerConfig",
+    "connection_of",
+    "expand",
+    "managed_bun",
+    "redact",
+    "references",
+    "slug",
+]

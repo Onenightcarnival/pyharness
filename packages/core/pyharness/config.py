@@ -253,9 +253,11 @@ def interpolate(value: Any, variables: dict[str, str]) -> Any:
     | ``${env:NAME}``          | environment variable; unset → ``""``                  |
     | ``${env:NAME:-default}`` | environment variable, else ``default``; defaults nest |
     | ``${var}``               | entry of ``variables``                                |
+    | ``${credential:REF}``    | kept as written                                       |
 
     - Substituted text is literal and never re-scanned.
     - A string that is exactly one unset ``${env:NAME}`` becomes ``None``.
+    - The plugin that reads a value resolves ``${credential:REF}`` at runtime through the profile credential store.
     """
     if isinstance(value, dict):
         return {k: interpolate(v, variables) for k, v in value.items()}
@@ -293,7 +295,8 @@ def _interpolate_str(text: str, variables: dict[str, str], *, allow_none: bool =
             break
         pieces.append(text[i:j])
         k = _matching_brace(text, j)
-        resolved = _resolve_token(text[j + 2 : k], variables)
+        token = text[j + 2 : k]
+        resolved = text[j : k + 1] if token.startswith("credential:") else _resolve_token(token, variables)
         if resolved is None:
             if allow_none and j == 0 and k == len(text) - 1:
                 return None

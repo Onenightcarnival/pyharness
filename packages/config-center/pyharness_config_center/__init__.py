@@ -12,9 +12,21 @@ skills, and the managed bun runtime for JavaScript MCP servers.
 | ``skills_presets``| agent presets that see the user skills (default: all)        |
 
 Routes under ``/api/config-center``: ``mcp`` (servers with status and the startup wait), ``mcp/test`` (connect to one
-server configuration and list its tools), ``mcp/timeout``; ``skills``, ``skills/detail``, ``skills/file``,
-``skills/install`` (ZIP), ``skills/open``; ``environment`` (bun status / install). Server lists are saved through the
-API's ``PUT /api/settings/mcp`` (restart to apply), as before.
+server configuration and list its tools), ``mcp/timeout``, ``mcp/credentials``; ``skills``, ``skills/detail``,
+``skills/file``, ``skills/install`` (ZIP), ``skills/open``; ``environment`` (bun status / install). Server lists are
+saved through the API's ``PUT /api/settings/mcp`` (restart to apply), as before.
+
+| ``mcp/credentials``            | contract                                                                    |
+|--------------------------------|-----------------------------------------------------------------------------|
+| ``PUT`` ``{reference, value}`` | stores the value in the profile credential store; invalid name or value → 400 |
+| ``DELETE ?reference=``         | removes the stored value                                                    |
+| answer                         | ``{credential: {reference, configured, source}, application}``              |
+
+| ``application``                | when                                                                        |
+|--------------------------------|-----------------------------------------------------------------------------|
+| ``restart-scheduled``          | the store changed, an enabled MCP server references the credential, supervised |
+| ``saved-restart-required``     | the same, unsupervised                                                      |
+| ``saved``                      | any other case                                                              |
 """
 
 from __future__ import annotations
@@ -29,7 +41,8 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from pyharness import Service, manage
-from pyharness_mcp import MASK, ServerConfig
+from pyharness.credentials import REFERENCE
+from pyharness_mcp import MASK, ServerConfig, references
 
 from .environment import BUN_VERSION, BunManager
 from .skills import SkillError, SkillStore
@@ -148,6 +161,39 @@ class ConfigCenterService(Service):
                 raise HTTPException(400, "a server needs a command (stdio) or a url")
             timeout = data.get("timeout") if isinstance(data.get("timeout"), (int, float)) else None
             return {"result": await mcp.probe(cfg, timeout)}
+
+        def credential_answer(reference: str, changed: bool) -> dict[str, Any]:
+            """The credential's description and ``application``; requests the restart ``application`` names."""
+            servers = mcp_service().config.servers.values()
+            application = "saved"
+            if changed and any(cfg.enabled and reference in references(cfg) for cfg in servers):
+                lifecycle = service.ctx.lifecycle
+                if lifecycle.supervised:
+                    lifecycle.request_restart("MCP credential changed")
+                    application = "restart-scheduled"
+                else:
+                    application = "saved-restart-required"
+            return {"credential": profile().credentials.describe(reference), "application": application}
+
+        @router.put("/mcp/credentials")
+        async def mcp_credential_set(request: Request) -> dict[str, Any]:
+            data = await body(request)
+            reference, value = data.get("reference"), data.get("value")
+            if not isinstance(reference, str) or not isinstance(value, str):
+                raise HTTPException(400, "reference and value are required")
+            mcp_service()
+            try:
+                profile().credentials.set(reference, value)
+            except ValueError as exc:
+                raise HTTPException(400, str(exc)) from exc
+            return credential_answer(reference, True)
+
+        @router.delete("/mcp/credentials")
+        async def mcp_credential_delete(reference: str | None = None) -> dict[str, Any]:
+            if not reference or not REFERENCE.match(reference):
+                raise HTTPException(400, "reference is required: uppercase letters, digits and underscores")
+            mcp_service()
+            return credential_answer(reference, profile().credentials.delete(reference))
 
         # -------------------------------------------------------------- skills
         def skills() -> SkillStore:

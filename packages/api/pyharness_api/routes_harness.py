@@ -152,7 +152,8 @@ def build_harness_router(ctx: Any) -> APIRouter:
 
     @router.get("/settings/mcp")
     async def get_mcp_settings() -> dict[str, Any]:
-        """Configured MCP servers (env and header values masked) with their connection status."""
+        """Configured MCP servers (env and header values masked, credential templates as written) with their
+        connection status."""
         mcp = ctx.get("mcp", None)
         if mcp is None:
             raise HTTPException(503, "mcp plugin not mounted")
@@ -160,8 +161,8 @@ def build_harness_router(ctx: Any) -> APIRouter:
 
     @router.put("/settings/mcp")
     async def put_mcp_settings(body: MCPSettings) -> dict[str, Any]:
-        """Replace the MCP server list in the profile patch; masked secrets keep their stored value.
-        Restart to apply."""
+        """Replace the MCP server list in the profile patch; a masked value keeps the stored one, any other value
+        (a ``${credential:REF}`` template included) is stored as written. Restart to apply."""
         mcp = ctx.get("mcp", None)
         if mcp is None:
             raise HTTPException(503, "mcp plugin not mounted")

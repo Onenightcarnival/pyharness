@@ -1,4 +1,5 @@
-"""Configuration center: skills store and routes, the MCP page routes (test, timeout), the managed bun runtime."""
+"""Configuration center: skills store and routes, the MCP page routes (test, timeout, credentials), the managed bun
+runtime."""
 
 from __future__ import annotations
 
@@ -228,3 +229,74 @@ async def test_routes(home, tmp_path):
             st = (await c.get("/api/config-center/environment")).json()
             assert st["state"] in ("missing", "unsupported") and st["recommendedVersion"] == center.config.bun_version
         assert any(cl["entry"] == "config-center" for cl in h.get("webui").clients())
+
+
+async def test_mcp_credential_routes(home, monkeypatch):
+    for name in ("PYH_T_CC_TOKEN", "PYH_T_CC_IDLE", "PYH_T_CC_SPARE"):
+        monkeypatch.delenv(name, raising=False)
+    profile = Profile.init("web", home=str(home))
+    server = {
+        "command": sys.executable,
+        "args": [str(MCP_SERVER)],
+        "env": {"MCP_TEST_TOKEN": "${credential:PYH_T_CC_TOKEN}", "PLAIN": "plain"},
+    }
+    idle = {**server, "env": {"MCP_TEST_TOKEN": "${credential:PYH_T_CC_IDLE}"}, "enabled": False}
+    mcp_patch = {"id": "mcp", "config": {"servers": {"demo": server, "idle": idle}, "connect_timeout": 60}}
+    url = "/api/config-center/mcp/credentials"
+    missing = {"reference": "PYH_T_CC_TOKEN", "configured": False, "source": None}
+    stored = {"reference": "PYH_T_CC_TOKEN", "configured": True, "source": "store"}
+    async with (
+        Harness(profile, patch=[HTTP_OFF, mcp_patch]) as h,
+        httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=90) as c,
+    ):
+        shown = (await c.get("/api/config-center/mcp")).json()["servers"]["demo"]
+        assert shown["state"] == "waiting-credentials" and shown["missing"] == ["PYH_T_CC_TOKEN"]
+        assert shown["env"] == {"MCP_TEST_TOKEN": "${credential:PYH_T_CC_TOKEN}", "PLAIN": "••••"}
+        assert shown["credentials"] == [missing]
+        # The test route takes the template as written and the masked value from the stored server.
+        draft = {"name": "demo", "server": {**server, "env": shown["env"]}}
+        assert (await c.post("/api/config-center/mcp/test", json=draft)).json()["result"] == {
+            "ok": False,
+            "code": "waiting-credentials",
+            "error": "missing credentials: PYH_T_CC_TOKEN",
+        }
+        for bad in (
+            {"reference": "lower", "value": "x"},
+            {"reference": "PYH_T_CC_TOKEN", "value": "has space"},
+            {"reference": "PYH_T_CC_TOKEN", "value": ""},
+            {"reference": "PYH_T_CC_TOKEN"},
+        ):
+            assert (await c.put(url, json=bad)).status_code == 400
+        assert profile.credentials.names() == []
+        # A credential of an enabled server asks for a restart; any other is stored without one.
+        r = await c.put(url, json={"reference": "PYH_T_CC_TOKEN", "value": "cc-secret"})
+        assert r.json() == {"credential": stored, "application": "saved-restart-required"}
+        assert profile.credentials.get("PYH_T_CC_TOKEN") == "cc-secret"
+        for reference in ("PYH_T_CC_IDLE", "PYH_T_CC_SPARE"):
+            r = await c.put(url, json={"reference": reference, "value": "other"})
+            assert r.json() == {
+                "credential": {"reference": reference, "configured": True, "source": "store"},
+                "application": "saved",
+            }
+        assert profile.credentials.names() == ["PYH_T_CC_IDLE", "PYH_T_CC_SPARE", "PYH_T_CC_TOKEN"]
+        assert (await c.post("/api/config-center/mcp/test", json=draft)).json()["result"] == {
+            "ok": True,
+            "tools": ["add", "token"],
+        }
+        r = await c.get("/api/config-center/mcp")
+        assert r.json()["servers"]["demo"]["credentials"] == [stored] and "cc-secret" not in r.text
+        r = await c.delete(url, params={"reference": "PYH_T_CC_TOKEN"})
+        assert r.json() == {"credential": missing, "application": "saved-restart-required"}
+        r = await c.delete(url, params={"reference": "PYH_T_CC_TOKEN"})
+        assert r.json() == {"credential": missing, "application": "saved"}
+        assert (await c.delete(url, params={"reference": "bad name"})).status_code == 400
+        assert (await c.delete(url)).status_code == 400
+        assert h.lifecycle.restart_pending is None
+    # A supervised harness schedules the restart.
+    async with (
+        Harness(profile, patch=[HTTP_OFF, mcp_patch], generation=2, supervised=True) as h2,
+        httpx.AsyncClient(transport=httpx.ASGITransport(app=h2.get("http").app), base_url="http://t") as c,
+    ):
+        r = await c.put(url, json={"reference": "PYH_T_CC_TOKEN", "value": "cc-secret"})
+        assert r.json() == {"credential": stored, "application": "restart-scheduled"}
+        assert h2.lifecycle.restart_pending["reasons"] == ["MCP credential changed"]

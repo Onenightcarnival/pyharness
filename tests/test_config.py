@@ -73,6 +73,12 @@ def test_interpolation(monkeypatch):
     assert interpolate({"p": ["${data_dir}/a.db"]}, vars_) == {"p": ["/d/a.db"]}
     with pytest.raises(ConfigError):
         interpolate("${nope}", vars_)
+    # A credential template stays as written: alone, inside text, inside a default.
+    assert interpolate("${credential:GH_TOKEN}", vars_) == "${credential:GH_TOKEN}"
+    assert interpolate({"h": ["Bearer ${credential:GH_TOKEN} in ${cwd}"]}, vars_) == {
+        "h": ["Bearer ${credential:GH_TOKEN} in /w"]
+    }
+    assert interpolate("${env:PYH_T_UNSET:-${credential:GH_TOKEN}}", vars_) == "${credential:GH_TOKEN}"
     # Substituted values: literal, never re-scanned. No placeholder limit.
     monkeypatch.setenv("PYH_T_SET", "${cwd}")
     assert interpolate("${env:PYH_T_SET}", vars_) == "${cwd}"
