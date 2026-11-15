@@ -83,6 +83,7 @@ uv run pyh run
 
 | 文档 | 内容 |
 |---|---|
+| [manual/quick-start.md](manual/quick-start.md) | 图文快速上手：从启动到第一个自定义插件 |
 | [docs/architecture.md](docs/architecture.md) | 内核：插件、Context、事件、Loader、组合 |
 | [docs/plugins.md](docs/plugins.md) | 内核插件、事件清单、扩展方式、第三方 bundle |
 | [docs/lifecycle.md](docs/lifecycle.md) | 代、重启、supervisor、预检、变更事务、续跑 |
