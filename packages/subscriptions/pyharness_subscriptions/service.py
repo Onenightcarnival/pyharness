@@ -15,6 +15,7 @@ from .antigravity import AntigravityProvider
 from .catalog import ROUTE_TYPE, provider_catalog, rebuild_routes
 from .chatgpt import ChatGPTProvider
 from .codex import CLIENT_VERSION_FLOOR, CodexProvider
+from .common import STREAM_IDLE_TIMEOUT
 from .grok import GrokProvider
 from .providers import Provider
 from .routes import build_router
@@ -29,7 +30,9 @@ class Config(BaseModel):
     )
     chatgpt: dict[str, Any] = Field(default_factory=dict)
     grok: dict[str, Any] = Field(default_factory=dict)
-    stream_idle_timeout: float = 300.0
+    stream_idle_timeout: float = Field(
+        STREAM_IDLE_TIMEOUT, gt=0, description="Seconds without stream data before a chat model fails with TIMEOUT."
+    )
 
 
 def _thread_id() -> str | None:
@@ -89,6 +92,8 @@ class SubscriptionsService(Service):
             ),
             "grok": GrokProvider(auth, catalogs, self.http, cfg.get("grok") or {}),
         }
+        for provider in self.providers.values():
+            provider.stream_idle_timeout = self.config.stream_idle_timeout
         self._route_disposer = self.ctx.llm.register(ROUTE_TYPE, self._factory)
         self.ctx.http.include_router(build_router(self), prefix="/api/subscriptions", tags=["pyharness-subscriptions"])
         self.ctx.webui.register_client(Path(__file__).with_name("client.js"))

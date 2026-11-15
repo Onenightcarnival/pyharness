@@ -56,7 +56,7 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Google Anti
 | `antigravity` | `clientId`、`clientSecret`、`baseURL`、`userAgent`、`projectId`、`onboard`、`maxTokens` |
 | `antigravity.userAgent` | 替换 Antigravity CLI 签名 |
 | `models`、`chatgpt.models`、`grok.models` | 静态目录；非空 → 该 provider 不做发现 |
-| `stream_idle_timeout` | 流无数据多少秒后失败；默认 `300.0`；聊天模型不读取此键，其 `stream_idle_timeout` 固定为 `300.0` |
+| `stream_idle_timeout` | 四个提供方的聊天模型：流无数据多少秒后以 `TIMEOUT` 失败；大于 0；默认 `300.0` |
 
 ## 工具
 

@@ -261,6 +261,7 @@ class GrokProvider(Provider):
             account_key=account,
             reasoning_effort=options.get("reasoning_effort"),
             max_tokens=options.get("max_tokens"),
+            stream_idle_timeout=self.stream_idle_timeout,
         )
 
     def tools(self, service: Any) -> list[Any]:

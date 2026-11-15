@@ -584,6 +584,23 @@ async def test_codex_provider_with_mocked_http(tmp_path):
     await http.aclose()
 
 
+async def test_stream_idle_timeout_reaches_the_chat_models(home):
+    profile = Profile.init("web", home=str(home))
+    async with Harness(profile, patch=[HTTP_OFF]) as h:  # the default
+        service = h.get("subscriptions")
+        assert {p.chat_model("m", None).stream_idle_timeout for p in service.providers.values()} == {300.0}
+    configured = [HTTP_OFF, {"id": "subscriptions", "config": {"stream_idle_timeout": 45}}]
+    async with Harness(profile, patch=configured) as h:
+        factory = h.get("llm")._providers["subscription"][0]
+        for provider in ("codex", "chatgpt", "antigravity", "grok"):
+            model = factory("m", provider=provider)
+            assert model.stream_idle_timeout == 45.0, provider
+            assert model.bind_tools([]).stream_idle_timeout == 45.0  # a bound copy keeps it
+    rejected = [HTTP_OFF, {"id": "subscriptions", "config": {"stream_idle_timeout": 0}}]
+    async with Harness(profile, patch=rejected) as h:  # an invalid value fails the entry, not the boot
+        assert h.ctx.get("subscriptions", None) is None
+
+
 async def test_service_routes_and_model_routes(home, tmp_path, monkeypatch):
     profile = Profile.init("web", home=str(home))
     async with Harness(profile, patch=[HTTP_OFF]) as h:

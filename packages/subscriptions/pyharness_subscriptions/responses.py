@@ -17,7 +17,7 @@ from pydantic import ConfigDict, Field
 
 from pyharness import package_prompts
 
-from .common import LlmError, http_error, iter_sse, read_error
+from .common import STREAM_IDLE_TIMEOUT, LlmError, http_error, iter_sse, read_error
 
 PROMPTS = package_prompts(__file__)
 UNKNOWN_OUTCOME: str = PROMPTS["responses"]["UNKNOWN_OUTCOME"]
@@ -274,7 +274,7 @@ class ResponsesChatModel(BaseChatModel):
     reasoning_effort: str | None = None
     max_tokens: int | None = None
     bound_tools: list[Any] = Field(default_factory=list)
-    stream_idle_timeout: float = 300.0
+    stream_idle_timeout: float = STREAM_IDLE_TIMEOUT
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

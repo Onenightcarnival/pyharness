@@ -278,6 +278,7 @@ class CodexProvider(Provider):
             reasoning_effort=options.get("reasoning_effort"),
             max_tokens=options.get("max_tokens"),
             fast_tier=bool(options.get("fast_tier")),
+            stream_idle_timeout=self.stream_idle_timeout,
         )
 
     def tools(self, service: Any) -> list[Any]:

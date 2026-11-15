@@ -7,7 +7,7 @@ from typing import Any
 
 import httpx
 
-from .common import TokenManager, not_logged_in
+from .common import STREAM_IDLE_TIMEOUT, TokenManager, not_logged_in
 from .oauth import FlowSpec, LoginAttempt
 from .store import AuthStore, CatalogCache
 
@@ -66,6 +66,7 @@ class Provider:
     default_max_tokens: int | None = None
     preempt_ms = 5 * 60 * 1000
     discovery_timeout = 10.0
+    stream_idle_timeout = STREAM_IDLE_TIMEOUT  # seconds without stream data before a chat model fails
 
     def __init__(
         self, auth: AuthStore, catalogs: CatalogCache, http: httpx.AsyncClient, config: dict[str, Any] | None = None
