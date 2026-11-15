@@ -1,4 +1,7 @@
-"""Package documentation: one ``AGENTS.md`` per package; the sources carry no file-header documentation."""
+"""
+Package layout: one ``AGENTS.md`` per package, sources without file-header documentation, ``__init__.py`` files
+that only import.
+"""
 
 from __future__ import annotations
 
@@ -23,6 +26,22 @@ def sources(package: Path) -> list[Path]:
             if path.suffix in (".py", *COMMENT) and not CONTENT_DIRS & set(path.relative_to(module).parts)
         )
     return out
+
+
+def init_files() -> list[Path]:
+    """``__init__.py`` of every package, of the plugin templates and of the example bundle."""
+    shipped = [path for package in PACKAGES for path in sources(package) if path.name == "__init__.py"]
+    templates = sorted((ROOT / "packages" / "plugin-manager").rglob("templates/*/__MODULE__/__init__.py"))
+    return [*shipped, *templates, *sorted((ROOT / "examples").rglob("__init__.py"))]
+
+
+def is_import_or_dunder(node: ast.stmt) -> bool:
+    if isinstance(node, (ast.Import, ast.ImportFrom)):
+        return True
+    targets = node.targets if isinstance(node, ast.Assign) else []
+    return bool(targets) and all(
+        isinstance(t, ast.Name) and t.id.startswith("__") and t.id.endswith("__") for t in targets
+    )
 
 
 def leading_comment_is_header(text: str, prefix: str) -> bool:
@@ -54,6 +73,20 @@ def test_sources_have_no_file_header():
                 headed.append(path)
     assert not headed, "file-header documentation belongs in the package's AGENTS.md: " + ", ".join(
         str(p.relative_to(ROOT)) for p in headed
+    )
+
+
+def test_init_files_only_import():
+    files = init_files()
+    assert len(files) >= len(PACKAGES) + 4
+    offenders = [
+        f"{path.relative_to(ROOT)}:{node.lineno}"
+        for path in files
+        for node in ast.parse(path.read_text(encoding="utf-8")).body
+        if not is_import_or_dunder(node)
+    ]
+    assert not offenders, "imports and __all__ only; the implementation lives in a named module: " + ", ".join(
+        offenders
     )
 
 

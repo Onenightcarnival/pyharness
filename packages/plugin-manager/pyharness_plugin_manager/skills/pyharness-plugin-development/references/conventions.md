@@ -4,13 +4,15 @@ The packages shipped with the harness follow these conventions; a plugin written
 
 ## Layout
 
-A plugin that fits one file is `<module>/__init__.py`, as in the templates. A plugin that outgrows one file splits into modules:
+A plugin that fits one file is `<module>/plugin.py`, as in the templates. A plugin that outgrows one file splits into modules:
 
 ```
 AGENTS.md         # design of the package
 pyproject.toml
 <module>/
-  __init__.py     # re-exports, __all__; no logic
+  __init__.py     # imports of the public names, __all__; no other code
+  plugin.py       # a function plugin: name, doc, inject, Config, apply
+  bundle.py       # BUNDLE: the path of bundle.yaml
   config.py       # Config (pydantic); a leaf every other module may import
   service.py      # the Service subclass: lifecycle, wiring, public methods
   tools.py        # LangChain tools bound to the service
@@ -26,7 +28,7 @@ pyproject.toml
 |---|---|
 | `AGENTS.md` | the design of the package, beside `pyproject.toml`: one sentence, an overview table (entry, service or `apply`, inject), a table of files, then one section of tables per subject (configuration, routes, events, storage, rules) |
 | file headers | none: no module docstring, no leading comment block in `.toml` or `client.js`; class and function docstrings stay |
-| `__init__.py` | `from .x import …` and `__all__` with the names other packages may import |
+| `__init__.py` | imports only: `from .x import …` and `__all__` with the names other packages may import; every definition, constant included, lives in a named module |
 | `doc` | a function plugin states its one-line description as the module attribute `doc`, beside `name` and `inject`; a service plugin's description is the docstring of its `Service` class |
 | imports between modules | a module imports its siblings (`from .store import Store`), never the package `__init__` |
 | dependency direction | `service.py` imports `tools.py` and `routes.py`; they do not import `service.py` |

@@ -6,11 +6,13 @@
 /plugins/<name>/
   AGENTS.md                     # design of the plugin
   pyproject.toml                # distribution; two entry points
-  <module>/__init__.py          # the plugin
+  <module>/__init__.py          # imports of the public names; no other code
+  <module>/plugin.py            # the plugin
+  <module>/bundle.py            # BUNDLE: the path of bundle.yaml
   <module>/bundle.yaml          # mount position: patch ops over the profile tree
 ```
 
-A plugin that outgrows `__init__.py` splits into modules (`service.py`, `tools.py`, `routes.py`, `config.toml`, `prompts.toml`); `conventions.md` gives the layout and its rules.
+A plugin that outgrows `plugin.py` splits into modules (`service.py`, `tools.py`, `routes.py`, `config.toml`, `prompts.toml`); `conventions.md` gives the layout and its rules.
 
 `pyproject.toml` declares:
 

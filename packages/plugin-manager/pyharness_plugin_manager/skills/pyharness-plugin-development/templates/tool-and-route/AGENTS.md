@@ -12,7 +12,9 @@ __TITLE__: one tool, one `tools/result` listener, one HTTP route.
 
 | file | content |
 |---|---|
-| `__MODULE__/__init__.py` | the plugin: `Config`, `apply` |
+| `__MODULE__/__init__.py` | exports |
+| `__MODULE__/plugin.py` | the plugin: `Config`, `apply` |
+| `__MODULE__/bundle.py` | `BUNDLE`: the path of `bundle.yaml` |
 | `__MODULE__/bundle.yaml` | mount position of the entry |
 
 ## Extension points

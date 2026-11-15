@@ -53,7 +53,8 @@ def test_templates_render_without_tokens():
     assert template_variants() == ["basic", "tool-and-route", "ui-panel"]
     for variant in template_variants():
         files = render_template("My Audit", variant)
-        assert "pyproject.toml" in files and "pyh_my_audit/__init__.py" in files and "pyh_my_audit/bundle.yaml" in files
+        assert {"pyproject.toml", "AGENTS.md"} <= set(files)
+        assert {f"pyh_my_audit/{f}" for f in ("__init__.py", "plugin.py", "bundle.py", "bundle.yaml")} <= set(files)
         assert not any(
             "__" + t for t in ("DIST", "MODULE", "BUNDLE", "TITLE") if any(f"__{t}__" in v for v in files.values())
         )

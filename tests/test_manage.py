@@ -56,9 +56,9 @@ async def test_install_preflight_boot_and_uninstall(profile, example_bundle, tmp
 async def test_broken_bundle_is_rejected_and_rolled_back(profile, example_bundle, tmp_path):
     broken = tmp_path / "broken-audit"
     shutil.copytree(example_bundle, broken)
-    init = broken / "pyharness_audit" / "__init__.py"
-    init.write_text(
-        init.read_text().replace('inject = ["tools"]', 'inject = ["tools"]\nraise ImportError("deliberately broken")')
+    plugin = broken / "pyharness_audit" / "plugin.py"
+    plugin.write_text(
+        plugin.read_text().replace('inject = ["tools"]', 'inject = ["tools"]\nraise ImportError("deliberately broken")')
     )
     before = profile.read_state()
     result = await manage.install_bundle(profile, broken)

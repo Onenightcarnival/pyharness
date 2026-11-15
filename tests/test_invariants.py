@@ -99,9 +99,9 @@ def _variant(example: Path, dest: Path, version: str, broken: bool) -> Path:
     pyproject = dest / "pyproject.toml"
     pyproject.write_text(pyproject.read_text().replace('version = "0.1.0"', f'version = "{version}"'))
     if broken:
-        init = dest / "pyharness_audit" / "__init__.py"
-        init.write_text(
-            init.read_text().replace('inject = ["tools"]', 'inject = ["tools"]\nraise ImportError("broken upgrade")')
+        plugin = dest / "pyharness_audit" / "plugin.py"
+        plugin.write_text(
+            plugin.read_text().replace('inject = ["tools"]', 'inject = ["tools"]\nraise ImportError("broken upgrade")')
         )
     return dest
 
