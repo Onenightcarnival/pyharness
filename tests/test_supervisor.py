@@ -48,3 +48,4 @@ def test_restart_into_broken_config_rolls_back(home, tmp_path):
     # Hand-off: committed by generation 3; nothing left for a later start.
     assert not (profile.runtime / "resume.json").exists()
     assert not (profile.runtime / "rollback.json").exists()
+    assert [p.name for p in profile.runtime.glob("ready-*.json")] == ["ready-3.json"]

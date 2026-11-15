@@ -67,7 +67,8 @@ class Supervisor:
         self.generation += 1
         self._signalled = False
         ready = self.profile.runtime / f"ready-{self.generation}.json"
-        ready.unlink(missing_ok=True)
+        for marker in self.profile.runtime.glob("ready-*.json"):  # one marker: the current generation's
+            marker.unlink(missing_ok=True)
         (self.profile.runtime / "boot-error.json").unlink(missing_ok=True)
         cmd = [
             self.python,
