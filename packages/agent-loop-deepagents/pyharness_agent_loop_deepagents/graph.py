@@ -12,35 +12,38 @@ from langchain.agents.middleware import AgentMiddleware
 from pyharness import package_prompts
 from pyharness_llm import LLMConfigError
 
-from .config import MODES, SKILLS_MOUNT, LoopConfig, PresetConfig
+from .config import MODES, LoopConfig, PresetConfig
 from .middleware import HarnessMiddleware
 
 PROMPTS = package_prompts(__file__)
 
 
 def backend_and_skills(
-    ctx: Any, config: LoopConfig, mounts: list[tuple[str, Path]], workspace: str | None, mode: str
+    ctx: Any,
+    config: LoopConfig,
+    skills: list[tuple[str, Path]],
+    mounts: list[tuple[str, Path]],
+    workspace: str | None,
+    mode: str,
 ) -> tuple[Any, list[str], list[Any]]:
     """
-    Backend for the workspace and mode with the skills ``mounts`` (``(slug, directory)``) routed in, the skill
-    sources, and the write-deny rules.
+    Backend for the workspace and mode with the ``skills`` and ``mounts`` (``(virtual path, directory)``) routed
+    in read-only, the skill sources, and the write-deny rules.
     """
     workspaces = ctx.get("workspace", None)
     if workspaces is not None and hasattr(workspaces, "backend_for"):
         backend = workspaces.backend_for(workspace, shell=mode != "read-only")
     else:
         backend = ctx.get("backend", None)
-    sources = list(config.skills or [])
+    sources = [*(config.skills or []), *(mount for mount, _ in skills)]
     rules: list[Any] = []
     if mode == "read-only":
         rules.append(FilesystemPermission(operations=["write"], paths=["/", "/**"], mode="deny"))
-    if not mounts:
+    if not skills and not mounts:
         return backend, sources, rules
     routes: dict[str, Any] = {}
-    for slug, path in mounts:
-        mount = f"{SKILLS_MOUNT}/{slug}/"
+    for mount, path in [*skills, *mounts]:
         routes[mount] = FilesystemBackend(root_dir=path, virtual_mode=True)
-        sources.append(mount)
         # One deny rule per mount: rules scoped to composite routes are accepted even when the workspace backend
         # runs commands.
         rules.append(FilesystemPermission(operations=["write"], paths=[mount, f"{mount}**"], mode="deny"))
@@ -91,6 +94,7 @@ async def build(
     *,
     mode: str,
     preset: tuple[str, PresetConfig],
+    skills: list[tuple[str, Path]],
     mounts: list[tuple[str, Path]],
     subagents: list[dict[str, Any]],
     middleware: list[AgentMiddleware],
@@ -98,7 +102,7 @@ async def build(
 ) -> Any:
     """
     Graph for a workspace root (``None``: the default), a permission mode id, a ``(id, config)`` preset, the
-    skills ``mounts`` for that preset, and the subagent specs and middleware added by plugins.
+    ``skills`` and ``mounts`` of that preset, and the subagent specs and middleware added by plugins.
     """
     preset_id, preset_cfg = preset
     keep = set(preset_cfg.tools) if preset_cfg.tools is not None else None
@@ -120,7 +124,7 @@ async def build(
     workspaces = ctx.get("workspace", None)
     ws = workspaces.open(workspace) if workspaces is not None and hasattr(workspaces, "open") else workspaces
     permissions = ws.permissions() if ws is not None and hasattr(ws, "permissions") else []
-    backend, skills, rules = backend_and_skills(ctx, config, mounts, workspace, mode)
+    backend, sources, rules = backend_and_skills(ctx, config, skills, mounts, workspace, mode)
     permissions = [*permissions, *rules]
     interrupt_on = {} if mode == "full-access" else {**ctx.tools.interrupt_on(), **config.interrupt_on}
     root = ws.root if ws is not None and hasattr(ws, "root") else "(none)"
@@ -141,7 +145,7 @@ async def build(
         "interrupt_on": interrupt_on or None,
         "subagents": subagents or None,
         "permissions": permissions or None,
-        "skills": skills or None,
+        "skills": sources or None,
         "memory": config.memory,
         "name": "pyharness",
     }

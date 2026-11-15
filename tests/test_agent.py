@@ -147,6 +147,58 @@ async def test_restart_handoff_continues_session(profile):
         assert messages[-1]["content"] == "continuing"
 
 
+async def test_read_only_mount_serves_one_preset(profile, tmp_path):
+    reference = tmp_path / "reference"
+    (reference / "inner").mkdir(parents=True)
+    (reference / "inner" / "note.md").write_text("mounted text", encoding="utf-8")
+
+    def read(id):
+        return {"name": "read_file", "args": {"file_path": "/ref/docs/inner/note.md"}, "id": id}
+
+    replies = [
+        {"content": "", "tool_calls": [read("r1")]},
+        {
+            "content": "",
+            "tool_calls": [{"name": "write_file", "args": {"file_path": "/ref/docs/x.md", "content": "x"}, "id": "w1"}],
+        },
+        {"content": "done"},
+        {"content": "", "tool_calls": [read("r2")]},
+        {"content": "done"},
+    ]
+    async with Harness(profile, patch=scripted_patch(replies)) as h:
+        loop, agents = h.get("agentLoop"), h.get("agents")
+        loop.add_mount("ref/docs", reference, presets=["creator"])
+        assert loop.mounts() == [
+            {
+                "mount": "/ref/docs/",
+                "path": str(reference.resolve()),
+                "owner": "<host>",
+                "presets": ["creator"],
+            }
+        ]
+        assert loop.mounted(reference / "inner" / "note.md") == "/ref/docs/inner/note.md"
+        assert loop.mounted(reference / "inner") == "/ref/docs/inner/"
+        assert loop.mounted(reference) == "/ref/docs/"
+        assert loop.mounted(tmp_path) is None
+        for bad in ("/", "/skills/mine", "/ref/../docs", "/ref/docs/"):
+            with pytest.raises(ValueError):
+                loop.add_mount(bad, reference)
+        with pytest.raises(ValueError):
+            loop.add_mount("/absent", tmp_path / "absent")
+
+        session = await agents.create_session(preset="creator")
+        events = await agents.start_run(session["id"], "go").wait()
+        results = {e["id"]: e for e in events if e["type"] == "tool_result"}
+        assert results["r1"]["status"] == "success" and "mounted text" in results["r1"]["content"]
+        assert results["w1"]["status"] == "error" and "denied" in results["w1"]["content"]
+        assert not (reference / "x.md").exists()
+
+        session = await agents.create_session(preset="standard")
+        events = await agents.start_run(session["id"], "go").wait()
+        results = {e["id"]: e for e in events if e["type"] == "tool_result"}
+        assert "mounted text" not in results["r2"]["content"]
+
+
 async def test_inspect_tool_reports_live_api(profile):
     async with Harness(profile, patch=scripted_patch([])) as h:
         tool = next(t for t in h.get("tools").list() if t.name == "harness_inspect")

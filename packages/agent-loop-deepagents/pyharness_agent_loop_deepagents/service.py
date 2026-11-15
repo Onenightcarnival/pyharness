@@ -26,6 +26,7 @@ class DeepAgentsLoop(Service):
         self._subagents: list[tuple[dict[str, Any], str]] = []
         self._middleware: list[tuple[AgentMiddleware, str]] = []
         self._skills: list[tuple[str, Path, str, tuple[str, ...] | None]] = []  # (label, directory, owner, presets)
+        self._mounts: list[tuple[str, Path, str, tuple[str, ...] | None]] = []  # (mount, directory, owner, presets)
         self._presets: dict[str, tuple[PresetConfig, str]] = {}  # plugin-added presets: id -> (config, owner)
         if self.config.default_mode not in MODES:
             raise ValueError(f"unknown default_mode {self.config.default_mode!r}; one of {', '.join(MODES)}")
@@ -101,6 +102,42 @@ class DeepAgentsLoop(Service):
             for s, p, o, pr in self._skills
         ]
 
+    def add_mount(self, mount: str, directory: str | Path, presets: list[str] | None = None) -> Any:
+        """
+        Mount ``directory`` read-only at the virtual path ``mount`` for ``presets`` (``None``: all); returns the
+        disposer.
+        """
+        path = Path(directory).expanduser().resolve()
+        if not path.is_dir():
+            raise ValueError(f"mount directory {path} does not exist")
+        parts = [part for part in str(mount).split("/") if part]
+        if not parts or any(part in {".", ".."} for part in parts):
+            raise ValueError(f"mount path {mount!r} is not a virtual directory path")
+        virtual = "/" + "/".join(parts) + "/"
+        if virtual.startswith(f"{SKILLS_MOUNT}/"):
+            raise ValueError(f"{SKILLS_MOUNT}/ is mounted through add_skills")
+        if any(existing == virtual for existing, _, _, _ in self._mounts):
+            raise ValueError(f"mount path {virtual!r} is already mounted")
+        item = (virtual, path, self.caller.entry_id, tuple(presets) if presets else None)
+        self._mounts.append(item)
+        return self.caller.on_dispose(lambda: self._mounts.remove(item) if item in self._mounts else None)
+
+    def mounts(self) -> list[dict[str, Any]]:
+        """Read-only mounts: ``mount``, ``path``, ``owner``, ``presets``."""
+        return [
+            {"mount": m, "path": str(p), "owner": o, "presets": list(pr) if pr else None}
+            for m, p, o, pr in self._mounts
+        ]
+
+    def mounted(self, path: str | Path) -> str | None:
+        """Virtual path of a path on disk that lies inside a mount; ``None`` outside every mount."""
+        real = Path(path).expanduser().resolve()
+        for mount, root, _, _ in sorted(self._mounts, key=lambda item: len(item[1].parts), reverse=True):
+            if real == root or root in real.parents:
+                inner = real.relative_to(root).as_posix()
+                return mount if inner == "." else mount + inner + ("/" if real.is_dir() else "")
+        return None
+
     # ------------------------------------------------------------------ presets and modes
     def add_preset(self, id: str, title: str, description: str = "", **fields: Any) -> Any:
         """Add an agent preset owned by the calling plugin; returns the disposer."""
@@ -166,7 +203,12 @@ class DeepAgentsLoop(Service):
             self.config,
             mode=self.mode(mode),
             preset=(preset_id, preset_cfg),
-            mounts=[(s, p) for s, p, _, presets in self._skills if presets is None or preset_id in presets],
+            skills=[
+                (f"{SKILLS_MOUNT}/{s}/", p)
+                for s, p, _, presets in self._skills
+                if presets is None or preset_id in presets
+            ],
+            mounts=[(m, p) for m, p, _, presets in self._mounts if presets is None or preset_id in presets],
             subagents=[s for s, _ in self._subagents],
             middleware=[m for m, _ in self._middleware],
             workspace=workspace,
