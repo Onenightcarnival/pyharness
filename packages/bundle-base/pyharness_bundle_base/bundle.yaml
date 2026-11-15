@@ -30,7 +30,7 @@ patch:
   - id: workspace
     name: pyharness-workspace
     config:
-      root: ${env:PYH_WORKSPACE:-${cwd}}
+      root: ${env:PYH_WORKSPACE}
       shell: false
 
   # Agent loop: ctx.agentLoop. Sessions and runs: ctx.agents.

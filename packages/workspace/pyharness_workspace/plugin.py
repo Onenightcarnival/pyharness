@@ -5,7 +5,7 @@ from typing import Any
 
 from .config import Config
 from .registry import Workspaces
-from .workspace import Workspace
+from .workspace import Workspace, default_root
 
 name = "pyharness-workspace"
 doc = "Workspace provider: ``ctx.workspace`` (workspace registry) and ``ctx.backend`` (default deepagents backend)."
@@ -13,11 +13,16 @@ inject = ["tools"]
 
 
 async def apply(ctx: Any, config: Config) -> None:
-    root = Path(config.root).expanduser().resolve()
+    profile = ctx.get("profile", None)
+    if config.root:
+        root = Path(config.root).expanduser().resolve()
+    elif profile is not None:
+        root = default_root(profile.name, Path.home()).resolve()
+    else:
+        root = Path.cwd()
     root.mkdir(parents=True, exist_ok=True)
     protected: list[Path] = []
     home: Path | None = None
-    profile = ctx.get("profile", None)
     if profile is not None:
         home = Path(profile.home).resolve()
         if root == home or home in root.parents:

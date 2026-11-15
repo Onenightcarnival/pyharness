@@ -17,8 +17,22 @@
 | `__init__.py` | 导出 |
 | `config.py` | `Config` |
 | `plugin.py` | `apply`：提供 `ctx.workspace` 与 `ctx.backend` |
-| `workspace.py` | `Workspace`、`WorkspaceError` |
+| `workspace.py` | `Workspace`、`WorkspaceError`、`default_root` |
 | `registry.py` | `Workspaces`：打开、backend、最近使用、选择器、浏览 |
+
+## 默认工作区
+
+| 顺序 | 根目录 | 条件 |
+|---|---|---|
+| 1 | `config.root` | 已设置；`base` bundle：`${env:PYH_WORKSPACE}` |
+| 2 | `~/Documents/pyharness/<profile>/` | `~/Documents` 存在 |
+| 3 | `~/pyharness/<profile>/` | 其余情况 |
+
+| 项 | 契约 |
+|---|---|
+| 2 与 3 | 已存在者沿用；都不存在时按顺序创建，创建失败取下一个 |
+| 启动目录 | 不参与 |
+| 没有 profile 的 harness | 进程的当前目录 |
 
 ## Backend
 

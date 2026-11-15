@@ -6,7 +6,9 @@ from pydantic import BaseModel, Field
 
 
 class Config(BaseModel):
-    root: str = Field("${cwd}", description="Default agent working directory.")
+    root: str | None = Field(
+        None, description="Default agent working directory; unset: the profile's directory under the user's Documents."
+    )
     virtual_mode: bool = True
     shell: bool = Field(False, description="`execute` tool on a local, unsandboxed shell.")
     shell_approval: bool = True

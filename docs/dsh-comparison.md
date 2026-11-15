@@ -17,7 +17,7 @@
 | `dsh-skill` + `dsh-skill-filesystem` + `dsh-tool-skill` | deepagents `SkillsMiddleware`；`ctx.agentLoop.add_skills` |
 | 插件的浏览器端（client slot） | 有：`ctx.webui.register_client` + 页面槽位（侧边栏行、更多菜单、主区面板、输入框停靠位、设置分区、右侧栏 tab）；模块为无打包的 JS，`window.__PyhModules__.load({id, factory})` |
 | `dsh-sandbox-policy` + `dsh-permission-presets`（read-only / workspace-write / danger-full-access） | `agent-loop` 的权限模式 `read-only` / `workspace-write` / `full-access`：deepagents 文件权限规则、shell 工具有无、审批闸门有无；每会话可切换 |
-| `dsh-workspace` + directory picker | `pyharness-workspace` 注册表：每会话工作区根目录、最近列表（`ctx.store`）、目录浏览 |
+| `dsh-workspace` + directory picker | `pyharness-workspace` 注册表：每会话工作区根目录、最近列表（`ctx.store`）、目录浏览；默认工作区 `~/Documents/pyharness/<profile>/`（dsh：`<Documents>/deepseek-harness/default-workspace`） |
 
 ## 生效方式
 

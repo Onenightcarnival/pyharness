@@ -18,6 +18,7 @@ from pyharness import Harness, Profile, manage
 from pyharness.events import EventBus
 from pyharness.preflight import run_preflight
 from pyharness_agent import RestartPending
+from pyharness_workspace import default_root
 from testkit import tools as testtools
 
 
@@ -91,6 +92,26 @@ async def test_workspace_inside_home_is_refused(profile, home, monkeypatch):
     async with Harness(profile, patch=scripted([])) as h:
         rt = h.loader.get("workspace")
         assert rt.state.value == "failed" and "inside the harness home" in rt.error
+
+
+# Default workspace: one directory per profile, independent of the launch directory -------------
+def test_default_workspace_prefers_documents_and_keeps_an_existing_one(tmp_path):
+    user = tmp_path / "user"
+    user.mkdir()
+    under_home = user / "pyharness" / "web"
+    assert default_root("web", user) == under_home and under_home.is_dir()
+    (user / "Documents").mkdir()
+    assert default_root("web", user) == under_home  # created earlier: kept
+    assert default_root("dev", user) == user / "Documents" / "pyharness" / "dev"
+
+
+async def test_default_workspace_is_the_profile_directory(profile, tmp_path, monkeypatch):
+    user = tmp_path / "user"
+    (user / "Documents").mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(user))
+    monkeypatch.delenv("PYH_WORKSPACE")
+    async with Harness(profile, patch=scripted([])) as h:
+        assert h.get("workspace").root == (user / "Documents" / "pyharness" / profile.name).resolve()
 
 
 # Rejected upgrade: previous version stays installed ----------------------------------------------
