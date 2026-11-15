@@ -78,17 +78,26 @@ select = [
     "D213", "D209", "D415",             # docstring shape: summary on the second line, closing quotes on their own
                                         # line (multi-line docstrings), closing punctuation
     "SIM", "PTH", "FURB", "C4", "PIE", "RET", "PERF",
-    "PLE", "PLW", "PLC",                # pylint errors, warnings, conventions (not the PLR refactor metrics)
+    "PLE", "PLW", "PLC", "PLR",         # pylint; the PLR size metrics are ignored below
     "A",                                # no shadowing of builtins
     "T201",                             # no print outside the CLI
     "TID251",                           # banned APIs
+    "G", "LOG",                         # logging calls
+    "FAST",                             # FastAPI routes
+    "PGH",                              # no blanket `noqa` or `type: ignore`
+    "SLF001",                           # no access to another object's private member
+    "T10", "RSE", "FLY", "EXE",         # no debugger call; raise without parentheses; f-string over join; shebangs
 ]
-ignore = ["B008", "B904", "UP042", "RUF001", "RUF002", "RUF003"]
+ignore = [
+    "B008", "B904", "UP042", "RUF001", "RUF002", "RUF003",
+    "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PLR0917", "PLR2004",  # size metrics, magic values
+]
 
 [tool.ruff.lint.per-file-ignores]
 "packages/core/pyharness/cli.py" = ["T201"]
 "packages/core/pyharness/preflight.py" = ["T201"]
 "scripts/*" = ["T201"]
+"tests/*" = ["SLF001"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["pyharness", "testkit"]
