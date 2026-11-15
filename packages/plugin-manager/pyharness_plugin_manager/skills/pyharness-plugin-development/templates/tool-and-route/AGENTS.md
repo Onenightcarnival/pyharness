@@ -21,7 +21,7 @@ __TITLE__: one tool, one `tools/result` listener, one HTTP route.
 
 | extension point | mode | effect |
 |---|---|---|
-| `ctx.tools` | | `__BUNDLE___note` tool, owned by this plugin |
+| `ctx.tools` | | `__MODULE___note` tool, owned by this plugin |
 | `tools/result` | parallel | counts finished tool calls per tool name |
 | `ctx.http` | | `GET /__BUNDLE__` returns the notes and the counts |
 

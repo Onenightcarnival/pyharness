@@ -59,6 +59,9 @@ def test_templates_render_without_tokens():
             "__" + t for t in ("DIST", "MODULE", "BUNDLE", "TITLE") if any(f"__{t}__" in v for v in files.values())
         )
         assert 'pyh-my-audit = "pyh_my_audit"' in files["pyproject.toml"]
+        for path, text in files.items():
+            if path.endswith(".py"):
+                compile(text, path, "exec")  # a name of several words renders to valid Python
     assert 'id: "my-audit"' in render_template("My Audit", "ui-panel")["pyh_my_audit/client.js"]
     with pytest.raises(ValueError):
         render_template("x", "nope")

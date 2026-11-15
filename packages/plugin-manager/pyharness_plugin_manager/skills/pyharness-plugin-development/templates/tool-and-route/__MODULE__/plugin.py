@@ -20,14 +20,14 @@ def apply(ctx: Any, config: Config) -> None:
     notes: list[str] = []
     calls: Counter[str] = Counter()
 
-    def __BUNDLE___note(text: str) -> str:
+    def __MODULE___note(text: str) -> str:
         """Keep a short note for this harness; returns the note count."""
         if len(text) > config.max_note_chars:
             return f"note rejected: longer than {config.max_note_chars} characters"
         notes.append(text)
         return f"kept; {len(notes)} notes"
 
-    ctx.tools.register(__BUNDLE___note)
+    ctx.tools.register(__MODULE___note)
 
     @ctx.on("tools/result")
     async def count(call: Any, result: Any) -> None:
