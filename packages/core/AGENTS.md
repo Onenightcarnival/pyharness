@@ -153,6 +153,7 @@ profile：harness home 中具名、持久的装配。harness home：`$PYH_HOME`�
 | `$PYH_HOME/profiles/<name>/site/` | 安装进该 profile 的 bundle（`pip --target`） |
 | `$PYH_HOME/profiles/<name>/data/` | SQLite 的默认位置 |
 | `$PYH_HOME/profiles/<name>/runtime/` | 当前代的 ready 标记、交接文件、last-known-good、锁 |
+| `~/Documents/pyharness/<name>/` | `Profile.documents`：用户可见的文件，在 home 之外；插件各占一个子目录 |
 
 ## 凭据（`credentials.py`）
 

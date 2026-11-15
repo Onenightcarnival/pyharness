@@ -12,11 +12,6 @@ class WorkspaceError(ValueError):
     """A path cannot be a workspace."""
 
 
-def default_root(profile: str, user: Path) -> Path:
-    """Default workspace of a profile: ``Documents/pyharness/<profile>/default-workspace`` under the user's home."""
-    return user / "Documents" / "pyharness" / profile / DEFAULT_WORKSPACE
-
-
 class Workspace:
     def __init__(self, root: Path, virtual_mode: bool, protected: list[Path] | None = None) -> None:
         self.root = root

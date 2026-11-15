@@ -6,8 +6,6 @@ from pathlib import Path
 
 import pytest
 
-from pyharness_workspace import default_root
-
 try:
     from pip._internal.locations import USER_CACHE_DIR as PIP_CACHE
 except ImportError:  # the uv fallback installs bundles
@@ -47,7 +45,7 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 @pytest.fixture
 def workspace(home: Path) -> Path:
     """Default workspace of the ``web`` profile."""
-    root = default_root("web", Path.home())
+    root = Path.home() / "Documents" / "pyharness" / "web" / "default-workspace"
     root.mkdir(parents=True)
     return root
 

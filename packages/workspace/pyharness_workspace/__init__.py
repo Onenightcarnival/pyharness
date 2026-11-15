@@ -3,6 +3,6 @@ from __future__ import annotations
 from .config import Config
 from .plugin import apply, doc, inject, name
 from .registry import Workspaces
-from .workspace import Workspace, WorkspaceError, default_root
+from .workspace import DEFAULT_WORKSPACE, Workspace, WorkspaceError
 
-__all__ = ["Config", "Workspace", "WorkspaceError", "Workspaces", "apply", "default_root", "doc", "inject", "name"]
+__all__ = ["DEFAULT_WORKSPACE", "Config", "Workspace", "WorkspaceError", "Workspaces", "apply", "doc", "inject", "name"]

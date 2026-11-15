@@ -66,6 +66,7 @@ class Profile:
         self.runtime = self.dir / "runtime"
         self.lkg = self.runtime / "last-known-good"
         self.credentials_path = self.dir / "credentials.yaml"
+        self.documents = Path.home() / "Documents" / "pyharness" / name
 
     @property
     def credentials(self) -> CredentialStore:

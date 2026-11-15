@@ -17,14 +17,14 @@
 | `__init__.py` | 导出 |
 | `config.py` | `Config` |
 | `plugin.py` | `apply`：提供 `ctx.workspace` 与 `ctx.backend` |
-| `workspace.py` | `Workspace`、`WorkspaceError`、`default_root` |
+| `workspace.py` | `Workspace`、`WorkspaceError`、`DEFAULT_WORKSPACE` |
 | `registry.py` | `Workspaces`：打开、backend、最近使用、选择器、浏览 |
 
 ## 默认工作区
 
 | 项 | 契约 |
 |---|---|
-| 根目录 | `~/Documents/pyharness/<profile>/default-workspace/`；不存在时创建 |
+| 根目录 | `profile.documents` 下的 `default-workspace/`：`~/Documents/pyharness/<profile>/default-workspace/`；不存在时创建 |
 | 配置、环境变量、启动目录 | 不参与 |
 | `<profile>/` 目录的其余内容 | 不在 agent 的文件工具范围内 |
 | 没有 profile 的 harness | 进程的当前目录 |

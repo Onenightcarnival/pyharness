@@ -18,7 +18,6 @@ from pyharness import Harness, Profile, manage
 from pyharness.events import EventBus
 from pyharness.preflight import run_preflight
 from pyharness_agent import RestartPending
-from pyharness_workspace import default_root
 from testkit import tools as testtools
 
 
@@ -98,7 +97,7 @@ async def test_workspace_inside_home_is_refused(home):
 # Default workspace: one fixed, empty directory per profile ---------------------------------------
 async def test_default_workspace_is_a_fixed_empty_directory_of_the_profile(profile, tmp_path, monkeypatch):
     expected = Path.home() / "Documents" / "pyharness" / "web" / "default-workspace"
-    assert default_root("web", Path.home()) == expected and not expected.exists()
+    assert profile.documents == expected.parent and not expected.exists()
     for cwd in ("a", "b"):  # the launch directory plays no part
         (tmp_path / cwd).mkdir()
         monkeypatch.chdir(tmp_path / cwd)
