@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |---|---|
-| 结果 | pyharness 运行起来；agent 写出并安装一个插件，提供 `roll_dice` 工具 |
+| 结果 | pyharness 运行起来；agent 写出并安装一个插件：左侧边栏的「骰子」页面，加一个 `roll_dice` 工具 |
 | 用时 | 约 10 分钟 |
 | 前置 | Python 3.12、uv、一个模型 API（OpenAI、Anthropic、DeepSeek、Gemini、OpenRouter，或 OpenAI / Anthropic 兼容端点） |
 
@@ -15,7 +15,7 @@
 | [5. 审批安装](#5-审批安装) | 会话 |
 | [6. 重启与验证](#6-重启与验证) | 会话 |
 | [7. 查看与管理](#7-查看与管理) | 插件页 |
-| [8. 使用](#8-使用) | 新会话 |
+| [8. 使用](#8-使用) | 侧边栏 |
 
 ## 1. 安装与启动
 
@@ -67,11 +67,11 @@ uv run pyh run
 
 ## 4. 描述插件
 
-写清四件事：工具名、参数、返回值、怎么验证。
+写清三件事：界面放在哪、能做什么、怎么验证。
 
 ```text
-帮我做一个掷骰子插件：提供一个 roll_dice 工具，参数是骰子面数和个数，
-返回每个骰子的点数与总和。装好后用它掷两个六面骰子验证一下。
+帮我做一个掷骰子插件：在左侧边栏加一个「骰子」入口，点开是一个页面，可以选骰子面数和个数，
+点按钮掷骰子，并列出最近的结果；同时提供一个 roll_dice 工具，让 agent 也能掷。装好后验证一下。
 ```
 
 ![输入需求](images/04-request.png)
@@ -80,7 +80,7 @@ uv run pyh run
 
 | agent 的步骤 | 需要审批 |
 |---|---|
-| 读插件编写技能，取模板 | 否 |
+| 读插件编写技能，取带界面的模板 | 否 |
 | 把插件写到 `/plugins/dice/` | 否 |
 | 用 shell 检查模块能否导入 | 是：每条 shell 命令 |
 | 安装插件 | 是 |
@@ -98,84 +98,32 @@ uv run pyh run
 
 ## 6. 重启与验证
 
-重启由 pyharness 自己完成，页面不用刷新。会话在新一代进程里继续，agent 调用新工具验证：
+重启由 pyharness 自己完成。对话里出现「第 2 代已启动」的分隔行，会话在新一代进程里继续，agent 调用新工具、请求页面的接口来验证，最后给出结果：
 
-![重启后的验证](images/06-verified.png)
+![验证结果](images/06-verified.png)
 
-| 界面上的标记 | 含义 |
-|---|---|
-| 「第 2 代已启动 · install bundle from /plugins/dice」 | 新进程已接管，原因是这次安装 |
-| 侧边栏「插件」的数字加一 | 新条目已加载 |
+验证中的 shell 命令同样逐条审批。
 
 ## 7. 查看与管理
 
-侧边栏「插件」：
+刷新页面。侧边栏「插件」里多了 `dice`：
 
 ![插件页](images/07-plugins.png)
 
 | 操作 | 位置 | 生效 |
 |---|---|---|
 | 停用、启用 | `dice` 行的开关 | 预检后重启 |
-| 卸载 | `dice` 行的删除按钮 | 预检后重启；源码保留 |
+| 卸载 | `dice` 行的删除按钮 | 预检后重启；源码保留在 `~/Documents/pyharness/web/plugins/dice/` |
 
 ## 8. 使用
 
-新工具对所有会话可用，包括「标准」预设。点开回复上方的步骤行可以看到工具调用：
+侧边栏的「骰子」：
 
-![在标准会话里使用](images/08-use.png)
+![骰子页面](images/08-use.png)
 
-## 插件的源码
-
-```text
-~/Documents/pyharness/web/plugins/dice/
-  AGENTS.md              设计说明
-  pyproject.toml         发行包与 entry point
-  pyh_dice/__init__.py   导入
-  pyh_dice/plugin.py     插件：roll_dice 工具
-  pyh_dice/bundle.py     bundle.yaml 的路径
-  pyh_dice/bundle.yaml   挂载位置
-```
-
-这次生成的 `plugin.py`（agent 每次写出的代码会有差异）：
-
-```python
-class DiceInput(BaseModel):
-    sides: Annotated[int, Field(strict=True, ge=1, description="Number of faces per die; a positive integer.")]
-    count: Annotated[int, Field(strict=True, ge=1, le=1000, description="Number of dice to roll, from 1 to 1000.")]
-
-
-@tool(args_schema=DiceInput)
-def roll_dice(sides: int, count: int) -> dict[str, Any]:
-    """Roll dice independently and return each die's result and their total."""
-    rolls = [secrets.randbelow(sides) + 1 for _ in range(count)]
-    return {"sides": sides, "count": count, "rolls": rolls, "total": sum(rolls)}
-
-
-def apply(ctx: Any, config: Config) -> None:
-    ctx.tools.register(roll_dice)
-```
-
-| 要做的事 | 做法 |
+| 用法 | 入口 |
 |---|---|
-| 修改插件 | 在「创造」会话里提出修改；agent 改 `/plugins/dice/` 后重新安装，再走一次审批与重启 |
-| 手工修改 | 编辑上面目录里的文件，然后在「创造」会话里让 agent 重新安装 `/plugins/dice` |
+| 自己掷 | 页面：填面数与个数，「掷骰子」 |
+| 让 agent 掷 | 任意会话里提出，包括「标准」预设；agent 调用 `roll_dice` |
 
-`/plugins/` 在每个「创造」会话里都是这同一个目录，与会话选的工作区无关。
-
-## 常见情况
-
-| 现象 | 原因与处理 |
-|---|---|
-| 回复只是复述输入 | 模型还是 `echo`：第 2 步 |
-| agent 说没有插件管理工具 | 会话是「标准」预设：新建会话，选「创造」 |
-| 安装结果是 rejected | 预检没通过，profile 没有变化；错误已返回给 agent，它会修正后重装 |
-| 重启后新一代启动失败 | pyharness 恢复上一份可用配置并再次启动；会话里有回滚提示 |
-| 端口被占用 | `PYH_PORT=8770 uv run pyh run` |
-
-## 延伸
-
-| 主题 | 文档 |
-|---|---|
-| 自扩展的机制、审批与边界 | [docs/self-extension.md](../docs/self-extension.md) |
-| 插件的形式与扩展点 | [docs/plugins.md](../docs/plugins.md) |
-| 预检、重启、回滚 | [docs/lifecycle.md](../docs/lifecycle.md) |
+两种用法的结果都进入页面的「最近结果」，末尾标明来源：页面或 Agent。

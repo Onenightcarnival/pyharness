@@ -38,7 +38,7 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 | `tests/` | 测试 |
 | `tests/testkit` | 测试用插件 |
 | `docs/` | 设计文档 |
-| `manual/` | 用户手册；`images/`：界面截图，1280 px 宽，8 位调色板 PNG |
+| `manual/` | 用户手册；`images/`：界面的整页截图，1280×800，8 位调色板 PNG |
 | `.github/workflows/ci.yml` | CI，Python 3.12：全量测试；Postgres 测试 |
 
 ## 代码、文档、注释统一风格要求
