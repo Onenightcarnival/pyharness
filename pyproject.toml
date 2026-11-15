@@ -83,6 +83,7 @@ select = [
     "A",                                # no shadowing of builtins
     "T201",                             # no print outside the CLI
     "TID251",                           # banned APIs
+    "ASYNC",                            # no blocking call in an async function
     "G", "LOG",                         # logging calls
     "FAST",                             # FastAPI routes
     "PGH",                              # no blanket `noqa` or `type: ignore`
@@ -92,6 +93,8 @@ select = [
 ignore = [
     "B008", "B904", "UP042", "RUF001", "RUF002", "RUF003",
     "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PLR0917", "PLR2004",  # size metrics, magic values
+    "ASYNC109",                         # a `timeout` parameter of an async function is part of the API here
+    "ASYNC240",                         # path metadata calls (resolve, exists, mkdir) are local and fast
 ]
 
 [tool.ruff.lint.per-file-ignores]

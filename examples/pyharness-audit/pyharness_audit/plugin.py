@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from pathlib import Path
@@ -35,6 +36,10 @@ def apply(ctx: Any, config: Config) -> None:
             )
         return await next()
 
+    def append(line: dict[str, Any]) -> None:
+        with log_path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(line, ensure_ascii=False, default=str) + "\n")
+
     @ctx.on("tools/result")
     async def record(call: Any, result: Any) -> None:
         line = {
@@ -45,8 +50,7 @@ def apply(ctx: Any, config: Config) -> None:
             "args": call.args,
             "status": getattr(result, "status", None),
         }
-        with log_path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(line, ensure_ascii=False, default=str) + "\n")
+        await asyncio.to_thread(append, line)
 
     @ctx.on("app/serve")
     def mount_route() -> None:
@@ -56,7 +60,7 @@ def apply(ctx: Any, config: Config) -> None:
         router = APIRouter()
 
         @router.get("/audit")
-        async def audit() -> list[dict[str, Any]]:
+        def audit() -> list[dict[str, Any]]:  # a sync route runs in the thread pool
             if not log_path.exists():
                 return []
             lines = log_path.read_text(encoding="utf-8").splitlines()[-config.tail :]
