@@ -157,9 +157,15 @@ async def test_read_only_mount_serves_one_preset(profile, tmp_path):
 
     replies = [
         {"content": "", "tool_calls": [read("r1")]},
+        {"content": "", "tool_calls": [{"name": "ls", "args": {"path": "/ref"}, "id": "l1"}]},
+        {"content": "", "tool_calls": [{"name": "grep", "args": {"pattern": "mounted", "path": "/ref"}, "id": "g1"}]},
         {
             "content": "",
             "tool_calls": [{"name": "write_file", "args": {"file_path": "/ref/docs/x.md", "content": "x"}, "id": "w1"}],
+        },
+        {
+            "content": "",
+            "tool_calls": [{"name": "write_file", "args": {"file_path": "/ref/x.md", "content": "x"}, "id": "w2"}],
         },
         {"content": "done"},
         {"content": "", "tool_calls": [read("r2")]},
@@ -168,7 +174,7 @@ async def test_read_only_mount_serves_one_preset(profile, tmp_path):
     async with Harness(profile, patch=scripted_patch(replies)) as h:
         loop, agents = h.get("agentLoop"), h.get("agents")
         loop.add_mount("ref/docs", reference, presets=["creator"])
-        assert loop.mounts() == [
+        assert [m for m in loop.mounts() if m["owner"] == "<host>"] == [
             {
                 "mount": "/ref/docs/",
                 "path": str(reference.resolve()),
@@ -190,7 +196,10 @@ async def test_read_only_mount_serves_one_preset(profile, tmp_path):
         events = await agents.start_run(session["id"], "go").wait()
         results = {e["id"]: e for e in events if e["type"] == "tool_result"}
         assert results["r1"]["status"] == "success" and "mounted text" in results["r1"]["content"]
+        assert results["l1"]["status"] == "success" and "/ref/docs/" in results["l1"]["content"]  # the parent lists
+        assert results["g1"]["status"] == "success" and "/ref/docs/inner/note.md" in results["g1"]["content"]
         assert results["w1"]["status"] == "error" and "denied" in results["w1"]["content"]
+        assert results["w2"]["status"] == "error" and "denied" in results["w2"]["content"]
         assert not (reference / "x.md").exists()
 
         session = await agents.create_session(preset="standard")

@@ -39,7 +39,7 @@
 | `add_subagent()` | 声明式子 agent spec，归调用方插件所有；返回 disposer |
 | `add_middleware()` | LangChain `AgentMiddleware`，排在 `HarnessMiddleware` 之后；返回 disposer |
 | `add_skills()` | 技能目录，只读挂载到 `/skills/<label>/`；返回 disposer |
-| `add_mount()` | 目录，只读挂载到给定的虚拟路径；返回 disposer |
+| `add_mount()` | 目录，只读挂载到给定的虚拟路径；挂载点之上的各级目录列出其下的挂载，不含其他内容；返回 disposer |
 | `add_preset()` | agent 预设，归调用方插件所有；返回 disposer |
 | `preset()` | 给定预设 id 或默认预设的 `(id, config)`；未知 id 抛出 `ValueError` |
 | `mode()` | 给定的权限模式 id 或默认模式；未知 id 抛出 `ValueError` |
@@ -101,6 +101,7 @@
 | 函数 | 契约 |
 |---|---|
 | `backend_and_skills()` | workspace 与模式对应的 backend（技能目录与只读挂载已路由进去）、技能来源、写入拒绝规则 |
+| `mount_tree()` | 只读挂载的 backend：每个目录在其路径上，其上的各级目录为 `MountDirectory` |
 | `resolve_subagent()` | 一个子 agent spec 内：工具名 → 已注册的工具，model spec → 模型 |
 | `built_model()` | 构建图所用的 `(spec, model)`；默认模型在启动时不可用：`echo:echo` |
 | `build()` | 编译好的 deepagents 图，取自 loop 的 context、配置与扩展状态 |

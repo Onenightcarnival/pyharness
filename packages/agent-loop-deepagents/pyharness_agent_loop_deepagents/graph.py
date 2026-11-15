@@ -5,7 +5,8 @@ from string import Template
 from typing import Any
 
 from deepagents import FilesystemPermission, create_deep_agent
-from deepagents.backends import CompositeBackend, FilesystemBackend, StateBackend
+from deepagents.backends import BackendProtocol, CompositeBackend, FilesystemBackend, StateBackend
+from deepagents.backends.protocol import FileDownloadResponse, GlobResult, GrepResult, LsResult, ReadResult
 from deepagents.middleware.subagents import GENERAL_PURPOSE_SUBAGENT
 from langchain.agents.middleware import AgentMiddleware
 
@@ -18,6 +19,43 @@ from .middleware import HarnessMiddleware
 PROMPTS = package_prompts(__file__)
 
 
+class MountDirectory(BackendProtocol):
+    """Directory without a file of its own: the parent of mounts."""
+
+    def ls(self, path: str) -> LsResult:
+        return LsResult(entries=[])
+
+    def read(self, file_path: str, offset: int = 0, limit: int = 2000) -> ReadResult:
+        return ReadResult(error=f"File '{file_path}' not found")
+
+    def grep(
+        self, pattern: str, path: str | None = None, glob: str | None = None, *, max_count: int | None = None
+    ) -> GrepResult:
+        return GrepResult(matches=[])
+
+    def glob(self, pattern: str, path: str | None = None) -> GlobResult:
+        return GlobResult(matches=[])
+
+    def download_files(self, paths: list[str]) -> list[FileDownloadResponse]:
+        return [FileDownloadResponse(path=path, error="file_not_found") for path in paths]
+
+
+def mount_tree(mounts: list[tuple[list[str], Path]]) -> Any:
+    """
+    Backend for ``mounts`` (``(path segments, directory)``): each directory at its segments, and every directory
+    above it listing the mounts below.
+    """
+    here = [directory for parts, directory in mounts if not parts]
+    default = FilesystemBackend(root_dir=here[0], virtual_mode=True) if here else MountDirectory()
+    below: dict[str, list[tuple[list[str], Path]]] = {}
+    for parts, directory in mounts:
+        if parts:
+            below.setdefault(parts[0], []).append((parts[1:], directory))
+    if not below:
+        return default
+    return CompositeBackend(default=default, routes={f"/{name}/": mount_tree(sub) for name, sub in below.items()})
+
+
 def backend_and_skills(
     ctx: Any,
     config: LoopConfig,
@@ -28,7 +66,8 @@ def backend_and_skills(
 ) -> tuple[Any, list[str], list[Any]]:
     """
     Backend for the workspace and mode with the ``skills`` and ``mounts`` (``(virtual path, directory)``) routed
-    in read-only, the skill sources, and the write-deny rules.
+    in read-only, the skill sources, and the write-deny rules. A mount's first path segment is one route: the
+    directories above a mount list the mounts below and hold nothing else.
     """
     workspaces = ctx.get("workspace", None)
     if workspaces is not None and hasattr(workspaces, "backend_for"):
@@ -42,11 +81,14 @@ def backend_and_skills(
     if not skills and not mounts:
         return backend, sources, rules
     routes: dict[str, Any] = {}
-    for mount, path in [*skills, *mounts]:
-        routes[mount] = FilesystemBackend(root_dir=path, virtual_mode=True)
-        # One deny rule per mount: rules scoped to composite routes are accepted even when the workspace backend
-        # runs commands.
-        rules.append(FilesystemPermission(operations=["write"], paths=[mount, f"{mount}**"], mode="deny"))
+    if mounts:
+        routes.update(mount_tree([(mount.strip("/").split("/"), path) for mount, path in mounts]).routes)
+    routes.update({mount: FilesystemBackend(root_dir=path, virtual_mode=True) for mount, path in skills})
+    # One deny rule per route: rules scoped to composite routes are accepted even when the workspace backend runs
+    # commands.
+    rules.extend(
+        FilesystemPermission(operations=["write"], paths=[route, f"{route}**"], mode="deny") for route in routes
+    )
     composite = CompositeBackend(default=backend if backend is not None else StateBackend(), routes=routes)
     return composite, sources, rules
 
