@@ -98,20 +98,22 @@ async def test_workspace_inside_home_is_refused(profile, home, monkeypatch):
 def test_default_workspace_prefers_documents_and_keeps_an_existing_one(tmp_path):
     user = tmp_path / "user"
     user.mkdir()
-    under_home = user / "pyharness" / "web"
+    under_home = user / "pyharness" / "web" / "default-workspace"
     assert default_root("web", user) == under_home and under_home.is_dir()
     (user / "Documents").mkdir()
     assert default_root("web", user) == under_home  # created earlier: kept
-    assert default_root("dev", user) == user / "Documents" / "pyharness" / "dev"
+    assert default_root("dev", user) == user / "Documents" / "pyharness" / "dev" / "default-workspace"
 
 
-async def test_default_workspace_is_the_profile_directory(profile, tmp_path, monkeypatch):
+async def test_default_workspace_is_an_empty_directory_of_the_profile(profile, tmp_path, monkeypatch):
     user = tmp_path / "user"
     (user / "Documents").mkdir(parents=True)
     monkeypatch.setenv("HOME", str(user))
     monkeypatch.delenv("PYH_WORKSPACE")
     async with Harness(profile, patch=scripted([])) as h:
-        assert h.get("workspace").root == (user / "Documents" / "pyharness" / profile.name).resolve()
+        root = h.get("workspace").root
+    assert root == (user / "Documents" / "pyharness" / profile.name / "default-workspace").resolve()
+    assert list(root.iterdir()) == []
 
 
 # Rejected upgrade: previous version stays installed ----------------------------------------------

@@ -74,7 +74,7 @@ uv run pyh run
 | `PYH_MODEL` | `echo:echo` | 默认模型 |
 | `PYH_HOST` | `127.0.0.1` | HTTP 地址 |
 | `PYH_PORT` | `8765` | HTTP 端口 |
-| `PYH_WORKSPACE` | `~/Documents/pyharness/<profile>` | 默认工作区根目录 |
+| `PYH_WORKSPACE` | `~/Documents/pyharness/<profile>/default-workspace` | 默认工作区根目录 |
 | `PYH_LOG_LEVEL` | `INFO` | 日志级别 |
 | `PYH_POSTGRES_DSN` | — | `examples/patches/postgres.yaml` 的连接串 |
 
