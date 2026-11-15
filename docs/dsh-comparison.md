@@ -70,7 +70,13 @@ bundle 中条目的位置（`after` / `before` / `parent`）对应 mount 路径�
 | AI 订阅（dsh-toolkit subscriptions） | 有：`pyharness-subscriptions`，四个提供方的登录、目录、用量、聊天与七个工具；未做多账号配额感知的池化路由与出站代理设置，每个提供方用默认账号 |
 | API 网关（dsh-toolkit gateway） | 有：`pyharness-gateway`，同样的三种协议端点、参数取舍、错误形状、API key、用量账本与页面；模型请求走 LangChain `astream` 而不是 dsh 的流式块协议，图片不经附件存储而是直接以 data URL 传给模型；`reasoning_effort` 只传给 `openai`、`azure_openai`、`subscription` 类型的路由；管理路由没有 dsh 的浏览器会话与回环校验 |
 | HTTP 请求工具（dsh-toolkit http） | 有：`pyharness-http-client`，同样的目标、保存的请求、历史、host 与内网策略、重定向规则、遮罩、事件流读取和三个 agent 工具；包名与路由前缀换成 `http-client`（`pyharness-http` 已是 FastAPI 服务）；管理路由没有 dsh 的浏览器会话与回环校验；出站请求走 httpx，遵循环境变量里的代理设置 |
-| MCP 客户端 | 有：`pyharness-mcp`，stdio / HTTP / SSE，左侧栏 MCP 页配置；未做 MCP resources 与 prompts |
+| MCP 客户端 | 有：`pyharness-mcp`，stdio / HTTP / SSE，左侧栏 MCP 页配置，`${credential:REF}` 凭据模板（连接时解析、缺值时「等待凭据」、错误文本遮罩）；未做 MCP resources 与 prompts |
+| 左侧栏入口固定 / 取消固定（服务端保存） | 有：`GET` / `PUT /api/webui/prefs`，取消固定的入口进「更多」菜单 |
+| 文件页搜索 | 有：右侧栏文件页的搜索框，结果为裁剪后的树；用服务端遍历（最多 30000 项、返回 500 条）而不是 dsh 的索引 |
+| 回复里的 diff 着色与数学公式 | 有：diff 围栏按行着色；公式用随包分发的 KaTeX 输出 MathML（不带 KaTeX 的 CSS 与字体，排版交给浏览器的 MathML） |
+| 模型重试策略（全局 + 每提供方）与失败代码 | 有：`pyharness-llm` 的 `RetryPolicy`（瞬时错误 / 所有错误、次数、失败代码、退避）与 `failure_code`，重试在 `agent/model-request` 的最内层执行并发出 `agent/model-retry`；失败代码由异常的 HTTP 状态与类型归类，不像 dsh 由各 provider 插件在流式块里给出，所以 `EMPTY_RESPONSE`、`STREAM_CLOSED` 只有订阅类提供方会产生 |
+| 失败轮次「继续生成」 | 有：`POST /sessions/{id}/retry`，LangGraph 从失败那一步的检查点续跑；可继续的失败代码与 dsh 相同（限流、服务端、超时、网络、空响应、流中断） |
+| 自定义端点的 Gemini 协议 | 有：`gemini` 协议走 `langchain-google-genai`，模型列表取 `/v1beta/models` |
 | 轨迹视图 | 有：按轮次的记录表、时间概览、详情面板；dsh 的虚拟滚动、分页加载与完整输入输出检查未做（记录只存摘要尺寸） |
 | 每会话 agent preset（preset + isolate realm） | 预设是 `agent-loop` 的配置（工具子集、skills、提示词片段），每会话一张图；没有 realm 级的服务隔离 |
 | 进程内热替换 | 换代重启 |
