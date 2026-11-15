@@ -1,21 +1,3 @@
-"""
-User skills: ``<profile data>/toolkit/skills/<name>/SKILL.md`` (enabled, mounted for the agent at ``/skills/user/``)
-and ``<profile data>/toolkit/disabled-skills/`` (kept, not mounted). Install from ZIP, enable / disable by moving the
-directory, remove, read files.
-
-| ZIP install      | rule                                                                                  |
-|------------------|---------------------------------------------------------------------------------------|
-| extraction       | every entry keeps its path and bytes; file contents are not read                      |
-| install unit     | one per top-level entry, named after it; an existing entry of that name is replaced as a whole |
-| top-level ``.md``| stored as ``<name>/SKILL.md``: the agent loop mounts skills in that layout only       |
-| executable bit   | applied when the archive records one (Unix or macOS host)                             |
-| ``__MACOSX``     | not extracted                                                                         |
-| limits           | 32 MB archive, 100 MB and 4000 entries extracted                                      |
-
-A skill name is one visible, portable path segment of at most 128 characters; the list shows the directories that
-hold a ``SKILL.md``.
-"""
-
 from __future__ import annotations
 
 import io

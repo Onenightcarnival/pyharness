@@ -1,35 +1,3 @@
-"""
-``ctx.configCenter``: the configuration center — the MCP page (servers, connection test, startup wait), user
-skills, and the managed bun runtime for JavaScript MCP servers.
-
-| member        | contract                                                                  |
-|---------------|---------------------------------------------------------------------------|
-| ``skills``    | :class:`SkillStore`: ``toolkit/skills/`` (mounted at ``/skills/user/``) and ``disabled-skills/`` |
-| ``bun``       | :class:`BunManager`: pinned bun under ``<profile data>/toolkit/bun/``      |
-
-| config            | meaning                                                      |
-|-------------------|--------------------------------------------------------------|
-| ``bun_version``   | the bun release to install (default :data:`BUN_VERSION`)     |
-| ``skills_presets``| agent presets that see the user skills (default: all)        |
-
-Routes under ``/api/config-center``: ``mcp`` (servers with status and the startup wait), ``mcp/test`` (connect to one
-server configuration and list its tools), ``mcp/timeout``, ``mcp/credentials``; ``skills``, ``skills/detail``,
-``skills/file``, ``skills/install`` (ZIP), ``skills/open``; ``environment`` (bun status / install). Server lists are
-saved through the API's ``PUT /api/settings/mcp`` (restart to apply), as before.
-
-| ``mcp/credentials``            | contract                                                                    |
-|--------------------------------|-----------------------------------------------------------------------------|
-| ``PUT`` ``{reference, value}`` | stores the value in the profile credential store; invalid name or value → 400 |
-| ``DELETE ?reference=``         | removes the stored value                                                    |
-| answer                         | ``{credential: {reference, configured, source}, application}``              |
-
-| ``application``                | when                                                                        |
-|--------------------------------|-----------------------------------------------------------------------------|
-| ``restart-scheduled``          | the store changed, an enabled MCP server references the credential, supervised |
-| ``saved-restart-required``     | the same, unsupervised                                                      |
-| ``saved``                      | any other case                                                              |
-"""
-
 from __future__ import annotations
 
 import asyncio

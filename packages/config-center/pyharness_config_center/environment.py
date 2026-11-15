@@ -1,9 +1,3 @@
-"""
-Managed bun runtime for JavaScript MCP servers: a pinned bun release under ``<profile data>/toolkit/bun/``, verified
-against the release's ``SHASUMS256.txt``; MCP server commands that are a bare ``bun`` / ``bunx`` run through it
-(see :func:`pyharness_mcp.managed_bun`). PATH is never changed.
-"""
-
 from __future__ import annotations
 
 import contextlib

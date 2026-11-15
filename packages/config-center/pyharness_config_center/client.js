@@ -1,5 +1,3 @@
-// Browser module of the `config-center` entry: the sidebar "MCP" page (servers, editor, credentials, connection test, startup wait),
-// the sidebar "Skills" page (user skills, ZIP install, files) and the Settings → Environment section (managed bun).
 window.__PyhModules__.load({
   id: "config-center",
   factory(require) {
