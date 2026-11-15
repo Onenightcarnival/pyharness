@@ -6,6 +6,7 @@
 | ``Turn``          | argument of ``agent/turn-start`` and ``agent/turn-end``                   |
 | ``TurnRecorder``  | stats and trajectory of one turn, from the run events and graph updates   |
 | ``SessionBusy``   | the session has a running turn                                            |
+| ``NotContinuable``| the session's last turn cannot be continued                               |
 | ``RestartPending``| a restart is pending; new runs are refused                                |
 """
 
@@ -32,6 +33,10 @@ class SessionBusy(RuntimeError):
     """The session has a running turn."""
 
 
+class NotContinuable(RuntimeError):
+    """The session's last turn cannot be continued: it did not fail, or not with a continuable failure code."""
+
+
 class RestartPending(RuntimeError):
     """A restart is pending; new runs are refused."""
 
@@ -40,7 +45,7 @@ class RestartPending(RuntimeError):
 class Turn:
     session_id: str
     run_id: str
-    kind: str  # message | approval | answer | continuation | compact
+    kind: str  # message | approval | answer | continuation | compact | retry
     input: str | None
     outcome: str | None = None
     model: str | None = None  # route:model selected for the session; None: the default
@@ -59,6 +64,7 @@ class RunHandle:
         self.events: list[dict[str, Any]] = []
         self.done = False
         self.task: asyncio.Task[Any] | None = None
+        self.recorder: TurnRecorder | None = None
         self._cond = asyncio.Condition()
 
     async def publish(self, event: dict[str, Any]) -> None:
@@ -95,7 +101,8 @@ class TurnRecorder:
     """Timing, token usage and a compact trajectory of one turn, from the run events and graph updates.
 
     Records: ``user`` (input), ``step`` (one model call: ttft, duration, tokens, text size, tool calls),
-    ``tool`` (call → result: duration, status, sizes), ``end`` (outcome). Stats sum the steps and tools.
+    ``tool`` (call → result: duration, status, sizes), ``retry`` (a model call retried: failure code, wait),
+    ``end`` (outcome, and the failure code of an ``error``). Stats sum the steps and tools.
     """
 
     def __init__(self, turn: Turn) -> None:
@@ -123,6 +130,7 @@ class TurnRecorder:
             "decode_tokens": 0,
             "duration_ms": 0,
             "compactions": 0,
+            "retries": 0,
         }
         if turn.input is not None:
             # @references travel as attachment blocks; the record keeps the typed text
@@ -169,6 +177,18 @@ class TurnRecorder:
                 }
             )
             self.stats["compactions"] += 1
+        elif kind == "retry":
+            self.records.append(
+                {
+                    "t": "retry",
+                    "at": now,
+                    "attempt": event.get("attempt"),
+                    "code": event.get("code"),
+                    "delay_ms": event.get("delay_ms"),
+                }
+            )
+            self.stats["retries"] += 1
+            self.first_token = None  # the retried call starts its answer over
 
     def observe_update(self, chunk: Any) -> None:
         now = time.time()
@@ -225,13 +245,15 @@ class TurnRecorder:
                 self.step_start = now
                 self.first_token = None
 
-    def finish(self, outcome: str, after: int) -> dict[str, Any]:
+    def finish(self, outcome: str, after: int, error: dict[str, Any] | None = None) -> dict[str, Any]:
+        """The turn record. ``error`` is ``{"code", "message"}`` of a turn that ended with outcome ``error``."""
         now = time.time()
         self.stats["duration_ms"] = round((now - self.started) * 1000)
         for record in self.tools.values():  # calls without a result (interrupted, cancelled)
             record.setdefault("status", "pending")
-        self.records.append({"t": "end", "at": now, "outcome": outcome})
+        self.records.append({"t": "end", "at": now, "outcome": outcome, **({"code": error["code"]} if error else {})})
         return {
+            **({"error": error} if error else {}),
             "run_id": self.turn.run_id,
             "session_id": self.turn.session_id,
             "kind": self.turn.kind,

@@ -157,13 +157,22 @@ class RouteSettings(BaseModel):
     type: str | None = None
     title: str | None = None
     protocol: str | None = Field(
-        None, description="Custom endpoints: openai-chat, openai-responses, anthropic-messages."
+        None, description="Custom endpoints: openai-chat, openai-responses, anthropic-messages, gemini."
     )
     base_url: str | None = None
     api_key: str | None = None
     models: list[dict[str, Any]] | None = None
     options: dict[str, Any] | None = None
+    retry: dict[str, Any] | None = Field(
+        None, description='Retry policy of the route (RetryPolicy fields); {"mode": "inherit"} removes it.'
+    )
     model: str | None = Field(None, description="Model id for /test.")
+
+
+class ModelRetry(BaseModel):
+    retry: dict[str, Any] | None = Field(
+        None, description="Retry policy for routes without their own (RetryPolicy fields); null: no retries."
+    )
 
 
 class DefaultModel(BaseModel):

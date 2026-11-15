@@ -1,4 +1,4 @@
-"""``scripted`` model provider: replies from a list in the entry config."""
+"""``scripted`` model provider: replies from a list in the entry config; a reply ``{"error": {...}}`` raises."""
 
 from __future__ import annotations
 
@@ -19,6 +19,25 @@ CALLS: list[dict[str, Any]] = []
 class Config(BaseModel):
     replies: list[dict[str, Any]] = Field(default_factory=list)
     by_generation: dict[int, list[dict[str, Any]]] = Field(default_factory=dict)
+
+
+class ScriptedError(RuntimeError):
+    """The failure of a reply ``{"error": {...}}``: ``code`` (a failure code) or ``status_code`` (an HTTP status)."""
+
+    def __init__(
+        self,
+        message: str = "scripted failure",
+        *,
+        code: str | None = None,
+        status_code: int | None = None,
+        retry_after_ms: int | None = None,
+    ) -> None:
+        super().__init__(message)
+        if code is not None:
+            self.code = code
+        if status_code is not None:
+            self.status_code = status_code
+        self.retry_after_ms = retry_after_ms
 
 
 class ScriptedModel(BaseChatModel):
@@ -48,6 +67,8 @@ class ScriptedModel(BaseChatModel):
         self.cursor[0] += 1
         if index < len(self.replies):
             reply = self.replies[index]
+            if reply.get("error"):
+                raise ScriptedError(**reply["error"])
             extra = {"reasoning_content": reply["reasoning"]} if reply.get("reasoning") else {}
             content: Any = reply.get("content", "")
             if reply.get("images"):

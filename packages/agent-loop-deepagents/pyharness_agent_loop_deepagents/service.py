@@ -16,7 +16,8 @@
 | ``subagents()``      | ``name`` and ``owner`` of every added subagent                                  |
 | ``recursion_limit``  | ``config.recursion_limit``                                                      |
 
-Events defined at start: ``agent/model-request`` (waterfall) and ``agent-loop/build`` (waterfall). The identity
+Events defined at start: ``agent/model-request`` (waterfall), ``agent/model-retry`` (parallel) and
+``agent-loop/build`` (waterfall). The identity
 section of the system prompt (order 0) is ``config.system_prompt``.
 """
 
@@ -57,6 +58,11 @@ class DeepAgentsLoop(Service):
             "agent/model-request",
             "waterfall",
             "listener(call: ModelCall, next) around each model call; `await next()` returns the ModelResponse.",
+        )
+        self.ctx.define_event(
+            "agent/model-retry",
+            "parallel",
+            "listener(retry: ModelRetry) before a failed model call is retried by the route's retry policy.",
         )
         self.ctx.define_event(
             "agent-loop/build",

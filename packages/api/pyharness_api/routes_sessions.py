@@ -15,6 +15,7 @@
 | POST   | ``/sessions/{id}/messages``           | ``post_message``        |
 | POST   | ``/sessions/{id}/approvals``          | ``post_approvals``      |
 | POST   | ``/sessions/{id}/compact``            | ``post_compact``        |
+| POST   | ``/sessions/{id}/retry``              | ``post_retry``          |
 | POST   | ``/sessions/{id}/answers``            | ``post_answers``        |
 | POST   | ``/sessions/{id}/cancel``             | ``cancel``              |
 | DELETE | ``/sessions/{id}``                    | ``delete``              |
@@ -33,7 +34,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import StreamingResponse
 
-from pyharness_agent import RestartPending, SessionBusy
+from pyharness_agent import NotContinuable, RestartPending, SessionBusy
 
 from . import references
 from .highlight import escaped_lines, lines as highlighted_lines
@@ -130,6 +131,7 @@ def build_sessions_router(ctx: Any) -> APIRouter:
             "busy": agents.busy(session_id),
             "messages": await agents.messages(session_id),
             "pending": await agents.pending(session_id),
+            "failure": await agents.failure(session_id),
             "changes": await changes.summaries(session_id) if changes is not None else [],
             "turns": await agents.turns(session_id),
             "context_window": llm.context_window(session.get("model"))
@@ -231,6 +233,19 @@ def build_sessions_router(ctx: Any) -> APIRouter:
                 session_id, "/compact", kind="compact", marker={"kind": "command", "name": "compact"}
             )
         except SessionBusy as exc:
+            raise HTTPException(409, str(exc)) from None
+        except RestartPending as exc:
+            raise HTTPException(503, str(exc), headers={"Retry-After": "2"}) from None
+        return _sse(handle.subscribe())
+
+    @router.post("/sessions/{session_id}/retry")
+    async def post_retry(session_id: str) -> StreamingResponse:
+        """Continue the failed last turn: a run of kind ``retry`` that resumes the step that failed, without a new
+        message (SSE like a message). 409 unless the session's ``failure`` is ``continuable``."""
+        await require(session_id)
+        try:
+            handle = await agents.retry_run(session_id)
+        except (SessionBusy, NotContinuable) as exc:
             raise HTTPException(409, str(exc)) from None
         except RestartPending as exc:
             raise HTTPException(503, str(exc), headers={"Retry-After": "2"}) from None

@@ -13,6 +13,7 @@ from langgraph.types import Command
 from pydantic import BaseModel, Field
 
 from pyharness import Service, package_prompts
+from pyharness_llm import CONTINUABLE_CODES, failure_code
 
 from .messages import (
     _checkpoint,
@@ -25,7 +26,7 @@ from .messages import (
     serialize_message,
     user_content,
 )
-from .runs import TURNS, RestartPending, RunHandle, SessionBusy, Turn, TurnRecorder
+from .runs import TURNS, NotContinuable, RestartPending, RunHandle, SessionBusy, Turn, TurnRecorder
 
 NAMESPACE = ("pyharness", "sessions")
 PROMPTS = package_prompts(__file__)
@@ -63,6 +64,7 @@ class AgentService(Service):
             "agent/turn-end", "parallel", "listener(turn: Turn) after a run settles; turn.outcome is set."
         )
         self.ctx.on("app/ready", self._build)
+        self.ctx.on("agent/model-retry", self._on_model_retry)
         self.ctx.on("app/started", self._resume_after_restart)
         self.ctx.on("app/stopping", self.stop)
 
@@ -207,6 +209,53 @@ class AgentService(Service):
         state = await self._require_graph().aget_state(self._config(session_id))
         return [{"id": i.id, "value": _jsonable(i.value)} for i in (state.interrupts or ())]
 
+    async def failure(self, session_id: str) -> dict[str, Any] | None:
+        """The failure the session stopped on: ``{"run_id", "code", "message", "continuable"}`` when its last turn
+        ended with outcome ``error``; ``None`` otherwise and while a turn runs.
+
+        ``continuable``: the failure code is one of ``CONTINUABLE_CODES`` and the graph stopped inside a step, so
+        ``retry_run`` resumes it.
+        """
+        if self.busy(session_id):
+            return None
+        turns = await self.turns(session_id)
+        last = turns[-1] if turns else None
+        if last is None or last.get("outcome") != "error":
+            return None
+        error = last.get("error") or {}
+        code = error.get("code") or "UNKNOWN"
+        continuable = False
+        if code in CONTINUABLE_CODES:
+            state = await self._require_graph().aget_state(self._config(session_id))
+            continuable = bool(state.next) and not state.interrupts
+        return {"run_id": last.get("run_id"), "code": code, "message": error.get("message"), "continuable": continuable}
+
+    async def retry_run(self, session_id: str, *, model: str | None = None) -> RunHandle:
+        """Continue the session's failed turn: a run of kind ``retry`` that resumes the graph at the step that
+        failed, with no new message. Raises :class:`NotContinuable` unless ``failure()`` is continuable."""
+        failure = await self.failure(session_id)
+        if failure is None:
+            raise NotContinuable(f"the last turn of session {session_id} did not fail")
+        if not failure["continuable"]:
+            raise NotContinuable(f"a turn that failed with {failure['code']} cannot be continued; send a new message")
+        return self.start_run(session_id, kind="retry", model=model)
+
+    async def _on_model_retry(self, retry: Any) -> None:
+        handle = self._runs.get(retry.session_id) if retry.session_id else None
+        if handle is None or handle.done:
+            return
+        event = {
+            "type": "retry",
+            "attempt": retry.attempt,
+            "max_retries": retry.max_retries,
+            "code": retry.code,
+            "message": retry.message,
+            "delay_ms": retry.delay_ms,
+        }
+        if handle.recorder is not None:
+            handle.recorder.observe_event(event)
+        await handle.publish(event)
+
     def busy(self, session_id: str) -> bool:
         handle = self._runs.get(session_id)
         return handle is not None and not handle.done
@@ -262,7 +311,8 @@ class AgentService(Service):
         | ``resume``               | ``{interrupt_id: value}`` resuming other interrupts (see below)    |
         | ``content`` + ``marker`` | user-role message tagged ``additional_kwargs["pyharness"]``        |
 
-        ``resume`` carries ``ask_user_question`` answers.
+        ``resume`` carries ``ask_user_question`` answers. ``kind="retry"`` sends no input: the graph resumes at
+        the step its last run failed in (see ``retry_run``).
 
         ``kind="compact"`` with ``marker={"kind": "command", "name": "compact"}`` runs a manual compaction: the
         compaction middleware replaces the history with a checkpoint and ends the run without a model call.
@@ -272,8 +322,10 @@ class AgentService(Service):
             raise SessionBusy(f"session {session_id} already has a running turn")
         if not self.ctx.lifecycle.accepting_work:
             raise RestartPending("restart pending: configuration change; retry later")
-        if decisions is not None:
-            payload: Any = Command(resume={"decisions": decisions})
+        if kind == "retry":
+            payload: Any = None
+        elif decisions is not None:
+            payload = Command(resume={"decisions": decisions})
             kind = kind or "approval"
         elif resume is not None:
             payload = Command(resume=resume)
@@ -296,8 +348,9 @@ class AgentService(Service):
         session_id = handle.session_id
         lifecycle = self.ctx.lifecycle
         turn = Turn(session_id=session_id, run_id=handle.id, kind=handle.kind, input=handle.input)
-        recorder = TurnRecorder(turn)
+        recorder = handle.recorder = TurnRecorder(turn)
         outcome = "completed"
+        error: dict[str, Any] | None = None
         async with lifecycle.hold(f"run:{session_id}", session=session_id):
             try:
                 record = await self.get_session(session_id)
@@ -323,11 +376,12 @@ class AgentService(Service):
             except Exception as exc:  # noqa: BLE001
                 outcome = "error"
                 self.ctx.logger.exception("run %s of session %s failed", handle.id, session_id)
-                await handle.publish({"type": "error", "message": f"{type(exc).__name__}: {exc}"})
+                error = {"code": failure_code(exc), "message": f"{type(exc).__name__}: {exc}"}
+                await handle.publish({"type": "error", **error, "continuable": error["code"] in CONTINUABLE_CODES})
             finally:
                 turn.outcome = outcome
                 try:
-                    record = recorder.finish(outcome, len(await self.messages(session_id)))
+                    record = recorder.finish(outcome, len(await self.messages(session_id)), error)
                     record["seq"] = await self._next_turn_seq(session_id)
                     await self.ctx.store.aput(TURNS + (session_id,), handle.id, record)
                     turn.extras["turn"] = record

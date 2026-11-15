@@ -139,7 +139,7 @@ async def test_route_lifecycle_through_the_api(profile):
             "scripted",
         ]
         assert all(c_["installed"] for c_ in d["catalog"])
-        assert [p["id"] for p in d["protocols"]] == ["openai-chat", "openai-responses", "anthropic-messages"]
+        assert [p["id"] for p in d["protocols"]] == ["openai-chat", "openai-responses", "anthropic-messages", "gemini"]
 
         # Create a route on the registered test provider; the key goes to the store, not the configuration.
         r = await c.put(

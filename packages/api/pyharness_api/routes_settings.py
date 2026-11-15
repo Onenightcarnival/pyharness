@@ -9,6 +9,7 @@
 | PUT    | ``/settings/compaction``              | ``put_compaction_settings``|
 | GET    | ``/settings/models``                  | ``get_model_settings``    |
 | PUT    | ``/settings/models``                  | ``put_default_model``     |
+| PUT    | ``/settings/model-retry``             | ``put_model_retry``       |
 | PUT    | ``/settings/models/{route}``          | ``put_route``             |
 | DELETE | ``/settings/models/{route}``          | ``delete_route``          |
 | POST   | ``/settings/models/{route}/discover`` | ``discover_models``       |
@@ -27,7 +28,7 @@ from pyharness import manage
 from pyharness.credentials import reference_for
 from pyharness_llm import PROTOCOLS, LLMConfig, LLMConfigError, ProviderConfig, split_spec, type_info
 
-from .models import AgentDefaults, CompactionSettings, DefaultModel, RouteSettings
+from .models import AgentDefaults, CompactionSettings, DefaultModel, ModelRetry, RouteSettings
 
 
 def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
@@ -128,6 +129,18 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
         await persist(service)
         return view(service)
 
+    @router.put("/settings/model-retry")
+    async def put_model_retry(body: ModelRetry) -> dict[str, Any]:
+        """The retry policy of routes without their own; ``null`` leaves retries to the provider clients."""
+        service = llm()
+        profile()
+        try:
+            service.update(retry=body.retry)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
+        await persist(service)
+        return view(service)
+
     @router.put("/settings/models/{route}")
     async def put_route(route: str, body: RouteSettings) -> dict[str, Any]:
         service = llm()
@@ -141,6 +154,11 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
                 data[field] = value or None if field in ("title", "base_url") else value
         if body.protocol is not None and body.protocol:
             data["type"] = PROTOCOLS[body.protocol]["type"]
+        if body.retry is not None:
+            if body.retry.get("mode") == "inherit":
+                data.pop("retry", None)
+            else:
+                data["retry"] = body.retry
         kind = PROTOCOLS[data["protocol"]]["type"] if data.get("protocol") else (data.get("type") or route)
         info = type_info(kind)
         if info["package"] is None and kind not in service.providers():

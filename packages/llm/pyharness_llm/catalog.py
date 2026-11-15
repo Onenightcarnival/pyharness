@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import re
 from typing import Any
 
 from pyharness import package_toml
@@ -23,6 +24,10 @@ PRESETS: list[str] = _CATALOG["PRESETS"]
 # Curated facts per LangChain provider type. Missing types fall back to generic ``api_key`` / ``base_url`` keywords;
 # a missing ``models_api`` means no model listing.
 CURATED: dict[str, dict[str, Any]] = _CATALOG["CURATED"]
+
+
+# API version segment at the end of a Gemini base URL.
+GEMINI_VERSION = re.compile(r"/v\d+(?:alpha|beta)?\d*$")
 
 
 def builtin_types() -> dict[str, tuple[str, str]]:
@@ -59,6 +64,9 @@ def translate_options(kind: str, options: dict[str, Any]) -> dict[str, Any]:
 
     ``openai`` with a custom ``base_url`` defaults to the Chat Completions API (``use_responses_api=False``):
     the common denominator of OpenAI-compatible servers. Set ``use_responses_api`` explicitly to override.
+
+    ``google_genai``: the client appends the API version to ``base_url``; a ``base_url`` that already ends with
+    one (``…/v1beta``) is passed without it.
     """
     keys = type_info(kind)["keys"] if kind else {}
     out: dict[str, Any] = {}
@@ -69,4 +77,6 @@ def translate_options(kind: str, options: dict[str, Any]) -> dict[str, Any]:
     base_url = options.get("base_url")
     if kind == "openai" and isinstance(base_url, str) and "api.openai.com" not in base_url:
         out.setdefault("use_responses_api", False)
+    if kind == "google_genai" and isinstance(out.get("base_url"), str):
+        out["base_url"] = GEMINI_VERSION.sub("", out["base_url"].rstrip("/"))
     return out

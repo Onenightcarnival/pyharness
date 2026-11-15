@@ -750,6 +750,8 @@ textarea.input { height: auto; padding: 8px 12px; line-height: 20px; resize: ver
 .mtable .inputs { white-space: nowrap; }
 .checkOpt { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; font-size: 12px; color: var(--label-secondary); cursor: pointer; }
 .checkOpt input { accent-color: var(--info); margin: 0; }
+.retryCodes { display: flex; flex-wrap: wrap; gap: 6px 4px; margin-top: 6px; }
+.retryBox { margin-top: 22px; }
 .mtable:empty { display: none; }
 .actionsRow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .emptyNote { font-size: 13px; color: var(--label-tertiary); padding: 2px 0; }
@@ -926,6 +928,7 @@ textarea.input { height: auto; padding: 8px 12px; line-height: 20px; resize: ver
     <symbol id="i-chev-right" viewBox="0 0 16 16"><path d="M6.25 4.5 9.75 8l-3.5 3.5"/></symbol>
     <symbol id="i-arrow-up" viewBox="0 0 16 16"><path d="M8 13V3.5M3.75 7.5 8 3.25l4.25 4.25"/></symbol>
     <symbol id="i-stop" viewBox="0 0 16 16"><rect x="4.5" y="4.5" width="7" height="7" rx="1.5" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-play" viewBox="0 0 16 16"><path d="M5.5 3.3v9.4a.4.4 0 0 0 .61.34l7.5-4.7a.4.4 0 0 0 0-.68l-7.5-4.7a.4.4 0 0 0-.61.34Z" fill="currentColor" stroke="none"/></symbol>
     <symbol id="i-copy" viewBox="0 0 16 16"><rect x="5.25" y="5.25" width="8" height="8" rx="1.75"/><path d="M10.75 5.25V3.5c0-.97-.78-1.75-1.75-1.75H3.5c-.97 0-1.75.78-1.75 1.75V9c0 .97.78 1.75 1.75 1.75h1.75"/></symbol>
     <symbol id="i-check" viewBox="0 0 16 16"><path d="m3.5 8.25 3 3 6-6.5"/></symbol>
     <symbol id="i-tool" viewBox="0 0 16 16"><path d="M10.1 2.4a3.4 3.4 0 0 0-4.3 4.3L2.4 10.1a1.4 1.4 0 0 0 2 2l3.4-3.4a3.4 3.4 0 0 0 4.3-4.3l-2 2-1.6-.4-.4-1.6z"/></symbol>
@@ -1074,6 +1077,12 @@ const $ = (id) => document.getElementById(id);
 const zh = (navigator.language || 'zh').toLowerCase().startsWith('zh');
 const T = zh ? {
   newSession: '新会话', plugins: '插件', workspace: '会话', headline: '要做什么？', placeholder: '描述你想做的事…',
+  continueGen: '继续生成', continueHint: '上一轮因模型调用失败中断：点右侧按钮从失败的那一步继续，或输入新消息', notContinuable: '这一轮无法继续，请重新发送消息',
+  retrying: (n, max, code, sec) => `模型调用失败（${code}），${sec} 秒后重试（第 ${n} / ${max} 次）`,
+  retryTitle: '失败重试', retryHint: '模型调用失败时按退避间隔自动重试，在提供方自带的重试之外；提供方可单独设置。', retryRouteHint: '这个提供方的重试策略；跟随全局时用上面「模型」页底部的设置。',
+  retryMode: '重试范围', retryOff: '不重试', retryInherit: '跟随全局', retryTransient: '瞬时错误', retryAll: '所有错误', retryMax: '最多重试次数', retryMaxHint: '首次调用之后再试的次数（0–10）；间隔 1 秒起每次翻倍，最长 30 秒。', retryCodes: '重试的失败类型', retryTimes: (n) => `最多 ${n} 次`,
+  failureCodes: { RATE_LIMIT: '限流（429）', SERVER: '服务端错误（5xx）', TIMEOUT: '超时', TRANSPORT: '网络连接', EMPTY_RESPONSE: '空响应', STREAM_CLOSED: '流中断' },
+  recRetry: '重试', retryAttempt: (n) => `第 ${n} 次重试`, retryWait: '等待', failureCode: '失败类型',
   placeholderBusy: 'agent 工作中…', collapse: '收起侧边栏', expand: '展开侧边栏', attach: '添加图片（也可粘贴或拖入）', send: '发送', stop: '停止',
   thinking: '思考中', thought: '思考过程', toolRunning: '运行中', copy: '复制', copied: '已复制', del: '删除会话', deleted: '会话已删除',
   approvalStrip: '待批准', approve: '批准', reject: '拒绝', cmdCompact: '压缩较早的对话历史', cmdHelp: '列出可用命令', cmdNew: '新建会话', cmdModel: '切换模型', cmdMode: '切换权限模式', cmdSettings: '打开设置', cmdFiles: '在右侧栏打开工作区文件', cmdTerminal: '在右侧栏打开终端', cmdJobs: '在右侧栏查看后台任务', cmdClear: '收起已完成的工作步骤', commandsTitle: '命令', referencesTitle: '文件', noCommands: '没有匹配的命令', noFiles: '没有匹配的文件', helpIntro: '可用命令：', refHint: '输入 @ 引用工作区文件，/ 使用命令', questionStrip: 'agent 有问题要问你', questionPending: '先回答上面的问题', questionTurn: '等待回答', submitAnswers: '提交回答', skipAll: '全部跳过', customAnswer: '其他…', customPlaceholder: '输入你的回答', chooseOne: '选一项', chooseMany: '可多选', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
@@ -1086,6 +1095,12 @@ const T = zh ? {
   restartFailed: '重启后 harness 无响应。日志：运行 pyh run 的终端。', busy: '会话运行中', approvalPending: '有待批准的工具调用',
 } : {
   newSession: 'New session', plugins: 'Plugins', workspace: 'Sessions', headline: 'What needs doing?', placeholder: 'Describe what you want to build…',
+  continueGen: 'Continue generating', continueHint: 'The last turn stopped on a failed model call: use the button to continue from that step, or type a new message', notContinuable: 'This turn cannot be continued; send the message again',
+  retrying: (n, max, code, sec) => `Model call failed (${code}); retry ${n} of ${max} in ${sec}s`,
+  retryTitle: 'Retry on failure', retryHint: 'Retry a failed model call with backoff, on top of the provider client\'s own retries; a provider can have its own policy.', retryRouteHint: 'The retry policy of this provider; "Follow global" uses the one at the bottom of the Models page.',
+  retryMode: 'Retry', retryOff: 'Off', retryInherit: 'Follow global', retryTransient: 'Transient failures', retryAll: 'All failures', retryMax: 'Maximum retries', retryMaxHint: 'Attempts after the first (0–10); waits start at 1s and double, up to 30s.', retryCodes: 'Failures to retry', retryTimes: (n) => `up to ${n}`,
+  failureCodes: { RATE_LIMIT: 'Rate limit (429)', SERVER: 'Server error (5xx)', TIMEOUT: 'Timeout', TRANSPORT: 'Connection', EMPTY_RESPONSE: 'Empty response', STREAM_CLOSED: 'Stream closed' },
+  recRetry: 'Retry', retryAttempt: (n) => `retry ${n}`, retryWait: 'Wait', failureCode: 'Failure',
   placeholderBusy: 'The agent is working…', collapse: 'Collapse sidebar', expand: 'Expand sidebar', attach: 'Add images (paste or drop works too)', send: 'Send', stop: 'Stop',
   thinking: 'Thinking', thought: 'Thoughts', toolRunning: 'Running', copy: 'Copy', copied: 'Copied', del: 'Delete session', deleted: 'Session deleted',
   approvalStrip: 'Awaiting approval', approve: 'Approve', reject: 'Reject', cmdCompact: 'Compact older conversation history', cmdHelp: 'List available commands', cmdNew: 'Start a new session', cmdModel: 'Choose the model', cmdMode: 'Choose the permission mode', cmdSettings: 'Open settings', cmdFiles: 'Open workspace files in the sidebar', cmdTerminal: 'Open a terminal in the sidebar', cmdJobs: 'Show background jobs in the sidebar', cmdClear: 'Collapse finished work details', commandsTitle: 'Commands', referencesTitle: 'Files', noCommands: 'No matching commands', noFiles: 'No matching files', helpIntro: 'Available commands:', refHint: 'Type @ to reference a workspace file, / for commands', questionStrip: 'The agent has a question for you', questionPending: 'Answer the question above first', questionTurn: 'Waiting for your answer', submitAnswers: 'Submit answers', skipAll: 'Skip all', customAnswer: 'Other…', customPlaceholder: 'Type your answer', chooseOne: 'Choose one', chooseMany: 'Choose any', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
@@ -1106,7 +1121,7 @@ Object.assign(T, zh ? {
   modelsTitle: '模型', modelChip: '选择模型', defaultModel: '新会话默认模型', defaultModelHint: '新建会话使用的模型；每个会话可在输入框的模型菜单里单独切换。', noDefault: '未设置',
   addProvider: '添加模型提供方', thirdParty: '第三方模型提供方', customApi: '自定义模型 API', thirdPartyHint: '预置的 LangChain 提供方；填写密钥与模型列表即可。', customApiHint: '自建服务、中转网关或其他 OpenAI / Anthropic 兼容端点。',
   providerType: '提供方类型', providerId: '提供方 ID', providerIdHint: '小写字母、数字、- 与 _；用作配置键与凭据引用名，保存后不可改。', displayName: '显示名称', protocol: 'API 协议',
-  apiKey: 'API Key', baseUrl: 'Base URL', baseUrlHint: '留空使用默认地址。', customBaseUrlHint: (p) => p === 'anthropic-messages' ? '例如 https://gateway.example；SDK 自行追加 /v1/messages。' : '例如 https://gateway.example/v1。',
+  apiKey: 'API Key', baseUrl: 'Base URL', baseUrlHint: '留空使用默认地址。', customBaseUrlHint: (p) => p === 'anthropic-messages' ? '例如 https://gateway.example；SDK 自行追加 /v1/messages。' : p === 'gemini' ? '例如 https://gateway.example；SDK 自行追加 /v1beta，写上也可以。' : '例如 https://gateway.example/v1。',
   keySaved: '已保存密钥；留空则沿用。', keyEnv: (e) => `使用环境变量 ${e}。`, keyMissing: (e) => `未配置；可设置环境变量 ${e} 或在此填写。`, keyNone: '该提供方不使用 API Key。', keyConfig: '密钥写在配置文件中（明文）；在此填写会迁移到凭据文件。',
   installed: '已安装', notInstalled: (pkg) => `未安装 ${pkg}：uv pip install ${pkg.replace(/_/g, '-')}`, notInstalledShort: '未安装',
   modelsSection: '模型列表', modelId: '模型 ID', modelName: '显示名', contextWindow: '上下文', maxTokens: '最大输出', inputTypes: '输入', inputText: '文本', inputImage: '图像', fetchModels: '获取可用模型', addModel: '添加模型', restoreModels: '恢复默认模型', noModelsYet: '还没有模型；获取或手动添加。',
@@ -1128,7 +1143,7 @@ Object.assign(T, zh ? {
   modelsTitle: 'Models', modelChip: 'Select model', defaultModel: 'Default model for new sessions', defaultModelHint: 'Used by new sessions; each session can switch in the composer model menu.', noDefault: 'Not set',
   addProvider: 'Add model provider', thirdParty: 'Third-party model provider', customApi: 'Custom model API', thirdPartyHint: 'LangChain providers; enter a key and the model list.', customApiHint: 'A self-hosted server, relay, or any other OpenAI- or Anthropic-compatible endpoint.',
   providerType: 'Provider', providerId: 'Provider ID', providerIdHint: 'Lowercase letters, digits, - and _; the configuration key and credential reference stem; fixed after saving.', displayName: 'Display name', protocol: 'API protocol',
-  apiKey: 'API key', baseUrl: 'Base URL', baseUrlHint: "Empty: the provider's default endpoint.", customBaseUrlHint: (p) => p === 'anthropic-messages' ? 'e.g. https://gateway.example; the SDK appends /v1/messages.' : 'e.g. https://gateway.example/v1.',
+  apiKey: 'API key', baseUrl: 'Base URL', baseUrlHint: "Empty: the provider's default endpoint.", customBaseUrlHint: (p) => p === 'anthropic-messages' ? 'e.g. https://gateway.example; the SDK appends /v1/messages.' : p === 'gemini' ? 'e.g. https://gateway.example; the SDK appends /v1beta, and a URL that ends with it works too.' : 'e.g. https://gateway.example/v1.',
   keySaved: 'A key is saved; leave empty to keep it.', keyEnv: (e) => `Using environment variable ${e}.`, keyMissing: (e) => `Not configured; set ${e} or enter a key here.`, keyNone: 'This provider does not use an API key.', keyConfig: 'The key is written in the configuration file (plain); entering one here moves it to the credential file.',
   installed: 'installed', notInstalled: (pkg) => `${pkg} is not installed: uv pip install ${pkg.replace(/_/g, '-')}`, notInstalledShort: 'not installed',
   modelsSection: 'Models', modelId: 'Model ID', modelName: 'Display name', contextWindow: 'Context', maxTokens: 'Max output', inputTypes: 'Input', inputText: 'Text', inputImage: 'Image', fetchModels: 'Fetch available models', addModel: 'Add model', restoreModels: 'Restore default models', noModelsYet: 'No models yet; fetch or add them.',
@@ -1753,7 +1768,7 @@ function renderDock() {
 }
 onSlot('conversation.composer.dock', renderDock);
 function newSession() {
-  state.current = null; state.run = null; state.session = null; state.sessionModel = null; state.sessionMode = null; state.sessionPreset = null; closeModelMenu(); renderModelChip(); renderSessionChips();
+  state.current = null; state.run = null; state.session = null; state.failure = null; state.sessionModel = null; state.sessionMode = null; state.sessionPreset = null; closeModelMenu(); renderModelChip(); renderSessionChips();
   setView('chat'); $('log').innerHTML = ''; $('approval').innerHTML = ''; curTurn = null; renderDock(); renderRightbar(); emitPlugin('session', null); setConvView('chat'); renderStats();
   $('crumb').textContent = '';
   setPhase('hero'); refreshSessions(); updateComposer(); $('input').focus();
@@ -1765,8 +1780,10 @@ async function openSession(id) {
   if (state.current !== id) return;
   $('crumb').textContent = s.title || T.untitled;
   state.session = s; state.sessionModel = s.model || null; renderModelChip(); renderSessionChips(); renderDock(); renderRightbar(); emitPlugin('session', s);
+  state.failure = s.failure || null;
   setPhase('active'); $('rbExpand').hidden = rightbar.open; setConvView('chat'); renderStats();
   renderHistory(s.messages, s.changes, s.turns);
+  if (s.failure && s.failure.message) addLine(s.failure.message, 'error');
   renderApproval(s.pending || []);
   refreshSessions();
   scrollToEnd(true);
@@ -1943,7 +1960,7 @@ function showRunning(on) {
 
 /* ---------- streaming ---------- */
 async function consume(res) {
-  state.streaming = true; updateComposer();
+  state.streaming = true; state.failure = null; updateComposer();
   collapsePending(); beginTurn({ live: true });
   showRunning(true); scrollToEnd(true);
   const reader = res.body.getReader(); const dec = new TextDecoder();
@@ -1989,8 +2006,13 @@ async function consume(res) {
           case 'compact': ai = null; reasoning = null; addCompact(ev, ev.summary); showRunning(true); scrollToEnd(); break;
           case 'references': { const rows = log().querySelectorAll('.userRow'); attachRefs(rows[rows.length - 1], ev.refs); break; }
           case 'interrupt': renderApproval(ev.interrupts); break;
-          case 'error': addLine(ev.message, 'error'); break;
+          case 'retry':  // the failed attempt's partial answer is void: the call runs again
+            if (ai) { ai.remove(); ai = null; }
+            if (reasoning) { reasoning.remove(); reasoning = null; }
+            addLine(T.retrying(ev.attempt, ev.max_retries, ev.code, (ev.delay_ms / 1000).toFixed(1))); showRunning(true); scrollToEnd(); break;
+          case 'error': addLine(ev.message, 'error'); state.failure = { code: ev.code, message: ev.message, continuable: !!ev.continuable }; break;
           case 'done':
+            if (ev.outcome !== 'error') state.failure = null;
             restart = ev.restart_pending;
             if (ev.extras?.changes) { queuedChanges = ev.extras.changes; if (state.session) (state.session.changes ||= []).push(ev.extras.changes); }
             if (ev.extras?.turn && state.session) (state.session.turns ||= []).push(ev.extras.turn);
@@ -2160,10 +2182,13 @@ function updateComposer() {
     send.dataset.mode = 'stop'; send.disabled = false; send.innerHTML = icon('stop'); send.title = T.stop;
     input.placeholder = T.placeholderBusy;
   } else {
-    delete send.dataset.mode; send.innerHTML = icon('arrow-up'); send.title = T.send;
-    send.disabled = (!input.value.trim() && !attachments.length) || state.pending;
-    input.placeholder = T.placeholder;
+    const empty = !input.value.trim() && !attachments.length;
+    const cont = !!(state.current && state.failure && state.failure.continuable && empty && !state.pending);
+    if (cont) { send.dataset.mode = 'continue'; send.innerHTML = icon('play'); send.title = T.continueGen; send.disabled = false; }
+    else { delete send.dataset.mode; send.innerHTML = icon('arrow-up'); send.title = T.send; send.disabled = empty || state.pending; }
+    input.placeholder = cont ? T.continueHint : T.placeholder;
   }
+  send.setAttribute('aria-label', send.title);
 }
 function autosize() { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 336) + 'px'; }
 input.addEventListener('input', () => { autosize(); updateComposer(); });
@@ -2174,7 +2199,7 @@ $('composer').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (state.streaming) { if (state.current) api(`/sessions/${state.current}/cancel`, { method: 'POST' }).catch(() => {}); return; }
   const text = input.value.trim(); const images = attachments.map((a) => a.url);
-  if (!text && !images.length) return;
+  if (!text && !images.length) { if (e.submitter === $('send') && $('send').dataset.mode === 'continue') await continueRun(); return; }
   if (state.pending) { toast(state.pendingKind === 'ask_user' ? T.questionPending : T.approvalPending); return; }
   if (!state.current) {
     let s;
@@ -2191,6 +2216,12 @@ $('composer').addEventListener('submit', async (e) => {
   try { await consume(await api(`/sessions/${state.current}/messages`, { method: 'POST', body: JSON.stringify({ content: text, images }) })); }
   catch (err) { addLine(err.status === 409 ? T.busy : err.message, 'error'); state.streaming = false; updateComposer(); }
 });
+/* Continue the failed last turn: the run resumes at the step that failed; no message is added. */
+async function continueRun() {
+  const id = state.current; if (!id || state.streaming) return;
+  try { await consume(await api(`/sessions/${id}/retry`, { method: 'POST' })); }
+  catch (err) { addLine(err.status === 409 ? T.notContinuable : err.message, 'error'); state.failure = null; state.streaming = false; updateComposer(); }
+}
 /* ---------- slash commands ---------- */
 const commands = {};
 function registerCommand(owner, spec) {
@@ -2671,7 +2702,8 @@ function renderTrajectory() {
     else if (r.t === 'step') { ico = 'cpu'; kind = T.recStep; desc = [r.tool_calls ? T.calls(r.tool_calls) : '', r.chars ? T.chars(r.chars) : ''].filter(Boolean).join(' · ') || '—'; dur = `${r.ttft_ms != null ? `${T.ttft} ${fmtDur(r.ttft_ms)} · ` : ''}${fmtDur(r.dur_ms)}`; tok = r.input_tokens != null ? `↑ ${fmtNum(r.input_tokens)} ↓ ${fmtNum(r.output_tokens)}` : ''; }
     else if (r.t === 'tool') { ico = toolGlyph(r.name || ''); kind = T.recTool; desc = r.name || ''; dur = r.dur_ms != null ? fmtDur(r.dur_ms) : ''; status = r.status || ''; tok = status && status !== 'success' ? status : ''; }
     else if (r.t === 'compact') { ico = 'box'; kind = T.recCompact; desc = `${T.removedMsgs(r.removed ?? 0)} · ${r.trigger === 'manual' ? T.compactManual : T.compactAuto}`; tok = `${fmtNum(r.before_tokens)} → ${fmtNum(r.after_tokens)}`; }
-    else { ico = r.outcome === 'completed' ? 'check' : 'x-circle'; kind = T.recEnd; desc = T.outcome[r.outcome] || r.outcome; }
+    else if (r.t === 'retry') { ico = 'refresh'; kind = T.recRetry; desc = `${r.code || ''} · ${T.retryAttempt(r.attempt)}`; dur = r.delay_ms != null ? fmtDur(r.delay_ms) : ''; }
+    else { ico = r.outcome === 'completed' ? 'check' : 'x-circle'; kind = T.recEnd; desc = (T.outcome[r.outcome] || r.outcome) + (r.code ? ` · ${r.code}` : ''); }
     if (q && !`${kind} ${desc} ${r.name || ''}`.toLowerCase().includes(q)) return '';
     return `<button type="button" class="trajRow" data-run="${esc(t.run_id)}" data-k="${k}" aria-selected="${sel}" data-status="${esc(status)}">${icon(ico)}<span class="kind">${esc(kind)}</span><span class="desc" title="${esc(desc)}">${esc(desc)}</span><span class="dur">${esc(dur)}</span><span class="tok">${esc(tok)}</span></button>`;
   };
@@ -2695,8 +2727,10 @@ function trajInspector(turns) {
   if (r.t === 'step') rows.push([T.durationLabel, fmtDur(r.dur_ms)], [T.ttft, r.ttft_ms != null ? fmtDur(r.ttft_ms) : '—'], [T.decoding, r.ttft_ms != null ? fmtDur(r.dur_ms - r.ttft_ms) : '—'], [T.tokensIn, fmtNum(r.input_tokens)], [T.tokensOut, fmtNum(r.output_tokens)], [T.cacheRead, fmtNum(r.cache_read_tokens)], [T.reasoningTokens, fmtNum(r.reasoning_tokens)], [T.calls(r.tool_calls || 0), T.chars(r.chars || 0)]);
   if (r.t === 'tool') rows.push([T.recTool, r.name || ''], [T.outcomeLabel, r.status || ''], [T.durationLabel, fmtDur(r.dur_ms)], [T.input, T.chars(r.args_chars || 0)], [T.output, T.chars(r.result_chars || 0)]);
   if (r.t === 'compact') rows.push([T.triggerLabel, r.trigger === 'manual' ? T.compactManual : T.compactAuto], [T.removedMsgs(r.removed ?? 0), ''], [T.tokensBefore, fmtNum(r.before_tokens)], [T.tokensAfter, fmtNum(r.after_tokens)]);
+  if (r.t === 'retry') rows.push([T.failureCode, T.failureCodes[r.code] ? `${T.failureCodes[r.code]} · ${r.code}` : r.code], [T.recRetry, T.retryAttempt(r.attempt)], [T.retryWait, fmtDur(r.delay_ms)]);
+  if (r.t === 'end' && r.code) rows.push([T.failureCode, T.failureCodes[r.code] ? `${T.failureCodes[r.code]} · ${r.code}` : r.code]);
   if (r.t === 'end') rows.push([T.outcomeLabel, T.outcome[r.outcome] || r.outcome], [T.durationLabel, fmtDur(t.stats?.duration_ms)], [T.recStep, fmtDur(t.stats?.llm_ms)], [T.recTool, fmtDur(t.stats?.tool_ms)]);
-  return `<p class="inspTitle">${esc(T.turnN(t.seq))} · ${esc(r.t === 'user' ? T.recUser : r.t === 'step' ? T.recStep : r.t === 'tool' ? T.recTool : r.t === 'compact' ? T.recCompact : T.recEnd)}</p><dl class="kvTable">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v == null ? '' : String(v))}</dd>`).join('')}</dl>`;
+  return `<p class="inspTitle">${esc(T.turnN(t.seq))} · ${esc(r.t === 'user' ? T.recUser : r.t === 'step' ? T.recStep : r.t === 'tool' ? T.recTool : r.t === 'compact' ? T.recCompact : r.t === 'retry' ? T.recRetry : T.recEnd)}</p><dl class="kvTable">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v == null ? '' : String(v))}</dd>`).join('')}</dl>`;
 }
 $('viewTabs').onclick = (e) => { const b = e.target.closest('[data-view]'); if (b) setConvView(b.dataset.view); };
 $('viewTabs').querySelector('[data-view="chat"]').textContent = T.viewChat; $('viewTabs').querySelector('[data-view="trajectory"]').textContent = T.viewTrajectory;
@@ -3226,7 +3260,9 @@ function renderModels() {
       <div class="cards" data-field="rows">${d.routes.map(routeRow).join('')}</div>
       <div class="actionsRow" style="margin-top:10px"><button type="button" class="btn dashed" data-field="add" ${d.editable ? '' : 'disabled'} aria-expanded="${models.open === 'add'}">${icon('plus')}<span>${esc(T.addProvider)}</span></button>${d.editable ? '' : `<span class="fieldHint">${esc(T.readonly)}</span>`}</div>
       <div data-field="addSlot"></div>
+      <div class="retryBox" data-field="retryBox"></div>
     </div>`;
+  renderGlobalRetry();
   sf('default').onchange = async (e) => {
     try { models.data = await json('/settings/models', { method: 'PUT', body: JSON.stringify({ default: e.target.value || null }) }); toast(T.applied); renderModels(); loadDirectory(); }
     catch (err) { toast(err.message); }
@@ -3237,6 +3273,44 @@ function renderModels() {
   else if (models.open && routeById(models.open)) mountEditor(sf('editorSlot'));
   else models.open = null;
 }
+/* ---------- retry policy ---------- */
+const RETRY_DEFAULT = { mode: 'transient', max_retries: 2, codes: ['RATE_LIMIT', 'SERVER', 'TIMEOUT', 'TRANSPORT'] };
+const retryLabel = (p, inherit) => (!p ? (inherit ? T.retryInherit : T.retryOff) : `${p.mode === 'all' ? T.retryAll : T.retryTransient} · ${T.retryTimes(p.max_retries)}`);
+/* Controls of one policy; `policy` null: off (the global one) or inherited (a provider's). */
+function retryControls(policy, { inherit, disabled }) {
+  const none = inherit ? 'inherit' : 'off'; const mode = policy ? policy.mode : none; const dis = disabled ? 'disabled' : '';
+  const opt = (v, label) => `<option value="${v}" ${mode === v ? 'selected' : ''}>${esc(label)}</option>`;
+  const row = (title, hint, ctl) => `<div class="srow"><div class="main"><div class="title">${esc(title)}</div>${hint}</div><div class="ctl">${ctl}</div></div>`;
+  const desc = (text) => `<div class="desc">${esc(text)}</div>`;
+  const known = models.data.retry_choices || []; const codes = policy ? [...known, ...policy.codes.filter((c) => !known.includes(c))] : [];
+  return row(T.retryMode, desc(inherit ? T.retryRouteHint : T.retryHint), `<div class="selectWrap"><select class="select" data-retry="mode" ${dis}>${opt(none, inherit ? T.retryInherit : T.retryOff)}${opt('transient', T.retryTransient)}${opt('all', T.retryAll)}</select>${icon('chev-down', 'ico chev')}</div>`)
+    + (policy ? row(T.retryMax, desc(T.retryMaxHint), `<span class="numField"><input class="input num" type="number" data-retry="max" value="${policy.max_retries}" min="0" max="10" step="1" style="width:72px" ${dis}></span>`) : '')
+    + (policy && policy.mode === 'transient' ? row(T.retryCodes, `<div class="retryCodes">${codes.map((c) => `<label class="checkOpt" title="${esc(c)}"><input type="checkbox" data-retry="code" value="${esc(c)}" ${policy.codes.includes(c) ? 'checked' : ''} ${dis}><span>${esc(T.failureCodes[c] || c)}</span></label>`).join('')}</div>`, '') : '');
+}
+function bindRetry(box, get, set) {
+  const mode = box.querySelector('[data-retry="mode"]');
+  mode.onchange = () => set(mode.value === 'off' || mode.value === 'inherit' ? null : { ...RETRY_DEFAULT, ...(get() || {}), mode: mode.value });
+  const max = box.querySelector('[data-retry="max"]');
+  if (max) max.onchange = () => set({ ...get(), max_retries: Math.min(10, Math.max(0, Math.round(+max.value || 0))) });
+  box.querySelectorAll('[data-retry="code"]').forEach((c) => {
+    c.onchange = () => { const cur = get(); set({ ...cur, codes: [...cur.codes.filter((x) => x !== c.value), ...(c.checked ? [c.value] : [])] }); };
+  });
+}
+function renderGlobalRetry() {
+  const box = sf('retryBox'); if (!box) return;
+  box.innerHTML = `<h4 class="subTitle">${esc(T.retryTitle)}</h4>${retryControls(models.data.retry, { inherit: false, disabled: !models.data.editable })}`;
+  bindRetry(box, () => models.data.retry, async (next) => {
+    try { const r = await json('/settings/model-retry', { method: 'PUT', body: JSON.stringify({ retry: next }) }); models.data.retry = r.retry; toast(T.applied); }
+    catch (err) { toast(err.message); }
+    renderGlobalRetry();
+  });
+}
+function mountRouteRetry(f, dr) {
+  const body = f.querySelector('[data-field="retryBody"]'); if (!body) return;
+  body.innerHTML = retryControls(dr.retry, { inherit: true });
+  f.querySelector('[data-field="retryMeta"]').textContent = retryLabel(dr.retry, true);
+  bindRetry(body, () => dr.retry, (next) => { dr.retry = next; mountRouteRetry(f, dr); });
+}
 function openEditor(target) {
   models.open = target;
   if (target === 'add') models.draft = models.draft && models.draft.mode !== 'route' ? models.draft : draftForAdd('catalog');
@@ -3246,7 +3320,7 @@ function openEditor(target) {
 }
 function closeEditor() { models.open = null; models.draft = null; renderModels(); }
 function draftFromRoute(r) {
-  return { mode: 'route', id: r.id, type: r.type, title: r.title, protocol: r.protocol, base_url: r.base_url || '', api_key: '', models: r.models.map((m) => ({ ...m })), info: r.type_info, key: r.api_key, saved: r };
+  return { mode: 'route', id: r.id, type: r.type, title: r.title, protocol: r.protocol, base_url: r.base_url || '', api_key: '', models: r.models.map((m) => ({ ...m })), info: r.type_info, key: r.api_key, saved: r, retry: r.retry ? { ...r.retry } : null };
 }
 function draftForAdd(kind) {
   const d = models.data;
@@ -3296,6 +3370,9 @@ function editorMarkup(dr) {
         <div class="actionsRow"><button type="button" class="btn outline sm" data-field="fetch">${icon('refresh')}<span>${esc(T.fetchModels)}</span></button><button type="button" class="btn outline sm" data-field="addModel">${icon('plus')}<span>${esc(T.addModel)}</span></button>${(info.models || []).length ? `<button type="button" class="btn outline sm" data-field="restore">${esc(T.restoreModels)}</button>` : ''}</div>
       </div>
     </details>
+    <details class="fold" ${dr.retry ? 'open' : ''}><summary>${icon('chev-right', 'ico chevron')}<span>${esc(T.retryTitle)}</span><span class="groupMeta" data-field="retryMeta"></span></summary>
+      <div class="foldBody" data-field="retryBody"></div>
+    </details>
     <div class="result" data-field="result" hidden></div>
     <div class="formFoot">${dr.mode === 'route' ? `<button type="button" class="btn danger" data-field="remove">${esc(T.remove)}</button>` : ''}<span class="spacer"></span><button type="button" class="btn outline" data-field="test">${icon('zap')}<span>${esc(T.test)}</span></button><button type="button" class="btn outline" data-field="cancel">${esc(T.cancel)}</button><button type="submit" class="btn primary" data-field="apply">${esc(T.apply)}</button></div>
   </form>`;
@@ -3312,6 +3389,7 @@ function mountEditor(slot) {
   const f = slot.querySelector('[data-field="form"]');
   const q = (n) => f.querySelector(`[data-field="${n}"]`);
   f.onsubmit = (e) => { e.preventDefault(); applyDraft(f); };
+  mountRouteRetry(f, dr);
   q('cancel').onclick = closeEditor;
   if (q('toggleKey')) q('toggleKey').onclick = () => { const k = q('api_key'); const show = k.type === 'password'; k.type = show ? 'text' : 'password'; q('toggleKey').innerHTML = icon(show ? 'eye-off' : 'eye'); };
   if (q('api_key')) q('api_key').oninput = (e) => { dr.api_key = e.target.value; };
@@ -3363,6 +3441,7 @@ function draftPayload(dr, withModels = true) {
   const body = { base_url: dr.base_url.trim(), api_key: dr.api_key ? dr.api_key : null };
   if (dr.mode === 'catalog') body.type = dr.type;
   if (dr.mode === 'custom') { body.protocol = dr.protocol; body.title = dr.title.trim() || null; }
+  if (withModels) body.retry = dr.retry ? dr.retry : dr.mode === 'route' ? { mode: 'inherit' } : null;
   if (withModels) body.models = dr.models.map((m) => ({ id: m.id.trim(), name: (m.name || '').trim() || null, context_window: m.context_window || null, max_tokens: m.max_tokens || null, input: m.input && m.input.length ? m.input : ['text'] }));
   return body;
 }

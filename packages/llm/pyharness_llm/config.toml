@@ -1,6 +1,7 @@
 # Provider catalog of pyharness-llm; loaded by catalog.py.
 #
 # [PROTOCOLS.<id>]  wire protocols for custom endpoints: title, LangChain type, model options, models listing API
+# [failures]        failure code sets of failures.py
 # PRESETS           provider types the settings page offers; their integration packages are dependencies of this plugin
 # [CURATED.<type>]  facts per LangChain provider type; a missing `models_api` means no model listing
 
@@ -23,6 +24,20 @@ title = "Anthropic Messages"
 type = "anthropic"
 options = {}
 models_api = "anthropic"
+
+[PROTOCOLS.gemini]
+title = "Gemini API"
+type = "google_genai"
+options = {}
+models_api = "google"
+
+[failures]
+# Codes a retry policy retries by default.
+TRANSIENT_CODES = ["RATE_LIMIT", "SERVER", "TIMEOUT", "TRANSPORT"]
+# Codes a settings form offers for a retry policy.
+RETRY_CHOICES = ["RATE_LIMIT", "SERVER", "TIMEOUT", "TRANSPORT", "EMPTY_RESPONSE", "STREAM_CLOSED"]
+# Codes after which a failed turn may be continued by hand; independent of the retry policy.
+CONTINUABLE_CODES = ["RATE_LIMIT", "SERVER", "TIMEOUT", "TRANSPORT", "EMPTY_RESPONSE", "STREAM_CLOSED"]
 
 [CURATED.openai]
 title = "OpenAI"

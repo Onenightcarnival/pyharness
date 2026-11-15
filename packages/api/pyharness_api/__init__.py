@@ -15,6 +15,7 @@
 | GET    | ``/sessions/{id}`` |  | session, busy, messages, pending approvals |
 | POST   | ``/sessions/{id}/messages`` | ``{"content", "images"?}`` | SSE run events |
 | GET    | ``/workspaces/search`` | ``q``, ``root``?, ``limit``?, ``hidden``?, ``fuzzy``? | paths matching ``q`` |
+| POST   | ``/sessions/{id}/retry`` |  | SSE of the run that continues the failed last turn |
 | POST   | ``/sessions/{id}/approvals`` | ``{"decisions": [decision]}`` | SSE run events |
 | POST   | ``/sessions/{id}/compact`` |  | SSE of a manual compaction run (``compact``, ``done``) |
 | POST   | ``/sessions/{id}/answers`` | ``{"answers", "interrupt_id"?}`` | SSE of the resumed run |

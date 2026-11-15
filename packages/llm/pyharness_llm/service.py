@@ -17,8 +17,18 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from pyharness import Service, package_prompts
 from pyharness.credentials import reference_for
 
-from .catalog import PRESETS, PROTOCOLS, translate_options, type_info
-from .config import LLMConfig, LLMConfigError, ModelFactory, ProviderConfig, _freeze, mask_secret, split_spec
+from .catalog import GEMINI_VERSION, PRESETS, PROTOCOLS, translate_options, type_info
+from .config import (
+    LLMConfig,
+    LLMConfigError,
+    ModelFactory,
+    ProviderConfig,
+    RetryPolicy,
+    _freeze,
+    mask_secret,
+    split_spec,
+)
+from .failures import RETRY_CHOICES
 
 PROMPTS = package_prompts(__file__)
 PROBE_PROMPT: str = PROMPTS["service"]["PROBE_PROMPT"]
@@ -88,6 +98,7 @@ class LLMService(Service):
         default: str | None | Any = ...,
         providers: dict[str, Any] | None = None,
         options: dict[str, Any] | None = None,
+        retry: dict[str, Any] | None | Any = ...,
     ) -> LLMConfig:
         """Replace parts of the live configuration; validated; the next ``resolve`` uses it."""
         data = self.config.model_dump(mode="python")
@@ -97,6 +108,8 @@ class LLMService(Service):
             data["providers"] = providers
         if options is not None:
             data["options"] = options
+        if retry is not ...:
+            data["retry"] = retry
         self.config = LLMConfig.model_validate(data)
         self._cache.clear()
         return self.config
@@ -114,6 +127,12 @@ class LLMService(Service):
         if cfg.protocol:
             return PROTOCOLS[cfg.protocol]["type"]
         return cfg.type or route
+
+    def retry_policy(self, spec: str | None = None) -> RetryPolicy | None:
+        """The retry policy for ``spec`` (``None``: the default): its route's, else the global one; ``None`` adds
+        no retries."""
+        route, _ = split_spec(spec or self.default)
+        return (self.route(route).retry if route else None) or self.config.retry
 
     def _credentials(self) -> Any:
         profile = self.ctx.get("profile", None)
@@ -259,6 +278,7 @@ class LLMService(Service):
             "api_key": {**credential, "masked": mask_secret(value), "required": info["credentials"]},
             "models": [m.model_dump(mode="json", exclude_none=True) for m in cfg.models],
             "options": {k: v for k, v in cfg.kwargs().items() if k != "api_key"},
+            "retry": cfg.retry.model_dump(mode="json") if cfg.retry else None,
             "type_info": info,
             "configured": route in self.config.providers,
         }
@@ -272,6 +292,8 @@ class LLMService(Service):
             "routes": [self.describe_route(r) for r in self.config.providers],
             "catalog": self.catalog(),
             "registered": self.providers(),
+            "retry": self.config.retry.model_dump(mode="json") if self.config.retry else None,
+            "retry_choices": list(RETRY_CHOICES),
             "env_model": os.environ.get("PYH_MODEL") or None,
         }
 
@@ -338,7 +360,8 @@ class LLMService(Service):
     async def list_models(
         self, route: str, kind: str | None = None, timeout: float = 20.0, **overrides: Any
     ) -> dict[str, Any]:
-        """Model ids served by the route's endpoint: ``/models`` (OpenAI, Anthropic) or ``/api/tags`` (Ollama)."""
+        """Model ids served by the route's endpoint: ``/models`` (OpenAI, Anthropic, Gemini) or ``/api/tags``
+        (Ollama)."""
         cfg = self.route(route)
         kind = kind or self.route_type(route)
         info = type_info(kind)
@@ -357,6 +380,10 @@ class LLMService(Service):
             headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
         elif api == "ollama":
             url = base_url + "/api/tags"
+        elif api == "google":
+            versioned = base_url if GEMINI_VERSION.search(base_url) else base_url + "/v1beta"
+            url = versioned + "/models?pageSize=1000"
+            headers = {"x-goog-api-key": api_key}
         else:
             url = base_url + "/models"
             if api_key:
@@ -376,12 +403,17 @@ class LLMService(Service):
         models = []
         for row in rows or []:
             if isinstance(row, dict) and (row.get("id") or row.get("name")):
-                ident = str(row.get("id") or row.get("name"))
-                entry: dict[str, Any] = {"id": ident, "name": str(row.get("display_name") or row.get("name") or ident)}
+                if "generateContent" not in row.get("supportedGenerationMethods", ["generateContent"]):
+                    continue  # Gemini lists embedding and other non-chat models too
+                ident = str(row.get("id") or row.get("name")).removeprefix("models/")
+                label = row.get("display_name") or row.get("displayName") or row.get("name") or ident
+                entry: dict[str, Any] = {"id": ident, "name": str(label).removeprefix("models/")}
                 for src, dst in (
                     ("context_window", "context_window"),
                     ("context_length", "context_window"),
                     ("max_input_tokens", "context_window"),
+                    ("inputTokenLimit", "context_window"),
+                    ("outputTokenLimit", "max_tokens"),
                     ("max_tokens", "max_tokens"),
                     ("max_output_tokens", "max_tokens"),
                 ):

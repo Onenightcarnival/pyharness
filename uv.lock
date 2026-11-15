@@ -1646,6 +1646,7 @@ dependencies = [
     { name = "langchain-core" },
     { name = "langgraph" },
     { name = "pyharness-core" },
+    { name = "pyharness-llm" },
 ]
 
 [package.metadata]
@@ -1653,6 +1654,7 @@ requires-dist = [
     { name = "langchain-core", specifier = "==1.7.1" },
     { name = "langgraph", specifier = "==1.2.18" },
     { name = "pyharness-core", editable = "packages/core" },
+    { name = "pyharness-llm", editable = "packages/llm" },
 ]
 
 [[package]]
