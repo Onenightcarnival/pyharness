@@ -84,6 +84,10 @@ select = [
     "T201",                             # no print outside the CLI
     "TID251",                           # banned APIs
     "ASYNC",                            # no blocking call in an async function
+    "DTZ",                              # datetimes carry a time zone
+    "PLW1514",                          # text files are opened with an explicit encoding (preview)
+    "TRY002", "TRY201", "TRY203", "TRY400", "TRY401",  # exception handling: own exception classes, bare re-raise,
+                                        # logger.exception in handlers
     "G", "LOG",                         # logging calls
     "FAST",                             # FastAPI routes
     "PGH",                              # no blanket `noqa` or `type: ignore`

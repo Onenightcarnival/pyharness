@@ -194,7 +194,7 @@ async def test_agent_defaults_persist(profile):
         s = (await c.post("/api/sessions", json={})).json()
         assert (s["preset"], s["mode"]) == ("creator", "read-only")
         assert (await c.put("/api/settings/agent", json={"default_mode": "nope"})).status_code == 422
-    ops = yaml.safe_load(Path(profile.patch_path).read_text())
+    ops = yaml.safe_load(Path(profile.patch_path).read_text(encoding="utf-8"))
     loop_op = next(op for op in ops if op["id"] == "agent-loop")
     assert loop_op["config"] == {"default_preset": "creator", "default_mode": "read-only"} and loop_op["merge"] is True
     async with Harness(profile, patch=[{"id": "http", "config": {"serve": False}}], generation=2) as h2:

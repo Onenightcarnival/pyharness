@@ -197,7 +197,7 @@ async def test_mcp_settings_api_round_trip(home, monkeypatch):
             await c.put("/api/settings/mcp", json={"servers": {"x": {"command": "a", "url": "http://x"}}})
         ).status_code == 422
 
-    ops = yaml.safe_load(Path(profile.patch_path).read_text())
+    ops = yaml.safe_load(Path(profile.patch_path).read_text(encoding="utf-8"))
     op = next(o for o in ops if o["id"] == "mcp")
     assert (
         op["config"]["servers"]["demo"]["env"] == {"TOKEN": "secret", "MCP_TEST_TOKEN": template}
@@ -218,9 +218,9 @@ async def test_mcp_settings_api_round_trip(home, monkeypatch):
                 json={"servers": {"demo": {"command": sys.executable, "args": [str(SERVER)], "env": shown["env"]}}},
             )
             assert r.status_code == 200
-    ops = yaml.safe_load(Path(profile.patch_path).read_text())
+    ops = yaml.safe_load(Path(profile.patch_path).read_text(encoding="utf-8"))
     assert next(o for o in ops if o["id"] == "mcp")["config"]["servers"]["demo"]["env"] == {
         "TOKEN": "secret",
         "MCP_TEST_TOKEN": template,
     }
-    assert "s3cr3t-token" not in Path(profile.patch_path).read_text()
+    assert "s3cr3t-token" not in Path(profile.patch_path).read_text(encoding="utf-8")

@@ -9,6 +9,7 @@ import asyncio
 import json
 import logging
 import stat
+import time
 from datetime import UTC, datetime
 from typing import Any
 
@@ -510,8 +511,9 @@ def test_usage(tmp_path):
         "keyId": "k1",
         "outcome": "error",
     }
-    midnight = datetime.fromtimestamp(now / 1000).replace(hour=0, minute=0, second=0, microsecond=0)
-    assert range_start("today", now) == int(midnight.timestamp() * 1000)
+    today = range_start("today", now)  # local midnight of the day `now` falls on
+    assert time.localtime(today / 1000)[:6] == (*time.localtime(now / 1000)[:3], 0, 0, 0)
+    assert 0 <= now - today < 25 * 3600 * 1000
     store.close()
 
 

@@ -307,7 +307,7 @@ class SkillStore:
                         target.mkdir()
                         shutil.move(extracted / top, target / "SKILL.md")
                     installed.append(name)
-                except Exception as exc:
+                except Exception:
                     try:
                         for backup, original in reversed(backups):
                             shutil.rmtree(original, ignore_errors=True)
@@ -315,7 +315,7 @@ class SkillStore:
                     except OSError as restore:
                         keep_stage = True
                         raise SkillError(f"restore failed; the previous files are kept in {stage}") from restore
-                    raise exc
+                    raise
         finally:
             if not keep_stage:
                 shutil.rmtree(stage, ignore_errors=True)

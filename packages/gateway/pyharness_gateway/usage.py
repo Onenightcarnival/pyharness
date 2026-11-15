@@ -3,7 +3,6 @@ from __future__ import annotations
 import sqlite3
 import time
 from collections.abc import Mapping
-from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 from typing import Any
@@ -81,8 +80,9 @@ def now_ms() -> int:
 def range_start(range_id: str, now: int | None = None) -> int:
     now = now_ms() if now is None else now
     if range_id == "today":
-        midnight = datetime.fromtimestamp(now / 1000).replace(hour=0, minute=0, second=0, microsecond=0)
-        return int(midnight.timestamp() * 1000)
+        day = time.localtime(now / 1000)
+        midnight = time.mktime((day.tm_year, day.tm_mon, day.tm_mday, 0, 0, 0, 0, 0, -1))  # of the local day
+        return int(midnight * 1000)
     return now - (7 if range_id == "7d" else 30) * DAY_MS
 
 
