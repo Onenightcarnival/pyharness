@@ -64,11 +64,14 @@ extend-exclude = [".venv", "examples/pyharness-audit/build"]
 docstring-code-format = true
 
 [tool.ruff.lint]
+preview = true                          # for the preview rules named in `select`, and only those
+explicit-preview-rules = true
 select = [
     "E", "F", "W", "I", "UP", "B",      # pycodestyle, pyflakes, isort, pyupgrade, bugbear
     "PLC0415",                          # imports at module top
     "ISC",                              # no implicit or `+` string concatenation
     "RUF022", "RUF012",                 # sorted __all__; ClassVar on mutable class attributes
+    "RUF067",                           # __init__.py: imports and dunder assignments only (preview)
     "D213", "D209", "D415",             # docstring shape: summary on the second line, closing quotes on their own
                                         # line (multi-line docstrings), closing punctuation
     "SIM", "PTH", "FURB", "C4", "PIE", "RET", "PERF",
