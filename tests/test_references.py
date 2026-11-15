@@ -64,8 +64,7 @@ def test_search_takes_hidden_entries_and_substring_matches_on_request(tmp_path):
     assert search(tmp_path, "github", fuzzy=False) == []
 
 
-async def test_message_route_expands_references(home, tmp_path):
-    workspace = tmp_path / "workspace"
+async def test_message_route_expands_references(home, workspace):
     (workspace / "notes.md").write_text("remember the milk\n")
     profile = Profile.init("web", home=str(home))
     scripted.CALLS.clear()

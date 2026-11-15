@@ -14,11 +14,10 @@ from pyharness_workspace_changes import parse_unified
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 
 
-def patch(replies, root):
+def patch(replies):
     return [
         {"id": "scripted", "name": "testkit.scripted", "after": "llm", "config": {"replies": replies}},
         {"id": "llm", "config": {"default": "scripted:test"}},
-        {"id": "workspace", "config": {"root": str(root)}, "merge": True},
         HTTP_OFF,
     ]
 
@@ -42,9 +41,8 @@ def git(cwd, *args):
     return subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True, text=True).stdout
 
 
-async def test_turn_changes_from_git_snapshots(home, tmp_path):
-    ws = tmp_path / "ws"
-    ws.mkdir()
+async def test_turn_changes_from_git_snapshots(home, workspace):
+    ws = workspace
     (ws / "a.py").write_text("def f():\n    return 1\n")
     (ws / ".gitignore").write_text("ignored.txt\n")
     git(ws, "init", "-q")
@@ -73,7 +71,7 @@ async def test_turn_changes_from_git_snapshots(home, tmp_path):
         {"content": "nothing to do"},
     ]
     profile = Profile.init("web", home=str(home))
-    async with Harness(profile, patch=patch(replies, ws)) as h, client(h) as c:
+    async with Harness(profile, patch=patch(replies)) as h, client(h) as c:
         s = (await c.post("/api/sessions", json={})).json()
         events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
         done = events[-1]
@@ -118,9 +116,8 @@ async def test_turn_changes_from_git_snapshots(home, tmp_path):
     assert "pyh-changes" not in git(ws, "count-objects", "-v")
 
 
-async def test_non_git_workspace_records_nothing(home, tmp_path):
-    plain = tmp_path / "plain"
-    plain.mkdir()
+async def test_non_git_workspace_records_nothing(home, workspace):
+    plain = workspace
     replies = [
         {
             "content": "",
@@ -129,7 +126,7 @@ async def test_non_git_workspace_records_nothing(home, tmp_path):
         {"content": "ok"},
     ]
     profile = Profile.init("web", home=str(home))
-    async with Harness(profile, patch=patch(replies, plain)) as h, client(h) as c:
+    async with Harness(profile, patch=patch(replies)) as h, client(h) as c:
         s = (await c.post("/api/sessions", json={})).json()
         events = sse((await c.post(f"/api/sessions/{s['id']}/messages", json={"content": "go"})).text)
         assert events[-1]["outcome"] == "completed" and "changes" not in events[-1]["extras"]

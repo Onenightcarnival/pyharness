@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import shutil
-from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -93,9 +92,8 @@ async def test_bundle_without_entry_point_is_rejected(profile, tmp_path):
     assert profile.site_distributions() == []
 
 
-async def test_agent_installs_a_bundle_through_the_tool(profile, example_bundle, home):
+async def test_agent_installs_a_bundle_through_the_tool(profile, example_bundle, workspace):
     """plugin_manager on an existing directory, through approval."""
-    workspace = Path(profile.variables()["cwd"])
     shutil.copytree(example_bundle, workspace / "plugins" / "audit")
     replies = [
         {

@@ -14,7 +14,6 @@ import socket
 import subprocess
 import sys
 import time
-from pathlib import Path
 
 import httpx
 
@@ -44,9 +43,8 @@ def wait_for(fn, timeout=60.0, step=0.25):
     raise AssertionError("condition not met in time")
 
 
-def test_agent_extends_itself_across_a_restart(home, example_bundle, tmp_path):
+def test_agent_extends_itself_across_a_restart(home, example_bundle, workspace):
     profile = Profile.init("web", home=str(home))
-    workspace = Path(os.environ["PYH_CWD"])
     shutil.copytree(example_bundle, workspace / "plugins" / "audit")
     port = free_port()
     install = {"name": "plugin_manager", "args": {"action": "install_bundle", "target": "/plugins/audit"}, "id": "pm1"}

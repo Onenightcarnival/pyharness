@@ -14,12 +14,7 @@ inject = ["tools"]
 
 async def apply(ctx: Any, config: Config) -> None:
     profile = ctx.get("profile", None)
-    if config.root:
-        root = Path(config.root).expanduser().resolve()
-    elif profile is not None:
-        root = default_root(profile.name, Path.home()).resolve()
-    else:
-        root = Path.cwd()
+    root = (default_root(profile.name, Path.home()) if profile is not None else Path.cwd()).resolve()
     root.mkdir(parents=True, exist_ok=True)
     protected: list[Path] = []
     home: Path | None = None
@@ -27,7 +22,7 @@ async def apply(ctx: Any, config: Config) -> None:
         home = Path(profile.home).resolve()
         if root == home or home in root.parents:
             raise RuntimeError(
-                f"workspace root {root} is inside the harness home {home}; choose another directory (PYH_WORKSPACE)"
+                f"default workspace {root} is inside the harness home {home}; move the harness home (PYH_HOME)"
             )
         if root in home.parents:
             protected.append(home)

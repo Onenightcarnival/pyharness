@@ -6,10 +6,6 @@ from pydantic import BaseModel, Field
 
 
 class Config(BaseModel):
-    root: str | None = Field(
-        None,
-        description="Default agent working directory; unset: the profile's `default-workspace` under Documents.",
-    )
     virtual_mode: bool = True
     shell: bool = Field(False, description="`execute` tool on a local, unsandboxed shell.")
     shell_approval: bool = True

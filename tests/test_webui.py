@@ -119,15 +119,14 @@ async def test_vendored_scripts_are_served_with_a_long_cache(home):
         assert "/vendor/katex.min.js" in page
 
 
-async def test_workspace_files_api(home, tmp_path):
+async def test_workspace_files_api(home, workspace, tmp_path):
     profile = Profile.init("web", home=str(home))
-    ws = tmp_path / "ws"
-    (ws / "src").mkdir(parents=True)
+    ws = workspace
+    (ws / "src").mkdir()
     (ws / "src" / "a.py").write_text("print(1)\n")
     (ws / ".hidden").write_text("x")
     (ws / "blob.bin").write_bytes(b"\x00\x01\x02")
-    extra = [{"id": "workspace", "config": {"root": str(ws)}, "merge": True}]
-    async with Harness(profile, patch=[HTTP_OFF, *extra]) as h, client(h) as c:
+    async with Harness(profile, patch=[HTTP_OFF]) as h, client(h) as c:
         d = (await c.get("/api/workspaces/files")).json()
         assert d["path"] == "/" and d["root"] == str(ws.resolve())
         assert [e["name"] for e in d["entries"]] == ["src", ".hidden", "blob.bin"]

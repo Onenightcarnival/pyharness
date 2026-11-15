@@ -22,17 +22,11 @@
 
 ## 默认工作区
 
-| 顺序 | 根目录 | 条件 |
-|---|---|---|
-| 1 | `config.root` | 已设置；`base` bundle：`${env:PYH_WORKSPACE}` |
-| 2 | `~/Documents/pyharness/<profile>/default-workspace/` | `~/Documents` 存在 |
-| 3 | `~/pyharness/<profile>/default-workspace/` | 其余情况 |
-
 | 项 | 契约 |
 |---|---|
-| 2 与 3 | 已存在者沿用；都不存在时按顺序创建，创建失败取下一个 |
-| `<profile>/` 目录 | 默认工作区之外的内容不在 agent 的文件工具范围内 |
-| 启动目录 | 不参与 |
+| 根目录 | `~/Documents/pyharness/<profile>/default-workspace/`；不存在时创建 |
+| 配置、环境变量、启动目录 | 不参与 |
+| `<profile>/` 目录的其余内容 | 不在 agent 的文件工具范围内 |
 | 没有 profile 的 harness | 进程的当前目录 |
 
 ## Backend

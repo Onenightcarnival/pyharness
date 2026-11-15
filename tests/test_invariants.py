@@ -65,9 +65,10 @@ async def test_subagent_tool_calls_use_the_pipeline(profile):
 
 
 # Harness home: closed to the agent's file tools --------------------------------------------------
-async def test_workspace_containing_home_is_protected(profile, home, tmp_path, monkeypatch):
-    monkeypatch.setenv("PYH_WORKSPACE", str(tmp_path))  # tmp_path contains the harness home
-    target = f"/{home.relative_to(tmp_path).as_posix()}/profiles/web/harness.patch.yaml"
+async def test_home_inside_the_workspace_is_protected(workspace):
+    home = workspace / "harness"
+    profile = Profile.init("web", home=str(home))
+    target = "/harness/profiles/web/harness.patch.yaml"
     before = (profile.patch_path).read_text()
     replies = [
         {
@@ -87,33 +88,23 @@ async def test_workspace_containing_home_is_protected(profile, home, tmp_path, m
     assert profile.patch_path.read_text() == before
 
 
-async def test_workspace_inside_home_is_refused(profile, home, monkeypatch):
-    monkeypatch.setenv("PYH_WORKSPACE", str(home / "profiles"))
+async def test_workspace_inside_home_is_refused(home):
+    profile = Profile.init("web", home=str(Path.home() / "Documents"))
     async with Harness(profile, patch=scripted([])) as h:
         rt = h.loader.get("workspace")
         assert rt.state.value == "failed" and "inside the harness home" in rt.error
 
 
-# Default workspace: one directory per profile, independent of the launch directory -------------
-def test_default_workspace_prefers_documents_and_keeps_an_existing_one(tmp_path):
-    user = tmp_path / "user"
-    user.mkdir()
-    under_home = user / "pyharness" / "web" / "default-workspace"
-    assert default_root("web", user) == under_home and under_home.is_dir()
-    (user / "Documents").mkdir()
-    assert default_root("web", user) == under_home  # created earlier: kept
-    assert default_root("dev", user) == user / "Documents" / "pyharness" / "dev" / "default-workspace"
-
-
-async def test_default_workspace_is_an_empty_directory_of_the_profile(profile, tmp_path, monkeypatch):
-    user = tmp_path / "user"
-    (user / "Documents").mkdir(parents=True)
-    monkeypatch.setenv("HOME", str(user))
-    monkeypatch.delenv("PYH_WORKSPACE")
-    async with Harness(profile, patch=scripted([])) as h:
-        root = h.get("workspace").root
-    assert root == (user / "Documents" / "pyharness" / profile.name / "default-workspace").resolve()
-    assert list(root.iterdir()) == []
+# Default workspace: one fixed, empty directory per profile ---------------------------------------
+async def test_default_workspace_is_a_fixed_empty_directory_of_the_profile(profile, tmp_path, monkeypatch):
+    expected = Path.home() / "Documents" / "pyharness" / "web" / "default-workspace"
+    assert default_root("web", Path.home()) == expected and not expected.exists()
+    for cwd in ("a", "b"):  # the launch directory plays no part
+        (tmp_path / cwd).mkdir()
+        monkeypatch.chdir(tmp_path / cwd)
+        async with Harness(profile, patch=scripted([])) as h:
+            assert h.get("workspace").root == expected.resolve()
+    assert list(expected.iterdir()) == [] and list((tmp_path / "b").iterdir()) == []
 
 
 # Rejected upgrade: previous version stays installed ----------------------------------------------

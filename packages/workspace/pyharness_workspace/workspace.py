@@ -12,26 +12,9 @@ class WorkspaceError(ValueError):
     """A path cannot be a workspace."""
 
 
-def is_dir(path: Path) -> bool:
-    try:
-        return path.is_dir()
-    except OSError:
-        return False
-
-
 def default_root(profile: str, user: Path) -> Path:
-    """
-    Default workspace of a profile: ``pyharness/<profile>/default-workspace`` under the user's Documents, else
-    under the user's home. An existing one is kept; a missing one is created.
-    """
-    roots = [base / "pyharness" / profile / DEFAULT_WORKSPACE for base in (user / "Documents", user) if is_dir(base)]
-    for root in [*filter(is_dir, roots), *roots]:
-        try:
-            root.mkdir(parents=True, exist_ok=True)
-        except OSError:
-            continue
-        return root
-    raise WorkspaceError(f"no default workspace can be created under {user}; set PYH_WORKSPACE")
+    """Default workspace of a profile: ``Documents/pyharness/<profile>/default-workspace`` under the user's home."""
+    return user / "Documents" / "pyharness" / profile / DEFAULT_WORKSPACE
 
 
 class Workspace:

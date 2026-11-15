@@ -111,7 +111,7 @@ async def test_presets_select_tools_skills_and_prompt_sections(profile):
         assert names(standard_graph) and names(creator_graph)
 
 
-async def test_modes_gate_writes_shell_and_approvals(profile, tmp_path):
+async def test_modes_gate_writes_shell_and_approvals(profile, workspace):
     write = {
         "content": "",
         "tool_calls": [{"name": "write_file", "args": {"file_path": "/note.md", "content": "hi"}, "id": "w1"}],
@@ -126,7 +126,7 @@ async def test_modes_gate_writes_shell_and_approvals(profile, tmp_path):
     extra = [
         {
             "id": "workspace",
-            "config": {"root": str(tmp_path / "ws"), "shell": True, "shell_approval": True},
+            "config": {"shell": True, "shell_approval": True},
             "merge": True,
         }
     ]
@@ -139,13 +139,13 @@ async def test_modes_gate_writes_shell_and_approvals(profile, tmp_path):
             assert write["status"] == "error" and "denied" in write["content"].lower()
             # The gated tool still asks in read-only mode.
             assert events[-1]["outcome"] == "interrupted"
-            assert not (tmp_path / "ws" / "note.md").exists()
+            assert not (workspace / "note.md").exists()
 
             full = (await c.post("/api/sessions", json={"mode": "full-access"})).json()
             events = sse((await c.post(f"/api/sessions/{full['id']}/messages", json={"content": "write"})).text)
             write = next(e for e in events if e["type"] == "tool_result" and e["id"] == "w1")
             assert write["status"] != "error"
-            assert (tmp_path / "ws" / "note.md").read_text() == "hi"
+            assert (workspace / "note.md").read_text() == "hi"
             assert events[-1]["outcome"] == "completed"  # no approval gate in full access
 
             # Switching an existing session's mode applies to the next run.
