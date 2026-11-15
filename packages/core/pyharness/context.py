@@ -308,7 +308,7 @@ class Service:
 class _Bound:
     """Proxy that ``ctx.get()`` returns for a :class:`Service`; binds ``Service.caller``."""
 
-    __slots__ = ("_svc", "_ctx")
+    __slots__ = ("_ctx", "_svc")
 
     def __init__(self, svc: Service, ctx: Context) -> None:
         object.__setattr__(self, "_svc", svc)

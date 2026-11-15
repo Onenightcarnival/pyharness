@@ -152,7 +152,7 @@ class ChatGPTProvider(Provider):
                     padding.PKCS1v15(),
                     hashes.SHA256(),
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise LoginError("id_token signature is invalid") from exc
         if claims.get("iss") != ISSUER:
             raise LoginError("id_token issuer mismatch")

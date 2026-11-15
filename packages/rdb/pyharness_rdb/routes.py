@@ -50,7 +50,7 @@ def build_router(service: Host) -> APIRouter:
             return await service.run(id_or_name, fn)
         except (EngineError, StoreError) as exc:
             raise HTTPException(400, str(exc)) from exc
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise HTTPException(400, str(exc).strip() or type(exc).__name__) from exc
 
     @router.get("/rdb/profiles")
@@ -161,7 +161,7 @@ def build_router(service: Host) -> APIRouter:
                     limit=int(data.get("limit") or 100),
                     sort=data.get("sort") if isinstance(data.get("sort"), dict) else None,
                     filters=data.get("filters") if isinstance(data.get("filters"), list) else None,
-                )  # fmt: skip
+                )
             },
         )
 

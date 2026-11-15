@@ -192,7 +192,7 @@ class AgentService(Service):
 
     async def turns(self, session_id: str) -> list[dict[str, Any]]:
         """Per-turn records (stats and trajectory), oldest first."""
-        items = await self.ctx.store.asearch(TURNS + (session_id,), limit=10000)
+        items = await self.ctx.store.asearch((*TURNS, session_id), limit=10000)
         return sorted((dict(i.value) for i in items), key=lambda t: t.get("seq", 0))
 
     async def _next_turn_seq(self, session_id: str) -> int:
@@ -282,8 +282,8 @@ class AgentService(Service):
         if await self.get_session(session_id) is None:
             return False
         await self.ctx.store.adelete(NAMESPACE, session_id)
-        for item in await self.ctx.store.asearch(TURNS + (session_id,), limit=10000):
-            await self.ctx.store.adelete(TURNS + (session_id,), item.key)
+        for item in await self.ctx.store.asearch((*TURNS, session_id), limit=10000):
+            await self.ctx.store.adelete((*TURNS, session_id), item.key)
         self._turn_seq.pop(session_id, None)
         checkpointer = self.ctx.get("checkpointer", None)
         if checkpointer is not None and hasattr(checkpointer, "adelete_thread"):
@@ -377,7 +377,7 @@ class AgentService(Service):
                     await handle.publish({"type": "interrupt", "interrupts": interrupts})
             except asyncio.CancelledError:
                 outcome = "cancelled"
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 outcome = "error"
                 self.ctx.logger.exception("run %s of session %s failed", handle.id, session_id)
                 error = {"code": failure_code(exc), "message": f"{type(exc).__name__}: {exc}"}
@@ -387,7 +387,7 @@ class AgentService(Service):
                 try:
                     record = recorder.finish(outcome, len(await self.messages(session_id)), error)
                     record["seq"] = await self._next_turn_seq(session_id)
-                    await self.ctx.store.aput(TURNS + (session_id,), handle.id, record)
+                    await self.ctx.store.aput((*TURNS, session_id), handle.id, record)
                     turn.extras["turn"] = record
                 except Exception:  # pragma: no cover
                     self.ctx.logger.exception("turn record failed")

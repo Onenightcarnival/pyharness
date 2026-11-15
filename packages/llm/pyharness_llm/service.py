@@ -125,10 +125,10 @@ class LLMService(Service):
     def update(
         self,
         *,
-        default: str | None | Any = ...,
+        default: str | Any | None = ...,
         providers: dict[str, Any] | None = None,
         options: dict[str, Any] | None = None,
-        retry: dict[str, Any] | None | Any = ...,
+        retry: dict[str, Any] | Any | None = ...,
     ) -> LLMConfig:
         """Replace parts of the live configuration; validated; the next ``resolve`` uses it."""
         data = self.config.model_dump(mode="python")
@@ -408,7 +408,7 @@ class LLMService(Service):
         kind = kind or self.route_type(route)
         info = type_info(kind)
         api = PROTOCOLS[cfg.protocol].get("models_api") if cfg.protocol else info["models_api"]
-        if "protocol" in overrides and overrides["protocol"]:
+        if overrides.get("protocol"):
             api = PROTOCOLS[overrides["protocol"]].get("models_api")
         if api is None:
             return {"supported": False, "models": []}

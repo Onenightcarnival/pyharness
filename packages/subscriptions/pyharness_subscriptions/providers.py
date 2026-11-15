@@ -78,6 +78,7 @@ class Provider:
         self._managers: dict[str, TokenManager] = {}
         self._usage_cache: dict[str, tuple[float, dict[str, Any]]] = {}
         self.attempt: LoginAttempt | None = None
+        self._login: asyncio.Task[None] | None = None  # the running login; referenced until it ends
         self.last_error: str | None = None
         self.busy = False
 
@@ -146,7 +147,7 @@ class Provider:
         self.attempt = attempt
         self.busy = True
         self.last_error = None
-        asyncio.create_task(self._finish_login(attempt))
+        self._login = asyncio.create_task(self._finish_login(attempt))
         return {"authorizeUrl": url, "manualOnly": attempt.manual_only}
 
     async def _finish_login(self, attempt: LoginAttempt) -> None:
@@ -234,7 +235,7 @@ class Provider:
         try:
             session = await self.token_manager(key).session()
             data = await asyncio.wait_for(self.usage(session), self.discovery_timeout)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             if hit:
                 return {**hit[1], "stale": True, "error": str(exc)}
             raise

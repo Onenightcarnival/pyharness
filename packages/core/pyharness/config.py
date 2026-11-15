@@ -91,7 +91,7 @@ def iter_entries(tree: Tree, parents: tuple[Entry, ...] = ()) -> Iterable[tuple[
     for entry in tree:
         yield entry, parents
         if entry.children is not None:
-            yield from iter_entries(entry.children, parents + (entry,))
+            yield from iter_entries(entry.children, (*parents, entry))
 
 
 def find(tree: Tree, entry_id: str) -> tuple[Tree, int] | None:

@@ -124,7 +124,7 @@ class ConfigCenterService(Service):
                 raw[secret] = values
             try:
                 cfg = ServerConfig.model_validate({k: v for k, v in raw.items() if k in ServerConfig.model_fields})
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise HTTPException(400, f"invalid server: {exc}") from exc
             if not cfg.command and not cfg.url:
                 raise HTTPException(400, "a server needs a command (stdio) or a url")
@@ -220,7 +220,7 @@ class ConfigCenterService(Service):
                 raise HTTPException(400, "invalid installation parameters")
             try:
                 raw = base64.b64decode(encoded, validate=True)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise HTTPException(400, "invalid installation parameters") from exc
             try:
                 return await asyncio.to_thread(skills().install_zip, raw, policy)

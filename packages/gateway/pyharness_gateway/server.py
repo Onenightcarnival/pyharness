@@ -178,7 +178,7 @@ class _Call:
                 }
             )
             self.deps.keys.touch(self.key["id"])
-        except Exception as exc:  # the ledger never fails a served request
+        except Exception as exc:  # noqa: BLE001  # the ledger never fails a served request
             self.deps.logger.warning("gateway: usage record failed: %s", exc)
 
     async def prepare(self, request: Request) -> Generation:
@@ -202,7 +202,7 @@ class _Call:
         except asyncio.CancelledError:
             self.failure = dict(CLIENT_CLOSED)
             raise
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             self.failure = describe_failure(exc)
             yield encoder.fail(self.failure) + encoder.end()
         finally:
@@ -253,7 +253,7 @@ async def _serve(deps: GatewayDeps, protocol: str, key: dict[str, Any], request:
             response: Response = Response(status_code=499, headers=CORS_HEADERS)
         else:
             response = work.result()
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         call.failure = describe_failure(exc)
         response = _failed(protocol, call.failure)
     call.record()

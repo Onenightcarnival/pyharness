@@ -22,7 +22,7 @@ def test_measure_prefers_usage_after_the_last_checkpoint():
     cp = checkpoint_message("summary", {"id": "1"})
     assert is_checkpoint(cp) and summary_of(cp.content) == "summary"
     # Usage before the checkpoint priced the replaced history: estimate everything instead.
-    assert measure([ai, cp, human]) == measure([ai, cp, human][0:0] + [ai, cp, human]) < 1010
+    assert measure([ai, cp, human]) < 1010
 
 
 def test_cut_index_keeps_tool_results_with_their_call():

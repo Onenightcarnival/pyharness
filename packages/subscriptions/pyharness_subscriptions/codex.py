@@ -210,7 +210,7 @@ class CodexProvider(Provider):
                     default_effort=m.get("default_reasoning_level"),
                     input_modalities=["text", "image"],
                     fast_tier=fast,
-                )  # fmt: skip
+                )
             )
         out.sort(key=lambda m: (m.priority is None, m.priority or 0))
         return out

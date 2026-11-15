@@ -17,7 +17,7 @@ async def preflight_in_process(profile: Profile, extra_patches: list[str] | None
     report: dict[str, Any] = {"ok": False, "errors": [], "warnings": [], "entries": []}
     try:
         harness = Harness(profile, extra_patches=extra_patches or [], preflight=True)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         report["errors"].append({"stage": "compose", "error": f"{type(exc).__name__}: {exc}"})
         return report
     report["warnings"] = list(harness.warnings)
@@ -25,7 +25,7 @@ async def preflight_in_process(profile: Profile, extra_patches: list[str] | None
         await harness.start()
         try:
             await harness.ready(serve=False)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             report["errors"].append({"stage": "app/ready", "error": f"{type(exc).__name__}: {exc}"})
         report["entries"] = harness.loader.snapshot()
     finally:

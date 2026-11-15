@@ -73,7 +73,7 @@ class JobRegistry:
     async def start(self, command: str, cwd: str, *, session_id: str | None = None, name: str | None = None) -> Job:
         self.log_dir.mkdir(parents=True, exist_ok=True)
         job = Job(uuid.uuid4().hex[:8], command, cwd, self.log_dir / f"{uuid.uuid4().hex[:8]}.log", session_id, name)
-        log = job.log.open("wb")  # noqa: SIM115 — handed to the subprocess
+        log = job.log.open("wb")
         try:
             job.proc = await asyncio.create_subprocess_exec(
                 self.shell,

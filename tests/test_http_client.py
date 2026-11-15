@@ -344,7 +344,7 @@ def rig(tmp_path: Path) -> Any:
 
 
 async def test_engine_request_and_masking(rig):
-    store, history, engine, target = rig
+    _store, history, engine, target = rig
     t = target(
         auth={"type": "bearer", "token": "super-secret-token"}, headers={"X-Fixed": "yes"}, variables={"id": "42"}
     )
@@ -386,7 +386,7 @@ async def test_engine_request_and_masking(rig):
 
 
 async def test_engine_redirects_and_host_policy(rig):
-    store, history, engine, target = rig
+    store, _history, engine, target = rig
     t = target(auth={"type": "bearer", "token": "redirect-token"})
     followed = await engine.send(t["id"], {"method": "GET", "path": "redirect"}, PANEL)
     assert followed["response"]["status"] == 200 and followed["response"]["redirects"] == [
@@ -486,7 +486,7 @@ async def test_engine_bodies_timeouts_and_errors(rig):
 
 
 async def test_engine_direct_scope_and_request_auth(rig):
-    store, history, engine, target = rig
+    _store, history, engine, target = rig
     typed = {"Authorization": "Bearer typed-token-xyz", "X-Api-Key": "key-98765"}
     direct = await engine.send("direct", {"method": "GET", "path": f"{ORIGIN}/v1/echo?x=1", "headers": typed}, PANEL)
     assert "error" not in direct and direct["targetId"] == "direct" and direct["response"]["status"] == 200
@@ -542,7 +542,7 @@ async def test_engine_direct_scope_and_request_auth(rig):
 
 
 async def test_engine_event_streams(rig):
-    store, history, engine, target = rig
+    _store, history, engine, target = rig
     t = target(auth={"type": "bearer", "token": "stream-secret-9"})
     heads: list[int] = []
     seen: list[dict[str, Any]] = []
@@ -612,7 +612,7 @@ class Rig:
 
 
 async def test_tools(rig):
-    store, history, engine, target = rig
+    store, history, engine, _target = rig
     read_only = store.create(
         {
             "baseUrl": "https://ro.example.com/api",

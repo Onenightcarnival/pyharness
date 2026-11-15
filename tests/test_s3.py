@@ -210,7 +210,7 @@ def test_bucket_operations(tmp_path):
     assert b.get_text("a.txt", 2)["truncated"] is True
     with pytest.raises(eng.S3Error, match="binary"):
         b.get_text("docs/img.png")
-    with pytest.raises(eng.S3Error, match='".."'):
+    with pytest.raises(eng.S3Error, match=r'"\.\."'):
         b.get_text("../other/x")
     assert b.put("new/c.json", b"{}")["size"] == 2 and fake.objects["team/new/c.json"] == (b"{}", "application/json")
     b.mkdir("empty")

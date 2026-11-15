@@ -144,7 +144,7 @@ def _module_dir(module_name: str | None) -> str | None:
         return None
     try:
         mod = importlib.import_module(module_name.split(":")[0])
-    except Exception:  # pragma: no cover
+    except Exception:  # noqa: BLE001  # pragma: no cover
         return None
     file = getattr(mod, "__file__", None)
     return str(Path(file).parent) if file else None

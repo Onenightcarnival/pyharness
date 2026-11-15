@@ -55,7 +55,7 @@ def build_router(service: Host) -> APIRouter:
         provider = provider_of(data)
         try:
             return await provider.login(data.get("account") or None)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise HTTPException(409, str(exc)) from exc
 
     @router.post("/manual")
@@ -64,7 +64,7 @@ def build_router(service: Host) -> APIRouter:
         provider = provider_of(data)
         try:
             provider.manual(str(data.get("input") or ""))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise HTTPException(400, str(exc)) from exc
         return {"ok": True}
 
@@ -96,7 +96,7 @@ def build_router(service: Host) -> APIRouter:
         provider = provider_of(data)
         try:
             return await provider.usage_cached(data.get("account") or None, bool(data.get("force")))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise HTTPException(502, str(exc)) from exc
 
     @router.get("/provider-settings")

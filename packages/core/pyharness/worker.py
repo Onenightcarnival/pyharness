@@ -70,7 +70,7 @@ async def run_generation(
         await harness.start()
         stage = "ready"
         await harness.ready()
-    except BaseException as exc:  # noqa: BLE001
+    except BaseException as exc:
         log.error(
             "generation %d failed during %s: %s", generation, stage, exc, exc_info=log.isEnabledFor(logging.DEBUG)
         )

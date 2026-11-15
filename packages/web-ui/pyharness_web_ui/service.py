@@ -248,7 +248,7 @@ class WebUIService(Service):
                 raise HTTPException(404, f"no call {method!r} on entry {entry!r}")
             try:
                 args = await request.json()
-            except Exception:
+            except ValueError:
                 args = {}
             if not isinstance(args, dict):
                 raise HTTPException(422, "call arguments must be a JSON object")

@@ -50,7 +50,7 @@ def build_router(service: Host) -> APIRouter:
     async def guarded(pid: str, fn: Any, status: int = 400) -> Any:
         try:
             return await service.run(pid, fn)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise HTTPException(status, error_text(exc) or type(exc).__name__) from exc
 
     @router.get("/s3/profiles")

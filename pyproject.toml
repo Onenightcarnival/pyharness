@@ -70,8 +70,9 @@ select = [
     "E", "F", "W", "I", "UP", "B",      # pycodestyle, pyflakes, isort, pyupgrade, bugbear
     "PLC0415",                          # imports at module top
     "ISC",                              # no implicit or `+` string concatenation
-    "RUF022", "RUF012",                 # sorted __all__; ClassVar on mutable class attributes
+    "RUF",                              # Ruff's own rules; RUF001-RUF003 are ignored below (Chinese text)
     "RUF067",                           # __init__.py: imports and dunder assignments only (preview)
+    "BLE001",                           # a broad `except` is stated: narrowed, or marked `noqa: BLE001`
     "PLC2801", "PLW3201",               # no direct call of a dunder method; no invented dunder name (preview)
     "PLR1702",                          # at most five nested blocks (preview)
     "S102", "S307",                     # no exec, no eval

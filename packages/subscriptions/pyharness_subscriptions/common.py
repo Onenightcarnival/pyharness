@@ -196,7 +196,7 @@ class TokenManager:
                 "INVALID_CREDENTIAL",
                 f"{self.provider.title} login expired or was revoked; log in again on the AI subscriptions page",
             ) from exc
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             if int(latest.get("expiresAt") or 0) > int(time.time() * 1000):
                 return latest
             raise LlmError("AUTH", f"{self.provider.title} token refresh failed: {exc}") from exc

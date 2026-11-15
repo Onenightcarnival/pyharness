@@ -163,7 +163,7 @@ async def _search_legacy(service: Host, query: str, key: str) -> dict[str, Any]:
         raise _http_error(response, endpoint)
     try:
         answer, sources = parse_search_response(response.json())
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise RuntimeError(f"DeepSeek returned an unprocessable response: {exc}") from exc
     if not sources and not answer:
         raise RuntimeError("DeepSeek returned no search results; the request may not have triggered native web search")

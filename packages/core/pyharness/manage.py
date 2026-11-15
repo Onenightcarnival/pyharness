@@ -102,7 +102,7 @@ def _prune_stale_dist_infos(profile: Profile, keep: metadata.Distribution) -> No
             continue
         try:
             same = _norm(dist.metadata["Name"] or "") == _norm(keep.name)
-        except Exception:  # pragma: no cover
+        except Exception:  # noqa: BLE001  # pragma: no cover
             same = False
         if same:
             shutil.rmtree(location, ignore_errors=True)
@@ -243,7 +243,7 @@ async def install_bundle(
         profile.activate_site()
         txn = _Transaction(profile, site=True)
         try:
-            code, out = await _run(_installer(profile.site) + ["--no-deps", str(source)])
+            code, out = await _run([*_installer(profile.site), "--no-deps", str(source)])
             if code != 0:
                 return _rejected("install", txn, error=out[-4000:])
             dist = _dist_for_path(profile, source)

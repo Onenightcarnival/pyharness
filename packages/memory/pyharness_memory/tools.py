@@ -80,7 +80,7 @@ Change = Annotated[
 def _thread_id() -> str | None:
     try:
         return dict(get_config().get("configurable") or {}).get("thread_id")
-    except Exception:
+    except RuntimeError:  # no run in progress
         return None
 
 

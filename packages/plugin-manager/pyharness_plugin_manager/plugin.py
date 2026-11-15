@@ -117,7 +117,7 @@ def apply(ctx: Any, config: Config) -> None:
     def session_of(runtime: Any) -> str | None:
         try:
             return (runtime.config.get("configurable") or {}).get("thread_id")
-        except Exception:
+        except AttributeError:
             return None
 
     def resolve_path(target: str) -> Path:

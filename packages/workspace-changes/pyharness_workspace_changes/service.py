@@ -55,11 +55,11 @@ class WorkspaceChangesService(Service):
 
     # ------------------------------------------------------------------ queries
     async def summaries(self, session_id: str) -> list[dict[str, Any]]:
-        items = await self.ctx.store.asearch(NAMESPACE + (session_id,), limit=1000)
+        items = await self.ctx.store.asearch((*NAMESPACE, session_id), limit=1000)
         return sorted((dict(i.value) for i in items), key=lambda s: s.get("seq", 0))
 
     async def summary(self, session_id: str, run_id: str) -> dict[str, Any] | None:
-        item = await self.ctx.store.aget(NAMESPACE + (session_id,), run_id)
+        item = await self.ctx.store.aget((*NAMESPACE, session_id), run_id)
         return dict(item.value) if item is not None else None
 
     async def diff(self, session_id: str, run_id: str, index: int) -> dict[str, Any]:
@@ -142,7 +142,7 @@ class WorkspaceChangesService(Service):
                 "deleted": sum(f["deleted"] or 0 for f in files),
             }
             self._trees[(turn.session_id, turn.run_id)] = (repo, info["base"], head)
-            await self.ctx.store.aput(NAMESPACE + (turn.session_id,), turn.run_id, summary)
+            await self.ctx.store.aput((*NAMESPACE, turn.session_id), turn.run_id, summary)
             turn.extras["changes"] = summary
         except Exception as exc:  # noqa: BLE001
             self.ctx.logger.warning("workspace changes: record skipped for %s: %s", turn.session_id, exc)

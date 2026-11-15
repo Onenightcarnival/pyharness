@@ -45,7 +45,7 @@ class CompactionError(RuntimeError):
 def _configurable() -> dict[str, Any]:
     try:
         return dict(get_config().get("configurable") or {})
-    except Exception:
+    except RuntimeError:  # no run in progress
         return {}
 
 

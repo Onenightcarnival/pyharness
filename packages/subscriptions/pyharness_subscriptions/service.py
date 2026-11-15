@@ -60,6 +60,7 @@ class SubscriptionsService(Service):
         self.settings: ProviderSettings | None = None
         self.defaults: ModelDefaults | None = None
         self.session_created: dict[str, int] = {}
+        self._discovery: asyncio.Task[None] | None = None
 
     # ------------------------------------------------------------------ lifecycle
     def _data(self) -> Path:
@@ -100,9 +101,11 @@ class SubscriptionsService(Service):
         self.ctx.on("agent/turn-start", self._on_turn_start)
         await self.sync_routes(discover=False)
         self.sync_tools()
-        asyncio.create_task(self._background_discovery())
+        self._discovery = asyncio.create_task(self._background_discovery())
 
     async def stop(self) -> None:
+        if self._discovery is not None:
+            self._discovery.cancel()
         for d in list(self._tool_disposers.values()):
             d()
         self._tool_disposers.clear()

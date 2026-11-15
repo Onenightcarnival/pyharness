@@ -85,7 +85,7 @@ class Loader:
                 child_scope = Scope(scope, entry.isolate, label=entry.id) if entry.isolate else scope
                 if entry.name:
                     log.warning("group %s: `name` on a group entry is ignored", entry.id)
-                self._plan(entry.children, path + (entry.id,), child_scope, off)
+                self._plan(entry.children, (*path, entry.id), child_scope, off)
                 continue
             rt = EntryRuntime(entry=entry, path=path, scope=scope)
             if off is not None:
@@ -110,13 +110,13 @@ class Loader:
             except PluginError as exc:
                 self._fail(rt, str(exc))
                 continue
-            except Exception as exc:  # pragma: no cover
+            except Exception as exc:  # noqa: BLE001  # pragma: no cover
                 self._fail(rt, f"{type(exc).__name__}: {exc}")
                 continue
             try:
                 raw = interpolate(rt.entry.config or {}, self.root.variables)
                 rt.config = rt.spec.validate_config(raw)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 self._fail(rt, f"invalid config: {exc}")
                 continue
             rt.state = EntryState.PENDING
@@ -158,7 +158,7 @@ class Loader:
                 ctx.provide(spec.service_cls.key, svc)
             else:
                 await _maybe_await(call_apply(spec, ctx, rt.config))
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             await self._dispose(rt)
             self._fail(rt, f"{type(exc).__name__}: {exc}", exc)
             return

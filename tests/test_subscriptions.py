@@ -256,7 +256,7 @@ def test_antigravity_wire():
         "thinkingBudget": 4000,
     } and thinking_config("gemini-2.5-flash", "off", None) == {"includeThoughts": False, "thinkingBudget": 0}
     assert thinking_config("gemini-3.1-flash-image", "high", None) == {"thinkingLevel": "HIGH", "includeThoughts": True}
-    with pytest.raises(LlmError, match="UNSUPPORTED|does not support"):
+    with pytest.raises(LlmError, match=r"UNSUPPORTED|does not support"):
         thinking_config("claude-sonnet-4", "low", None)
     schema = {
         "type": "object",
@@ -393,7 +393,7 @@ async def test_antigravity_cli_signature(tmp_path):
         list(AntigravityTranslator("ag").feed(json.dumps(part)))
     assert info.value.code == "UNSUPPORTED_CLIENT"
     fine = {"response": {"candidates": [{"content": {"parts": [{"text": "This version of the plan is fine."}]}}]}}
-    assert list(AntigravityTranslator("ag").feed(json.dumps(fine)))[0].content == "This version of the plan is fine."
+    assert next(AntigravityTranslator("ag").feed(json.dumps(fine))).content == "This version of the plan is fine."
 
 
 def test_codex_search_commands():

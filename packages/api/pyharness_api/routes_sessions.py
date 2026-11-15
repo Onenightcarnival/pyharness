@@ -168,7 +168,7 @@ def build_sessions_router(ctx: Any) -> APIRouter:
         if workspaces is not None and hasattr(workspaces, "open") and "@" in content:
             try:
                 content, refs = references.expand(content, workspaces.open(session.get("workspace")))
-            except Exception:  # noqa: BLE001 — a reference that cannot be read never blocks the message
+            except Exception:
                 ctx.logger.exception("expanding @references failed")
         try:
             handle = agents.start_run(session_id, content, images=body.images or None)
