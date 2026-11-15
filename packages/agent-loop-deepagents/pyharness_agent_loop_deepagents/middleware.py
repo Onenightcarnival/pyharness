@@ -1,4 +1,5 @@
-"""``HarnessMiddleware``: LangChain middleware that routes model and tool calls through the harness.
+"""
+``HarnessMiddleware``: LangChain middleware that routes model and tool calls through the harness.
 
 | hook       | route                                                                           |
 |------------|---------------------------------------------------------------------------------|

@@ -1,4 +1,5 @@
-"""Model side of the gateway: one :class:`Generation` becomes one LangChain ``astream`` over a route of ``ctx.llm``.
+"""
+Model side of the gateway: one :class:`Generation` becomes one LangChain ``astream`` over a route of ``ctx.llm``.
 
 | name               | contract                                                                          |
 |--------------------|-----------------------------------------------------------------------------------|

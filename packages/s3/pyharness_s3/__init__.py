@@ -1,4 +1,5 @@
-"""``ctx.s3``: S3-compatible object storage browser (MinIO / OSS / COS / R2 / AWS).
+"""
+``ctx.s3``: S3-compatible object storage browser (MinIO / OSS / COS / R2 / AWS).
 
 | member | contract |
 |---|---|

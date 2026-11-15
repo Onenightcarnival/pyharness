@@ -1,4 +1,5 @@
-"""``ctx.webui``: the Web UI page at ``config.path`` on ``ctx.http``, plus the client-module registry for plugins.
+"""
+``ctx.webui``: the Web UI page at ``config.path`` on ``ctx.http``, plus the client-module registry for plugins.
 
 | member                                   | contract                                                                 |
 |------------------------------------------|--------------------------------------------------------------------------|
@@ -225,7 +226,8 @@ class WebUIService(Service):
     def register_client(
         self, path: str | Path, *, calls: dict[str, Callable[..., Any]] | None = None, inject: list[str] | None = None
     ) -> Callable[[], Any]:
-        """Serve ``path`` as the calling plugin's browser module; ``calls`` answer ``ctx.host.call``.
+        """
+        Serve ``path`` as the calling plugin's browser module; ``calls`` answer ``ctx.host.call``.
 
         Returns the disposer.
         """

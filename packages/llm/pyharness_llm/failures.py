@@ -1,4 +1,5 @@
-"""Failure codes of a model call: one stable code per failure, read from the exception a provider raised.
+"""
+Failure codes of a model call: one stable code per failure, read from the exception a provider raised.
 
 | code                        | failure                                                              |
 |-----------------------------|----------------------------------------------------------------------|

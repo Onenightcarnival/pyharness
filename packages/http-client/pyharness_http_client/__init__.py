@@ -1,4 +1,5 @@
-"""``ctx.httpClient``: HTTP API request tool (aligned with dsh-http): API targets with injected auth, saved
+"""
+``ctx.httpClient``: HTTP API request tool (aligned with dsh-http): API targets with injected auth, saved
 requests, a request history shared by the page and the agent, and event streams read as they arrive.
 
 | member       | contract                                                                              |

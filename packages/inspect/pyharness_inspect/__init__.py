@@ -1,4 +1,5 @@
-"""``harness_inspect`` tool: read-only view of the running harness.
+"""
+``harness_inspect`` tool: read-only view of the running harness.
 
 | topic    | content                                                                   |
 |----------|---------------------------------------------------------------------------|

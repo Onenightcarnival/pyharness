@@ -120,8 +120,10 @@ class AgentService(Service):
         mode: str | None = None,
         preset: str | None = None,
     ) -> dict[str, Any]:
-        """New session; ``workspace`` (root directory), ``mode`` and ``preset`` are validated and defaulted by their
-        services."""
+        """
+        New session; ``workspace`` (root directory), ``mode`` and ``preset`` are validated and defaulted by their
+        services.
+        """
         loop = self.ctx.get("agentLoop", None)
         workspaces = self.ctx.get("workspace", None)
         if workspaces is not None and hasattr(workspaces, "open"):
@@ -210,7 +212,8 @@ class AgentService(Service):
         return [{"id": i.id, "value": _jsonable(i.value)} for i in (state.interrupts or ())]
 
     async def failure(self, session_id: str) -> dict[str, Any] | None:
-        """The failure the session stopped on: ``{"run_id", "code", "message", "continuable"}`` when its last turn
+        """
+        The failure the session stopped on: ``{"run_id", "code", "message", "continuable"}`` when its last turn
         ended with outcome ``error``; ``None`` otherwise and while a turn runs.
 
         ``continuable``: the failure code is one of ``CONTINUABLE_CODES`` and the graph stopped inside a step, so
@@ -231,8 +234,10 @@ class AgentService(Service):
         return {"run_id": last.get("run_id"), "code": code, "message": error.get("message"), "continuable": continuable}
 
     async def retry_run(self, session_id: str, *, model: str | None = None) -> RunHandle:
-        """Continue the session's failed turn: a run of kind ``retry`` that resumes the graph at the step that
-        failed, with no new message. Raises :class:`NotContinuable` unless ``failure()`` is continuable."""
+        """
+        Continue the session's failed turn: a run of kind ``retry`` that resumes the graph at the step that
+        failed, with no new message. Raises :class:`NotContinuable` unless ``failure()`` is continuable.
+        """
         failure = await self.failure(session_id)
         if failure is None:
             raise NotContinuable(f"the last turn of session {session_id} did not fail")
@@ -301,7 +306,8 @@ class AgentService(Service):
         model: str | None = None,
         images: list[str] | None = None,
     ) -> RunHandle:
-        """Start a run and return its handle. ``model`` overrides the session's selection for this run;
+        """
+        Start a run and return its handle. ``model`` overrides the session's selection for this run;
         ``images`` are data URLs attached to the user message.
 
         | arguments                | input to the graph                                                 |

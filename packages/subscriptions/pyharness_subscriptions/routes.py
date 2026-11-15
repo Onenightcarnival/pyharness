@@ -1,4 +1,5 @@
-"""HTTP API of the AI subscriptions page, mounted under ``/api/subscriptions``.
+"""
+HTTP API of the AI subscriptions page, mounted under ``/api/subscriptions``.
 
 | method | path                 | effect                                                              |
 |--------|----------------------|---------------------------------------------------------------------|

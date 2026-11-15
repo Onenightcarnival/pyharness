@@ -1,5 +1,7 @@
-"""HTTP client: the wire helpers, the three stores, the request engine over a mocked transport, the agent tools and
-the management routes."""
+"""
+HTTP client: the wire helpers, the three stores, the request engine over a mocked transport, the agent tools and
+the management routes.
+"""
 
 from __future__ import annotations
 

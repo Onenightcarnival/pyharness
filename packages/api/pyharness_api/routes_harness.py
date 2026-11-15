@@ -1,4 +1,5 @@
-"""Harness-level routes: health, plugin management, restart, MCP server settings, syntax highlighting.
+"""
+Harness-level routes: health, plugin management, restart, MCP server settings, syntax highlighting.
 
 | method | path                         | handler              |
 |--------|------------------------------|----------------------|
@@ -90,8 +91,10 @@ def build_harness_router(ctx: Any) -> APIRouter:
         return {b["bundle"] for b in profile.installed_bundles() if b.get("installed") == "profile"}
 
     def switchable_bundles(profile: Any) -> set[str]:
-        """Profile-installed bundles plus optional environment bundles (``optional: true``): the ones the Web UI may
-        toggle."""
+        """
+        Profile-installed bundles plus optional environment bundles (``optional: true``): the ones the Web UI may
+        toggle.
+        """
         return {
             b["bundle"] for b in profile.installed_bundles() if b.get("installed") == "profile" or b.get("optional")
         }
@@ -152,8 +155,10 @@ def build_harness_router(ctx: Any) -> APIRouter:
 
     @router.get("/settings/mcp")
     async def get_mcp_settings() -> dict[str, Any]:
-        """Configured MCP servers (env and header values masked, credential templates as written) with their
-        connection status."""
+        """
+        Configured MCP servers (env and header values masked, credential templates as written) with their
+        connection status.
+        """
         mcp = ctx.get("mcp", None)
         if mcp is None:
             raise HTTPException(503, "mcp plugin not mounted")
@@ -161,8 +166,10 @@ def build_harness_router(ctx: Any) -> APIRouter:
 
     @router.put("/settings/mcp")
     async def put_mcp_settings(body: MCPSettings) -> dict[str, Any]:
-        """Replace the MCP server list in the profile patch; a masked value keeps the stored one, any other value
-        (a ``${credential:REF}`` template included) is stored as written. Restart to apply."""
+        """
+        Replace the MCP server list in the profile patch; a masked value keeps the stored one, any other value
+        (a ``${credential:REF}`` template included) is stored as written. Restart to apply.
+        """
         mcp = ctx.get("mcp", None)
         if mcp is None:
             raise HTTPException(503, "mcp plugin not mounted")

@@ -42,8 +42,10 @@ class Terminal:
         self.subscribers: set[asyncio.Queue[bytes | None]] = set()
 
     def open(self) -> None:
-        """Spawn the shell on a new PTY: the child becomes a session leader with the slave as its controlling
-        terminal."""
+        """
+        Spawn the shell on a new PTY: the child becomes a session leader with the slave as its controlling
+        terminal.
+        """
         master, slave = os.openpty()
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", self.rows, self.cols, 0, 0))
         env = {

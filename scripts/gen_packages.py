@@ -1,4 +1,5 @@
-"""Regenerate the `pyharness-composition-reference` skill's `references/packages.md` from the installed entry points.
+"""
+Regenerate the `pyharness-composition-reference` skill's `references/packages.md` from the installed entry points.
 
 uv run python scripts/gen_packages.py
 """

@@ -1,4 +1,5 @@
-"""Workspace routes: the registry (recent, pick, add, rename, forget, browse) and files inside a workspace.
+"""
+Workspace routes: the registry (recent, pick, add, rename, forget, browse) and files inside a workspace.
 
 | method | path                     | handler             |
 |--------|--------------------------|---------------------|
@@ -126,7 +127,8 @@ def build_workspaces_router(ctx: Any) -> APIRouter:
     async def search_files(
         q: str = "", root: str | None = None, limit: int = 50, hidden: bool = False, fuzzy: bool = True
     ) -> dict[str, Any]:
-        """Files and directories of a workspace matching ``q``, ranked; dependency directories skipped.
+        """
+        Files and directories of a workspace matching ``q``, ranked; dependency directories skipped.
 
         | parameter  | effect                                                                  |
         |------------|-------------------------------------------------------------------------|

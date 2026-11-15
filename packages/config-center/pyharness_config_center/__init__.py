@@ -1,4 +1,5 @@
-"""``ctx.configCenter``: the configuration center — the MCP page (servers, connection test, startup wait), user
+"""
+``ctx.configCenter``: the configuration center — the MCP page (servers, connection test, startup wait), user
 skills, and the managed bun runtime for JavaScript MCP servers.
 
 | member        | contract                                                                  |

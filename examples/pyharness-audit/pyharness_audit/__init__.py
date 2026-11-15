@@ -1,4 +1,5 @@
-"""Example third-party plugin: tool-call audit.
+"""
+Example third-party plugin: tool-call audit.
 
 | extension point   | mode      | effect                                                  |
 |-------------------|-----------|---------------------------------------------------------|

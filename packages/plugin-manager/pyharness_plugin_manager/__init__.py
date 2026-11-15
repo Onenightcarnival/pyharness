@@ -1,4 +1,5 @@
-"""``plugin_manager`` tool, the plugin-authoring skills, and the short prompt section.
+"""
+``plugin_manager`` tool, the plugin-authoring skills, and the short prompt section.
 
 | config       | effect                                                                                   |
 |--------------|------------------------------------------------------------------------------------------|
@@ -85,7 +86,8 @@ def _template_files(variant: str) -> Iterator[tuple[str, str]]:
 
 
 def render_template(short: str, variant: str = "basic") -> dict[str, str]:
-    """Template files for a bundle named after ``short``; ``__DIST__``-style tokens substituted in paths and
+    """
+    Template files for a bundle named after ``short``; ``__DIST__``-style tokens substituted in paths and
     contents.
     """
     slug = re.sub(r"[^a-z0-9]+", "-", short.lower()).strip("-") or "my-plugin"

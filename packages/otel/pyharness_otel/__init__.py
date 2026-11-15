@@ -1,4 +1,5 @@
-"""``ctx.otel``: OpenTelemetry export of agent turns (GenAI semantic conventions) to an OTLP/HTTP backend such as
+"""
+``ctx.otel``: OpenTelemetry export of agent turns (GenAI semantic conventions) to an OTLP/HTTP backend such as
 Langfuse.
 
 | member        | contract                                                                  |

@@ -1,4 +1,5 @@
-"""``ctx.agents``: sessions and runs over the graph ``ctx.agentLoop`` builds.
+"""
+``ctx.agents``: sessions and runs over the graph ``ctx.agentLoop`` builds.
 
 | concept    | contract                                                                            |
 |------------|-------------------------------------------------------------------------------------|

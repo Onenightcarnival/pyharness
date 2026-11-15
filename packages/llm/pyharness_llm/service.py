@@ -75,8 +75,10 @@ class LLMService(Service):
 
     # ------------------------------------------------------------------ registry
     def register(self, provider: str, factory: ModelFactory) -> Callable[[], Any]:
-        """Register ``factory(model_name, **options) -> BaseChatModel`` as provider type ``provider``; returns the
-        disposer."""
+        """
+        Register ``factory(model_name, **options) -> BaseChatModel`` as provider type ``provider``; returns the
+        disposer.
+        """
         if provider in self._providers:
             raise LLMConfigError(f"provider {provider!r} is already registered by {self._providers[provider][1]!r}")
         owner = self.caller.entry_id
@@ -129,8 +131,10 @@ class LLMService(Service):
         return cfg.type or route
 
     def retry_policy(self, spec: str | None = None) -> RetryPolicy | None:
-        """The retry policy for ``spec`` (``None``: the default): its route's, else the global one; ``None`` adds
-        no retries."""
+        """
+        The retry policy for ``spec`` (``None``: the default): its route's, else the global one; ``None`` adds
+        no retries.
+        """
         route, _ = split_spec(spec or self.default)
         return (self.route(route).retry if route else None) or self.config.retry
 
@@ -139,8 +143,10 @@ class LLMService(Service):
         return profile.credentials if profile is not None else None
 
     def references(self, route: str, cfg: ProviderConfig | None = None) -> list[str]:
-        """Credential references tried in order: ``api_key_env``, ``<ROUTE>_API_KEY`` for a named route, the type's
-        variable."""
+        """
+        Credential references tried in order: ``api_key_env``, ``<ROUTE>_API_KEY`` for a named route, the type's
+        variable.
+        """
         cfg = cfg or self.route(route)
         kind = self.route_type(route)
         env = type_info(kind)["env"]
@@ -339,8 +345,10 @@ class LLMService(Service):
         return {"default": self.config.default, "groups": groups}
 
     async def probe(self, route: str, model: str, timeout: float = 60.0, **overrides: Any) -> dict[str, Any]:
-        """One short completion with ``route:model``; ``overrides`` (base_url, api_key, type) win over the saved
-        route."""
+        """
+        One short completion with ``route:model``; ``overrides`` (base_url, api_key, type) win over the saved
+        route.
+        """
         if not route or not model:
             raise LLMConfigError("route and model are required")
         chat = self.resolve(f"{route}:{model}", **overrides)
@@ -360,8 +368,10 @@ class LLMService(Service):
     async def list_models(
         self, route: str, kind: str | None = None, timeout: float = 20.0, **overrides: Any
     ) -> dict[str, Any]:
-        """Model ids served by the route's endpoint: ``/models`` (OpenAI, Anthropic, Gemini) or ``/api/tags``
-        (Ollama)."""
+        """
+        Model ids served by the route's endpoint: ``/models`` (OpenAI, Anthropic, Gemini) or ``/api/tags``
+        (Ollama).
+        """
         cfg = self.route(route)
         kind = kind or self.route_type(route)
         info = type_info(kind)

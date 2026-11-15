@@ -1,6 +1,8 @@
-"""Database engine facade: drivers (SQLite, PostgreSQL / GaussDB, MySQL / MariaDB), statement classification, paging,
+"""
+Database engine facade: drivers (SQLite, PostgreSQL / GaussDB, MySQL / MariaDB), statement classification, paging,
 grid changes and CSV, re-exported from :mod:`.sql`, :mod:`.driver`, :mod:`.sqlite`, :mod:`.postgres`, :mod:`.mysql`,
-:mod:`.pool` and :mod:`.query`."""
+:mod:`.pool` and :mod:`.query`.
+"""
 
 from __future__ import annotations
 

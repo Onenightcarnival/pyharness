@@ -1,4 +1,5 @@
-"""Plugin entry: ``Config``, the router composition, ``apply`` mounting both routers on ``ctx.http``.
+"""
+Plugin entry: ``Config``, the router composition, ``apply`` mounting both routers on ``ctx.http``.
 
 | router                     | routes                                                     |
 |----------------------------|------------------------------------------------------------|

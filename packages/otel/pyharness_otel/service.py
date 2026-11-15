@@ -190,8 +190,10 @@ class OtelService(Service):
         return self.status()
 
     async def test(self, data: dict[str, Any]) -> dict[str, Any]:
-        """Send test spans through a temporary pipeline built from ``data`` (or the saved settings); verify on
-        Langfuse."""
+        """
+        Send test spans through a temporary pipeline built from ``data`` (or the saved settings); verify on
+        Langfuse.
+        """
         config = self.config.model_copy()
         if data.get("endpoint"):
             config.endpoint = str(data["endpoint"])

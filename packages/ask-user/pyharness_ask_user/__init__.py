@@ -1,4 +1,5 @@
-"""``ask_user_question``: the agent asks the user and waits for the answer.
+"""
+``ask_user_question``: the agent asks the user and waits for the answer.
 
 The tool raises a LangGraph interrupt whose value is ``{"kind": "ask_user", "questions": [...]}``; the run ends
 ``interrupted`` and the Web UI shows a question card. The answer resumes the run through

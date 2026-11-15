@@ -41,8 +41,10 @@ class ShellSession:
         return self.proc
 
     async def run(self, command: str, timeout: float) -> dict[str, Any]:
-        """``{"output", "exit_code", "cwd", "timed_out"}``; a timeout kills the shell and the next call starts a new
-        one."""
+        """
+        ``{"output", "exit_code", "cwd", "timed_out"}``; a timeout kills the shell and the next call starts a new
+        one.
+        """
         async with self.lock:
             self.last_used = time.time()
             proc = await self._ensure()

@@ -1,4 +1,5 @@
-"""Per-request usage ledger in SQLite with range aggregates by model and key.
+"""
+Per-request usage ledger in SQLite with range aggregates by model and key.
 
 | name                 | contract                                                                         |
 |----------------------|----------------------------------------------------------------------------------|

@@ -1,4 +1,5 @@
-"""``web`` bundle: the ``web_search`` and ``web_fetch`` tools (``pyharness-web-tools``).
+"""
+``web`` bundle: the ``web_search`` and ``web_fetch`` tools (``pyharness-web-tools``).
 
 Optional: on by default, switched off on the Plugins page.
 """

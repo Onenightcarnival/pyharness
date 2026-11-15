@@ -1,4 +1,5 @@
-"""The ``http_*`` LangChain tools; every result is text for the model.
+"""
+The ``http_*`` LangChain tools; every result is text for the model.
 
 | tool             | contract                                                                             |
 |------------------|--------------------------------------------------------------------------------------|

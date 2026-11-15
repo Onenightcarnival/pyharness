@@ -1,5 +1,7 @@
-"""Bucket profiles (``<profile data>/toolkit/s3.json``) and the agent-access setting; secret keys live in the profile
-credential store under ``S3_<ID>``."""
+"""
+Bucket profiles (``<profile data>/toolkit/s3.json``) and the agent-access setting; secret keys live in the profile
+credential store under ``S3_<ID>``.
+"""
 
 from __future__ import annotations
 

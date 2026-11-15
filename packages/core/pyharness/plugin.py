@@ -1,4 +1,5 @@
-"""Plugin definitions, entry-point discovery and bundle loading.
+"""
+Plugin definitions, entry-point discovery and bundle loading.
 
 | plugin form                         | contract                                                            |
 |-------------------------------------|---------------------------------------------------------------------|

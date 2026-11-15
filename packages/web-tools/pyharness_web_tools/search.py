@@ -1,4 +1,5 @@
-"""``web_search``: DeepSeek search.
+"""
+``web_search``: DeepSeek search.
 
 | ``search_provider``     | request                                                                         |
 |-------------------------|---------------------------------------------------------------------------------|

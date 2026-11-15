@@ -1,5 +1,7 @@
-"""Google Antigravity (Cloud Code Assist ``v1internal``) wire format: contents / parts from LangChain messages, tool
-schemas for Gemini and for Claude / gpt-oss models, thinking configuration per model, SSE translation."""
+"""
+Google Antigravity (Cloud Code Assist ``v1internal``) wire format: contents / parts from LangChain messages, tool
+schemas for Gemini and for Claude / gpt-oss models, thinking configuration per model, SSE translation.
+"""
 
 from __future__ import annotations
 
@@ -112,8 +114,10 @@ def gemini_schema(parameters: dict[str, Any]) -> dict[str, Any]:
 
 
 def simple_schema(schema: Any) -> Any:
-    """The reduced schema Claude / gpt-oss models accept: type, description, properties, required, items,
-    string enums."""
+    """
+    The reduced schema Claude / gpt-oss models accept: type, description, properties, required, items,
+    string enums.
+    """
     if not isinstance(schema, dict):
         return schema
     s = copy.deepcopy(schema)
@@ -191,8 +195,10 @@ def _parse_args(raw: Any) -> dict[str, Any]:
 
 
 def to_contents(messages: list[BaseMessage], model: str) -> tuple[str | None, list[dict[str, Any]]]:
-    """``(system_instruction, contents)``; consecutive same-role messages merge; tool results become
-    ``functionResponse`` parts in a user turn."""
+    """
+    ``(system_instruction, contents)``; consecutive same-role messages merge; tool results become
+    ``functionResponse`` parts in a user turn.
+    """
     system: list[str] = []
     contents: list[dict[str, Any]] = []
     call_names: dict[str, str] = {}

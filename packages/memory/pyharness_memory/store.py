@@ -1,4 +1,5 @@
-"""The career memory model and its SQLite store.
+"""
+The career memory model and its SQLite store.
 
 Tree: ``profile`` (one root) → ``work`` → ``project`` (``fields.workId``; empty = independent, under the root) →
 ``lesson`` (``fields.parentId``). Every write is a commit: when content changes it adds one revision (time, actor,

@@ -1,4 +1,5 @@
-"""Prompt section ``dev-context``: where this harness runs.
+"""
+Prompt section ``dev-context``: where this harness runs.
 
 | line         | value                                                   |
 |--------------|---------------------------------------------------------|

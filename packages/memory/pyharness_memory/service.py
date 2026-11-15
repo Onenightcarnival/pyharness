@@ -1,5 +1,7 @@
-"""The ``memory`` service: the store, the agent's node view (``read``) and typed change batches (``save``), the tool
-registration and the prompt section."""
+"""
+The ``memory`` service: the store, the agent's node view (``read``) and typed change batches (``save``), the tool
+registration and the prompt section.
+"""
 
 from __future__ import annotations
 

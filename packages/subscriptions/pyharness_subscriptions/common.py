@@ -1,5 +1,7 @@
-"""Shared pieces: error codes, HTTP error mapping, SSE parsing, JWT claims, the token manager (refresh with shared
-in-flight calls, permanent-error detection), request attribution."""
+"""
+Shared pieces: error codes, HTTP error mapping, SSE parsing, JWT claims, the token manager (refresh with shared
+in-flight calls, permanent-error detection), request attribution.
+"""
 
 from __future__ import annotations
 
@@ -110,8 +112,10 @@ class SseEvent:
 async def iter_sse(
     res: httpx.Response, label: str, idle_timeout: float = STREAM_IDLE_TIMEOUT
 ) -> AsyncIterator[SseEvent]:
-    """Parse an SSE body: ``data:`` lines joined with newlines, dispatched on blank lines; comments reset the idle
-    timer."""
+    """
+    Parse an SSE body: ``data:`` lines joined with newlines, dispatched on blank lines; comments reset the idle
+    timer.
+    """
     event: str | None = None
     data: list[str] = []
     lines = res.aiter_lines()
@@ -156,8 +160,10 @@ def headers_with_ua(headers: dict[str, str]) -> dict[str, str]:
 
 # ---------------------------------------------------------------------- token manager
 class TokenManager:
-    """Valid session for one account; refreshes early (``preempt_ms``), shares one in-flight refresh, deletes the
-    account on a permanent refresh error."""
+    """
+    Valid session for one account; refreshes early (``preempt_ms``), shares one in-flight refresh, deletes the
+    account on a permanent refresh error.
+    """
 
     def __init__(self, provider: Any, key: str, preempt_ms: int = PREEMPT_MS) -> None:
         self.provider = provider

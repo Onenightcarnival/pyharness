@@ -1,4 +1,5 @@
-"""Preflight: boot a candidate configuration in a separate process.
+"""
+Preflight: boot a candidate configuration in a separate process.
 
 | step                                | runs |
 |-------------------------------------|------|
@@ -64,7 +65,8 @@ def recorded_overlays(profile: Profile) -> list[str]:
 async def run_preflight(
     profile: Profile, extra_patches: list[str] | None = None, timeout: float = 180.0
 ) -> dict[str, Any]:
-    """Run :func:`preflight_in_process` in a new interpreter; returns its report.
+    """
+    Run :func:`preflight_in_process` in a new interpreter; returns its report.
 
     ``extra_patches=None`` uses the overlays recorded by the running generation.
     """

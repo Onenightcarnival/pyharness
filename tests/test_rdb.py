@@ -1,4 +1,5 @@
-"""Database workbench: statement classification, the SQLite driver, paging and grid changes, profiles, tools and
+"""
+Database workbench: statement classification, the SQLite driver, paging and grid changes, profiles, tools and
 routes.
 """
 

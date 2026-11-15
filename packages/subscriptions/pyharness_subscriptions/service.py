@@ -1,4 +1,5 @@
-"""``SubscriptionsService``: the providers, their model routes and tools, the status of the AI subscriptions page.
+"""
+``SubscriptionsService``: the providers, their model routes and tools, the status of the AI subscriptions page.
 
 | member                 | contract                                                                        |
 |------------------------|---------------------------------------------------------------------------------|

@@ -1,4 +1,5 @@
-"""Process lifecycle: activity holds, restarts, and the hand-off between generations.
+"""
+Process lifecycle: activity holds, restarts, and the hand-off between generations.
 
 | exit code                    | meaning                   |
 |------------------------------|---------------------------|

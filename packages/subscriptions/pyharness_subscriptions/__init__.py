@@ -1,4 +1,5 @@
-"""``ctx.subscriptions``: AI subscriptions as model routes and tools — Codex (OpenAI), ChatGPT, Google Antigravity
+"""
+``ctx.subscriptions``: AI subscriptions as model routes and tools — Codex (OpenAI), ChatGPT, Google Antigravity
 and Grok (xAI), signed in through their OAuth flows.
 
 | member            | contract                                                                  |

@@ -1,4 +1,5 @@
-"""One run of a session: its handle (event log), the :class:`Turn` handed to listeners, the turn record.
+"""
+One run of a session: its handle (event log), the :class:`Turn` handed to listeners, the turn record.
 
 | name              | contract                                                                  |
 |-------------------|---------------------------------------------------------------------------|
@@ -98,7 +99,8 @@ class RunHandle:
 
 
 class TurnRecorder:
-    """Timing, token usage and a compact trajectory of one turn, from the run events and graph updates.
+    """
+    Timing, token usage and a compact trajectory of one turn, from the run events and graph updates.
 
     Records: ``user`` (input), ``step`` (one model call: ttft, duration, tokens, text size, tool calls),
     ``tool`` (call → result: duration, status, sizes), ``retry`` (a model call retried: failure code, wait),

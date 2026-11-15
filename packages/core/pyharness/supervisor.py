@@ -1,4 +1,5 @@
-"""Supervisor: runs one worker generation at a time; owns restarts and rollbacks.
+"""
+Supervisor: runs one worker generation at a time; owns restarts and rollbacks.
 
 | worker outcome                        | supervisor action                                                   |
 |---------------------------------------|---------------------------------------------------------------------|

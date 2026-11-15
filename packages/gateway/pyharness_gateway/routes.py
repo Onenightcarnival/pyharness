@@ -1,4 +1,5 @@
-"""Management routes under ``/api/gateway`` for the API gateway page.
+"""
+Management routes under ``/api/gateway`` for the API gateway page.
 
 | request                                   | response                                                       |
 |-------------------------------------------|----------------------------------------------------------------|

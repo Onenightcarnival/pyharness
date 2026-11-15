@@ -1,4 +1,5 @@
-"""Git data of the changes service: repository paths, the command error, unified diff parsing.
+"""
+Git data of the changes service: repository paths, the command error, unified diff parsing.
 
 | name                 | contract                                                                        |
 |----------------------|---------------------------------------------------------------------------------|
@@ -30,8 +31,10 @@ def _resolve_git_path(top: Path, value: str) -> Path:
 
 
 def parse_unified(text: str) -> list[dict[str, Any]]:
-    """Hunks of a unified diff: ``{old_start, new_start, header, lines: [{kind, old, new, text}]}``;
-    ``kind`` is ctx/add/del."""
+    """
+    Hunks of a unified diff: ``{old_start, new_start, header, lines: [{kind, old, new, text}]}``;
+    ``kind`` is ctx/add/del.
+    """
     hunks: list[dict[str, Any]] = []
     hunk: dict[str, Any] | None = None
     old = new = 0

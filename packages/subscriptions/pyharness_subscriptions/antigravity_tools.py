@@ -1,5 +1,7 @@
-"""Antigravity tools: ``antigravity_web_search`` (Gemini with Google Search grounding) and
-``antigravity_image_generate`` (Gemini 3.1 Flash Image)."""
+"""
+Antigravity tools: ``antigravity_web_search`` (Gemini with Google Search grounding) and
+``antigravity_image_generate`` (Gemini 3.1 Flash Image).
+"""
 
 from __future__ import annotations
 

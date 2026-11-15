@@ -1,4 +1,5 @@
-"""``ctx.gateway``: local LLM API gateway. The model routes of ``ctx.llm`` are served over the OpenAI Chat
+"""
+``ctx.gateway``: local LLM API gateway. The model routes of ``ctx.llm`` are served over the OpenAI Chat
 Completions, OpenAI Responses and Anthropic Messages protocols on a listener of its own, with API keys and
 per-request usage accounting (aligned with dsh-gateway).
 

@@ -1,4 +1,5 @@
-"""Image inputs of requests: base64 payloads and remote URLs become ``data:`` URLs for the model.
+"""
+Image inputs of requests: base64 payloads and remote URLs become ``data:`` URLs for the model.
 
 | name                 | contract                                                                    |
 |----------------------|-----------------------------------------------------------------------------|

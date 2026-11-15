@@ -1,4 +1,5 @@
-"""``references/packages.md`` of the ``pyharness-composition-reference`` skill, rendered from the installed entry
+"""
+``references/packages.md`` of the ``pyharness-composition-reference`` skill, rendered from the installed entry
 points.
 
 ``python scripts/gen_packages.py`` writes it; ``tests/test_creator.py`` fails when the file is stale.

@@ -1,4 +1,5 @@
-"""__TITLE__: a Web UI panel with a sidebar row, fed by a server-side call.
+"""
+__TITLE__: a Web UI panel with a sidebar row, fed by a server-side call.
 
 | extension point   | effect                                                        |
 |-------------------|---------------------------------------------------------------|

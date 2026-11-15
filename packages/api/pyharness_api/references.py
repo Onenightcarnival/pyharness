@@ -1,4 +1,5 @@
-"""``@path`` references in a user message: the referenced files and directories travel with the prompt.
+"""
+``@path`` references in a user message: the referenced files and directories travel with the prompt.
 
 A token ``@path`` or ``@"path with spaces"`` at the start of the text or after whitespace or a bracket names a
 file or directory of the session's workspace (``/`` or relative to its root). Resolvable references are appended to
@@ -106,7 +107,8 @@ def expand(text: str, workspace: Any) -> tuple[str, list[dict[str, Any]]]:
 def search(
     root: Path, query: str, limit: int = 50, max_visited: int = 30_000, *, hidden: bool = False, fuzzy: bool = True
 ) -> list[dict[str, Any]]:
-    """Files and directories under ``root`` whose virtual path matches ``query`` (substring, then subsequence),
+    """
+    Files and directories under ``root`` whose virtual path matches ``query`` (substring, then subsequence),
     ranked.
 
     | argument   | effect                                                                         |

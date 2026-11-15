@@ -1,4 +1,5 @@
-"""Credential store: secrets referenced by name from configuration, never written into it.
+"""
+Credential store: secrets referenced by name from configuration, never written into it.
 
 | reference resolution | source                                              |
 |----------------------|-----------------------------------------------------|

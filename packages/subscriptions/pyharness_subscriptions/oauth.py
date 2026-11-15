@@ -1,5 +1,7 @@
-"""OAuth loopback flow: one temporary HTTP server per login attempt (PKCE S256, state, nonce), manual callback
-input when the browser cannot reach the harness, timeout and cancel."""
+"""
+OAuth loopback flow: one temporary HTTP server per login attempt (PKCE S256, state, nonce), manual callback
+input when the browser cannot reach the harness, timeout and cancel.
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
-"""Profile mutations shared by the CLI and the ``plugin_manager`` tool.
+"""
+Profile mutations shared by the CLI and the ``plugin_manager`` tool.
 
 Each mutation is one transaction:
 
@@ -292,7 +293,8 @@ def requirement_name(requirement: str) -> str | None:
 
 
 def looks_like_path(target: str) -> bool:
-    """Whether an install target names a directory rather than a package: a separator, ``~``, ``.`` or an existing
+    """
+    Whether an install target names a directory rather than a package: a separator, ``~``, ``.`` or an existing
     path.
     """
     return target.startswith(("/", ".", "~")) or "/" in target or "\\" in target or Path(target).expanduser().exists()

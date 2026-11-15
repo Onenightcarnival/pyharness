@@ -1,4 +1,5 @@
-"""Worker process: one generation of the harness.
+"""
+Worker process: one generation of the harness.
 
 ``python -m pyharness.worker --profile web``
 

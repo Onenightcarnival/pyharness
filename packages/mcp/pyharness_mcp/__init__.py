@@ -1,4 +1,5 @@
-"""``ctx.mcp``: tools of MCP servers, registered into ``ctx.tools`` at boot.
+"""
+``ctx.mcp``: tools of MCP servers, registered into ``ctx.tools`` at boot.
 
 | config                 | meaning                                                                          |
 |------------------------|----------------------------------------------------------------------------------|
@@ -50,8 +51,10 @@ def slug(name: str) -> str:
 
 
 def managed_bun(data_dir: str | os.PathLike[str] | None) -> tuple[Path, dict[str, str]] | None:
-    """The bun runtime installed by the configuration center (``<profile data>/toolkit/bun/bin/bun``) and its
-    environment, or ``None`` when it is not installed."""
+    """
+    The bun runtime installed by the configuration center (``<profile data>/toolkit/bun/bin/bun``) and its
+    environment, or ``None`` when it is not installed.
+    """
     if data_dir is None:
         return None
     root = Path(data_dir) / "toolkit" / "bun"
@@ -62,8 +65,10 @@ def managed_bun(data_dir: str | os.PathLike[str] | None) -> tuple[Path, dict[str
 
 
 def connection_of(cfg: ServerConfig, data_dir: str | os.PathLike[str] | None = None) -> dict[str, Any]:
-    """The ``langchain-mcp-adapters`` connection for a server configuration. A bare ``bun`` / ``bunx`` command runs
-    through the managed bun under ``data_dir`` when that runtime is installed."""
+    """
+    The ``langchain-mcp-adapters`` connection for a server configuration. A bare ``bun`` / ``bunx`` command runs
+    through the managed bun under ``data_dir`` when that runtime is installed.
+    """
     if cfg.command:
         command, env = cfg.command, dict(cfg.env)
         bun = managed_bun(data_dir) if command.lower() in ("bun", "bunx", "bun.exe", "bunx.exe") else None
@@ -158,7 +163,8 @@ class MCPService(Service):
         return {"reference": reference, "configured": configured, "source": "env" if configured else None}
 
     async def probe(self, cfg: ServerConfig, timeout: float | None = None) -> dict[str, Any]:
-        """Connect to a server configuration without registering anything: ``{"ok", "tools": [names]}``.
+        """
+        Connect to a server configuration without registering anything: ``{"ok", "tools": [names]}``.
 
         | failure               | ``ok`` is ``False``, with                                                      |
         |-----------------------|--------------------------------------------------------------------------------|
@@ -183,12 +189,15 @@ class MCPService(Service):
 
     # ------------------------------------------------------------------ views
     def status(self) -> dict[str, dict[str, Any]]:
-        """Per server: ``state`` (connected / error / disabled / waiting-credentials), ``tools`` (registered names),
-        ``error``, ``missing`` (unresolved credential references)."""
+        """
+        Per server: ``state`` (connected / error / disabled / waiting-credentials), ``tools`` (registered names),
+        ``error``, ``missing`` (unresolved credential references).
+        """
         return {name: dict(value) for name, value in self._status.items()}
 
     def servers(self) -> dict[str, dict[str, Any]]:
-        """Configured servers with their status.
+        """
+        Configured servers with their status.
 
         | field                     | value                                                                      |
         |---------------------------|----------------------------------------------------------------------------|

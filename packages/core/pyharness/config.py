@@ -1,4 +1,5 @@
-"""Composition tree and layered patches.
+"""
+Composition tree and layered patches.
 
 The tree is composed at boot from an empty list by applying layers in order:
 
@@ -246,7 +247,8 @@ def tree_to_data(tree: Tree, with_source: bool = False) -> list[dict[str, Any]]:
 
 # ---------------------------------------------------------------------- interpolation
 def interpolate(value: Any, variables: dict[str, str]) -> Any:
-    """Resolve placeholders in strings, recursively through dicts and lists.
+    """
+    Resolve placeholders in strings, recursively through dicts and lists.
 
     | placeholder              | value                                                 |
     |--------------------------|-------------------------------------------------------|

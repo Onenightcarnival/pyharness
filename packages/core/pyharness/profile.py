@@ -1,4 +1,5 @@
-"""Profiles: named, persistent assemblies in the harness home.
+"""
+Profiles: named, persistent assemblies in the harness home.
 
 ``$PYH_HOME`` (default ``~/.pyharness``)::
 
@@ -125,8 +126,10 @@ class Profile:
         write_yaml(self.manifest_path, data)
 
     def bundles(self) -> list[str]:
-        """Enabled bundles in composition order: the manifest's ``bundles``, then the built-in environment bundles
-        (``builtin: true``, always on), then the optional ones (``optional: true``) not listed under ``disabled``."""
+        """
+        Enabled bundles in composition order: the manifest's ``bundles``, then the built-in environment bundles
+        (``builtin: true``, always on), then the optional ones (``optional: true``) not listed under ``disabled``.
+        """
         data = self.manifest()
         explicit = [str(b) for b in data.get("bundles", [])]
         disabled = {str(b) for b in data.get("disabled", [])}
@@ -237,7 +240,8 @@ class Profile:
         self.save_patch(ops)
 
     def set_entry_config(self, entry_id: str, config: dict[str, Any], *, merge: bool = True) -> None:
-        """Patch an entry's ``config`` in the profile patch.
+        """
+        Patch an entry's ``config`` in the profile patch.
 
         The entry's last op is reused: with ``merge`` the new keys are deep-merged into its
         ``config``; otherwise its ``config`` is replaced. Without an op, ``{id, config, merge}`` is appended.
@@ -257,9 +261,11 @@ class Profile:
         self.save_patch(ops)
 
     def set_bundle_enabled(self, bundle: str, enabled: bool) -> bool:
-        """Enable or disable a bundle: optional bundles move in and out of ``disabled``, others in and out of
+        """
+        Enable or disable a bundle: optional bundles move in and out of ``disabled``, others in and out of
         ``bundles``.
-        A built-in bundle (``builtin: true``) is always on: disabling it raises :class:`ConfigError`."""
+        A built-in bundle (``builtin: true``) is always on: disabling it raises :class:`ConfigError`.
+        """
         if not enabled and bundle in self.builtin_bundles():
             raise ConfigError(f"bundle {bundle!r} is built in and cannot be disabled")
         data = self.manifest()
@@ -293,8 +299,10 @@ class Profile:
         return list(metadata.distributions(path=[str(self.site)]))
 
     def installed_bundles(self) -> list[dict[str, Any]]:
-        """Bundles of the profile site and the environment: ``enabled``, ``installed`` (``profile`` / ``environment``),
-        ``optional``, ``builtin``, ``title``, ``description``."""
+        """
+        Bundles of the profile site and the environment: ``enabled``, ``installed`` (``profile`` / ``environment``),
+        ``optional``, ``builtin``, ``title``, ``description``.
+        """
         enabled = set(self.bundles())
         out = []
         seen: set[str] = set()
@@ -347,7 +355,8 @@ class Profile:
                 path.write_text(text, encoding="utf-8")
 
     def save_last_known_good(self, state: dict[str, str | None] | None = None) -> None:
-        """Save ``state`` as last-known-good; default: the current files.
+        """
+        Save ``state`` as last-known-good; default: the current files.
 
         The worker passes the state it read before composing.
         """

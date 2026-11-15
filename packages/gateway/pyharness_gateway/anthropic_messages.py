@@ -1,4 +1,5 @@
-"""Anthropic Messages: request parsing, the content-block event stream and the complete message object.
+"""
+Anthropic Messages: request parsing, the content-block event stream and the complete message object.
 
 | name                       | contract                                                                    |
 |----------------------------|-----------------------------------------------------------------------------|

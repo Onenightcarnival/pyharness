@@ -1,5 +1,7 @@
-"""API gateway: protocol translation, the stores, the gateway application, stream normalization and the management
-routes."""
+"""
+API gateway: protocol translation, the stores, the gateway application, stream normalization and the management
+routes.
+"""
 
 from __future__ import annotations
 

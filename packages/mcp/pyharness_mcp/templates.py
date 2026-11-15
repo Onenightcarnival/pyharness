@@ -1,4 +1,5 @@
-"""Credential templates in the transport strings of an MCP server.
+"""
+Credential templates in the transport strings of an MCP server.
 
 | subject    | contract                                                                                   |
 |------------|--------------------------------------------------------------------------------------------|
@@ -38,7 +39,8 @@ def references(cfg: ServerConfig) -> list[str]:
 
 
 def expand(cfg: ServerConfig, lookup: Callable[[str], str | None]) -> tuple[ServerConfig, list[str], list[str]]:
-    """Resolve the templates of ``cfg`` through ``lookup(reference)``.
+    """
+    Resolve the templates of ``cfg`` through ``lookup(reference)``.
 
     Returns the expanded configuration, the resolved values, and the references ``lookup`` has no value for. A
     template of a missing reference stays as written.
@@ -62,7 +64,8 @@ def expand(cfg: ServerConfig, lookup: Callable[[str], str | None]) -> tuple[Serv
 
 
 def redact(text: str, values: Iterable[str]) -> str:
-    """``text`` with each value of three characters or more, and its URL-encoded form, replaced by ``[redacted]``.
+    """
+    ``text`` with each value of three characters or more, and its URL-encoded form, replaced by ``[redacted]``.
 
     Where several values match at one position, the longest is replaced.
     """

@@ -1,4 +1,5 @@
-"""Request engine: one request of the page or the agent, from the composed input to the recorded exchange.
+"""
+Request engine: one request of the page or the agent, from the composed input to the recorded exchange.
 
 | step        | behavior                                                                                 |
 |-------------|------------------------------------------------------------------------------------------|
@@ -118,9 +119,11 @@ class _Expired(Exception):
 
 @dataclass
 class SendOptions:
-    """``cancel``: set to stop the request (the exchange carries the error ``cancelled``; an event stream ends with
+    """
+    ``cancel``: set to stop the request (the exchange carries the error ``cancelled``; an event stream ends with
     what arrived). ``on_stream_start(head)`` and ``on_stream_event(event, at_ms)`` report an event stream as it
-    arrives."""
+    arrives.
+    """
 
     source: str  # "panel" or "agent"
     max_body_bytes: int = PANEL_BODY_BYTES

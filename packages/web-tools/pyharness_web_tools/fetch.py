@@ -1,4 +1,5 @@
-"""``web_fetch``: HTTP GET with the body reduced to readable text.
+"""
+``web_fetch``: HTTP GET with the body reduced to readable text.
 
 | function           | contract                                                                             |
 |--------------------|--------------------------------------------------------------------------------------|

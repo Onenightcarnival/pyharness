@@ -1,4 +1,5 @@
-"""Shared by the ``web_search`` and ``web_fetch`` modules.
+"""
+Shared by the ``web_search`` and ``web_fetch`` modules.
 
 | name           | contract                                                        |
 |----------------|-----------------------------------------------------------------|

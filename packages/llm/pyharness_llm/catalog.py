@@ -60,7 +60,8 @@ def type_info(kind: str) -> dict[str, Any]:
 
 
 def translate_options(kind: str, options: dict[str, Any]) -> dict[str, Any]:
-    """Generic ``base_url`` / ``api_key`` → the provider's keyword names; ``None`` values dropped.
+    """
+    Generic ``base_url`` / ``api_key`` → the provider's keyword names; ``None`` values dropped.
 
     ``openai`` with a custom ``base_url`` defaults to the Chat Completions API (``use_responses_api=False``):
     the common denominator of OpenAI-compatible servers. Set ``use_responses_api`` explicitly to override.

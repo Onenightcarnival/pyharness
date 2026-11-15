@@ -1,4 +1,5 @@
-"""__TITLE__: one tool, one tools/result listener, one HTTP route.
+"""
+__TITLE__: one tool, one tools/result listener, one HTTP route.
 
 | extension point   | mode     | effect                                    |
 |-------------------|----------|-------------------------------------------|

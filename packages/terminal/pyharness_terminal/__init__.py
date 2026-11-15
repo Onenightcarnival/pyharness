@@ -1,4 +1,5 @@
-"""``ctx.terminal``: a persistent shell per session for the agent, background jobs, and PTY terminals for the Web UI.
+"""
+``ctx.terminal``: a persistent shell per session for the agent, background jobs, and PTY terminals for the Web UI.
 
 - ``bash``: tool; one bash process per agent session (thread id), started in the workspace root; working directory
   and environment persist between calls; stdin is ``/dev/null``; a timeout kills and restarts the shell.

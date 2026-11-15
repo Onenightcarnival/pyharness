@@ -1,5 +1,7 @@
-"""Configuration center: skills store and routes, the MCP page routes (test, timeout, credentials), the managed bun
-runtime."""
+"""
+Configuration center: skills store and routes, the MCP page routes (test, timeout, credentials), the managed bun
+runtime.
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
-"""Wire contract shared by the stores, the engine, the routes and the page.
+"""
+Wire contract shared by the stores, the engine, the routes and the page.
 
 | name               | contract                                                                             |
 |--------------------|--------------------------------------------------------------------------------------|
@@ -94,9 +95,11 @@ def _parse(text: str, shown: str) -> httpx.URL:
 
 
 def join_url(base_url: str, path: str, query: Any) -> httpx.URL:
-    """The URL the engine sends and the page previews. An empty base URL (a request without a target) takes the path
+    """
+    The URL the engine sends and the page previews. An empty base URL (a request without a target) takes the path
     as the whole URL: a missing scheme becomes ``http`` for loopback and private literals, ``https`` otherwise.
-    Raises ``ValueError`` on a malformed URL, a scheme other than http(s) or embedded credentials."""
+    Raises ``ValueError`` on a malformed URL, a scheme other than http(s) or embedded credentials.
+    """
     if SCHEME.match(path):
         url = _parse(path, path)
     elif not base_url:
@@ -123,9 +126,11 @@ def join_url(base_url: str, path: str, query: Any) -> httpx.URL:
 
 
 class SseParser:
-    """Lines end with LF, CR or CRLF; ``:`` lines are comments; a blank line dispatches the event built from the
+    """
+    Lines end with LF, CR or CRLF; ``:`` lines are comments; a blank line dispatches the event built from the
     ``event``, ``data``, ``id`` and ``retry`` fields since the previous one. An event without a field is not
-    dispatched."""
+    dispatched.
+    """
 
     def __init__(self) -> None:
         self._buffer = ""

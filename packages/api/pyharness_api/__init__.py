@@ -1,4 +1,5 @@
-"""REST and SSE API over ``ctx.agents``, under ``/api`` on ``ctx.http``.
+"""
+REST and SSE API over ``ctx.agents``, under ``/api`` on ``ctx.http``.
 
 | method | path | body | response |
 |--------|------|------|----------|

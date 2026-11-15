@@ -1,4 +1,5 @@
-"""Server-side syntax highlighting for the Web UI (Pygments): token spans with ``hl-`` classes, no inline colors.
+"""
+Server-side syntax highlighting for the Web UI (Pygments): token spans with ``hl-`` classes, no inline colors.
 
 | function                         | result                                                           |
 |----------------------------------|------------------------------------------------------------------|

@@ -1,4 +1,5 @@
-"""Model catalogs per provider and the ``ctx.llm`` routes rebuilt from them.
+"""
+Model catalogs per provider and the ``ctx.llm`` routes rebuilt from them.
 
 | function               | contract                                                                        |
 |------------------------|---------------------------------------------------------------------------------|

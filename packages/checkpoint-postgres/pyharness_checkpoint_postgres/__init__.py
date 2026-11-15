@@ -1,4 +1,5 @@
-"""Persistence provider on PostgreSQL: ``ctx.checkpointer`` and ``ctx.store``.
+"""
+Persistence provider on PostgreSQL: ``ctx.checkpointer`` and ``ctx.store``.
 
 | service              | implementation         |
 |----------------------|------------------------|

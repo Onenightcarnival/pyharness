@@ -1,4 +1,5 @@
-"""Listener of the gateway application: a uvicorn server of its own, restarted when the settings change.
+"""
+Listener of the gateway application: a uvicorn server of its own, restarted when the settings change.
 
 | member        | contract                                                                          |
 |---------------|-----------------------------------------------------------------------------------|

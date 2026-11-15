@@ -39,7 +39,8 @@ class ModelEntry(BaseModel):
 
 
 class RetryPolicy(BaseModel):
-    """Retries of a failed model call, on top of the provider client's own.
+    """
+    Retries of a failed model call, on top of the provider client's own.
 
     | field              | meaning                                                              |
     |--------------------|----------------------------------------------------------------------|

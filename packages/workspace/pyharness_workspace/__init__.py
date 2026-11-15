@@ -1,4 +1,5 @@
-"""Workspace provider: ``ctx.workspace`` (the workspace registry) and ``ctx.backend`` (the default deepagents backend).
+"""
+Workspace provider: ``ctx.workspace`` (the workspace registry) and ``ctx.backend`` (the default deepagents backend).
 
 | config           | backend               | agent file tools                                                     |
 |------------------|-----------------------|----------------------------------------------------------------------|

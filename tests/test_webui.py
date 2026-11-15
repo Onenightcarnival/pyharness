@@ -1,5 +1,7 @@
-"""Web UI: boot manifest, client modules, plugin calls, page preferences, vendored scripts, workspace file
-browsing, the inspect ``ui`` topic."""
+"""
+Web UI: boot manifest, client modules, plugin calls, page preferences, vendored scripts, workspace file
+browsing, the inspect ``ui`` topic.
+"""
 
 from __future__ import annotations
 

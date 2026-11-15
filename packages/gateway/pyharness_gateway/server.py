@@ -1,4 +1,5 @@
-"""The gateway's own ASGI application: key authentication, the three protocol endpoints, model listing, the
+"""
+The gateway's own ASGI application: key authentication, the three protocol endpoints, model listing, the
 streaming relay and the usage ledger entry of every authenticated protocol request.
 
 | route                       | behavior                                                                   |
@@ -68,8 +69,10 @@ COMPLETIONS: dict[str, Callable[..., dict[str, Any]]] = {
 
 @dataclass
 class GatewayDeps:
-    """``generate(generation)`` yields the chunks of one model request; ``load_image`` turns a pending image into a
-    ``data:`` URL."""
+    """
+    ``generate(generation)`` yields the chunks of one model request; ``load_image`` turns a pending image into a
+    ``data:`` URL.
+    """
 
     generate: Callable[[Generation], AsyncIterator[Chunk]]
     catalog: ModelCatalog

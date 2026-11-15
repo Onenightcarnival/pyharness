@@ -1,4 +1,5 @@
-"""Data files shipped inside a package: TOML tables next to a module.
+"""
+Data files shipped inside a package: TOML tables next to a module.
 
 | function                       | file            | use                                              |
 |--------------------------------|-----------------|--------------------------------------------------|

@@ -1,4 +1,5 @@
-"""In-process harness: compose, start, ready, stop.
+"""
+In-process harness: compose, start, ready, stop.
 
 | user                | phases run                                             |
 |---------------------|--------------------------------------------------------|

@@ -1,4 +1,5 @@
-"""``ctx.rdb``: relational database workbench — SQLite / PostgreSQL / GaussDB / MySQL (MariaDB).
+"""
+``ctx.rdb``: relational database workbench — SQLite / PostgreSQL / GaussDB / MySQL (MariaDB).
 
 | member | contract |
 |---|---|

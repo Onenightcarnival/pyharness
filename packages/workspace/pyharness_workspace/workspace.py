@@ -1,4 +1,5 @@
-"""One workspace: a root directory, agent path resolution, protected paths.
+"""
+One workspace: a root directory, agent path resolution, protected paths.
 
 | member            | contract                                                                       |
 |-------------------|--------------------------------------------------------------------------------|

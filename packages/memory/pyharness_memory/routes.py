@@ -1,5 +1,7 @@
-"""FastAPI routes under ``/api/memory`` for the Memory page: ``GET`` (state), ``GET ?diff=N``, ``POST`` (commit),
-``PATCH`` (agent access), ``DELETE`` (clear)."""
+"""
+FastAPI routes under ``/api/memory`` for the Memory page: ``GET`` (state), ``GET ?diff=N``, ``POST`` (commit),
+``PATCH`` (agent access), ``DELETE`` (clear).
+"""
 
 from __future__ import annotations
 

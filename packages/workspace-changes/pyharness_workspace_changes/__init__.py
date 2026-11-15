@@ -1,4 +1,5 @@
-"""``ctx.workspaceChanges``: which files each turn changed, from git work-tree snapshots.
+"""
+``ctx.workspaceChanges``: which files each turn changed, from git work-tree snapshots.
 
 | moment             | work                                                                                   |
 |--------------------|----------------------------------------------------------------------------------------|

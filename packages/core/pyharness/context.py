@@ -1,4 +1,5 @@
-"""Context: the service container each plugin receives.
+"""
+Context: the service container each plugin receives.
 
 | concept      | contract                                                                          |
 |--------------|-----------------------------------------------------------------------------------|
@@ -285,7 +286,8 @@ class Context:
 
 
 class Service:
-    """Plugin that provides one service under ``key``.
+    """
+    Plugin that provides one service under ``key``.
 
     | phase    | loader action                                                |
     |----------|--------------------------------------------------------------|

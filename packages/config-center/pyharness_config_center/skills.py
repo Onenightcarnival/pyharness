@@ -1,4 +1,5 @@
-"""User skills: ``<profile data>/toolkit/skills/<name>/SKILL.md`` (enabled, mounted for the agent at ``/skills/user/``)
+"""
+User skills: ``<profile data>/toolkit/skills/<name>/SKILL.md`` (enabled, mounted for the agent at ``/skills/user/``)
 and ``<profile data>/toolkit/disabled-skills/`` (kept, not mounted). Install from ZIP, enable / disable by moving the
 directory, remove, read files.
 
@@ -249,8 +250,10 @@ class SkillStore:
         return [root / name for root in (self.enabled_dir, self.disabled_dir) if os.path.lexists(root / name)]
 
     def install_zip(self, data: bytes, policy: str = "ask") -> dict[str, Any]:
-        """Extract a ZIP into the enabled directory (the rules of the module table). ``policy``: ask (report
-        conflicts, write nothing), skip (keep existing entries), replace (overwrite)."""
+        """
+        Extract a ZIP into the enabled directory (the rules of the module table). ``policy``: ask (report
+        conflicts, write nothing), skip (keep existing entries), replace (overwrite).
+        """
         if len(data) > ZIP_LIMIT:
             raise SkillError("ZIP size limit: 32 MB")
         try:

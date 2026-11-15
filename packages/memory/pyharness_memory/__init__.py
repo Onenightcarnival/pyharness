@@ -1,4 +1,5 @@
-"""``ctx.memory``: the agent's layered career memory (profile → work → project → lesson) with version history.
+"""
+``ctx.memory``: the agent's layered career memory (profile → work → project → lesson) with version history.
 
 | member                    | contract                                                                 |
 |---------------------------|--------------------------------------------------------------------------|

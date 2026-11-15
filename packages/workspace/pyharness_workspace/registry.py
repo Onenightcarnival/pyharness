@@ -1,4 +1,5 @@
-"""``Workspaces`` (``ctx.workspace``): open workspaces, cached backends, remembered workspaces, the directory picker.
+"""
+``Workspaces`` (``ctx.workspace``): open workspaces, cached backends, remembered workspaces, the directory picker.
 
 | member                       | contract                                                                  |
 |------------------------------|---------------------------------------------------------------------------|
@@ -202,7 +203,8 @@ class Workspaces:
         return "browse"
 
     async def pick(self, prompt: str = "Choose a workspace directory") -> str | None:
-        """Open the OS folder dialog; the chosen absolute path, ``None`` when cancelled.
+        """
+        Open the OS folder dialog; the chosen absolute path, ``None`` when cancelled.
 
         Raises ``WorkspaceError`` without a dialog.
         """

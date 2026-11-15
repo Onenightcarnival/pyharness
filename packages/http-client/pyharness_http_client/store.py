@@ -1,4 +1,5 @@
-"""The three stores of the HTTP page, each one file written atomically with mode 0600.
+"""
+The three stores of the HTTP page, each one file written atomically with mode 0600.
 
 | store            | file              | content                                                                |
 |------------------|-------------------|------------------------------------------------------------------------|
@@ -199,8 +200,10 @@ def _integer(value: Any, low: int, high: int, name: str) -> int:
 
 
 def normalize_auth(value: Any, previous: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Validate a target's auth payload; ``previous`` supplies a secret the form left empty when the type is
-    unchanged."""
+    """
+    Validate a target's auth payload; ``previous`` supplies a secret the form left empty when the type is
+    unchanged.
+    """
     if value is None:
         return previous or {"type": "none"}
     if not isinstance(value, dict):

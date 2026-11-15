@@ -1,4 +1,5 @@
-"""``DeepAgentsLoop``: the ``agentLoop`` service; extension points, presets and modes, ``build()``.
+"""
+``DeepAgentsLoop``: the ``agentLoop`` service; extension points, presets and modes, ``build()``.
 
 | member               | contract                                                                        |
 |----------------------|---------------------------------------------------------------------------------|
@@ -97,8 +98,10 @@ class DeepAgentsLoop(Service):
         return [{"name": s.get("name"), "owner": owner} for s, owner in self._subagents]
 
     def add_skills(self, directory: str | Path, label: str | None = None, presets: list[str] | None = None) -> Any:
-        """Mount ``directory`` (``<skill>/SKILL.md`` layout) read-only at ``/skills/<label>/`` for ``presets``
-        (``None``: all); returns the disposer."""
+        """
+        Mount ``directory`` (``<skill>/SKILL.md`` layout) read-only at ``/skills/<label>/`` for ``presets``
+        (``None``: all); returns the disposer.
+        """
         path = Path(directory).expanduser().resolve()
         if not path.is_dir():
             raise ValueError(f"skills directory {path} does not exist")

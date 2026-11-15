@@ -1,4 +1,5 @@
-"""Loader: turns a composed tree into running plugins.
+"""
+Loader: turns a composed tree into running plugins.
 
 | phase    | behavior                                                                   |
 |----------|----------------------------------------------------------------------------|

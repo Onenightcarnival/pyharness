@@ -1,4 +1,5 @@
-"""Antigravity client signature: the Cloud Code backend serves content requests of the Antigravity CLI User-Agent
+"""
+Antigravity client signature: the Cloud Code backend serves content requests of the Antigravity CLI User-Agent
 family only.
 
 | name                    | contract                                                                    |

@@ -1,4 +1,5 @@
-"""Headline flow, real processes.
+"""
+Headline flow, real processes.
 
 agent installs a bundle → supervisor restart → session continues in the next generation → new plugin in use
 """

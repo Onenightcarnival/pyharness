@@ -1,4 +1,5 @@
-"""OpenAI Responses: request parsing, the semantic event stream and the complete response object.
+"""
+OpenAI Responses: request parsing, the semantic event stream and the complete response object.
 
 | name                      | contract                                                                    |
 |---------------------------|-----------------------------------------------------------------------------|

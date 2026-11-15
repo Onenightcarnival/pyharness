@@ -1,4 +1,5 @@
-"""Permission modes, agent presets and the loop configuration.
+"""
+Permission modes, agent presets and the loop configuration.
 
 | name                      | contract                                                                  |
 |---------------------------|---------------------------------------------------------------------------|

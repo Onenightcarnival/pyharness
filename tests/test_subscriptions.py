@@ -1,5 +1,7 @@
-"""AI subscriptions: the loopback OAuth flow, stores, Responses and Antigravity translation, provider parsing with
-mocked HTTP, token refresh, model routes and the page routes."""
+"""
+AI subscriptions: the loopback OAuth flow, stores, Responses and Antigravity translation, provider parsing with
+mocked HTTP, token refresh, model routes and the page routes.
+"""
 
 from __future__ import annotations
 

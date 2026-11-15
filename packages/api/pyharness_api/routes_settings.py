@@ -1,4 +1,5 @@
-"""Settings routes: agent defaults, compaction, model routes and credentials.
+"""
+Settings routes: agent defaults, compaction, model routes and credentials.
 
 | method | path                                  | handler                   |
 |--------|---------------------------------------|---------------------------|

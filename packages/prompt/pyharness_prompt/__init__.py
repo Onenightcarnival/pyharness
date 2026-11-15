@@ -1,4 +1,5 @@
-"""``ctx.prompt``: system prompt assembled from ordered sections.
+"""
+``ctx.prompt``: system prompt assembled from ordered sections.
 
 | member       | contract                                                    |
 |--------------|-------------------------------------------------------------|
@@ -47,7 +48,8 @@ class PromptService(Service):
     def add(
         self, id: str, content: str | Callable[[], str], order: int = 100, presets: list[str] | None = None
     ) -> Callable[[], Any]:
-        """Add a section; ``content`` is text or a zero-argument callable; ``presets`` limits it to those agent
+        """
+        Add a section; ``content`` is text or a zero-argument callable; ``presets`` limits it to those agent
         presets. Returns the disposer.
         """
         if id in self._sections:

@@ -1,4 +1,5 @@
-"""``ctx.http``: the FastAPI application and its uvicorn server.
+"""
+``ctx.http``: the FastAPI application and its uvicorn server.
 
 | member             | contract                                               |
 |--------------------|--------------------------------------------------------|

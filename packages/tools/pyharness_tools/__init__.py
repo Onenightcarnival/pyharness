@@ -1,4 +1,5 @@
-"""``ctx.tools``: tool registry and execution pipeline.
+"""
+``ctx.tools``: tool registry and execution pipeline.
 
 | member                                | contract                                                |
 |---------------------------------------|---------------------------------------------------------|
@@ -99,7 +100,8 @@ class ToolsService(Service):
         approval: bool | dict[str, Any] = False,
         tags: tuple[str, ...] | list[str] = (),
     ) -> Callable[[], Any]:
-        """Register a tool owned by the calling plugin; returns the disposer.
+        """
+        Register a tool owned by the calling plugin; returns the disposer.
 
         | ``approval`` | effect                                                                            |
         |--------------|-----------------------------------------------------------------------------------|
@@ -123,7 +125,8 @@ class ToolsService(Service):
         return self.caller.on_dispose(dispose)
 
     def require_approval(self, tool_name: str, config: bool | dict[str, Any] = True) -> Callable[[], Any]:
-        """Gate a tool the calling plugin does not own; returns the disposer.
+        """
+        Gate a tool the calling plugin does not own; returns the disposer.
 
         Gates accumulate per owner; a disposer removes only its owner's gate.
         """

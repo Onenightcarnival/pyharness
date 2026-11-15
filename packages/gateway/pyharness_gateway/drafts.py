@@ -1,4 +1,5 @@
-"""Protocol-independent request model: every inbound protocol parses into a :class:`ParsedRequest`; the server
+"""
+Protocol-independent request model: every inbound protocol parses into a :class:`ParsedRequest`; the server
 resolves the model, loads the images and materializes a :class:`Generation` of LangChain messages from it.
 
 | name              | contract                                                                          |

@@ -1,4 +1,5 @@
-"""Persistence on Postgres through one entry patch; history across generations.
+"""
+Persistence on Postgres through one entry patch; history across generations.
 
 Requires ``PYH_TEST_POSTGRES_DSN`` (writable database):
 ``PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test``.

@@ -50,7 +50,8 @@ def summary_of(content: Any) -> str:
 
 
 def measure(messages: list[BaseMessage]) -> int:
-    """Tokens in context: the latest response's usage (input + output) plus an estimate of what follows it.
+    """
+    Tokens in context: the latest response's usage (input + output) plus an estimate of what follows it.
 
     Usage before the last checkpoint is stale (it priced the history the checkpoint replaced), so the estimate
     covers everything after a compaction until the next model call.
@@ -72,7 +73,8 @@ def measure(messages: list[BaseMessage]) -> int:
 
 
 def cut_index(messages: list[BaseMessage], retain_tokens: int) -> int | None:
-    """Index of the first message kept verbatim; ``None`` when nothing before it is worth summarizing.
+    """
+    Index of the first message kept verbatim; ``None`` when nothing before it is worth summarizing.
 
     The tail holds at least ``retain_tokens`` (``0``: nothing is kept). The cut never separates an AI message's tool
     calls from their results, and a head that is only an earlier checkpoint is not compacted again.

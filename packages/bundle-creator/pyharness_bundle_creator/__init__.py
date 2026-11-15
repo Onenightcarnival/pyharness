@@ -1,4 +1,5 @@
-"""``creator`` bundle: the ``creator`` agent preset as the default for new sessions
+"""
+``creator`` bundle: the ``creator`` agent preset as the default for new sessions
 (the ``creator`` profile template).
 """
 

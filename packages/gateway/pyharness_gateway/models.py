@@ -1,4 +1,5 @@
-"""Model catalog of the gateway: every model of every route as ``provider:model``, and alias resolution.
+"""
+Model catalog of the gateway: every model of every route as ``provider:model``, and alias resolution.
 
 | name            | contract                                                                             |
 |-----------------|--------------------------------------------------------------------------------------|

@@ -1,5 +1,7 @@
-"""Connection profiles (``<profile data>/toolkit/rdb.json``) and the agent-access setting; passwords live in the
-profile credential store under ``RDB_<ID>``."""
+"""
+Connection profiles (``<profile data>/toolkit/rdb.json``) and the agent-access setting; passwords live in the
+profile credential store under ``RDB_<ID>``.
+"""
 
 from __future__ import annotations
 

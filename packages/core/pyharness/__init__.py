@@ -1,4 +1,5 @@
-"""pyharness: an everything-is-a-plugin agent harness on FastAPI, deepagents and LangGraph.
+"""
+pyharness: an everything-is-a-plugin agent harness on FastAPI, deepagents and LangGraph.
 
 | kernel module              | content                                          |
 |----------------------------|--------------------------------------------------|

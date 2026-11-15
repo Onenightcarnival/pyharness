@@ -1,6 +1,8 @@
-"""OpenAI Responses wire format shared by Codex, ChatGPT and Grok: LangChain messages → ``input`` items, tool
+"""
+OpenAI Responses wire format shared by Codex, ChatGPT and Grok: LangChain messages → ``input`` items, tool
 definitions, and the streaming translation of Responses SSE events into ``AIMessageChunk`` (text, reasoning,
-tool calls, usage)."""
+tool calls, usage).
+"""
 
 from __future__ import annotations
 
@@ -67,8 +69,10 @@ def short_call_id(call_id: str) -> str:
 def to_responses_input(
     messages: list[BaseMessage], *, repair: bool = True, shorten_ids: bool = False, namespace: str | None = None
 ) -> tuple[str | None, list[dict[str, Any]]]:
-    """``(instructions, input)``: system messages become the instructions; tool calls / results become
-    ``function_call`` / ``function_call_output`` items; calls without an output get a placeholder output."""
+    """
+    ``(instructions, input)``: system messages become the instructions; tool calls / results become
+    ``function_call`` / ``function_call_output`` items; calls without an output get a placeholder output.
+    """
     instructions: list[str] = []
     items: list[dict[str, Any]] = []
     ids: dict[str, str] = {}

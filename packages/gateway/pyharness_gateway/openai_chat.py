@@ -1,4 +1,5 @@
-"""OpenAI Chat Completions: request parsing, ``chat.completion.chunk`` frames and the complete object.
+"""
+OpenAI Chat Completions: request parsing, ``chat.completion.chunk`` frames and the complete object.
 
 | name                  | contract                                                                        |
 |-----------------------|---------------------------------------------------------------------------------|

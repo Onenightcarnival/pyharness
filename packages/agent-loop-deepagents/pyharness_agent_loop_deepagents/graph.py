@@ -1,4 +1,5 @@
-"""Graph building: the backend with its skills mounts, the write-deny rules, subagent resolution, ``create_deep_agent``.
+"""
+Graph building: the backend with its skills mounts, the write-deny rules, subagent resolution, ``create_deep_agent``.
 
 | function                 | contract                                                                        |
 |--------------------------|---------------------------------------------------------------------------------|
@@ -38,8 +39,10 @@ PROMPTS = package_prompts(__file__)
 def backend_and_skills(
     ctx: Any, config: LoopConfig, mounts: list[tuple[str, Path]], workspace: str | None, mode: str
 ) -> tuple[Any, list[str], list[Any]]:
-    """Backend for the workspace and mode with the skills ``mounts`` (``(slug, directory)``) routed in, the skill
-    sources, and the write-deny rules."""
+    """
+    Backend for the workspace and mode with the skills ``mounts`` (``(slug, directory)``) routed in, the skill
+    sources, and the write-deny rules.
+    """
     workspaces = ctx.get("workspace", None)
     if workspaces is not None and hasattr(workspaces, "backend_for"):
         backend = workspaces.backend_for(workspace, shell=mode != "read-only")
@@ -82,8 +85,10 @@ def resolve_subagent(ctx: Any, spec: dict[str, Any], registry: dict[str, Any]) -
 
 
 def built_model(ctx: Any, config: LoopConfig) -> tuple[str | None, Any]:
-    """Model the graph is built with. An unusable default falls back to ``echo:echo`` so the harness boots;
-    requests then resolve the configured model and report its error in the session."""
+    """
+    Model the graph is built with. An unusable default falls back to ``echo:echo`` so the harness boots;
+    requests then resolve the configured model and report its error in the session.
+    """
     spec = config.model or ctx.llm.default
     try:
         return spec, ctx.llm.resolve(spec)
@@ -109,8 +114,10 @@ async def build(
     middleware: list[AgentMiddleware],
     workspace: str | None = None,
 ) -> Any:
-    """Graph for a workspace root (``None``: the default), a permission mode id, a ``(id, config)`` preset, the
-    skills ``mounts`` for that preset, and the subagent specs and middleware added by plugins."""
+    """
+    Graph for a workspace root (``None``: the default), a permission mode id, a ``(id, config)`` preset, the
+    skills ``mounts`` for that preset, and the subagent specs and middleware added by plugins.
+    """
     preset_id, preset_cfg = preset
     keep = set(preset_cfg.tools) if preset_cfg.tools is not None else None
     drop = set(preset_cfg.exclude_tools)

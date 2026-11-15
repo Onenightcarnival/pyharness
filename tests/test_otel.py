@@ -1,4 +1,5 @@
-"""OpenTelemetry export: endpoint normalization, the turn trace built from a scripted run, the settings and test
+"""
+OpenTelemetry export: endpoint normalization, the turn trace built from a scripted run, the settings and test
 routes.
 """
 

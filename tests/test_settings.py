@@ -1,4 +1,5 @@
-"""Model routes: configuration model, credential store, settings API, per-session selection; live endpoint when
+"""
+Model routes: configuration model, credential store, settings API, per-session selection; live endpoint when
 configured.
 """
 
@@ -276,7 +277,8 @@ LIVE = {k: os.environ.get(f"PYH_TEST_OPENAI_{k}") for k in ("BASE_URL", "MODEL",
 
 @pytest.mark.skipif(not all(LIVE.values()), reason="PYH_TEST_OPENAI_BASE_URL / _MODEL / _API_KEY unset")
 async def test_live_openai_compatible_service(profile, monkeypatch):
-    """Settings flow against a real OpenAI-compatible endpoint: discover, test, save, run with the model selected per
+    """
+    Settings flow against a real OpenAI-compatible endpoint: discover, test, save, run with the model selected per
     session.
     """
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)

@@ -1,4 +1,5 @@
-"""Typed events with declared dispatch modes.
+"""
+Typed events with declared dispatch modes.
 
 Each event has one dispatch mode, fixed by :meth:`EventBus.define`.
 
@@ -75,7 +76,8 @@ class EventBus:
 
     # ------------------------------------------------------------------ contract
     def define(self, name: str, mode: str, doc: str = "", owner: str | None = None) -> Callable[[], None]:
-        """Declare ``name`` with ``mode``; returns the disposer.
+        """
+        Declare ``name`` with ``mode``; returns the disposer.
 
         One event has one mode and any number of declaring owners.
         """

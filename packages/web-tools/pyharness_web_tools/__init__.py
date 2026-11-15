@@ -1,4 +1,5 @@
-"""``ctx.web``: the ``web_search`` and ``web_fetch`` tools.
+"""
+``ctx.web``: the ``web_search`` and ``web_fetch`` tools.
 
 | tool           | source                                                                                  |
 |----------------|-----------------------------------------------------------------------------------------|

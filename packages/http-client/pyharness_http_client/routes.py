@@ -1,4 +1,5 @@
-"""Management routes under ``/api/http-client`` for the HTTP page.
+"""
+Management routes under ``/api/http-client`` for the HTTP page.
 
 | request                                   | response                                                         |
 |-------------------------------------------|------------------------------------------------------------------|

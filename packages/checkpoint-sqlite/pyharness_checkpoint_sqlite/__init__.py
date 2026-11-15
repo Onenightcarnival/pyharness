@@ -1,4 +1,5 @@
-"""Persistence provider on SQLite: ``ctx.checkpointer`` and ``ctx.store``.
+"""
+Persistence provider on SQLite: ``ctx.checkpointer`` and ``ctx.store``.
 
 | service              | implementation       | file                  |
 |----------------------|----------------------|-----------------------|

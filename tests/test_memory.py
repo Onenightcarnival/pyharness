@@ -1,4 +1,5 @@
-"""Career memory: store commits and history, memory_get / memory_save tools, the agent-access switch, the HTTP
+"""
+Career memory: store commits and history, memory_get / memory_save tools, the agent-access switch, the HTTP
 routes.
 """
 

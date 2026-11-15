@@ -1,4 +1,5 @@
-"""Session routes: records, messages and approvals as SSE runs, turns, changes, cancel, delete, stream.
+"""
+Session routes: records, messages and approvals as SSE runs, turns, changes, cancel, delete, stream.
 
 | method | path                                  | handler                 |
 |--------|---------------------------------------|-------------------------|
@@ -221,8 +222,10 @@ def build_sessions_router(ctx: Any) -> APIRouter:
 
     @router.post("/sessions/{session_id}/compact")
     async def post_compact(session_id: str) -> StreamingResponse:
-        """Manual compaction: a run of kind ``compact`` whose stream carries ``compact`` (when history was replaced)
-        and ``done``."""
+        """
+        Manual compaction: a run of kind ``compact`` whose stream carries ``compact`` (when history was replaced)
+        and ``done``.
+        """
         await require(session_id)
         if ctx.get("compaction", None) is None:
             raise HTTPException(503, "compaction plugin unavailable")
@@ -240,8 +243,10 @@ def build_sessions_router(ctx: Any) -> APIRouter:
 
     @router.post("/sessions/{session_id}/retry")
     async def post_retry(session_id: str) -> StreamingResponse:
-        """Continue the failed last turn: a run of kind ``retry`` that resumes the step that failed, without a new
-        message (SSE like a message). 409 unless the session's ``failure`` is ``continuable``."""
+        """
+        Continue the failed last turn: a run of kind ``retry`` that resumes the step that failed, without a new
+        message (SSE like a message). 409 unless the session's ``failure`` is ``continuable``.
+        """
         await require(session_id)
         try:
             handle = await agents.retry_run(session_id)

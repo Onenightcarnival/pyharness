@@ -1,4 +1,5 @@
-"""Gateway settings file: defaults, validation and atomic persistence.
+"""
+Gateway settings file: defaults, validation and atomic persistence.
 
 | name                  | contract                                                                    |
 |-----------------------|-----------------------------------------------------------------------------|

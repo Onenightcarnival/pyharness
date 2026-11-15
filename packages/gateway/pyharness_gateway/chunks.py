@@ -1,4 +1,5 @@
-"""Stream vocabulary of the gateway: a LangChain message stream becomes block chunks the protocol encoders consume.
+"""
+Stream vocabulary of the gateway: a LangChain message stream becomes block chunks the protocol encoders consume.
 
 | chunk             | fields                                                              |
 |-------------------|---------------------------------------------------------------------|

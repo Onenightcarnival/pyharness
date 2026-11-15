@@ -1,4 +1,5 @@
-"""``ctx.compaction``: context compaction — a checkpoint summary replaces older history.
+"""
+``ctx.compaction``: context compaction — a checkpoint summary replaces older history.
 
 - auto: before a model call, once the measured context reaches ``threshold_ratio`` × window; kept verbatim: the tail
   worth ``retain_ratio`` × window.

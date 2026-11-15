@@ -1,4 +1,5 @@
-"""``ctx.llm``: chat-model routes over LangChain provider integrations.
+"""
+``ctx.llm``: chat-model routes over LangChain provider integrations.
 
 A **route** is a configured provider under ``config.providers[route]``: its ``type`` names a LangChain provider
 (``init_chat_model`` ``model_provider``, or a factory registered with :meth:`LLMService.register`), its connection

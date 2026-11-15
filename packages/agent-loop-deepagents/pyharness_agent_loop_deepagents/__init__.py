@@ -1,4 +1,5 @@
-"""``ctx.agentLoop``: the default agent loop, built on deepagents.
+"""
+``ctx.agentLoop``: the default agent loop, built on deepagents.
 
 Contract with ``ctx.agents``: ``build()`` returns a LangGraph graph with ``astream`` and
 ``aget_state``. Another loop replaces this entry through a patch.

@@ -1,4 +1,5 @@
-"""``WebToolsService``: the ``web`` service; registers ``web_search`` and ``web_fetch`` and holds the credential.
+"""
+``WebToolsService``: the ``web`` service; registers ``web_search`` and ``web_fetch`` and holds the credential.
 
 | member         | contract                                                                             |
 |----------------|--------------------------------------------------------------------------------------|

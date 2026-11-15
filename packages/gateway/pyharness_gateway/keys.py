@@ -1,4 +1,5 @@
-"""API keys of the gateway: a 0600 JSON file holding every key in full, so the page can show and copy them.
+"""
+API keys of the gateway: a 0600 JSON file holding every key in full, so the page can show and copy them.
 
 | name               | contract                                                                         |
 |--------------------|----------------------------------------------------------------------------------|
