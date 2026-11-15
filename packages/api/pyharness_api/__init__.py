@@ -14,7 +14,7 @@
 | POST   | ``/sessions`` | ``{"title"?, "model"?, "workspace"?, "mode"?, "preset"?}`` | session |
 | GET    | ``/sessions/{id}`` |  | session, busy, messages, pending approvals |
 | POST   | ``/sessions/{id}/messages`` | ``{"content", "images"?}`` | SSE run events |
-| GET    | ``/workspaces/search`` | ``q``, ``root``? | workspace paths matching ``q`` for ``@`` references |
+| GET    | ``/workspaces/search`` | ``q``, ``root``?, ``limit``?, ``hidden``?, ``fuzzy``? | paths matching ``q`` |
 | POST   | ``/sessions/{id}/approvals`` | ``{"decisions": [decision]}`` | SSE run events |
 | POST   | ``/sessions/{id}/compact`` |  | SSE of a manual compaction run (``compact``, ``done``) |
 | POST   | ``/sessions/{id}/answers`` | ``{"answers", "interrupt_id"?}`` | SSE of the resumed run |

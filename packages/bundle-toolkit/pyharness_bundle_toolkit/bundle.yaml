@@ -1,5 +1,5 @@
 title: Toolkit
-description: Built-in toolkit; sidebar entries can be hidden in Settings → General.
+description: Built-in toolkit; sidebar entries can be unpinned to the More menu.
 builtin: true
 patch:
   # Career memory (profile → work → project → lesson) with version history: ctx.memory, memory_get / memory_save, the Memory page.

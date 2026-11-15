@@ -47,6 +47,23 @@ def test_tokens_and_expand(tmp_path):
     assert {e["path"] for e in search(tmp_path, "")} >= {"/README.md", "/src/"}
 
 
+def test_search_takes_hidden_entries_and_substring_matches_on_request(tmp_path):
+    for path in ("src/app.py", ".github/app.yml", ".git/app", "node_modules/app/index.js"):
+        (tmp_path / path).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / path).write_text("x")
+    (tmp_path / ".apprc").write_text("x")
+    (tmp_path / "a_p_p.txt").write_text("x")
+    assert [e["path"] for e in search(tmp_path, "app")] == ["/src/app.py", "/a_p_p.txt"]
+    assert [e["path"] for e in search(tmp_path, "app", fuzzy=False)] == ["/src/app.py"]
+    found = [e["path"] for e in search(tmp_path, "app", hidden=True, fuzzy=False)]
+    assert found == ["/src/app.py", "/.github/app.yml", "/.apprc"]  # dependency directories stay out
+    assert [e["path"] for e in search(tmp_path, "github", hidden=True, fuzzy=False)] == [
+        "/.github/",
+        "/.github/app.yml",
+    ]
+    assert search(tmp_path, "github", fuzzy=False) == []
+
+
 async def test_message_route_expands_references(home, tmp_path):
     workspace = tmp_path / "workspace"
     (workspace / "notes.md").write_text("remember the milk\n")
@@ -58,6 +75,27 @@ async def test_message_route_expands_references(home, tmp_path):
     ):
         found = (await c.get("/api/workspaces/search", params={"q": "note"})).json()["entries"]
         assert found and found[0]["path"] == "/notes.md"
+        (workspace / ".notes").mkdir()
+        for i in range(3):
+            (workspace / ".notes" / f"note{i}.md").write_text("n")
+        r = (await c.get("/api/workspaces/search", params={"q": "note"})).json()
+        assert [e["path"] for e in r["entries"]] == ["/notes.md"] and r["truncated"] is False
+        r = (await c.get("/api/workspaces/search", params={"q": "note", "hidden": "true", "fuzzy": "false"})).json()
+        paths = [e["path"] for e in r["entries"]]
+        assert paths == ["/notes.md", "/.notes/note0.md", "/.notes/note1.md", "/.notes/note2.md", "/.notes/"]
+        r = (await c.get("/api/workspaces/search", params={"q": "note", "hidden": "true", "limit": 2})).json()
+        assert [e["path"] for e in r["entries"]] == paths[:2] and r["truncated"] is True
+        r = (await c.get("/api/workspaces/search", params={"q": "nts", "fuzzy": "false"})).json()
+        assert r == {"entries": [], "truncated": False}
+        assert (await c.get("/api/workspaces/search", params={"q": "nts"})).json()["entries"][0]["path"] == "/notes.md"
+        for i in range(520):
+            (workspace / f"bulk{i:03}.txt").write_text("b")
+        r = (await c.get("/api/workspaces/search", params={"q": "bulk", "limit": 9999})).json()
+        assert len(r["entries"]) == 500 and r["truncated"] is True
+        r = (await c.get("/api/workspaces/search", params={"q": "bulk", "limit": 300})).json()
+        assert len(r["entries"]) == 300
+        for i in range(520):
+            (workspace / f"bulk{i:03}.txt").unlink()
         sid = (await c.post("/api/sessions", json={})).json()["id"]
         events = sse_events(
             (await c.post(f"/api/sessions/{sid}/messages", json={"content": "summarize @notes.md"})).text

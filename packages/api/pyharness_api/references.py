@@ -103,20 +103,29 @@ def expand(text: str, workspace: Any) -> tuple[str, list[dict[str, Any]]]:
     return text.rstrip() + "\n\n" + "\n\n".join(blocks), refs
 
 
-def search(root: Path, query: str, limit: int = 50, max_visited: int = 30_000) -> list[dict[str, Any]]:
+def search(
+    root: Path, query: str, limit: int = 50, max_visited: int = 30_000, *, hidden: bool = False, fuzzy: bool = True
+) -> list[dict[str, Any]]:
     """Files and directories under ``root`` whose virtual path matches ``query`` (substring, then subsequence),
-    ranked."""
+    ranked.
+
+    | argument   | effect                                                                         |
+    |------------|--------------------------------------------------------------------------------|
+    | ``hidden`` | dot-files and dot-directories take part; ``SKIP_DIRS`` stay out in either case |
+    | ``fuzzy``  | ``False`` drops the subsequence matches                                        |
+    """
     q = query.strip().lower().lstrip("/")
     results: list[tuple[int, str, dict[str, Any]]] = []
     visited = 0
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS and not d.startswith("."))
+        dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS and (hidden or not d.startswith(".")))
         rel = Path(dirpath).relative_to(root).as_posix()
         prefix = "" if rel == "." else rel + "/"
-        for name, is_dir in [(d, True) for d in dirnames] + [(f, False) for f in filenames if not f.startswith(".")]:
+        files = [(f, False) for f in filenames if hidden or not f.startswith(".")]
+        for name, is_dir in [(d, True) for d in dirnames] + files:
             visited += 1
             virtual = prefix + name + ("/" if is_dir else "")
-            score = _score(virtual.lower(), name.lower(), q)
+            score = _score(virtual.lower(), name.lower(), q, fuzzy)
             if score is not None:
                 results.append((score, virtual, {"path": "/" + virtual, "name": name, "dir": is_dir}))
             if visited >= max_visited:
@@ -127,7 +136,7 @@ def search(root: Path, query: str, limit: int = 50, max_visited: int = 30_000) -
     return [r[2] for r in results[:limit]]
 
 
-def _score(path: str, name: str, q: str) -> int | None:
+def _score(path: str, name: str, q: str, fuzzy: bool = True) -> int | None:
     if not q:
         return 2 if "/" in path.rstrip("/") else 0
     if name.startswith(q):
@@ -136,6 +145,8 @@ def _score(path: str, name: str, q: str) -> int | None:
         return 1
     if q in path:
         return 2
+    if not fuzzy:
+        return None
     i = 0
     for ch in path:
         if ch == q[i]:

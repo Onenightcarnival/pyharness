@@ -47,5 +47,5 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 |---|---|---|---|
 | `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `mcp`, `ask-user`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `compaction`, `workspace-changes`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui`, `terminal` |
 | `creator` | Creator | New sessions start in the Creator preset (plugin-authoring skills, plugin manager and inspection tools). | `agent-loop` |
-| `toolkit` | Toolkit | Built-in toolkit; sidebar entries can be hidden in Settings → General. | `memory`, `rdb`, `s3`, `config-center`, `otel`, `subscriptions`, `gateway`, `http-client` |
+| `toolkit` | Toolkit | Built-in toolkit; sidebar entries can be unpinned to the More menu. | `memory`, `rdb`, `s3`, `config-center`, `otel`, `subscriptions`, `gateway`, `http-client` |
 | `web` | Web | web_search (DeepSeek native search; needs DEEPSEEK_API_KEY) and web_fetch tools for the agent. Preset; switch it off on the Plugins page. | `web-tools` |

@@ -25,6 +25,8 @@ from fastapi import APIRouter, HTTPException, Response
 from . import references
 from .models import WorkspacePath
 
+SEARCH_LIMIT = 500  # entries of one ``/workspaces/search`` response
+
 
 def build_workspaces_router(ctx: Any) -> APIRouter:
     router = APIRouter()
@@ -121,9 +123,17 @@ def build_workspaces_router(ctx: Any) -> APIRouter:
         }
 
     @router.get("/workspaces/search")
-    async def search_files(q: str = "", root: str | None = None, limit: int = 50) -> dict[str, Any]:
-        """Files and directories of a workspace matching ``q`` (for ``@`` references); hidden and dependency
-        directories skipped."""
+    async def search_files(
+        q: str = "", root: str | None = None, limit: int = 50, hidden: bool = False, fuzzy: bool = True
+    ) -> dict[str, Any]:
+        """Files and directories of a workspace matching ``q``, ranked; dependency directories skipped.
+
+        | parameter  | effect                                                                  |
+        |------------|-------------------------------------------------------------------------|
+        | ``limit``  | at most this many entries, 1 to 500; ``truncated`` reports further ones |
+        | ``hidden`` | dot-files and dot-directories take part                                 |
+        | ``fuzzy``  | ``false`` keeps substring matches only                                  |
+        """
         workspaces = ctx.get("workspace", None)
         if workspaces is None or not hasattr(workspaces, "open"):
             raise HTTPException(503, "workspace registry unavailable")
@@ -131,7 +141,9 @@ def build_workspaces_router(ctx: Any) -> APIRouter:
             ws = workspaces.open(root)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
-        return {"entries": await asyncio.to_thread(references.search, ws.root, q, max(1, min(limit, 200)))}
+        limit = max(1, min(limit, SEARCH_LIMIT))
+        found = await asyncio.to_thread(references.search, ws.root, q, limit + 1, hidden=hidden, fuzzy=fuzzy)
+        return {"entries": found[:limit], "truncated": len(found) > limit}
 
     @router.get("/workspaces/file")
     async def read_file(path: str, root: str | None = None, limit: int = 512 * 1024) -> dict[str, Any]:

@@ -1,4 +1,5 @@
-"""Web UI: boot manifest, client modules, plugin calls, workspace file browsing, the inspect ``ui`` topic."""
+"""Web UI: boot manifest, client modules, plugin calls, page preferences, vendored scripts, workspace file
+browsing, the inspect ``ui`` topic."""
 
 from __future__ import annotations
 
@@ -7,6 +8,7 @@ import json
 import httpx
 
 from pyharness import Harness, Profile
+from pyharness_web_ui import VENDOR, PrefsStore
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 UI_PLUGIN = {"id": "uiplugin", "name": "testkit.uiplugin", "after": "web-ui", "config": {"greeting": "hello"}}
@@ -54,6 +56,65 @@ async def test_page_carries_the_boot_manifest_and_serves_client_modules(home):
     async with Harness(profile, patch=[HTTP_OFF]) as h, client(h) as c:
         page = (await c.get("/")).text
         assert "window.__PYH_BOOT__ = " in page and '"id": "uiplugin"' not in page
+
+
+async def test_page_preferences_are_validated_and_persist_per_profile(home):
+    profile = Profile.init("web", home=str(home))
+    stored = profile.data / "web-ui" / "prefs.json"
+    async with Harness(profile, patch=[HTTP_OFF]) as h, client(h) as c:
+        assert (await c.get("/api/webui/prefs")).json() == {"unpinnedPanels": []}
+        assert not stored.exists()
+        r = await c.put("/api/webui/prefs", json={"unpinnedPanels": ["memory", "gone-panel", "memory"]})
+        assert r.status_code == 200 and r.json() == {"unpinnedPanels": ["memory", "gone-panel"]}
+        assert json.loads(stored.read_text()) == {"unpinnedPanels": ["memory", "gone-panel"]}
+        assert [f.name for f in stored.parent.iterdir()] == ["prefs.json"]
+        invalid = [
+            {"unpinnedPanels": "memory"},
+            {"unpinnedPanels": ["memory", 1]},
+            {"unpinnedPanels": ["x" * 201]},
+            {"unpinnedPanels": [str(i) for i in range(201)]},
+            {"unpinnedPanels": [], "other": 1},
+            {},
+            ["memory"],
+        ]
+        for body in invalid:
+            assert (await c.put("/api/webui/prefs", json=body)).status_code == 400, body
+        r = await c.put("/api/webui/prefs", content=b"{not json", headers={"content-type": "application/json"})
+        assert r.status_code == 400
+        assert (await c.get("/api/webui/prefs")).json() == {"unpinnedPanels": ["memory", "gone-panel"]}
+        limits = {"unpinnedPanels": ["x" * 200, *[str(i) for i in range(199)]]}
+        assert (await c.put("/api/webui/prefs", json=limits)).json() == limits
+        assert (await c.put("/api/webui/prefs", json={"unpinnedPanels": ["rdb"]})).json() == {"unpinnedPanels": ["rdb"]}
+    # A second harness on the same profile reads the stored set.
+    async with Harness(profile, patch=[HTTP_OFF]) as h, client(h) as c:
+        assert (await c.get("/api/webui/prefs")).json() == {"unpinnedPanels": ["rdb"]}
+        assert (await c.put("/api/webui/prefs", json={"unpinnedPanels": []})).json() == {"unpinnedPanels": []}
+        stored.write_text("{broken")
+        assert (await c.get("/api/webui/prefs")).json() == {"unpinnedPanels": []}
+        stored.write_text('{"unpinnedPanels": [1]}')
+        assert (await c.get("/api/webui/prefs")).json() == {"unpinnedPanels": []}
+
+
+def test_preferences_without_a_profile_stay_in_memory():
+    store = PrefsStore(None)
+    assert store.read() == {"unpinnedPanels": []}
+    assert store.write({"unpinnedPanels": ["memory"]}) == {"unpinnedPanels": ["memory"]}
+    assert store.read() == {"unpinnedPanels": ["memory"]}
+    assert PrefsStore(None).read() == {"unpinnedPanels": []}
+
+
+async def test_vendored_scripts_are_served_with_a_long_cache(home):
+    profile = Profile.init("web", home=str(home))
+    async with Harness(profile, patch=[HTTP_OFF]) as h, client(h) as c:
+        r = await c.get("/vendor/katex.min.js")
+        assert r.status_code == 200 and r.headers["content-type"].startswith("application/javascript")
+        assert r.headers["cache-control"] == "public, max-age=31536000, immutable"
+        assert r.content == (VENDOR / "katex.min.js").read_bytes() and b"renderToString" in r.content
+        assert "Khan Academy" in (VENDOR / "katex.LICENSE").read_text()
+        assert (await c.get("/vendor/katex.LICENSE")).status_code == 404
+        assert (await c.get("/vendor/nope.js")).status_code == 404
+        page = (await c.get("/")).text
+        assert "/vendor/katex.min.js" in page
 
 
 async def test_workspace_files_api(home, tmp_path):

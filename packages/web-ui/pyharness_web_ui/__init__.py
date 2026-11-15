@@ -5,6 +5,7 @@
 | ``register_client(path, calls=, inject=)`` | serve ``path`` for the caller; ``calls`` answer ``ctx.host.call`` |
 | ``clients()``                            | registered client modules: entry id, revision, calls                     |
 | ``slots()``                              | the page's extension slots with their kinds and props (:data:`SLOTS`)    |
+| ``prefs``                                | the page preferences of the profile (:class:`PrefsStore`)                |
 
 | route                              | content                                                                 |
 |------------------------------------|-------------------------------------------------------------------------|
@@ -12,6 +13,16 @@
 | ``GET /plugins/boot.json``         | the same manifest, fetched by a page that was served without it         |
 | ``GET /plugins/{entry}/client.js`` | the plugin's browser module (``?rev=`` of its mtime and size)           |
 | ``POST /plugins/{entry}/call/{m}`` | JSON body → ``calls[m](args)`` → ``{"result": ...}``                    |
+| ``GET /vendor/{name}``             | a script of :data:`VENDOR_FILES`, cacheable for a year; others 404      |
+| ``GET /api/webui/prefs``           | ``{"unpinnedPanels": [ids]}``                                           |
+| ``PUT /api/webui/prefs``           | ``{"unpinnedPanels": [ids]}`` → the stored object; invalid body 400     |
+
+Page preferences:
+
+| key                | value                                                                          |
+|--------------------|--------------------------------------------------------------------------------|
+| ``unpinnedPanels`` | ``sidebar.panellist`` ids listed in the More menu; at most 200 strings of at   |
+|                    | most 200 characters; ids without a registered panel stay stored                |
 
 Browser module contract (plain JavaScript, no bundler)::
 
@@ -48,6 +59,10 @@ from pydantic import BaseModel
 from pyharness import Service
 
 INDEX = Path(__file__).with_name("index.html")
+VENDOR = Path(__file__).with_name("vendor")
+VENDOR_FILES: dict[str, str] = {"katex.min.js": "application/javascript"}  # file name -> content type
+PREF_IDS = 200  # ids in ``unpinnedPanels``
+PREF_ID_CHARS = 200  # characters of one id
 
 # Extension slots the page declares; mirrored for ``harness_inspect`` and the plugin-authoring skill.
 SLOTS: list[dict[str, Any]] = [
@@ -57,7 +72,7 @@ SLOTS: list[dict[str, Any]] = [
         "entry": dedent(
             """
             {id, label, icon?, description?, order?}; selecting it opens the `main` panel with the same key;
-            Settings → General lets the user hide entries
+            the user unpins an entry from its row and pins it back from the More menu, which lists unpinned entries
             """
         ).strip(),
         "props": {},
@@ -141,6 +156,51 @@ class ClientModule:
         }
 
 
+def unpinned_panels(value: Any) -> list[str]:
+    """``value`` as a list of panel ids without repeats; ``ValueError`` when it is not one."""
+    if not isinstance(value, list) or len(value) > PREF_IDS:
+        raise ValueError(f"unpinnedPanels is a list of at most {PREF_IDS} strings")
+    if not all(isinstance(item, str) and len(item) <= PREF_ID_CHARS for item in value):
+        raise ValueError(f"unpinnedPanels holds strings of at most {PREF_ID_CHARS} characters")
+    return list(dict.fromkeys(value))
+
+
+class PrefsStore:
+    """Page preferences as one JSON object at ``path``, written atomically; in memory when ``path`` is ``None``."""
+
+    def __init__(self, path: Path | None) -> None:
+        self.path = path
+        self._memory: dict[str, Any] = {}
+
+    def read(self) -> dict[str, Any]:
+        """The stored preferences; a missing or unreadable file or value reads as the default."""
+        stored: Any = self._memory
+        if self.path is not None:
+            try:
+                stored = json.loads(self.path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                stored = {}
+        try:
+            unpinned = unpinned_panels(stored.get("unpinnedPanels", []) if isinstance(stored, dict) else [])
+        except ValueError:
+            unpinned = []
+        return {"unpinnedPanels": unpinned}
+
+    def write(self, prefs: Any) -> dict[str, Any]:
+        """Store ``prefs`` and return the stored object; ``ValueError`` when ``prefs`` is not a preferences object."""
+        if not isinstance(prefs, dict) or set(prefs) != {"unpinnedPanels"}:
+            raise ValueError('preferences are an object {"unpinnedPanels": [ids]}')
+        stored = {"unpinnedPanels": unpinned_panels(prefs["unpinnedPanels"])}
+        if self.path is None:
+            self._memory = stored
+            return stored
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = self.path.with_name(self.path.name + ".tmp")
+        tmp.write_text(json.dumps(stored, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        tmp.replace(self.path)
+        return stored
+
+
 class WebUIService(Service):
     """The Web UI page and the client-module registry."""
 
@@ -153,8 +213,12 @@ class WebUIService(Service):
         super().__init__(ctx, config)
         self._clients: dict[str, ClientModule] = {}
         self._html = INDEX.read_text(encoding="utf-8")
+        self.prefs = PrefsStore(None)
 
     async def start(self) -> None:
+        profile = self.ctx.get("profile", None)
+        if profile is not None and hasattr(profile, "data"):
+            self.prefs = PrefsStore(Path(profile.data) / "web-ui" / "prefs.json")
         self.ctx.http.include_router(self._router(), include_in_schema=False)
 
     # ------------------------------------------------------------------ registry
@@ -241,7 +305,32 @@ class WebUIService(Service):
                 raise HTTPException(422, str(exc)) from None
             return {"result": result}
 
+        @router.get("/vendor/{name}")
+        async def vendor(name: str) -> Response:
+            media = VENDOR_FILES.get(name)
+            if media is None:
+                raise HTTPException(404, f"no vendored file {name!r}")
+            try:
+                body = (VENDOR / name).read_bytes()
+            except OSError as exc:
+                raise HTTPException(404, str(exc)) from None
+            headers = {"Cache-Control": "public, max-age=31536000, immutable"}
+            return Response(body, media_type=media, headers=headers)
+
+        @router.get("/api/webui/prefs")
+        async def read_prefs() -> dict[str, Any]:
+            return self.prefs.read()
+
+        @router.put("/api/webui/prefs")
+        async def write_prefs(request: Request) -> dict[str, Any]:
+            try:
+                return self.prefs.write(await request.json())
+            except ValueError as exc:
+                raise HTTPException(400, str(exc)) from None
+            except OSError as exc:
+                raise HTTPException(500, f"preferences not saved: {exc}") from None
+
         return router
 
 
-__all__ = ["INDEX", "SLOTS", "ClientModule", "Config", "WebUIService"]
+__all__ = ["INDEX", "SLOTS", "VENDOR", "VENDOR_FILES", "ClientModule", "Config", "PrefsStore", "WebUIService"]
