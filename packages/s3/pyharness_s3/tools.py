@@ -1,5 +1,3 @@
-"""The ``s3_*`` LangChain tools (shapes as dsh-s3); every result is text for the model."""
-
 from __future__ import annotations
 
 from typing import Any, Protocol

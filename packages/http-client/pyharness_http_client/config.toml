@@ -1,6 +1,3 @@
-# Limits, defaults and wire-level tables. One table per module; each module loads its table with
-# ``package_toml(__file__)``.
-
 [protocol]
 # Scope id of requests sent without a target; target ids are 12 hex characters and never equal it.
 DIRECT_TARGET_ID = "direct"

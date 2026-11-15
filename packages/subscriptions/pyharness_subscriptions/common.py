@@ -1,8 +1,3 @@
-"""
-Shared pieces: error codes, HTTP error mapping, SSE parsing, JWT claims, the token manager (refresh with shared
-in-flight calls, permanent-error detection), request attribution.
-"""
-
 from __future__ import annotations
 
 import asyncio

@@ -1,5 +1,3 @@
-"""Codex tools: ``codex_web_search`` (the Codex search backend with its command set) and ``codex_image_generate``."""
-
 from __future__ import annotations
 
 import asyncio

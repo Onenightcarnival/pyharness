@@ -1,13 +1,3 @@
-"""
-``ask_user_question``: the agent asks the user and waits for the answer.
-
-The tool raises a LangGraph interrupt whose value is ``{"kind": "ask_user", "questions": [...]}``; the run ends
-``interrupted`` and the Web UI shows a question card. The answer resumes the run through
-``POST /sessions/{id}/answers`` (``agents.start_run(resume={interrupt_id: {"answers": [...]}})``); the tool then
-returns ``{"answers": [{"id", "selected", "custom"?}]}`` as JSON — a skipped question has an empty ``selected``
-and no ``custom``. Question and answer shapes follow dsh's ``ask_user_question`` so prompts written for either work.
-"""
-
 from __future__ import annotations
 
 import json

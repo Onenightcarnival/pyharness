@@ -1,5 +1,3 @@
-// Browser module of the `terminal` entry: right-sidebar tab types `terminal` (a PTY over WebSocket, rendered with
-// xterm.js when it loads, else a plain line terminal) and `jobs` (background jobs with their logs).
 window.__PyhModules__.load({
   id: "terminal",
   factory(require) {

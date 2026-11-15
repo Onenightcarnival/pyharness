@@ -1,28 +1,3 @@
-"""
-The gateway's own ASGI application: key authentication, the three protocol endpoints, model listing, the
-streaming relay and the usage ledger entry of every authenticated protocol request.
-
-| route                       | behavior                                                                   |
-|-----------------------------|----------------------------------------------------------------------------|
-| ``OPTIONS *``               | 204 with the CORS headers                                                  |
-| ``GET /v1/models``          | models the key may use; Anthropic shape with ``anthropic-version`` or ``x-api-key`` |
-| ``POST /v1/chat/completions`` | OpenAI Chat Completions                                                  |
-| ``POST /v1/responses``      | OpenAI Responses                                                           |
-| ``POST /v1/messages``       | Anthropic Messages                                                         |
-
-| failure                                | status                                                  |
-|----------------------------------------|---------------------------------------------------------|
-| missing or invalid key                 | 401                                                     |
-| key not allowed to use the model       | 403                                                     |
-| malformed or unsupported request       | 400                                                     |
-| no model resolves                      | 404                                                     |
-| body over ``max_body_bytes``           | 413                                                     |
-| route failure                          | the provider's status when it is 4xx or 5xx, else 502   |
-| client disconnect                      | the model request is cancelled; the ledger records 499  |
-
-A failure after a stream started arrives as an error frame of the endpoint's protocol, then the stream ends.
-"""
-
 from __future__ import annotations
 
 import asyncio

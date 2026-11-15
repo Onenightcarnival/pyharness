@@ -1,24 +1,3 @@
-"""
-Settings routes: agent defaults, compaction, model routes and credentials.
-
-| method | path                                  | handler                   |
-|--------|---------------------------------------|---------------------------|
-| GET    | ``/models``                           | ``model_directory``       |
-| GET    | ``/agent``                            | ``agent_options``         |
-| PUT    | ``/settings/agent``                   | ``put_agent_defaults``    |
-| GET    | ``/settings/compaction``              | ``get_compaction_settings``|
-| PUT    | ``/settings/compaction``              | ``put_compaction_settings``|
-| GET    | ``/settings/models``                  | ``get_model_settings``    |
-| PUT    | ``/settings/models``                  | ``put_default_model``     |
-| PUT    | ``/settings/model-retry``             | ``put_model_retry``       |
-| PUT    | ``/settings/models/{route}``          | ``put_route``             |
-| DELETE | ``/settings/models/{route}``          | ``delete_route``          |
-| POST   | ``/settings/models/{route}/discover`` | ``discover_models``       |
-| POST   | ``/settings/models/{route}/test``     | ``test_route``            |
-
-``llm_entry``: entry id of the model registry whose configuration the routes persist.
-"""
-
 from __future__ import annotations
 
 from typing import Any

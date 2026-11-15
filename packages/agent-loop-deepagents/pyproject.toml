@@ -22,3 +22,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["pyharness_agent_loop_deepagents"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"AGENTS.md" = "pyharness_agent_loop_deepagents/AGENTS.md"

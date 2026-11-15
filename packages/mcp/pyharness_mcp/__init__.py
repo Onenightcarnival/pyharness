@@ -1,33 +1,3 @@
-"""
-``ctx.mcp``: tools of MCP servers, registered into ``ctx.tools`` at boot.
-
-| config                 | meaning                                                                          |
-|------------------------|----------------------------------------------------------------------------------|
-| ``servers.<name>``     | stdio: ``command``, ``args``, ``env``, ``cwd``; HTTP / SSE transports: ``url``, ``headers`` |
-| ``${credential:REF}``  | inside any of those strings: a credential, resolved at connection (:mod:`.templates`) |
-| ``servers.<name>.enabled`` | ``false`` keeps the server configured but unconnected                         |
-| ``servers.<name>.approval`` | gate for every tool of the server: ``true`` or a LangChain ``InterruptOnConfig`` |
-| ``servers.<name>.prefix`` | tool names become ``<server>_<tool>`` (default) to keep servers apart        |
-| ``connect_timeout``    | seconds to list a server's tools before it is marked ``error``                   |
-
-A stdio server whose command is a bare ``bun`` / ``bunx`` runs through the bun runtime the configuration center installs
-(``<profile data>/toolkit/bun/``) when it exists; :func:`managed_bun` finds it.
-
-A server that fails to connect is reported in :meth:`MCPService.status` and skipped; the harness boots without it.
-Tools run through the ``tools/execute`` pipeline like any registered tool, so permission modes and approvals apply.
-
-Secrets in ``env`` and ``headers`` stay out of the configuration file:
-
-| written as             | value                                                                            |
-|------------------------|----------------------------------------------------------------------------------|
-| ``${credential:REF}``  | environment variable ``REF``, else the profile credential store (``credentials.yaml``) |
-| ``${env:VAR}``         | environment variable ``VAR``, interpolated at boot                               |
-
-- Without a profile, a credential resolves from the environment only.
-- A server with an unresolved credential has the state ``waiting-credentials`` and is not connected.
-- A resolved credential value reads ``[redacted]`` in status errors, probe errors and logs.
-"""
-
 from __future__ import annotations
 
 import asyncio

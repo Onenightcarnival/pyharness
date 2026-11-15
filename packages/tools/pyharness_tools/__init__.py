@@ -1,26 +1,3 @@
-"""
-``ctx.tools``: tool registry and execution pipeline.
-
-| member                                | contract                                                |
-|---------------------------------------|---------------------------------------------------------|
-| :meth:`ToolsService.register`         | tool owned by the calling plugin; removed when it stops |
-| :meth:`ToolsService.require_approval` | approval gate on a tool the plugin does not own         |
-| :meth:`ToolsService.interrupt_on`     | human-in-the-loop configuration for the agent loop      |
-| :meth:`ToolsService.execute`          | pipeline for every tool call, loop built-ins included   |
-
-Pipeline:
-
-| event             | mode      | listener                           |
-|-------------------|-----------|------------------------------------|
-| ``tools/execute`` | waterfall | ``(call, next)``                   |
-| ``tools/result``  | parallel  | ``(call, result)`` after each call |
-
-``tools/execute`` listener:
-
-- ``await next()`` runs the tool and returns its result;
-- a ``ToolMessage`` returned without ``next`` replaces the call.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable

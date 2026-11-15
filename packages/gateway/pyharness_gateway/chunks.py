@@ -1,28 +1,3 @@
-"""
-Stream vocabulary of the gateway: a LangChain message stream becomes block chunks the protocol encoders consume.
-
-| chunk             | fields                                                              |
-|-------------------|---------------------------------------------------------------------|
-| ``block-start``   | ``index``, ``block_type`` (``text``, ``reasoning``, ``tool-call``)  |
-| ``text-delta``    | ``index``, ``text``                                                 |
-| ``reasoning-delta`` | ``index``, ``text``                                               |
-| ``tool-call-delta`` | ``index``, ``id``, ``arguments_delta``; ``name`` on the first delta |
-| ``block-end``     | ``index``                                                           |
-| ``usage``         | ``usage``: token counters                                           |
-| ``finish``        | ``reason``: ``{kind}`` of ``stop``, ``tool-calls``, ``max-tokens``; ``error`` adds ``failure`` |
-
-| name               | contract                                                                        |
-|--------------------|---------------------------------------------------------------------------------|
-| ``normalize()``    | chunks of one LangChain ``astream``; one text or reasoning block is open at a time |
-|                    | and tool calls stay open until the finish                                       |
-| ``BlockAssembler`` | collects chunks into finished blocks, the usage and the finish reason           |
-| ``full_usage()``   | usage with every counter present                                                |
-| ``finish_failure()`` | ``{code, message, status}`` of an ``error`` finish; ``None`` for a normal one |
-
-Reasoning text is read from ``additional_kwargs["reasoning_content"]`` and from ``reasoning`` / ``thinking`` content
-blocks. A message without ``tool_call_chunks`` (a model that does not stream) contributes its ``tool_calls`` whole.
-"""
-
 from __future__ import annotations
 
 from collections.abc import AsyncIterator

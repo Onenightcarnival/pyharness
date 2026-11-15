@@ -1,5 +1,3 @@
-"""The GenAI span tree of one turn: ENTRY → AGENT → STEP → LLM / TOOL spans built from the turn record."""
-
 from __future__ import annotations
 
 import json

@@ -1,16 +1,3 @@
-"""
-Permission modes, agent presets and the loop configuration.
-
-| name                      | contract                                                                  |
-|---------------------------|---------------------------------------------------------------------------|
-| ``SKILLS_MOUNT``          | root of the read-only skills mounts: ``/skills/<label>/``                 |
-| ``MODES``                 | permission modes by id: ``title``, ``description``                        |
-| ``DEFAULT_SYSTEM_PROMPT`` | identity section of the system prompt (order 0)                           |
-| ``PresetConfig``          | one agent preset: title, description, kept / dropped tools, order         |
-| ``DEFAULT_PRESETS``       | ``standard`` and ``creator``                                              |
-| ``LoopConfig``            | the service configuration                                                 |
-"""
-
 from __future__ import annotations
 
 from typing import Any

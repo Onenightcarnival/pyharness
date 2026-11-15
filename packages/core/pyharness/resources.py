@@ -1,14 +1,3 @@
-"""
-Data files shipped inside a package: TOML tables next to a module.
-
-| function                       | file            | use                                              |
-|--------------------------------|-----------------|--------------------------------------------------|
-| ``package_toml(file, name)``   | ``config.toml`` | data tables: endpoints, catalogs, type maps      |
-| ``package_prompts(file, name)``| ``prompts.toml``| model-visible text; string leaves are stripped   |
-
-Placeholders in prompt text use :class:`string.Template` syntax (``${name}``); a literal ``$`` is ``$$``.
-"""
-
 from __future__ import annotations
 
 import tomllib

@@ -1,5 +1,3 @@
-// Browser module of the `rdb` entry: the sidebar "Database" entry and its page (connections, object tree, data grid
-// with inline edits applied as SQL, structure, SQL editor, CSV export, the agent-access switch).
 window.__PyhModules__.load({
   id: "rdb",
   factory(require) {

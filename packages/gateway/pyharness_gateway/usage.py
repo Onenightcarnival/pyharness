@@ -1,17 +1,3 @@
-"""
-Per-request usage ledger in SQLite with range aggregates by model and key.
-
-| name                 | contract                                                                         |
-|----------------------|----------------------------------------------------------------------------------|
-| ``UsageStore``       | ledger bound to one file, opened on first use; rows past the retention are deleted on insert |
-| ``record()``         | one finished gateway request                                                     |
-| ``summary()``        | facets of the whole range; totals, groups and the newest rows of the filtered part |
-| ``parse_filter()``   | row filter from query parameters; empty and unknown values are ignored           |
-| ``range_start()``    | start of ``today`` (local midnight), ``7d`` or ``30d`` in epoch milliseconds     |
-
-Cost is the sum over rows whose model has a price; ``None`` when no row of the group has one.
-"""
-
 from __future__ import annotations
 
 import sqlite3

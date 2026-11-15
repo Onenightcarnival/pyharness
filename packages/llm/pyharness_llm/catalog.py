@@ -1,5 +1,3 @@
-"""Provider catalog: wire protocols, the settings-page presets, curated facts per LangChain provider type."""
-
 from __future__ import annotations
 
 import importlib.util

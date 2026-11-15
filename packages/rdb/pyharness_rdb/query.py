@@ -1,8 +1,3 @@
-"""
-Engine-level operations on a driver: one guarded statement, table description, paged rows, grid edits as SQL,
-and the CSV / model-facing renderings of a result.
-"""
-
 from __future__ import annotations
 
 import contextlib

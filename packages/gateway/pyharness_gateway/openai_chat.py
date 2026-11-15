@@ -1,14 +1,3 @@
-"""
-OpenAI Chat Completions: request parsing, ``chat.completion.chunk`` frames and the complete object.
-
-| name                  | contract                                                                        |
-|-----------------------|---------------------------------------------------------------------------------|
-| ``parse_request()``   | body → ``ParsedRequest``; ``GatewayError`` 400 for malformed or unsupported requests |
-| ``ChatStreamEncoder`` | SSE frames per chunk; usage rides a final choices-less chunk when requested     |
-| ``completion()``      | the ``chat.completion`` object of a finished generation                         |
-| ``error_body()``      | ``{"error": {message, type, code, param}}``                                     |
-"""
-
 from __future__ import annotations
 
 import time

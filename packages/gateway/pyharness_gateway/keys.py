@@ -1,17 +1,3 @@
-"""
-API keys of the gateway: a 0600 JSON file holding every key in full, so the page can show and copy them.
-
-| name               | contract                                                                         |
-|--------------------|----------------------------------------------------------------------------------|
-| ``KeyStore``       | keys bound to one file; every mutation rewrites the file atomically              |
-| ``verify()``       | constant-time match of a presented key against every enabled key                 |
-| ``touch()``        | records ``lastUsedAt``; at most one write per minute per key                     |
-| ``presented_key()``| the key of a request: ``Authorization: Bearer <key>`` or ``x-api-key: <key>``    |
-
-A key view: ``id``, ``name``, ``prefix``, ``enabled``, ``models`` (allowed gateway model ids; ``None`` allows every
-model), ``createdAt``, ``lastUsedAt`` (epoch milliseconds).
-"""
-
 from __future__ import annotations
 
 import hmac

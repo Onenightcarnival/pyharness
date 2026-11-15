@@ -1,5 +1,3 @@
-# Data of pyharness_rdb; loaded with pyharness.package_toml(__file__).
-
 # driver.DEFAULT_PORT: default port per connection kind (0 for sqlite)
 [driver.DEFAULT_PORT]
 sqlite = 0

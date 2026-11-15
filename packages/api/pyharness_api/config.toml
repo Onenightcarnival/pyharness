@@ -1,5 +1,3 @@
-# Data of pyharness_api; one table per module, loaded with ``package_toml(__file__)``.
-
 [references]
 # references.SKIP_DIRS: directory names left out of listings and search.
 SKIP_DIRS = [

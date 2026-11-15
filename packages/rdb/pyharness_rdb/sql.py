@@ -1,8 +1,3 @@
-"""
-Statement text: classification (read-only or not), splitting on top-level semicolons, SQL literals and
-JSON-safe values. ``mysql`` selects the MySQL dialect (backtick identifiers, backslash escapes, ``#`` comments).
-"""
-
 from __future__ import annotations
 
 import datetime as dt

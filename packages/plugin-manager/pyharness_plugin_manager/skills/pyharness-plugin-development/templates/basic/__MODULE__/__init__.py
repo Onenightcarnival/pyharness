@@ -1,5 +1,3 @@
-"""__TITLE__."""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -8,6 +6,7 @@ from typing import Any
 from pydantic import BaseModel
 
 name = "__DIST__"
+doc = "__TITLE__."
 # Required services; the plugin starts once all exist.
 inject = ["tools"]
 

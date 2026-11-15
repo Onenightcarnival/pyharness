@@ -1,15 +1,3 @@
-"""
-Persistence provider on PostgreSQL: ``ctx.checkpointer`` and ``ctx.store``.
-
-| service              | implementation         |
-|----------------------|------------------------|
-| ``ctx.checkpointer`` | ``AsyncPostgresSaver`` |
-| ``ctx.store``        | ``AsyncPostgresStore`` |
-
-- One async connection pool: autocommit, dict rows, ``prepare_threshold=0``.
-- The database encoding is UTF8; ``SQL_ASCII`` fails the plugin.
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -21,6 +9,7 @@ from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel, Field
 
 name = "pyharness-checkpoint-postgres"
+doc = "Persistence provider on PostgreSQL: ``ctx.checkpointer`` and ``ctx.store``."
 inject: list[str] = []
 
 
@@ -55,4 +44,4 @@ async def apply(ctx: Any, config: Config) -> None:
     ctx.provide("store", store)
 
 
-__all__ = ["Config", "apply", "name"]
+__all__ = ["Config", "apply", "doc", "name"]

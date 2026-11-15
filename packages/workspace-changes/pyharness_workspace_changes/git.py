@@ -1,13 +1,3 @@
-"""
-Git data of the changes service: repository paths, the command error, unified diff parsing.
-
-| name                 | contract                                                                        |
-|----------------------|---------------------------------------------------------------------------------|
-| ``Repo``             | ``top`` (work tree), ``objects`` (object directory), ``index`` (index file)      |
-| ``GitError``         | a git command failed or timed out                                               |
-| ``parse_unified``    | hunks of a unified diff                                                         |
-"""
-
 from __future__ import annotations
 
 from pathlib import Path

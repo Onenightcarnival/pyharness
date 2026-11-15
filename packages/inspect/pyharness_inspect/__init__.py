@@ -1,21 +1,3 @@
-"""
-``harness_inspect`` tool: read-only view of the running harness.
-
-| topic    | content                                                                   |
-|----------|---------------------------------------------------------------------------|
-| overview | generation, profile, entry counts, service keys, events                   |
-| services | service keys; with ``name``: type, owner, methods                         |
-| events   | name, mode, declaring owners, listeners                                   |
-| plugins  | loader entries and states                                                 |
-| config   | entries; with ``name``: config JSON Schema, effective config, package dir |
-| tools    | registered tools and approval gates; with ``name``: argument schema       |
-| routes   | HTTP routes and their contributing plugins                                |
-| prompt   | system-prompt sections                                                    |
-| ui       | Web UI extension slots and registered client modules (``ctx.webui``)      |
-
-Effective config values from ``${env:...}`` and fields named like secrets are redacted.
-"""
-
 from __future__ import annotations
 
 import inspect as _inspect
@@ -31,6 +13,7 @@ from pyharness import Service, package_prompts, unwrap
 PROMPTS = package_prompts(__file__)
 
 name = "pyharness-inspect"
+doc = "``harness_inspect`` tool: read-only view of the running harness."
 inject = ["tools"]
 
 Topic = Literal["overview", "services", "events", "plugins", "config", "tools", "routes", "prompt", "ui"]
@@ -184,6 +167,7 @@ class Inspector:
         if rt.spec is not None:
             data["schema"] = rt.spec.config_schema()
             data["package_dir"] = rt.spec.package_dir
+            data["docs"] = rt.spec.docs
             data["doc"] = rt.spec.doc
         if rt.config is not None and hasattr(rt.config, "model_dump"):
             data["effective_config"] = _redact(rt.config.model_dump(mode="json"), rt.entry.config or {})
@@ -268,4 +252,4 @@ def apply(ctx: Any, config: Config) -> None:
     )
 
 
-__all__ = ["REDACTED", "Config", "Inspector", "Topic", "apply", "inject", "name"]
+__all__ = ["REDACTED", "Config", "Inspector", "Topic", "apply", "doc", "inject", "name"]

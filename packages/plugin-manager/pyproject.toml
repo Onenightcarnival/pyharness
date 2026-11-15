@@ -16,3 +16,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["pyharness_plugin_manager"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"AGENTS.md" = "pyharness_plugin_manager/AGENTS.md"

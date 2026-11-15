@@ -1,5 +1,3 @@
-"""``WorkspaceChangesService`` (``ctx.workspaceChanges``): work-tree snapshots per turn, stored summaries, diffs."""
-
 from __future__ import annotations
 
 import asyncio

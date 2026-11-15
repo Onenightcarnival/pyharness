@@ -1,14 +1,3 @@
-"""
-Anthropic Messages: request parsing, the content-block event stream and the complete message object.
-
-| name                       | contract                                                                    |
-|----------------------------|-----------------------------------------------------------------------------|
-| ``parse_request()``        | body → ``ParsedRequest``; ``thinking`` blocks of earlier turns are dropped  |
-| ``AnthropicStreamEncoder`` | ``message_start`` … ``message_stop``; a ``tool_use`` block opens on its first delta |
-| ``message()``              | the ``message`` object of a finished generation                             |
-| ``error_body()``           | ``{"type": "error", "error": {type, message}}``                             |
-"""
-
 from __future__ import annotations
 
 from typing import Any

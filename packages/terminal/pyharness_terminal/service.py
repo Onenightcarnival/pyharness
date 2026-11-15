@@ -1,5 +1,3 @@
-"""``TerminalService``: shells per session, jobs, terminals, tool and route registration."""
-
 from __future__ import annotations
 
 import contextlib

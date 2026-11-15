@@ -1,15 +1,3 @@
-"""
-Credential store: secrets referenced by name from configuration, never written into it.
-
-| reference resolution | source                                              |
-|----------------------|-----------------------------------------------------|
-| 1                    | environment variable of that name                   |
-| 2                    | ``credentials.yaml`` in the profile directory (0600) |
-
-A configuration names a credential (``api_key_env: OPENAI_API_KEY``); the value lives in the environment or in the
-store.
-"""
-
 from __future__ import annotations
 
 import os

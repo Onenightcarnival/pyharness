@@ -1,5 +1,3 @@
-"""The ``db_*`` LangChain tools (shapes as dsh-rdb); every result is text for the model."""
-
 from __future__ import annotations
 
 import re

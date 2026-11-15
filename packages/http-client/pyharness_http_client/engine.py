@@ -1,30 +1,3 @@
-"""
-Request engine: one request of the page or the agent, from the composed input to the recorded exchange.
-
-| step        | behavior                                                                                 |
-|-------------|------------------------------------------------------------------------------------------|
-| target      | resolved by id or name; ``direct`` (a request without a target) is open to the page only: any host, |
-|             | private networks included, no injected auth                                              |
-| variables   | ``{{name}}`` substituted in the path, query, headers and body                            |
-| URL         | the path joined below the base URL; an absolute URL must be on the base host or an allowed host |
-| private     | without ``allowPrivate``, loopback, link-local and private addresses are refused, names resolved first |
-| headers     | fixed headers, then request headers; transport headers dropped; ``content-type`` defaults to JSON for |
-|             | a body that starts with ``{`` or ``[``, else ``text/plain``                              |
-| auth        | the target's; a request's own auth applies when the page sends it and the target has none |
-| redirects   | at most five, each checked against the allowed hosts; credentials are dropped when the origin |
-|             | changes; 303, and 301 / 302 after POST, continue as GET without a body                   |
-| body        | read up to the cap; text decoded with the declared charset; a binary body is omitted, or returned |
-|             | whole as base64 to the page on request                                                   |
-| event stream| ``text/event-stream`` is read event by event; a stop, the timeout and the cap end it with what arrived |
-| timeout     | ``timeoutMs`` covers redirects and the body; a stream the page reads restarts it with every chunk |
-| masking     | target secrets, the request's own auth and credentials typed into headers become ``••••••`` in |
-|             | the URL, headers and bodies of the exchange, their URL-encoded form included             |
-| history     | the exchange is recorded with bodies capped and binary bodies dropped                    |
-
-A policy or transport failure is the ``error`` of the exchange; a malformed input or an unknown target raises
-:class:`PolicyError` before anything is sent or recorded.
-"""
-
 from __future__ import annotations
 
 import asyncio

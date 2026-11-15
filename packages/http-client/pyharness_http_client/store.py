@@ -1,24 +1,3 @@
-"""
-The three stores of the HTTP page, each one file written atomically with mode 0600.
-
-| store            | file              | content                                                                |
-|------------------|-------------------|------------------------------------------------------------------------|
-| ``TargetStore``  | ``targets.json``  | targets with their auth secrets in plain text, and the switches        |
-| ``RequestStore`` | ``requests.json`` | saved requests of every target, in creation order                      |
-| ``HistoryStore`` | ``history.jsonl`` | one exchange per line, newest last; compacted to the history limit     |
-
-| rule                | detail                                                                           |
-|---------------------|----------------------------------------------------------------------------------|
-| secrets             | stay in the store; ``summarize()`` gives the type, non-secret names and a short hint |
-| target name         | letter or digit first; letters, digits, spaces, dots, hyphens, underscores; 64 characters; |
-|                     | unique without regard to case, a collision gets a numeric suffix                 |
-| auth on update      | an empty secret keeps the stored one when the type is unchanged                  |
-| request auth        | stored as typed, incomplete fields included; ``usable_request_auth()``: whether it can be sent |
-| unreadable targets  | the file is renamed to ``.corrupt-<time>`` and an empty store takes its place    |
-
-Validation failures raise :class:`StoreError`.
-"""
-
 from __future__ import annotations
 
 import base64

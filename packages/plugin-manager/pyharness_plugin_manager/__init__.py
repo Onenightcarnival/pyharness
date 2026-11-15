@@ -1,25 +1,3 @@
-"""
-``plugin_manager`` tool, the plugin-authoring skills, and the short prompt section.
-
-| config       | effect                                                                                   |
-|--------------|------------------------------------------------------------------------------------------|
-| ``guidance`` | three-line section in the system prompt for the presets without the skills (``standard``) |
-| ``skills``   | ``skills/`` of this package mounted at ``/skills/pyharness/`` for the ``creator`` preset |
-
-Skills (``skills/<name>/SKILL.md``): ``pyharness-plugin-development``, ``editing-pyharness-compositions``,
-``pyharness-composition-reference``, ``agent-experience``.
-Templates: ``skills/pyharness-plugin-development/templates/``.
-
-| step                | effect                                                                    |
-|---------------------|---------------------------------------------------------------------------|
-| mutating action     | :mod:`pyharness.manage` transaction: change → preflight → keep or restore |
-| rejected            | errors returned; profile unchanged                                        |
-| saved, supervised   | restart after the current turn; the calling session continues             |
-| saved, unsupervised | change applies on the next start                                          |
-
-Mutating actions wait for human approval (``when`` predicate on the tool's gate).
-"""
-
 from __future__ import annotations
 
 import json
@@ -37,6 +15,7 @@ from pyharness import manage, package_prompts
 PROMPTS = package_prompts(__file__)
 
 name = "pyharness-plugin-manager"
+doc = "``plugin_manager`` tool, the plugin-authoring skills, and the short prompt section."
 inject = ["tools", "prompt", "agentLoop"]
 
 SKILLS_DIR = Path(__file__).with_name("skills")
@@ -237,6 +216,7 @@ __all__ = [
     "Action",
     "Config",
     "apply",
+    "doc",
     "inject",
     "name",
     "render_template",

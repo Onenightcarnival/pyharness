@@ -1,5 +1,3 @@
-"""``HttpClientService``: the stores, the engine, the agent tools switch and the management routes."""
-
 from __future__ import annotations
 
 import warnings

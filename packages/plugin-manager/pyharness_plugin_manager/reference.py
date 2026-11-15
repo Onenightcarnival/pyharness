@@ -1,10 +1,3 @@
-"""
-``references/packages.md`` of the ``pyharness-composition-reference`` skill, rendered from the installed entry
-points.
-
-``python scripts/gen_packages.py`` writes it; ``tests/test_creator.py`` fails when the file is stale.
-"""
-
 from __future__ import annotations
 
 from pathlib import Path

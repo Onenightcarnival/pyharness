@@ -1,17 +1,3 @@
-"""
-Preflight: boot a candidate configuration in a separate process.
-
-| step                                | runs |
-|-------------------------------------|------|
-| import plugins, validate configs    | yes  |
-| start all plugins                   | yes  |
-| ``app/ready``                       | yes  |
-| ``app/serve`` (ports, resumed work) | no   |
-| teardown                            | yes  |
-
-Report: ``ok``, ``errors`` (stage, entry, error), ``pending``, ``warnings``, ``entries``.
-"""
-
 from __future__ import annotations
 
 import argparse

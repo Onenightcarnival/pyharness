@@ -1,18 +1,3 @@
-"""
-``ctx.http``: the FastAPI application and its uvicorn server.
-
-| member             | contract                                               |
-|--------------------|--------------------------------------------------------|
-| ``include_router`` | router under a prefix, owned by the calling plugin     |
-| ``mount``          | sub-application at a path, owned by the calling plugin |
-| ``routes``         | flattened route list                                   |
-
-| event            | server                                                                |
-|------------------|-----------------------------------------------------------------------|
-| ``app/serve``    | socket bound, then uvicorn started; a bind error fails the boot       |
-| ``app/stopping`` | stops accepting requests; in-flight requests get ``shutdown_timeout`` |
-"""
-
 from __future__ import annotations
 
 import asyncio

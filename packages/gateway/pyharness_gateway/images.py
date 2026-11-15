@@ -1,14 +1,3 @@
-"""
-Image inputs of requests: base64 payloads and remote URLs become ``data:`` URLs for the model.
-
-| name                 | contract                                                                    |
-|----------------------|-----------------------------------------------------------------------------|
-| ``ImageResolver``    | ``await resolver(image)`` → a ``data:`` URL; ``GatewayError`` 400 on any rejection |
-| ``sniff_media_type`` | media type from the leading bytes, for responses without a usable content type |
-
-PNG, JPEG, WebP and GIF up to :data:`MAX_IMAGE_BYTES`; remote URLs are fetched with ``http`` or ``https``.
-"""
-
 from __future__ import annotations
 
 import base64

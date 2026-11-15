@@ -1,31 +1,3 @@
-"""
-``WebToolsService``: the ``web`` service; registers ``web_search`` and ``web_fetch`` and holds the credential.
-
-| member         | contract                                                                             |
-|----------------|--------------------------------------------------------------------------------------|
-| ``api_key()``  | the ``api_key_env`` credential: the profile's credential store, else the environment |
-| ``status()``   | ``{"search": {credential description, enabled, model, base_url}, "fetch": {enabled}}`` |
-| ``search()``   | :func:`pyharness_web_tools.search.search`                                            |
-| ``fetch()``    | :func:`pyharness_web_tools.fetch.fetch`                                              |
-| ``transport``  | httpx transport override for every request (tests)                                   |
-
-| config             | default                                     | meaning                                        |
-|--------------------|---------------------------------------------|------------------------------------------------|
-| ``search``         | ``True``                                    | register ``web_search``                        |
-| ``fetch``          | ``True``                                    | register ``web_fetch``                         |
-| ``api_key_env``    | ``DEEPSEEK_API_KEY``                        | credential reference of the search key         |
-| ``base_url``       | ``https://api.deepseek.com/anthropic/v1``   | Anthropic-format Messages endpoint             |
-| ``model``          | ``deepseek-v4-flash``                       | search model                                   |
-| ``max_uses``       | 5 (1–20)                                    | searches DeepSeek may run per query            |
-| ``max_results``    | 8 (1–50)                                    | sources returned                               |
-| ``max_tokens``     | 4096 (≥ 256)                                | answer budget                                  |
-| ``search_timeout`` | 90.0                                        | seconds                                        |
-| ``fetch_timeout``  | 30.0                                        | seconds                                        |
-| ``fetch_max_chars``| 20000 (≥ 1000)                              | text cap of ``web_fetch``                      |
-| ``fetch_max_bytes``| 5000000 (≥ 10000)                           | body read cap of ``web_fetch``                 |
-| ``approval``       | ``False``                                   | approval gate passed to ``ctx.tools.register`` |
-"""
-
 from __future__ import annotations
 
 import os

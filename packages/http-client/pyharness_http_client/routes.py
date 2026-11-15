@@ -1,28 +1,3 @@
-"""
-Management routes under ``/api/http-client`` for the HTTP page.
-
-| request                                   | response                                                         |
-|-------------------------------------------|------------------------------------------------------------------|
-| ``GET targets``                           | ``{targets}``: secret-free summaries                             |
-| ``POST targets``                          | ``{target}`` of the created target                               |
-| ``PATCH targets?id=``                     | ``{target}`` after the update                                    |
-| ``DELETE targets?id=``                    | ``{ok}``; the target's saved requests and history go with it     |
-| ``GET requests?target=``                  | ``{requests}`` in creation order; ``direct``: those without a target |
-| ``POST requests`` ``{targetId, …}``       | ``{request}``; ``targetId`` is a target id or ``direct``         |
-| ``PATCH requests?id=``                    | ``{request}``; a ``targetId`` moves the request                  |
-| ``DELETE requests?id=``                   | ``{ok}``                                                         |
-| ``GET settings`` / ``POST settings``      | ``{settings: {agentTools, historyLimit}}``                       |
-| ``POST send`` ``{id, request}``           | ``{exchange}``; ``id``: a target id, or ``direct`` (full URL as path) |
-| ``GET history?target=&limit=``            | ``{entries}``, newest first                                      |
-| ``DELETE history?id=`` / ``?target=`` / none | ``{removed}``                                                 |
-| ``POST test`` ``{id}``                    | ``{result: {ok, status, latencyMs, error}}``                     |
-
-``POST send`` with ``Accept: application/x-ndjson`` answers with one JSON object per line: ``{"type": "head"}`` and
-``{"type": "event"}`` while an event stream arrives, then ``{"type": "done", "exchange"}`` or ``{"type": "error"}``.
-Closing the connection before the response cancels the request; the recorded error is ``cancelled``. A policy or
-transport failure of a sent request is ``exchange.error``; invalid input answers 400.
-"""
-
 from __future__ import annotations
 
 import asyncio

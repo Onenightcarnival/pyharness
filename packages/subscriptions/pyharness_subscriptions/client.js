@@ -1,5 +1,3 @@
-// Browser module of the `subscriptions` entry: the sidebar "AI subscriptions" entry and its page (providers, account
-// login with manual callback fallback, models / tools / usage tabs, generated media previews in tool rows).
 window.__PyhModules__.load({
   id: "subscriptions",
   factory(require) {

@@ -1,5 +1,3 @@
-# Model-visible text of pyharness_memory; loaded with pyharness.package_prompts(__file__).
-
 # service.GUIDANCE = guidance_intro, one "<kind>: <store.KIND_GUIDE>" line per kind, then the remaining pieces, joined by spaces
 [service]
 guidance_intro = "Career memory is this agent's own resume. Record kinds."

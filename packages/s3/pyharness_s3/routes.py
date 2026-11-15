@@ -1,8 +1,3 @@
-"""
-FastAPI routes under ``/api/s3`` for the S3 page: profiles, settings, test, list, stat, text, object, upload,
-delete, folder, presign, copy.
-"""
-
 from __future__ import annotations
 
 import json

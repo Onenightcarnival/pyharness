@@ -1,19 +1,3 @@
-"""
-Management routes under ``/api/gateway`` for the API gateway page.
-
-| request                                   | response                                                       |
-|-------------------------------------------|----------------------------------------------------------------|
-| ``GET status``                            | settings, listener state, model list, key list                 |
-| ``PUT settings``                          | saves the complete settings object, restarts the listener; the status |
-| ``GET keys`` / ``GET keys?id=``           | key list; one key in full                                      |
-| ``POST keys`` ``{name, models}``          | ``{key, record}``: the new key in full                         |
-| ``PATCH keys`` ``{id, name?, enabled?, models?}`` | ``{record}``                                           |
-| ``DELETE keys?id=``                       | remaining keys                                                 |
-| ``GET usage?range=&key=&model=&protocol=&outcome=`` | range facets; totals, groups and newest rows of the filter |
-
-Invalid settings and keys answer 400, an unknown key id 404.
-"""
-
 from __future__ import annotations
 
 from typing import Any, Protocol

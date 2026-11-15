@@ -1,11 +1,8 @@
-# Model-visible text; tables are named after the module that uses them. Loaded with pyharness.package_prompts:
-# every string value is stripped of surrounding whitespace. Placeholders use string.Template syntax (${name}).
-
 [tools]
 harness_inspect = '''
 Read-only view of the running harness.
 
 topic: overview | services | events | plugins | config | tools | routes | prompt
 name: filter; a service key, event name, entry id or tool name
-topic=config with an entry id: the plugin's config JSON Schema and package_dir
+topic=config with an entry id: the plugin's config JSON Schema, package_dir and docs (the package's AGENTS.md)
 '''

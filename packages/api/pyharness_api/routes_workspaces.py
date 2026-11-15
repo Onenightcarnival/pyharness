@@ -1,20 +1,3 @@
-"""
-Workspace routes: the registry (recent, pick, add, rename, forget, browse) and files inside a workspace.
-
-| method | path                     | handler             |
-|--------|--------------------------|---------------------|
-| GET    | ``/workspaces``          | ``list_workspaces`` |
-| POST   | ``/workspaces/pick``     | ``pick_workspace``  |
-| POST   | ``/workspaces``          | ``add_workspace``   |
-| PUT    | ``/workspaces``          | ``rename_workspace``|
-| DELETE | ``/workspaces``          | ``forget_workspace``|
-| GET    | ``/workspaces/files``    | ``list_files``      |
-| GET    | ``/workspaces/search``   | ``search_files``    |
-| GET    | ``/workspaces/file``     | ``read_file``       |
-| GET    | ``/workspaces/file/raw`` | ``read_file_raw``   |
-| POST   | ``/workspaces/browse``   | ``browse_workspaces``|
-"""
-
 from __future__ import annotations
 
 import asyncio

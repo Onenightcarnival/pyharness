@@ -1,13 +1,3 @@
-"""
-__TITLE__: one tool, one tools/result listener, one HTTP route.
-
-| extension point   | mode     | effect                                    |
-|-------------------|----------|-------------------------------------------|
-| ``ctx.tools``     |          | ``__BUNDLE___note`` tool, owned by this plugin |
-| ``tools/result``  | parallel | counts finished tool calls per tool name  |
-| ``ctx.http``      |          | ``GET /__BUNDLE__`` returns the counts    |
-"""
-
 from __future__ import annotations
 
 from collections import Counter
@@ -18,6 +8,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 name = "__DIST__"
+doc = "__TITLE__: one tool, one tools/result listener, one HTTP route."
 inject = ["tools", "http"]
 
 BUNDLE = Path(__file__).with_name("bundle.yaml")

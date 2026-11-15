@@ -1,16 +1,3 @@
-"""
-One run of a session: its handle (event log), the :class:`Turn` handed to listeners, the turn record.
-
-| name              | contract                                                                  |
-|-------------------|---------------------------------------------------------------------------|
-| ``RunHandle``     | event log of one run; each subscriber receives every event from the start |
-| ``Turn``          | argument of ``agent/turn-start`` and ``agent/turn-end``                   |
-| ``TurnRecorder``  | stats and trajectory of one turn, from the run events and graph updates   |
-| ``SessionBusy``   | the session has a running turn                                            |
-| ``NotContinuable``| the session's last turn cannot be continued                               |
-| ``RestartPending``| a restart is pending; new runs are refused                                |
-"""
-
 from __future__ import annotations
 
 import asyncio

@@ -32,7 +32,7 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 | `pyharness-composition-reference` | `references/packages.md`：环境中全部 `pyharness.plugins` / `pyharness.bundles` entry point；`scripts/gen_packages.py` 生成，测试校验未过期 |
 | `agent-experience` | 工具定义、提示词片段、skill、子 agent、状态消息的写法 |
 
-知识来源顺序：运行时检查（`harness_inspect`）→ 包目录中的模块文档（`topic=config` 的 `package_dir`）→ skill 的参考文件。
+知识来源顺序：运行时检查（`harness_inspect`）→ 包的 `AGENTS.md`（`topic=config` 的 `docs`）与包目录中的源码（`package_dir`）→ skill 的参考文件。
 
 每个 `SKILL.md` 小于 8000 字符。其他插件：`ctx.agentLoop.add_skills(directory, label, presets=None)` 挂载自己的 skills 目录，随插件停止卸载；`ctx.agentLoop.add_preset(id, title, description, tools=…, exclude_tools=…)` 添加预设；`ctx.prompt.add(..., presets=[…])` 限定提示词片段。
 

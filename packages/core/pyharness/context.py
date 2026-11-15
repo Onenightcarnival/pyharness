@@ -1,15 +1,3 @@
-"""
-Context: the service container each plugin receives.
-
-| concept      | contract                                                                          |
-|--------------|-----------------------------------------------------------------------------------|
-| service      | object under a stable key (``ctx.tools``); consumers look it up by key            |
-| registration | ``provide``, ``on``, ``effect``, ``enter``, ``on_dispose``; owned by the plugin   |
-| teardown     | the plugin's registrations are undone in reverse order                            |
-| caller       | inside a :class:`Service` method, ``self.caller`` is the calling plugin's context |
-| root         | :class:`Root`: the event bus, lifecycle, variables, profile and host context shared by all contexts |
-"""
-
 from __future__ import annotations
 
 import inspect

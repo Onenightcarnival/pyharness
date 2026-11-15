@@ -1,5 +1,3 @@
-"""Plugin entry: ``apply`` providing ``ctx.workspace`` and ``ctx.backend``."""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -10,6 +8,7 @@ from .registry import Workspaces
 from .workspace import Workspace
 
 name = "pyharness-workspace"
+doc = "Workspace provider: ``ctx.workspace`` (workspace registry) and ``ctx.backend`` (default deepagents backend)."
 inject = ["tools"]
 
 

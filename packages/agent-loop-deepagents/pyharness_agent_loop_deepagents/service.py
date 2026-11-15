@@ -1,27 +1,3 @@
-"""
-``DeepAgentsLoop``: the ``agentLoop`` service; extension points, presets and modes, ``build()``.
-
-| member               | contract                                                                        |
-|----------------------|---------------------------------------------------------------------------------|
-| ``build()``          | :func:`pyharness_agent_loop_deepagents.graph.build`                             |
-| ``add_subagent()``   | declarative subagent spec owned by the calling plugin; returns the disposer     |
-| ``add_middleware()`` | LangChain ``AgentMiddleware`` after :class:`HarnessMiddleware`; returns the disposer |
-| ``add_skills()``     | skills directory mounted read-only at ``/skills/<label>/``; returns the disposer |
-| ``add_preset()``     | agent preset owned by the calling plugin; returns the disposer                  |
-| ``preset()``         | ``(id, config)`` of a preset id or of the default; unknown ids raise ``ValueError`` |
-| ``mode()``           | a permission mode id or the default; unknown ids raise ``ValueError``           |
-| ``set_defaults()``   | the defaults for new sessions (live); the settings API persists them           |
-| ``presets()``        | roster for selectors: ``id``, ``title``, ``description``, ``order``, ``default``, ``owner`` |
-| ``modes()``          | roster for selectors: ``id``, ``title``, ``description``, ``default``           |
-| ``skills()``         | mounted skills directories: ``label``, ``path``, ``mount``, ``owner``, ``presets`` |
-| ``subagents()``      | ``name`` and ``owner`` of every added subagent                                  |
-| ``recursion_limit``  | ``config.recursion_limit``                                                      |
-
-Events defined at start: ``agent/model-request`` (waterfall), ``agent/model-retry`` (parallel) and
-``agent-loop/build`` (waterfall). The identity
-section of the system prompt (order 0) is ``config.system_prompt``.
-"""
-
 from __future__ import annotations
 
 import re

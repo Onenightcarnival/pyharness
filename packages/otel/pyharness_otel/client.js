@@ -1,5 +1,3 @@
-// Browser module of the `otel` entry: the Settings → Observability section (endpoint, keys, toggles, advanced
-// options, send test, check exports, status and counters).
 window.__PyhModules__.load({
   id: "otel",
   factory(require) {

@@ -1,5 +1,3 @@
-"""The ``s3`` service: profiles, cached boto3 clients, the ``s3_*`` tool registration and the prompt section."""
-
 from __future__ import annotations
 
 import asyncio

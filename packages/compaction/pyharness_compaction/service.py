@@ -1,5 +1,3 @@
-"""``CompactionService`` and its middleware: automatic compaction under pressure and the ``/compact`` command."""
-
 from __future__ import annotations
 
 import time

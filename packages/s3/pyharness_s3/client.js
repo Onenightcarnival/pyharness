@@ -1,5 +1,3 @@
-// Browser module of the `s3` entry: the sidebar "S3" entry and its page (bucket profiles, object browser with
-// upload / download / preview / share link / rename / folders / delete, the agent-access switch).
 window.__PyhModules__.load({
   id: "s3",
   factory(require) {

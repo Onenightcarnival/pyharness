@@ -1,16 +1,3 @@
-"""
-Loader: turns a composed tree into running plugins.
-
-| phase    | behavior                                                                   |
-|----------|----------------------------------------------------------------------------|
-| resolve  | import each enabled plugin, validate its config; errors → ``FAILED``       |
-| start    | an entry starts once every ``inject`` key is visible from its scope        |
-| order    | among ready entries, configuration order                                   |
-| pending  | an entry whose services never appear stays ``PENDING``; boot continues     |
-| failure  | an ``apply``/``start`` error undoes the partial registrations → ``FAILED`` |
-| teardown | reverse start order; each plugin's registrations in reverse                |
-"""
-
 from __future__ import annotations
 
 import enum
@@ -69,6 +56,8 @@ class EntryRuntime:
                 data["dist"] = spec.dist
             if spec.package_dir:
                 data["package_dir"] = spec.package_dir
+            if spec.docs:
+                data["docs"] = spec.docs
             data["has_config_schema"] = spec.config_model is not None
         if self.missing:
             data["missing"] = list(self.missing)

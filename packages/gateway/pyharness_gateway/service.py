@@ -1,5 +1,3 @@
-"""``GatewayService``: the stores, the gateway application, its listener, and the management routes."""
-
 from __future__ import annotations
 
 from pathlib import Path

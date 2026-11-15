@@ -1,13 +1,3 @@
-"""
-One workspace: a root directory, agent path resolution, protected paths.
-
-| member            | contract                                                                       |
-|-------------------|--------------------------------------------------------------------------------|
-| ``resolve(path)`` | real path of an agent path; ``ValueError`` outside the root or inside the home |
-| ``permissions()`` | deepagents ``FilesystemPermission`` rules denying the protected paths          |
-| ``describe()``    | ``{root, name, virtual_mode, protected}``                                      |
-"""
-
 from __future__ import annotations
 
 from pathlib import Path

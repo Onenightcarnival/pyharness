@@ -1,5 +1,3 @@
-// Browser module of the `gateway` entry: the sidebar "API gateway" entry and its page (listener state and settings,
-// API keys with a provider → model allowlist picker, usage filters, metric cards and the request detail table).
 window.__PyhModules__.load({
   id: "gateway",
   factory(require) {

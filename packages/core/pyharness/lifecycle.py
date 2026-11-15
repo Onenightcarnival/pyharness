@@ -1,32 +1,3 @@
-"""
-Process lifecycle: activity holds, restarts, and the hand-off between generations.
-
-| exit code                    | meaning                   |
-|------------------------------|---------------------------|
-| ``0``                        | stop                      |
-| ``RESTART_EXIT_CODE`` 75     | start the next generation |
-| ``BOOT_FAILURE_EXIT_CODE`` 3 | boot failed               |
-
-Restart:
-
-1. :meth:`Lifecycle.request_restart` records reasons and sessions to resume.
-2. The process exits 75 once every :meth:`Lifecycle.hold` is released.
-3. While a restart is pending, :attr:`Lifecycle.accepting_work` is ``False``.
-
-Hand-off files (runtime directory):
-
-| file              | writer                           | content                     |
-|-------------------|----------------------------------|-----------------------------|
-| ``resume.json``   | :meth:`request_restart`          | reasons, sessions to resume |
-| ``rollback.json`` | supervisor, after a boot failure | failed generation, error    |
-
-| step   | method                          | effect                                                       |
-|--------|---------------------------------|--------------------------------------------------------------|
-| read   | :meth:`handoff`                 | reads both files once; files stay                            |
-| commit | :meth:`commit_handoff`          | worker deletes both files after the generation boots         |
-| abort  | :meth:`discard_pending_restart` | a non-restart exit deletes this generation's ``resume.json`` |
-"""
-
 from __future__ import annotations
 
 import asyncio

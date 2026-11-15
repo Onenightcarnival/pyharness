@@ -1,5 +1,3 @@
-# Model-visible text of pyharness_rdb; loaded with pyharness.package_prompts(__file__).
-
 [service]
 GUIDANCE = '''
 The database workbench (SQLite / PostgreSQL / MySQL / GaussDB) is installed and the user allowed its tools.

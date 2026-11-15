@@ -15,3 +15,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["pyharness_mcp"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"AGENTS.md" = "pyharness_mcp/AGENTS.md"

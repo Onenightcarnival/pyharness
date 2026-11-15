@@ -1,12 +1,3 @@
-"""
-__TITLE__: a Web UI panel with a sidebar row, fed by a server-side call.
-
-| extension point   | effect                                                        |
-|-------------------|---------------------------------------------------------------|
-| ``ctx.webui``     | serves ``client.js``; ``calls["stats"]`` answers ``ctx.host.call("stats")`` from the page |
-| ``tools/result``  | counts finished tool calls per tool name; the panel shows them |
-"""
-
 from __future__ import annotations
 
 from collections import Counter
@@ -16,6 +7,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 name = "__DIST__"
+doc = "__TITLE__: a Web UI panel with a sidebar row, fed by a server-side call."
 inject = ["webui"]
 
 BUNDLE = Path(__file__).with_name("bundle.yaml")

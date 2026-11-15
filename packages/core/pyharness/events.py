@@ -1,29 +1,3 @@
-"""
-Typed events with declared dispatch modes.
-
-Each event has one dispatch mode, fixed by :meth:`EventBus.define`.
-
-| dispatch                   | raises                   |
-|----------------------------|--------------------------|
-| undeclared event           | ``UndeclaredEventError`` |
-| method other than its mode | ``EventModeError``       |
-
-| mode      | awaited | order           | result                                | listener errors |
-|-----------|---------|-----------------|---------------------------------------|-----------------|
-| emit      | no      | registration    | none; async listeners run as tasks    | logged          |
-| parallel  | yes     | concurrent      | none                                  | logged          |
-| serial    | yes     | registration    | first non-None result; stops there    | raised          |
-| series    | yes     | registration    | none; every listener runs             | raised          |
-| bail      | no      | registration    | first non-None result; sync listeners | raised          |
-| waterfall | yes     | outermost first | value the chain returns               | raised          |
-
-Waterfall listener ``listener(*args, next)``:
-
-- ``await next()`` runs the rest of the chain and returns its result;
-- ``await next(*new_args)`` runs the rest of the chain with new arguments;
-- returning without ``next`` ends the chain.
-"""
-
 from __future__ import annotations
 
 import asyncio

@@ -1,30 +1,3 @@
-"""
-Session routes: records, messages and approvals as SSE runs, turns, changes, cancel, delete, stream.
-
-| method | path                                  | handler                 |
-|--------|---------------------------------------|-------------------------|
-| GET    | ``/sessions``                         | ``list_sessions``       |
-| POST   | ``/sessions``                         | ``create_session``      |
-| PUT    | ``/sessions/{id}``                    | ``rename_session``      |
-| PUT    | ``/sessions/{id}/model``              | ``set_session_model``   |
-| PUT    | ``/sessions/{id}/mode``               | ``set_session_mode``    |
-| PUT    | ``/sessions/{id}/preset``             | ``set_session_preset``  |
-| GET    | ``/sessions/{id}``                    | ``get_session``         |
-| GET    | ``/sessions/{id}/turns``              | ``session_turns``       |
-| GET    | ``/sessions/{id}/changes``            | ``session_changes``     |
-| GET    | ``/sessions/{id}/changes/{run}/diff`` | ``session_changes_diff``|
-| POST   | ``/sessions/{id}/messages``           | ``post_message``        |
-| POST   | ``/sessions/{id}/approvals``          | ``post_approvals``      |
-| POST   | ``/sessions/{id}/compact``            | ``post_compact``        |
-| POST   | ``/sessions/{id}/retry``              | ``post_retry``          |
-| POST   | ``/sessions/{id}/answers``            | ``post_answers``        |
-| POST   | ``/sessions/{id}/cancel``             | ``cancel``              |
-| DELETE | ``/sessions/{id}``                    | ``delete``              |
-| GET    | ``/sessions/{id}/stream``             | ``attach``              |
-
-``_sse``: run events as ``text/event-stream`` (one ``data:`` line per event).
-"""
-
 from __future__ import annotations
 
 import asyncio

@@ -1,6 +1,3 @@
-# Listener defaults, limits and wire-level tables. One table per module; each module loads its table with
-# ``package_toml(__file__)``.
-
 [settings]
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8766

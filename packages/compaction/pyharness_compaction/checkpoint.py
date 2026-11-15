@@ -1,5 +1,3 @@
-"""Checkpoint messages: markers, the summary prompt, context measurement, cut selection, transcript rendering."""
-
 from __future__ import annotations
 
 import json

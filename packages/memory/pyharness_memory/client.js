@@ -1,5 +1,3 @@
-// Browser module of the `memory` entry: the sidebar "Memory" entry and its page (resume view, directory view,
-// version history with diffs, editor, import / export, clear, the agent-access switch).
 window.__PyhModules__.load({
   id: "memory",
   factory(require) {

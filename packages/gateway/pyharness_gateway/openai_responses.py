@@ -1,14 +1,3 @@
-"""
-OpenAI Responses: request parsing, the semantic event stream and the complete response object.
-
-| name                      | contract                                                                    |
-|---------------------------|-----------------------------------------------------------------------------|
-| ``parse_request()``       | body → ``ParsedRequest``; ``reasoning`` input items are dropped             |
-| ``ResponsesStreamEncoder``| semantic events numbered by ``sequence_number``; one output item per block  |
-| ``completion()``          | the ``response`` object of a finished generation                            |
-| ``error_body()``          | ``{"error": {type, code, message, param}}``                                 |
-"""
-
 from __future__ import annotations
 
 import time

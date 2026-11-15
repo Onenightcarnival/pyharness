@@ -1,5 +1,3 @@
-"""PTY terminals for the Web UI: one interactive shell per terminal, a scrollback buffer, subscriber queues."""
-
 from __future__ import annotations
 
 import asyncio

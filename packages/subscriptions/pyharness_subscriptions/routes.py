@@ -1,22 +1,3 @@
-"""
-HTTP API of the AI subscriptions page, mounted under ``/api/subscriptions``.
-
-| method | path                 | effect                                                              |
-|--------|----------------------|---------------------------------------------------------------------|
-| GET    | ``status``           | every provider: busy flag, accounts, Codex client version           |
-| POST   | ``login``            | start the provider's OAuth flow; 409 while another login runs       |
-| POST   | ``manual``           | hand a pasted callback URL / code to the running flow               |
-| POST   | ``cancel``           | abort the running flow                                              |
-| POST   | ``logout``           | drop one account; routes and tools rebuilt                          |
-| POST   | ``default``          | choose the default account of a provider                            |
-| POST   | ``usage``            | cached usage of one account; ``force`` refreshes                    |
-| GET    | ``provider-settings``| the catalog; ``force`` clears the cache and rediscovers             |
-| PUT    | ``provider-settings``| store the preferences; routes and tools rebuilt                     |
-| POST   | ``model-default``    | store the default reasoning effort of one model                     |
-| POST   | ``refresh``          | rediscover every catalog; routes and tools rebuilt                  |
-| GET    | ``media/{name}``     | an image or video the provider tools stored                         |
-"""
-
 from __future__ import annotations
 
 import json

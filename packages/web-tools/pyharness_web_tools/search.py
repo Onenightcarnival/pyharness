@@ -1,27 +1,3 @@
-"""
-``web_search``: DeepSeek search.
-
-| ``search_provider``     | request                                                                         |
-|-------------------------|---------------------------------------------------------------------------------|
-| ``deepseek-search-api`` | ``POST {search_base_url}/search`` ``{query, count, need_content: false}``: one  |
-|                         | direct request, paced to ``search_requests_per_second``; sources carry a summary |
-| ``deepseek-legacy``     | one Anthropic-format Messages call with the ``web_search_20250305`` server tool: |
-|                         | an answer with cited sources                                                    |
-
-| function                    | contract                                                                       |
-|-----------------------------|--------------------------------------------------------------------------------|
-| ``search()``                | ``{"answer", "sources", "truncated"}``; ``RuntimeError`` with a user-facing message on |
-|                             | failure                                                                        |
-| ``map_search_response()``   | sources of a Search API response: url, title, snippet, summary, published_at   |
-| ``parse_search_response()`` | answer text and deduplicated sources of a Messages response with                |
-|                             | ``web_search_tool_result`` blocks                                               |
-| ``format_search()``         | the tool result: notice, answer, ``Sources:`` list with each source's summary  |
-|                             | or snippet, citation instruction                                               |
-| ``search_tool()``           | the ``web_search`` LangChain tool bound to the service                          |
-
-A redirect of the Search API endpoint and an HTTP 429 fail the search.
-"""
-
 from __future__ import annotations
 
 import re

@@ -1,16 +1,3 @@
-"""
-Listener of the gateway application: a uvicorn server of its own, restarted when the settings change.
-
-| member        | contract                                                                          |
-|---------------|-----------------------------------------------------------------------------------|
-| ``apply()``   | stop the running server, then listen on ``host:port`` when ``enabled``; one apply at a time |
-| ``close()``   | stop the server                                                                   |
-| ``listening`` | ``{"host", "port"}`` of the bound socket, or ``None``                             |
-| ``error``     | why the last ``apply`` could not listen, or ``None``                              |
-
-A bind failure is recorded in ``error`` and logged; it does not raise.
-"""
-
 from __future__ import annotations
 
 import asyncio

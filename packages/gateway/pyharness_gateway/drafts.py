@@ -1,27 +1,3 @@
-"""
-Protocol-independent request model: every inbound protocol parses into a :class:`ParsedRequest`; the server
-resolves the model, loads the images and materializes a :class:`Generation` of LangChain messages from it.
-
-| name              | contract                                                                          |
-|-------------------|-----------------------------------------------------------------------------------|
-| ``GatewayError``  | request-level failure with the HTTP status, error code and offending parameter    |
-| ``ParsedRequest`` | model name, stream flags, system text, draft messages, tools, sampling parameters |
-| ``materialize()`` | ``ParsedRequest`` + ``Target`` → ``Generation``; images go through the resolver   |
-| ``optional_*()``  | typed readers of request fields; a wrong type raises ``GatewayError`` 400         |
-
-| draft block       | fields                                                             |
-|-------------------|--------------------------------------------------------------------|
-| ``text``          | ``text``                                                           |
-| ``tool-call``     | ``id``, ``name``, ``arguments`` (JSON text)                        |
-| ``pending-image`` | ``source``: ``{kind: "url", url}`` or ``{kind: "base64", media_type, data}`` |
-
-| draft message | fields                              |
-|---------------|-------------------------------------|
-| ``user``      | ``content``                         |
-| ``assistant`` | ``content``                         |
-| ``tool``      | ``call_id``, ``content``, ``is_error`` |
-"""
-
 from __future__ import annotations
 
 import json

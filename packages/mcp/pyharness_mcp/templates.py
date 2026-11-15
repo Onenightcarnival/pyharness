@@ -1,14 +1,3 @@
-"""
-Credential templates in the transport strings of an MCP server.
-
-| subject    | contract                                                                                   |
-|------------|--------------------------------------------------------------------------------------------|
-| syntax     | ``${credential:REF}``; ``REF`` follows :data:`pyharness.credentials.REFERENCE`             |
-| fields     | ``command``, ``args``, ``env`` values, ``cwd``, ``url``, ``headers`` values                |
-| mixing     | a value holds literal text and any number of templates (``Bearer ${credential:GH_TOKEN}``) |
-| other text | literal, a ``${credential:...}`` with an invalid ``REF`` included                          |
-"""
-
 from __future__ import annotations
 
 import re

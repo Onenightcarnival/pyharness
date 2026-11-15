@@ -1,5 +1,3 @@
-"""Connection opening (host order, ``target_session_attrs``) and the per-profile :class:`Pool`."""
-
 from __future__ import annotations
 
 import contextlib

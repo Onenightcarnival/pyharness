@@ -1,5 +1,3 @@
-"""HTTP routes under ``/api``: terminal status, jobs, terminals and the terminal WebSocket."""
-
 from __future__ import annotations
 
 import asyncio

@@ -1,5 +1,3 @@
-"""``AgentService`` (``ctx.agents``): session records, per-session graphs, runs and the post-restart continuation."""
-
 from __future__ import annotations
 
 import asyncio

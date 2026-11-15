@@ -1,15 +1,3 @@
-"""
-Server-side syntax highlighting for the Web UI (Pygments): token spans with ``hl-`` classes, no inline colors.
-
-| function                         | result                                                           |
-|----------------------------------|------------------------------------------------------------------|
-| ``render(code, lang, filename)`` | ``{"html": <lines joined by \\n>, "lang": alias or None}``        |
-| ``lines(code, lang, filename)``  | one HTML string per source line (spans never cross lines)        |
-| ``style_css()``                  | token colors for ``.hl`` (light) and ``[data-theme="dark"] .hl`` |
-
-``render``: ``html`` is empty when nothing matched.
-"""
-
 from __future__ import annotations
 
 from functools import lru_cache

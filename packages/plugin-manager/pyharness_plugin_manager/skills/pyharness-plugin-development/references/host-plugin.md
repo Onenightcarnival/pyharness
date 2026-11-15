@@ -4,6 +4,7 @@
 
 ```
 /plugins/<name>/
+  AGENTS.md                     # design of the plugin
   pyproject.toml                # distribution; two entry points
   <module>/__init__.py          # the plugin
   <module>/bundle.yaml          # mount position: patch ops over the profile tree

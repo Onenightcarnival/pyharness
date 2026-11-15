@@ -1,19 +1,3 @@
-"""
-``SubscriptionsService``: the providers, their model routes and tools, the status of the AI subscriptions page.
-
-| member                 | contract                                                                        |
-|------------------------|---------------------------------------------------------------------------------|
-| ``providers``          | ``{id: Provider}`` built at start from the stores under                         |
-|                        | ``<profile data>/toolkit/subscriptions/`` (``AuthStore``, ``CatalogCache``)      |
-| ``sync_routes()``      | :func:`pyharness_subscriptions.catalog.rebuild_routes`                          |
-| ``sync_tools()``       | register the tools of every signed-in provider that has tools; drop them at logout |
-| ``catalog()``          | :func:`pyharness_subscriptions.catalog.provider_catalog`                        |
-| ``status()``           | ``{"providers": {id: status}}``; the Codex entry carries ``clientVersion``      |
-| ``tool_enabled()``     | the stored preference of one provider tool, optionally as of the session's creation |
-| ``model_default()``    | the stored default reasoning effort of one model                                |
-| ``media_url()``        | the ``/api/subscriptions/media/{name}`` URL of a stored media file              |
-"""
-
 from __future__ import annotations
 
 import asyncio

@@ -1,8 +1,3 @@
-"""
-Google Antigravity (Cloud Code Assist ``v1internal``): Google OAuth, project discovery, catalog from both
-origins, quota summary, streaming chat, web search and image generation.
-"""
-
 from __future__ import annotations
 
 import asyncio

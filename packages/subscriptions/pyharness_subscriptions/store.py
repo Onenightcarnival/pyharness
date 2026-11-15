@@ -1,9 +1,3 @@
-"""
-Local state under ``<profile data>/toolkit/subscriptions/``: account sessions (``auth.json``), provider preferences
-(``provider-settings.json``), last-known model catalogs (``models.json``), per-model default efforts
-(``model-defaults.json``), generated media. Every write is atomic with mode 0600.
-"""
-
 from __future__ import annotations
 
 import json

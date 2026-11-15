@@ -1,9 +1,3 @@
-"""
-OpenAI Responses wire format shared by Codex, ChatGPT and Grok: LangChain messages → ``input`` items, tool
-definitions, and the streaming translation of Responses SSE events into ``AIMessageChunk`` (text, reasoning,
-tool calls, usage).
-"""
-
 from __future__ import annotations
 
 import asyncio

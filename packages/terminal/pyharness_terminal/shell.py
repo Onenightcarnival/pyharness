@@ -1,5 +1,3 @@
-"""The persistent per-session shell: one bash process; commands run one at a time with exit code and cwd read back."""
-
 from __future__ import annotations
 
 import asyncio

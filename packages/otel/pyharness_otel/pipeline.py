@@ -1,5 +1,3 @@
-"""OTLP endpoint resolution and the export pipeline: tracer provider, batch processor, counting exporter."""
-
 from __future__ import annotations
 
 import base64

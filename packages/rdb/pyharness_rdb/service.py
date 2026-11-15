@@ -1,5 +1,3 @@
-"""The ``rdb`` service: profiles, the connection pool, the ``db_*`` tool registration and the prompt section."""
-
 from __future__ import annotations
 
 import asyncio

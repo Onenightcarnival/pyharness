@@ -1,5 +1,3 @@
-# Model-visible text of pyharness_s3; loaded with pyharness.package_prompts(__file__).
-
 [service]
 GUIDANCE = '''
 The S3 object storage browser is installed and the user allowed its tools. s3_buckets lists the bucket profiles

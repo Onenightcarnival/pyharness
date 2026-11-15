@@ -1,5 +1,3 @@
-"""Request bodies of the API routes (pydantic models) and the image attachment limits."""
-
 from __future__ import annotations
 
 import re

@@ -1,4 +1,3 @@
-// Browser module of the `__BUNDLE__` entry, served by the Web UI at /plugins/__BUNDLE__/client.js. Plain JavaScript, no bundler.
 window.__PyhModules__.load({
   id: "__BUNDLE__",
   factory(require) {

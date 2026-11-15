@@ -1,12 +1,3 @@
-"""
-The career memory model and its SQLite store.
-
-Tree: ``profile`` (one root) → ``work`` → ``project`` (``fields.workId``; empty = independent, under the root) →
-``lesson`` (``fields.parentId``). Every write is a commit: when content changes it adds one revision (time, actor,
-source, summary) with a full snapshot of the entries; blobs are content-addressed so unchanged entries are stored once.
-``revision`` is a monotonic concurrency counter (``stateToken``); the displayed version is the number of revisions.
-"""
-
 from __future__ import annotations
 
 import hashlib

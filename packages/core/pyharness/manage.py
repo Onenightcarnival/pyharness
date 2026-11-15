@@ -1,27 +1,3 @@
-"""
-Profile mutations shared by the CLI and the ``plugin_manager`` tool.
-
-Each mutation is one transaction:
-
-1. snapshot: profile files; for install and uninstall also ``site/``
-2. change: install (a local bundle directory, or a package from the index) or remove a distribution, edit
-   ``profile.yaml`` or the profile patch
-3. preflight the resulting configuration in a new interpreter
-4. result:
-
-| preflight       | effect                                 | ``application`` |
-|-----------------|----------------------------------------|-----------------|
-| new failures    | snapshot restored, files and ``site/`` | ``rejected``    |
-| no new failures | change kept                            | ``saved``       |
-
-A saved change goes live with the next generation.
-
-| lock              | scope                                                           |
-|-------------------|-----------------------------------------------------------------|
-| ``asyncio.Lock``  | mutations within one process                                    |
-| profile file lock | mutations across processes; polled, never blocks the event loop |
-"""
-
 from __future__ import annotations
 
 import asyncio

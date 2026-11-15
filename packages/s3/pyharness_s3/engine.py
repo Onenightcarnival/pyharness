@@ -1,5 +1,3 @@
-"""S3 operations on a boto3 client; keys are relative to the profile prefix at this boundary."""
-
 from __future__ import annotations
 
 import datetime as dt

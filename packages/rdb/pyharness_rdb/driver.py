@@ -1,9 +1,3 @@
-"""
-The driver contract: limits, result shapes, host lists, the :class:`Driver` base and the shared cursor runner.
-Drivers are synchronous DB-API connections; the service runs them in worker threads, one statement at a time per
-connection.
-"""
-
 from __future__ import annotations
 
 import re

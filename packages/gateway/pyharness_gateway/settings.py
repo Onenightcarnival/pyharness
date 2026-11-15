@@ -1,16 +1,3 @@
-"""
-Gateway settings file: defaults, validation and atomic persistence.
-
-| name                  | contract                                                                    |
-|-----------------------|-----------------------------------------------------------------------------|
-| ``normalize()``       | a complete, validated settings object; unknown fields dropped               |
-| ``SettingsStore``     | settings bound to one file; reads fall back to the defaults, writes are atomic (0600) |
-| ``is_model_id()``     | ``provider:model`` shape check shared with the key allowlists               |
-
-Settings object: ``enabled``, ``host``, ``port``, ``aliases`` (request model name → gateway model id) and ``pricing``
-(gateway model id → ``{input, output}`` price per one million tokens).
-"""
-
 from __future__ import annotations
 
 import copy

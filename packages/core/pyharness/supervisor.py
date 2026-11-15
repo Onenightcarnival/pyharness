@@ -1,24 +1,3 @@
-"""
-Supervisor: runs one worker generation at a time; owns restarts and rollbacks.
-
-| worker outcome                        | supervisor action                                                   |
-|---------------------------------------|---------------------------------------------------------------------|
-| ready marker written                  | record ``ready``                                                    |
-| exit 75                               | start the next generation                                           |
-| exit 0, or SIGINT/SIGTERM received    | stop                                                                |
-| boot failure                          | restore last-known-good, write ``rollback.json``, start again; once |
-| boot failure, nothing to restore      | exit 3                                                              |
-| killed by a forwarded signal, booting | start again; no rollback                                            |
-| other exit after boot                 | back-off restart; stop after ``max_crashes`` in ``crash_window``    |
-
-| signal to supervisor | effect                                                 |
-|----------------------|--------------------------------------------------------|
-| SIGINT, SIGTERM      | stop the worker, exit 0                                |
-| SIGHUP               | forwarded; the worker restarts once holds are released |
-
-Events are appended to ``runtime/supervisor.log.jsonl``.
-"""
-
 from __future__ import annotations
 
 import contextlib

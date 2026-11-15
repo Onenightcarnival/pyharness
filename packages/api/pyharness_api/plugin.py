@@ -1,12 +1,3 @@
-"""
-Plugin entry: ``Config``, the router composition, ``apply`` mounting both routers on ``ctx.http``.
-
-| router                     | routes                                                     |
-|----------------------------|------------------------------------------------------------|
-| ``build_router``           | harness, sessions and workspaces routes (one ``APIRouter``) |
-| ``build_settings_router``  | agent defaults, compaction, model routes                   |
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -20,6 +11,7 @@ from .routes_settings import build_settings_router
 from .routes_workspaces import build_workspaces_router
 
 name = "pyharness-api"
+doc = "REST and SSE API over ``ctx.agents``, under ``/api`` on ``ctx.http``."
 inject = ["http", "agents", "llm"]
 
 

@@ -1,5 +1,3 @@
-"""``OtelService``: configuration, the turn-end hook, the Observability status / settings / test routes."""
-
 from __future__ import annotations
 
 import asyncio

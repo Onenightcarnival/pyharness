@@ -1,5 +1,3 @@
-"""Message content helpers: text, images and reasoning of LangChain messages; serialization for the API."""
-
 from __future__ import annotations
 
 import json

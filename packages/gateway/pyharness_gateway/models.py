@@ -1,14 +1,3 @@
-"""
-Model catalog of the gateway: every model of every route as ``provider:model``, and alias resolution.
-
-| name            | contract                                                                             |
-|-----------------|--------------------------------------------------------------------------------------|
-| ``list()``      | ``{id, provider, providerName, model, name}`` of every model the routes offer        |
-| ``resolve()``   | a request's model name → ``Target``: an alias first, then a ``provider:model`` id of a known route |
-
-A request names its model; an absent name or one of an unknown route raises :class:`ModelResolutionError`.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping

@@ -1,5 +1,3 @@
-"""Grok tools: ``grok_x_search`` (hosted X search), ``grok_image_generate`` and ``grok_video_generate``."""
-
 from __future__ import annotations
 
 import asyncio

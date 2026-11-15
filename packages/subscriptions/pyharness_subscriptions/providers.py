@@ -1,5 +1,3 @@
-"""Provider base: login flow wiring, token managers, catalog and usage caches. Each provider module subclasses it."""
-
 from __future__ import annotations
 
 import asyncio

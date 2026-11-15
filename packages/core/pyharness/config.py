@@ -1,22 +1,3 @@
-"""
-Composition tree and layered patches.
-
-The tree is composed at boot from an empty list by applying layers in order:
-
-1. the profile's bundles, in ``profile.yaml`` order
-2. the profile patch
-3. the home patch
-4. ``--patch`` overlays
-
-Each layer is a list of patch operations addressed by entry ``id``:
-
-| ``id`` | operation                                                                                        |
-|--------|--------------------------------------------------------------------------------------------------|
-| exists | replace the fields the op sets; ``config`` is replaced, or deep-merged with ``merge: true``      |
-| exists | ``remove: true`` deletes the entry                                                               |
-| new    | insert an entry (``name`` or ``children``) at the end, or at ``parent`` / ``before`` / ``after`` |
-"""
-
 from __future__ import annotations
 
 import copy

@@ -1,21 +1,3 @@
-"""
-Graph building: the backend with its skills mounts, the write-deny rules, subagent resolution, ``create_deep_agent``.
-
-| function                 | contract                                                                        |
-|--------------------------|---------------------------------------------------------------------------------|
-| ``backend_and_skills()`` | backend for the workspace and mode, the skill sources, the write-deny rules      |
-| ``resolve_subagent()``   | tool names → registered tools, model spec → model, inside one subagent spec      |
-| ``built_model()``        | ``(spec, model)`` the graph is built with; ``echo:echo`` when the default is unusable at |
-|                          | boot                                                                            |
-| ``build()``              | the compiled deepagents graph from the loop's context, configuration and extension state |
-
-Skills directories added by plugins are mounted read-only for the model at ``/skills/<label>/``
-(``CompositeBackend`` route over ``ctx.backend``); deepagents lists them in the system prompt and
-the model reads a skill with ``read_file``.
-
-``agent-loop/build`` (waterfall) receives the ``create_deep_agent`` keyword arguments.
-"""
-
 from __future__ import annotations
 
 from pathlib import Path

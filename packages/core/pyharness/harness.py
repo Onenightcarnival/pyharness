@@ -1,18 +1,3 @@
-"""
-In-process harness: compose, start, ready, stop.
-
-| user                | phases run                                             |
-|---------------------|--------------------------------------------------------|
-| worker              | start → ready → serve → started → stop                 |
-| preflight           | start → ready → stop                                   |
-| ``pyh exec``, tests | ``async with``: start → ready → serve → started → stop |
-
-::
-
-    async with Harness(Profile("web")) as h:
-        agents = h.get("agents")
-"""
-
 from __future__ import annotations
 
 import os

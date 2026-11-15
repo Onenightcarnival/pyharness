@@ -1,8 +1,3 @@
-"""
-Google Antigravity (Cloud Code Assist ``v1internal``) wire format: contents / parts from LangChain messages, tool
-schemas for Gemini and for Claude / gpt-oss models, thinking configuration per model, SSE translation.
-"""
-
 from __future__ import annotations
 
 import copy

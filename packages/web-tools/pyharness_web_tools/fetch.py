@@ -1,17 +1,3 @@
-"""
-``web_fetch``: HTTP GET with the body reduced to readable text.
-
-| function           | contract                                                                             |
-|--------------------|--------------------------------------------------------------------------------------|
-| ``html_to_text()`` | ``(title, text)`` of an HTML document: headings, bullets, paragraphs, links as ``[text](url)`` |
-| ``fetch()``        | ``{"url", "status", "content_type", "title", "text", "truncated"}``; ``RuntimeError`` on |
-|                    | failure                                                                              |
-| ``fetch_tool()``   | the ``web_fetch`` LangChain tool bound to the service                                 |
-
-The body is read up to ``fetch_max_bytes``; HTML becomes text, JSON is re-indented, other text kinds pass verbatim,
-binary content is described, and the text is cut at ``max_chars`` (at most ``fetch_max_chars``).
-"""
-
 from __future__ import annotations
 
 import contextlib

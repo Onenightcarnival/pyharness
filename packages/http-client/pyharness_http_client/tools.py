@@ -1,16 +1,3 @@
-"""
-The ``http_*`` LangChain tools; every result is text for the model.
-
-| tool             | contract                                                                             |
-|------------------|--------------------------------------------------------------------------------------|
-| ``http_targets`` | a table of the targets: name, base URL, auth type, mutations, variable names, extra hosts |
-| ``http_request`` | one request through the engine; a method other than GET / HEAD / OPTIONS needs the target's |
-|                  | mutation switch and ``confirm=true``                                                  |
-| ``http_history`` | the recent exchanges of one target or of every target; requests without a target are left out |
-
-Secrets never reach a result: the engine masks them and the target table carries the auth type only.
-"""
-
 from __future__ import annotations
 
 from datetime import UTC, datetime

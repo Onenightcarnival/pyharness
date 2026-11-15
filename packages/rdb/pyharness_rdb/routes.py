@@ -1,8 +1,3 @@
-"""
-FastAPI routes under ``/api/rdb`` for the Database page: profiles, settings, test, schemas, tables, columns, ddl,
-rows, query, execute, changes and ``export.csv``.
-"""
-
 from __future__ import annotations
 
 import asyncio

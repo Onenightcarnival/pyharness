@@ -1,14 +1,3 @@
-"""
-Shared by the ``web_search`` and ``web_fetch`` modules.
-
-| name           | contract                                                        |
-|----------------|-----------------------------------------------------------------|
-| ``NOTICE``     | first line of every tool result: the content is untrusted data  |
-| ``USER_AGENT`` | ``user-agent`` header of every outgoing request                 |
-| ``Host``       | the service, as the two modules use it: config, API key, client |
-| ``Pacer``      | at most ``limit`` request starts in any one-second window       |
-"""
-
 from __future__ import annotations
 
 import asyncio

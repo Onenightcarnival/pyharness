@@ -1,13 +1,3 @@
-"""
-Model catalogs per provider and the ``ctx.llm`` routes rebuilt from them.
-
-| function               | contract                                                                        |
-|------------------------|---------------------------------------------------------------------------------|
-| ``provider_catalog()`` | discovered models of every account, merged, with the stored context windows and efforts |
-| ``cached_catalog()``   | the same rows from the last-known catalogs only; no network                      |
-| ``rebuild_routes()``   | rewrite the ``codex`` / ``chatgpt`` / ``antigravity`` / ``grok`` routes of ``ctx.llm`` |
-"""
-
 from __future__ import annotations
 
 from typing import Any, Protocol

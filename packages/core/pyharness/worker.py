@@ -1,21 +1,3 @@
-"""
-Worker process: one generation of the harness.
-
-``python -m pyharness.worker --profile web``
-
-1. compose the profile; start every plugin
-2. ``app/ready``, ``app/serve``
-3. save last-known-good, write the ready marker, commit the hand-off (supervised)
-4. ``app/started``; run until stopped
-
-| signal          | effect                                   |
-|-----------------|------------------------------------------|
-| SIGINT, SIGTERM | stop, exit 0                             |
-| SIGHUP          | restart once holds are released, exit 75 |
-
-Exit codes follow :mod:`pyharness.lifecycle`.
-"""
-
 from __future__ import annotations
 
 import argparse

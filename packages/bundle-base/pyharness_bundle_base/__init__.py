@@ -1,5 +1,3 @@
-"""``base`` bundle: the plugin set of the ``web`` profile template."""
-
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,23 +1,3 @@
-"""
-Plugin definitions, entry-point discovery and bundle loading.
-
-| plugin form                         | contract                                                            |
-|-------------------------------------|---------------------------------------------------------------------|
-| module or object with ``apply``     | ``apply(ctx[, config])``; optional ``name``, ``inject``, ``Config`` |
-| :class:`pyharness.Service` subclass | provides one service under ``key``                                  |
-| :func:`define_plugin` result        | same attributes as a module                                         |
-
-| attribute  | meaning                                          |
-|------------|--------------------------------------------------|
-| ``inject`` | service keys required before the plugin starts   |
-| ``Config`` | pydantic model validating the entry's ``config`` |
-
-| entry-point group     | content                      | entry ``name`` refers to it as         |
-|-----------------------|------------------------------|----------------------------------------|
-| ``pyharness.plugins`` | plugins                      | entry-point name, or ``module[:attr]`` |
-| ``pyharness.bundles`` | bundles (composition layers) | ``profile.yaml`` bundle name           |
-"""
-
 from __future__ import annotations
 
 import difflib
@@ -37,6 +17,7 @@ from .context import Service
 
 PLUGIN_GROUP = "pyharness.plugins"
 BUNDLE_GROUP = "pyharness.bundles"
+DOCS_NAME = "AGENTS.md"  # design documentation of a package
 
 
 class PluginError(RuntimeError):
@@ -81,6 +62,7 @@ class PluginSpec:
     module: str | None = None
     dist: str | None = None
     package_dir: str | None = None
+    docs: str | None = None  # the package's AGENTS.md
 
     def validate_config(self, raw: dict[str, Any] | None) -> Any:
         if self.config_model is None:
@@ -168,6 +150,22 @@ def _module_dir(module_name: str | None) -> str | None:
     return str(Path(file).parent) if file else None
 
 
+def _package_docs(package_dir: str | None) -> str | None:
+    """
+    ``AGENTS.md`` of a package: inside the module directory (an installed wheel), else beside the ``pyproject.toml``
+    one level up (a source checkout).
+    """
+    if not package_dir:
+        return None
+    module_dir = Path(package_dir)
+    inside, beside = module_dir / DOCS_NAME, module_dir.parent / DOCS_NAME
+    if inside.is_file():
+        return str(inside)
+    if beside.is_file() and (module_dir.parent / "pyproject.toml").is_file():
+        return str(beside)
+    return None
+
+
 def load_plugin(name: str) -> PluginSpec:
     eps = plugin_entry_points()
     if name in eps:
@@ -180,6 +178,7 @@ def load_plugin(name: str) -> PluginSpec:
         spec.dist = ep.dist.name if ep.dist else None
         spec.module = ep.module
         spec.package_dir = _module_dir(ep.module)
+        spec.docs = _package_docs(spec.package_dir)
         return spec
     module_name, _, attr = name.partition(":")
     if module_name.replace(".", "").replace("_", "").isalnum() and not module_name[:1].isdigit():
@@ -201,6 +200,7 @@ def load_plugin(name: str) -> PluginSpec:
                 raise PluginNotFound(f"module {module_name!r} has no attribute {attr!r}") from None
         spec = to_spec(obj, name)
         spec.package_dir = _module_dir(module_name)
+        spec.docs = _package_docs(spec.package_dir)
         return spec
     close = difflib.get_close_matches(name, list(eps), n=3)
     hint = f"; close matches: {', '.join(close)}" if close else ""

@@ -1,18 +1,3 @@
-"""
-Persistence provider on SQLite: ``ctx.checkpointer`` and ``ctx.store``.
-
-| service              | implementation       | file                  |
-|----------------------|----------------------|-----------------------|
-| ``ctx.checkpointer`` | ``AsyncSqliteSaver`` | ``config.path``       |
-| ``ctx.store``        | ``AsyncSqliteStore`` | ``config.store_path`` |
-
-Same entry id, PostgreSQL provider::
-
-    - id: checkpoint
-      name: pyharness-checkpoint-postgres
-      config: {dsn: "${env:PYH_POSTGRES_DSN}"}
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -23,6 +8,7 @@ from langgraph.store.sqlite.aio import AsyncSqliteStore
 from pydantic import BaseModel, Field
 
 name = "pyharness-checkpoint-sqlite"
+doc = "Persistence provider on SQLite: ``ctx.checkpointer`` and ``ctx.store``."
 inject: list[str] = []
 
 
@@ -43,4 +29,4 @@ async def apply(ctx: Any, config: Config) -> None:
     ctx.logger.debug("sqlite persistence at %s / %s", config.path, config.store_path)
 
 
-__all__ = ["Config", "apply", "name"]
+__all__ = ["Config", "apply", "doc", "name"]

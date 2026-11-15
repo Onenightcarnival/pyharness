@@ -1,16 +1,3 @@
-"""
-Prompt section ``dev-context``: where this harness runs.
-
-| line         | value                                                   |
-|--------------|---------------------------------------------------------|
-| installation | directory of the ``pyharness`` package                  |
-| profile      | profile name and directory, when a profile is active    |
-| workspace    | ``ctx.workspace.root``, when the workspace is active    |
-| Web UI       | ``http://host:port/`` from ``ctx.http``; API under ``/api`` |
-
-The guidance text is value-free; the values follow as a list.
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -24,6 +11,7 @@ from pyharness import package_prompts
 PROMPTS = package_prompts(__file__)
 
 name = "pyharness-dev-context"
+doc = "Prompt section ``dev-context``: where this harness runs."
 inject = ["prompt"]
 
 GUIDANCE: str = PROMPTS["dev_context"]["GUIDANCE"]

@@ -1,18 +1,3 @@
-"""
-``Workspaces`` (``ctx.workspace``): open workspaces, cached backends, remembered workspaces, the directory picker.
-
-| member                       | contract                                                                  |
-|------------------------------|---------------------------------------------------------------------------|
-| ``default``                  | the configured workspace; ``root``, ``resolve`` … delegate to it          |
-| ``open(path)``               | a validated :class:`Workspace` for ``path``; ``None`` is the default       |
-| ``backend_for(path, shell)`` | cached backend for a workspace; ``shell=False`` gives a filesystem-only one |
-| ``recent()`` / ``remember`` / ``forget`` | workspaces used by sessions, kept in ``ctx.store``                |
-| ``rename(path, name)``       | display name of a workspace (``None`` restores the directory name)       |
-| ``browse(path)``             | one directory level: subdirectories only, for the in-app picker          |
-| ``picker()``                 | ``native`` (an OS folder dialog on this machine) or ``browse``            |
-| ``pick(prompt)``             | opens the OS folder dialog; the chosen absolute path, or ``None``        |
-"""
-
 from __future__ import annotations
 
 import asyncio

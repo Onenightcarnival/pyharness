@@ -1,8 +1,3 @@
-"""
-Grok (xAI): OIDC-discovered OAuth, catalogs from ``api.x.ai`` and the CLI proxy, billing usage, Responses chat,
-X search, image and video generation.
-"""
-
 from __future__ import annotations
 
 import asyncio

@@ -1,5 +1,3 @@
-"""PostgreSQL and GaussDB driver through psycopg 3."""
-
 from __future__ import annotations
 
 import contextlib

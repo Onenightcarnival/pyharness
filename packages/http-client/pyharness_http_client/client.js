@@ -1,5 +1,3 @@
-// Browser module of the `http-client` entry: the sidebar "HTTP" entry and its page (scope selector and targets, saved
-// requests and exchange history, the request form with autosave, the response pane and the event-stream view).
 window.__PyhModules__.load({
   id: "http-client",
   factory(require) {

@@ -1,16 +1,3 @@
-"""
-Model side of the gateway: one :class:`Generation` becomes one LangChain ``astream`` over a route of ``ctx.llm``.
-
-| name               | contract                                                                          |
-|--------------------|-----------------------------------------------------------------------------------|
-| ``LangChainBackend`` | ``stream(generation)`` yields the chunks of :mod:`.chunks`                      |
-| ``UpstreamError``  | failure of the route: the provider's status when it is 4xx or 5xx, else 502       |
-
-``temperature``, ``max_tokens`` and ``reasoning_effort`` of a request build a model instance of their own
-(``ctx.llm.build``); a request without them uses the cached instance (``ctx.llm.resolve``). ``reasoning_effort``
-reaches route types listed in :data:`REASONING_EFFORT_TYPES`.
-"""
-
 from __future__ import annotations
 
 from collections.abc import AsyncIterator

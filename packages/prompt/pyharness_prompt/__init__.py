@@ -1,13 +1,3 @@
-"""
-``ctx.prompt``: system prompt assembled from ordered sections.
-
-| member       | contract                                                    |
-|--------------|-------------------------------------------------------------|
-| ``add``      | section owned by the calling plugin; removed when it stops; ``presets`` limits it to agent presets |
-| ``render``   | sections by ``order``, then insertion; blank-line separated; ``preset`` selects the applicable ones |
-| ``sections`` | ``id``, ``order``, ``owner``, ``chars``, ``presets`` per section |
-"""
-
 from __future__ import annotations
 
 from collections.abc import Callable

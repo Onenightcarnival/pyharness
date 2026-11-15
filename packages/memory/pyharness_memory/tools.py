@@ -1,5 +1,3 @@
-"""The ``memory_get`` / ``memory_save`` LangChain tools and the typed change schemas (shapes as dsh-memory)."""
-
 from __future__ import annotations
 
 import json

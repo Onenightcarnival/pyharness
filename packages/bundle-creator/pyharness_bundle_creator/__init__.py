@@ -1,8 +1,3 @@
-"""
-``creator`` bundle: the ``creator`` agent preset as the default for new sessions
-(the ``creator`` profile template).
-"""
-
 from __future__ import annotations
 
 from pathlib import Path

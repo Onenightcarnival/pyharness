@@ -1,31 +1,3 @@
-"""
-Failure codes of a model call: one stable code per failure, read from the exception a provider raised.
-
-| code                        | failure                                                              |
-|-----------------------------|----------------------------------------------------------------------|
-| ``RATE_LIMIT``              | HTTP 429                                                             |
-| ``SERVER``                  | HTTP 5xx other than 504                                              |
-| ``TIMEOUT``                 | a request or stream timeout; HTTP 408 and 504                        |
-| ``TRANSPORT``               | the connection could not be made or broke                            |
-| ``STREAM_CLOSED``           | the response stream ended early or broke the protocol                |
-| ``EMPTY_RESPONSE``          | the provider answered without content                                |
-| ``AUTH``                    | HTTP 401 and 403                                                     |
-| ``CONTEXT_WINDOW_EXCEEDED`` | HTTP 400 whose message names the context window                      |
-| ``CONFIG``                  | the route is not usable: no model, no credential, unknown provider   |
-| ``HTTP_<status>``           | any other HTTP error status                                          |
-| ``UNKNOWN``                 | nothing above                                                        |
-
-| name                 | contract                                                                    |
-|----------------------|-----------------------------------------------------------------------------|
-| ``failure_code()``   | the code of an exception; a ``code`` attribute in this vocabulary wins, then the HTTP status, |
-|                      | then the exception type; the cause chain is followed                        |
-| ``retry_after_ms()`` | the wait a provider asked for: ``retry_after_ms`` of the exception, else its ``Retry-After`` |
-|                      | response header in seconds; ``None`` without one                            |
-| ``TRANSIENT_CODES``  | codes a retry policy retries by default                                     |
-| ``RETRY_CHOICES``    | codes a settings form offers for a retry policy                             |
-| ``CONTINUABLE_CODES``| codes after which a failed turn may be continued by hand                    |
-"""
-
 from __future__ import annotations
 
 import re

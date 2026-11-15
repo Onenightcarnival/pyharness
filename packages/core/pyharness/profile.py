@@ -1,19 +1,3 @@
-"""
-Profiles: named, persistent assemblies in the harness home.
-
-``$PYH_HOME`` (default ``~/.pyharness``)::
-
-    $PYH_HOME/
-      harness.patch.yaml       home patch, every profile
-      profiles/<name>/
-        profile.yaml           ordered bundle list
-        harness.patch.yaml     profile patch; written by plugin_manager and the settings API
-        credentials.yaml       credential store (0600); values referenced by name from the patch
-        site/                  bundles installed into this profile (pip --target)
-        data/                  default SQLite location
-        runtime/               ready markers, hand-off files, last-known-good, locks
-"""
-
 from __future__ import annotations
 
 import asyncio

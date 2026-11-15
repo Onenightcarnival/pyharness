@@ -1,5 +1,3 @@
-"""LangChain tools over the terminal service: ``bash``, ``run_in_background`` and the ``job_*`` tools."""
-
 from __future__ import annotations
 
 import json

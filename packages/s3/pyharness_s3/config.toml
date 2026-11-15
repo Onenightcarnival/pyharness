@@ -1,5 +1,3 @@
-# Data of pyharness_s3; loaded with pyharness.package_toml(__file__).
-
 # engine.MIME: file extension -> media type of objects written and served
 [engine.MIME]
 ".txt" = "text/plain; charset=utf-8"

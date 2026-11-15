@@ -1,37 +1,3 @@
-"""
-Wire contract shared by the stores, the engine, the routes and the page.
-
-| name               | contract                                                                             |
-|--------------------|--------------------------------------------------------------------------------------|
-| ``substitute()``   | ``{{name}}`` → the variable's value; unknown names stay as written                   |
-| ``join_url()``     | a request path joined below a base URL, or an absolute URL, with the query appended  |
-| ``to_pairs()``     | ``[name, value]`` pairs of a mapping or of a pair list; repeated names are kept      |
-| ``SseParser``      | incremental server-sent event parser (WHATWG event stream format)                    |
-| ``parse_sse()``    | every event of a complete stream text                                                |
-
-| object            | fields                                                                                |
-|-------------------|---------------------------------------------------------------------------------------|
-| target            | ``id``, ``name``, ``baseUrl``, ``auth``, ``headers``, ``variables``, ``allowedHosts``, |
-|                   | ``allowMutations``, ``allowPrivate``, ``timeoutMs``, ``createdAt``, ``updatedAt``     |
-| auth              | ``{type: none}``, ``{type: bearer, token}``, ``{type: basic, username, password}``,   |
-|                   | ``{type: header, name, value}``, ``{type: query, name, value}``                       |
-| saved request     | ``id``, ``targetId``, ``name``, ``method``, ``path``, ``query``, ``headers``, ``auth``, |
-|                   | ``bodyMode``, ``body``, ``form``, ``createdAt``, ``updatedAt``                        |
-| row               | ``key``, ``value``, ``enabled``: one entry of ``query``, ``headers`` or ``form``      |
-| request input     | ``method``, ``path``, ``query`` (mapping or pairs), ``headers``, ``body``, ``requestId``, |
-|                   | ``auth``                                                                              |
-| exchange          | ``id``, ``at``, ``targetId``, ``targetName``, ``source`` (``panel`` / ``agent``), ``requestId``, |
-|                   | ``request``, then ``response`` or ``error``                                           |
-| exchange request  | ``method``, ``url`` (masked), ``path``, ``query``, ``headers``, ``sentHeaders``, ``body``, |
-|                   | ``bodyTruncated``                                                                     |
-| exchange response | ``status``, ``statusText``, ``headers``, ``contentType``, ``bodyBytes``, ``body``,    |
-|                   | ``bodyTruncated``, ``binary``, ``bodyBase64``, ``durationMs``, ``redirects``,         |
-|                   | ``stream: {ended, times}``                                                            |
-| event             | ``event`` (empty: the default type ``message``), ``data``, ``id``, ``retry``          |
-
-Times are epoch milliseconds. ``stream.ended`` is ``complete``, ``cancelled``, ``timeout`` or ``limit``.
-"""
-
 from __future__ import annotations
 
 import re

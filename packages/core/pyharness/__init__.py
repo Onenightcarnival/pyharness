@@ -1,25 +1,3 @@
-"""
-pyharness: an everything-is-a-plugin agent harness on FastAPI, deepagents and LangGraph.
-
-| kernel module              | content                                          |
-|----------------------------|--------------------------------------------------|
-| ``context``                | service container, registrations, ``Service``    |
-| ``events``                 | typed events with declared dispatch modes        |
-| ``config``                 | composition tree, layered patches, interpolation |
-| ``plugin``                 | plugin forms, entry-point discovery, bundles     |
-| ``loader``                 | dependency-driven start, teardown                |
-| ``lifecycle``              | holds, restarts, hand-off between generations    |
-| ``profile``                | profiles in the harness home                     |
-| ``credentials``            | credential store referenced by name              |
-| ``resources``              | TOML data and prompt files next to a module      |
-| ``manage``                 | transactional profile mutations                  |
-| ``preflight``              | dry boot in a separate process                   |
-| ``worker``, ``supervisor`` | process model                                    |
-| ``cli``                    | ``pyh``                                          |
-
-Model adapters, tools, the agent loop, persistence and the HTTP API are plugins.
-"""
-
 from __future__ import annotations
 
 from .config import ConfigError, Entry, PatchOp

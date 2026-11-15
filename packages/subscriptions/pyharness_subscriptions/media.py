@@ -1,5 +1,3 @@
-"""Generated media: saving images / videos under the subscriptions data directory and describing them to the model."""
-
 from __future__ import annotations
 
 import base64

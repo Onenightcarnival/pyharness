@@ -1,8 +1,3 @@
-"""
-ChatGPT ("Sign in with ChatGPT", public OpenAI API with plan usage): dynamic client registration, id_token
-validation against the issuer's JWKS, chat through ``/v1/responses`` with a ``dsh``-style tool namespace.
-"""
-
 from __future__ import annotations
 
 import base64

@@ -1,5 +1,3 @@
-"""``LLMService``: provider registry, route resolution and model cache, settings views, probe and model listing."""
-
 from __future__ import annotations
 
 import asyncio

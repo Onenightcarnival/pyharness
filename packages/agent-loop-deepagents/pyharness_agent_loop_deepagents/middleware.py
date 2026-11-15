@@ -1,19 +1,3 @@
-"""
-``HarnessMiddleware``: LangChain middleware that routes model and tool calls through the harness.
-
-| hook       | route                                                                           |
-|------------|---------------------------------------------------------------------------------|
-| model call | model from ``configurable.model_spec`` or ``ctx.llm.default`` when it differs from the built one; |
-|            | then ``agent/model-request`` (waterfall)                                        |
-| tool call  | ``ctx.tools.execute``                                                           |
-
-:class:`ModelCall` is the payload ``agent/model-request`` listeners receive.
-
-A failed model call is retried by the retry policy of its route (``ctx.llm.retry_policy``): the handler runs again
-after the policy's wait, inside the waterfall, so listeners see one call. ``agent/model-retry`` (parallel) carries
-a :class:`ModelRetry` before each wait. Cancellation is never retried.
-"""
-
 from __future__ import annotations
 
 import asyncio

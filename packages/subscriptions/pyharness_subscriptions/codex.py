@@ -1,8 +1,3 @@
-"""
-Codex (OpenAI, ChatGPT-subscription Codex backend): OAuth login, model catalog, usage, chat, web search and
-image generation.
-"""
-
 from __future__ import annotations
 
 import json

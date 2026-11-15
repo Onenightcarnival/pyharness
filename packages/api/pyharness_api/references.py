@@ -1,12 +1,3 @@
-"""
-``@path`` references in a user message: the referenced files and directories travel with the prompt.
-
-A token ``@path`` or ``@"path with spaces"`` at the start of the text or after whitespace or a bracket names a
-file or directory of the session's workspace (``/`` or relative to its root). Resolvable references are appended to
-the message as ``<attached-file path=...>`` blocks (text, clipped) or ``<attached-directory path=...>`` listings;
-the ``@path`` text itself stays in place. Tokens that resolve to nothing (an email address, a handle) are left alone.
-"""
-
 from __future__ import annotations
 
 import os

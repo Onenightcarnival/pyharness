@@ -1,5 +1,3 @@
-"""MySQL and MariaDB driver through PyMySQL."""
-
 from __future__ import annotations
 
 import contextlib

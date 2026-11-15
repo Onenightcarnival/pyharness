@@ -1,5 +1,3 @@
-# Model-visible text of pyharness_http_client; loaded with pyharness.package_prompts(__file__).
-
 [service]
 GUIDANCE = '''
 The HTTP API request tool is installed and the user allowed its tools. http_targets lists the API targets the user

@@ -1,5 +1,3 @@
-"""SQLite driver (stdlib ``sqlite3``); statement timeouts through the progress handler."""
-
 from __future__ import annotations
 
 import sqlite3

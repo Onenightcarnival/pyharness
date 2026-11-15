@@ -1,6 +1,3 @@
-# Provider endpoints, OAuth client ids and scopes, wire-level identifiers. One table per module; each module loads
-# its table with ``package_toml(__file__)``.
-
 [common]
 USER_AGENT = "pyharness-subscriptions/0.1 (+https://github.com/Onenightcarnival/dsh-toolkit)"
 # JSON fields searched for a rate-limit reset (seconds, epoch seconds or epoch ms).

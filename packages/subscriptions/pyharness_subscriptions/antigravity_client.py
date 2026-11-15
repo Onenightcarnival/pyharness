@@ -1,15 +1,3 @@
-"""
-Antigravity client signature: the Cloud Code backend serves content requests of the Antigravity CLI User-Agent
-family only.
-
-| name                    | contract                                                                    |
-|-------------------------|-----------------------------------------------------------------------------|
-| ``build_user_agent()``  | ``antigravity/cli/<version> (aidev_client; os_type=…; arch=…; cl=…; …)``    |
-| ``parse_cli_version()`` | the first ``x.y.z`` of the auto-updater text, or ``None``                   |
-| ``CliVersion``          | the version in use; ``prime()`` reads the stable version once, and a failed |
-|                         | read keeps the pinned one                                                   |
-"""
-
 from __future__ import annotations
 
 import asyncio

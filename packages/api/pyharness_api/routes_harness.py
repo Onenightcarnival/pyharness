@@ -1,21 +1,3 @@
-"""
-Harness-level routes: health, plugin management, restart, MCP server settings, syntax highlighting.
-
-| method | path                         | handler              |
-|--------|------------------------------|----------------------|
-| GET    | ``/health``                  | ``health``           |
-| POST   | ``/plugins/install``         | ``install_plugin``   |
-| DELETE | ``/plugins/bundles/{name}``  | ``uninstall_plugin`` |
-| PUT    | ``/plugins/bundles/{name}``  | ``toggle_bundle``    |
-| PUT    | ``/plugins/entries/{id}``    | ``toggle_entry``     |
-| POST   | ``/restart``                 | ``restart_now``      |
-| GET    | ``/plugins``                 | ``plugins``          |
-| GET    | ``/settings/mcp``            | ``get_mcp_settings`` |
-| PUT    | ``/settings/mcp``            | ``put_mcp_settings`` |
-| POST   | ``/highlight``               | ``highlight_code``   |
-| GET    | ``/highlight.css``           | ``highlight_css``    |
-"""
-
 from __future__ import annotations
 
 import asyncio

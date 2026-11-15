@@ -1,5 +1,3 @@
-"""Background jobs: ``bash -c`` processes with their output in a log file, and their registry."""
-
 from __future__ import annotations
 
 import asyncio
