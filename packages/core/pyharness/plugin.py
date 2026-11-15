@@ -166,6 +166,12 @@ def _package_docs(package_dir: str | None) -> str | None:
     return None
 
 
+def package_root(package_dir: str | Path) -> Path:
+    """Directory that holds a package's files: where its ``AGENTS.md`` lies, else the module directory."""
+    docs = _package_docs(str(package_dir))
+    return Path(docs).parent if docs else Path(package_dir)
+
+
 def load_plugin(name: str) -> PluginSpec:
     eps = plugin_entry_points()
     if name in eps:

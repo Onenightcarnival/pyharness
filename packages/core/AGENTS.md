@@ -107,6 +107,7 @@ waterfall 监听者 `listener(*args, next)`：
 |---|---|
 | `package_dir` | 插件模块所在目录 |
 | `docs` | 包的 `AGENTS.md`：模块目录内（已安装的 wheel），否则上一级 `pyproject.toml` 旁（源码检出）；没有时为 `None` |
+| `package_root(package_dir)` | 包的文件所在目录：`AGENTS.md` 所在的目录，没有时为模块目录 |
 
 | entry point 组 | 内容 | 引用方式 |
 |---|---|---|

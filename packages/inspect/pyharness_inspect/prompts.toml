@@ -4,5 +4,6 @@ Read-only view of the running harness.
 
 topic: overview | services | events | plugins | config | tools | routes | prompt
 name: filter; a service key, event name, entry id or tool name
-topic=config with an entry id: the plugin's config JSON Schema, package_dir and docs (the package's AGENTS.md)
+topic=config with an entry id: the plugin's config JSON Schema, package_dir (its sources) and docs (its AGENTS.md);
+both are file-tool paths where the package is mounted, paths on disk otherwise
 '''

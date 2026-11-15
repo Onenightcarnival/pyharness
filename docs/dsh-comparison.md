@@ -13,6 +13,7 @@
 | HMR：进程内热替换 | 换代：supervisor + worker generation |
 | Plugin Manager + 创造模式（`cordis` preset：`dsh-tool-cordis` + skills） | `plugin_manager` + `harness_inspect` + `creator` bundle：skills 挂载到 `/skills/pyharness/`，deepagents skills 中间件按需加载 |
 | `dsh-harness-dev-context` | `pyharness-dev-context` 提示词段 |
+| 源码随包分发，agent 按实现所在路径读取 | `creator` 预设：已加载的包只读挂载到 `/harness/<模块名>/`（`AGENTS.md` 与源码） |
 | `dsh-skill` + `dsh-skill-filesystem` + `dsh-tool-skill` | deepagents `SkillsMiddleware`；`ctx.agentLoop.add_skills` |
 | 插件的浏览器端（client slot） | 有：`ctx.webui.register_client` + 页面槽位（侧边栏行、更多菜单、主区面板、输入框停靠位、设置分区、右侧栏 tab）；模块为无打包的 JS，`window.__PyhModules__.load({id, factory})` |
 | `dsh-sandbox-policy` + `dsh-permission-presets`（read-only / workspace-write / danger-full-access） | `agent-loop` 的权限模式 `read-only` / `workspace-write` / `full-access`：deepagents 文件权限规则、shell 工具有无、审批闸门有无；每会话可切换 |

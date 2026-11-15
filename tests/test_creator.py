@@ -1,11 +1,13 @@
-"""Creator mode: skills mounted read-only, catalog in the system prompt, templates, generated package reference."""
+"""Creator mode: skills and package sources mounted read-only, templates, generated package reference."""
 
 from __future__ import annotations
 
+import json
 import re
 
 import pytest
 
+from conftest import ROOT
 from pyharness import Harness, Profile
 from pyharness_plugin_manager import SKILLS_DIR, render_template, template_variants
 from pyharness_plugin_manager.reference import PACKAGES_MD, render_packages
@@ -117,6 +119,75 @@ async def test_creator_profile_mounts_skills_read_only(home):
         for name in SKILLS:
             assert f"/skills/pyharness/{name}/SKILL.md" in system
         assert "Extending this harness" not in system
+
+
+async def test_creator_preset_reads_the_mounted_packages(home):
+    profile = Profile.init("creator", template="creator", home=str(home))
+    docs = "/harness/pyharness_llm/AGENTS.md"
+    replies = [
+        {"content": "", "tool_calls": [{"name": "read_file", "args": {"file_path": docs}, "id": "r1"}]},
+        {
+            "content": "",
+            "tool_calls": [
+                {
+                    "name": "read_file",
+                    "args": {"file_path": "/harness/pyharness_llm/pyharness_llm/service.py"},
+                    "id": "r2",
+                }
+            ],
+        },
+        {
+            "content": "",
+            "tool_calls": [{"name": "write_file", "args": {"file_path": docs, "content": "x"}, "id": "w1"}],
+        },
+        {"content": "", "tool_calls": [{"name": "ls", "args": {"path": "/harness"}, "id": "l1"}]},
+        {"content": "done"},
+        {"content": "", "tool_calls": [{"name": "read_file", "args": {"file_path": docs}, "id": "r3"}]},
+        {"content": "done"},
+    ]
+    async with Harness(profile, patch=patch_for(replies)) as h:
+        loop, agents = h.get("agentLoop"), h.get("agents")
+        mounts = {m["mount"]: m for m in loop.mounts()}
+        assert mounts["/harness/pyharness/"]["path"] == str(ROOT / "packages" / "core")  # the kernel
+        assert mounts["/harness/pyharness_llm/"] == {
+            "mount": "/harness/pyharness_llm/",
+            "path": str(ROOT / "packages" / "llm"),
+            "owner": "plugin-manager",
+            "presets": ["creator"],
+        }
+        assert all(m["owner"] == "plugin-manager" for m in mounts.values())
+        assert "## Harness sources" in h.get("prompt").render("creator")
+        assert "## Harness sources" not in h.get("prompt").render("standard")
+
+        inspect = next(t for t in h.get("tools").list() if t.name == "harness_inspect")
+        config = json.loads(inspect.invoke({"topic": "config", "name": "llm"}))
+        assert config["docs"] == docs and config["package_dir"] == "/harness/pyharness_llm/pyharness_llm/"
+        entry = json.loads(inspect.invoke({"topic": "plugins", "name": "dev-context"}))[0]
+        assert entry["docs"] == "/harness/pyharness_plugin_manager/AGENTS.md"
+
+        session = await agents.create_session()
+        events = await agents.start_run(session["id"], "go").wait()
+        results = {e["id"]: e for e in events if e["type"] == "tool_result"}
+        assert results["r1"]["status"] == "success" and "# pyharness-llm" in results["r1"]["content"]
+        assert results["r2"]["status"] == "success" and "class LLMService" in results["r2"]["content"]
+        assert results["w1"]["status"] == "error" and "denied" in results["w1"]["content"]
+        assert all(f"/harness/{module}/" in results["l1"]["content"] for module in ("pyharness", "pyharness_llm"))
+
+        session = await agents.create_session(preset="standard")
+        events = await agents.start_run(session["id"], "go").wait()
+        results = {e["id"]: e for e in events if e["type"] == "tool_result"}
+        assert "# pyharness-llm" not in results["r3"]["content"]
+
+
+async def test_sources_off_leaves_paths_on_disk(home):
+    profile = Profile.init("creator", template="creator", home=str(home))
+    patch = [*patch_for([]), {"id": "plugin-manager", "config": {"sources": False}}]
+    async with Harness(profile, patch=patch) as h:
+        assert h.get("agentLoop").mounts() == []
+        assert "## Harness sources" not in h.get("prompt").render("creator")
+        inspect = next(t for t in h.get("tools").list() if t.name == "harness_inspect")
+        config = json.loads(inspect.invoke({"topic": "config", "name": "llm"}))
+        assert config["docs"] == str(ROOT / "packages" / "llm" / "AGENTS.md")
 
 
 async def test_base_profile_keeps_the_short_guidance(home):

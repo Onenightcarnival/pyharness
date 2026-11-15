@@ -36,7 +36,7 @@ Read the references below and inspect the proposed or existing plugin against th
 ## Knowledge sources, in order
 
 1. Inspection: `harness_inspect` answers from the running process: services and their methods, events with modes and listeners, config JSON Schemas and effective values, registered tools and approval gates, HTTP routes, prompt sections.
-2. Package documentation: `harness_inspect topic=config name=<entry id>` returns `docs`, the path of the package's `AGENTS.md` (its design: files, members, configuration, routes, rules), `package_dir` and `doc`. Read `docs` with the file tools when the inspection leaves a question open, then the sources under `package_dir`; both are outside the workspace, so use the absolute paths.
+2. Package documentation: `harness_inspect topic=config name=<entry id>` returns `docs`, the path of the package's `AGENTS.md` (its design: files, members, configuration, routes, rules), `package_dir` and `doc`. Read `docs` with the file tools when the inspection leaves a question open, then the sources under `package_dir`; both lie under `/harness/<module>/`, the read-only mount of the package.
 3. Reference files of this skill (table below).
 
 ## Read next

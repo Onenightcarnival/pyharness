@@ -10,16 +10,18 @@ from langchain.tools import ToolRuntime
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 
-from pyharness import manage, package_prompts
+import pyharness
+from pyharness import manage, package_prompts, package_root
 
 PROMPTS = package_prompts(__file__)
 
 name = "pyharness-plugin-manager"
-doc = "``plugin_manager`` tool, the plugin-authoring skills, and the short prompt section."
+doc = "``plugin_manager`` tool, the plugin-authoring skills, the read-only package mounts, and the prompt sections."
 inject = ["tools", "prompt", "agentLoop"]
 
 SKILLS_DIR = Path(__file__).with_name("skills")
 TEMPLATES_DIR = SKILLS_DIR / "pyharness-plugin-development" / "templates"
+SOURCES_MOUNT = "/harness"
 TOKENS = ("__DIST__", "__MODULE__", "__BUNDLE__", "__TITLE__")
 
 Action = Literal[
@@ -43,12 +45,27 @@ class Config(BaseModel):
         True,
         description="Mount the plugin-authoring skills at /skills/pyharness/ for the presets listed in skills_presets.",
     )
+    sources: bool = Field(
+        True,
+        description="Mount every loaded package read-only at /harness/<module>/ for the presets in skills_presets.",
+    )
     skills_presets: list[str] = Field(
-        default_factory=lambda: ["creator"], description="Agent presets that see the skills."
+        default_factory=lambda: ["creator"], description="Agent presets that see the skills and the sources."
     )
 
 
 GUIDANCE: str = PROMPTS["plugin_manager"]["GUIDANCE"]
+SOURCES: str = PROMPTS["plugin_manager"]["SOURCES"]
+
+
+def source_roots(ctx: Any) -> dict[str, Path]:
+    """Kernel and every loaded plugin package: ``module name -> directory of its files``."""
+    module_dirs = [Path(pyharness.__file__).resolve().parent]
+    module_dirs += [Path(rt.spec.package_dir) for rt in ctx.loader.runtimes if rt.spec and rt.spec.package_dir]
+    roots: dict[str, Path] = {}
+    for module_dir in module_dirs:
+        roots.setdefault(module_dir.name, package_root(module_dir))
+    return roots
 
 
 def template_variants() -> list[str]:
@@ -87,6 +104,10 @@ def render_template(short: str, variant: str = "basic") -> dict[str, str]:
 def apply(ctx: Any, config: Config) -> None:
     if config.skills:
         ctx.agentLoop.add_skills(SKILLS_DIR, "pyharness", presets=config.skills_presets)
+    if config.sources:
+        for module, root in source_roots(ctx).items():
+            ctx.agentLoop.add_mount(f"{SOURCES_MOUNT}/{module}", root, presets=config.skills_presets)
+        ctx.prompt.add("harness-sources", SOURCES, order=55, presets=config.skills_presets or None)
     if config.guidance:
         presets = ctx.agentLoop.preset_ids()
         without_skills = [p for p in presets if p not in config.skills_presets] if config.skills else None
@@ -211,6 +232,7 @@ def apply(ctx: Any, config: Config) -> None:
 __all__ = [
     "MUTATING",
     "SKILLS_DIR",
+    "SOURCES_MOUNT",
     "TEMPLATES_DIR",
     "TOKENS",
     "Action",
@@ -220,5 +242,6 @@ __all__ = [
     "inject",
     "name",
     "render_template",
+    "source_roots",
     "template_variants",
 ]

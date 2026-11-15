@@ -5,7 +5,7 @@ agent 编写插件、安装进自己的 profile，在下一代中使用。
 | 预设 | 工具 | agent 看到的 |
 |---|---|---|
 | `standard` | 不含 `plugin_manager`、`harness_inspect` | 系统提示词中三行「Extending this harness」：指向 Creator 预设 |
-| `creator` | 全部 | skill 目录（`/skills/pyharness/`）；完整流程按需由 `read_file` 加载 |
+| `creator` | 全部 | skill 目录（`/skills/pyharness/`）；完整流程按需由 `read_file` 加载；包的设计文档与源码（`/harness/`） |
 
 预设按会话选择（输入框的「预设」标签），对照 dsh 的 agent preset；`creator` bundle 只把新会话默认预设设为 `creator`（`pyh init --template creator`）。
 
@@ -33,6 +33,17 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 | `agent-experience` | 工具定义、提示词片段、skill、子 agent、状态消息的写法 |
 
 知识来源顺序：运行时检查（`harness_inspect`）→ 包的 `AGENTS.md`（`topic=config` 的 `docs`）与包目录中的源码（`package_dir`）→ skill 的参考文件。
+
+### 包的只读挂载
+
+| 项 | 内容 |
+|---|---|
+| 范围 | 内核与每个已加载条目的包 |
+| 挂载点 | `creator` 预设会话的 `/harness/<模块名>/`；写入被拒绝 |
+| 内容 | 包的 `AGENTS.md` 与源码 |
+| 路径 | `harness_inspect topic=config name=<条目 id>` 的 `docs`、`package_dir` |
+| 接口 | `ctx.agentLoop.add_mount(mount, directory, presets=None)`；其他插件同样可挂载自己的只读目录 |
+| 对照 dsh | 源码随包分发、agent 可读；pyharness 只读，扩展经插件完成 |
 
 每个 `SKILL.md` 小于 8000 字符。其他插件：`ctx.agentLoop.add_skills(directory, label, presets=None)` 挂载自己的 skills 目录，随插件停止卸载；`ctx.agentLoop.add_preset(id, title, description, tools=…, exclude_tools=…)` 添加预设；`ctx.prompt.add(..., presets=[…])` 限定提示词片段。
 
@@ -80,7 +91,8 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 | `require_approval` | `true` | 变更动作需人工批准 |
 | `guidance` | `true` | 没有 skills 的预设的三行插件编写片段 |
 | `skills` | `true` | 挂载插件编写 skills 到 `/skills/pyharness/` |
-| `skills_presets` | `["creator"]` | 看到 skills 的预设 |
+| `sources` | `true` | 已加载的包只读挂载到 `/harness/<模块名>/` |
+| `skills_presets` | `["creator"]` | 看到 skills 与包挂载的预设 |
 
 ### `dev-context` 提示词段
 

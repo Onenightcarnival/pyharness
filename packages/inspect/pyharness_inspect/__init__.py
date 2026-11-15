@@ -133,10 +133,19 @@ class Inspector:
             return {"error": f"no event {name!r}", "available": [d.name for d in bus.declarations()]}
         return rows
 
+    def _path(self, path: str | None) -> str | None:
+        """File-tool path of a package path: its path inside a mount, else the path on disk."""
+        loop = self.ctx.get("agentLoop", None)
+        if not path or loop is None or not hasattr(loop, "mounted"):
+            return path
+        return loop.mounted(path) or path
+
     def plugins(self, name: str | None) -> Any:
         rows = self.ctx.loader.snapshot()
         if name:
             match = [r for r in rows if r["id"] == name or r.get("name") == name]
+            for row in match:
+                row.update({key: self._path(row[key]) for key in ("package_dir", "docs") if row.get(key)})
             return match or {"error": f"no entry {name!r}"}
         return [
             {k: r.get(k) for k in ("id", "name", "state", "kind", "provides", "inject", "missing", "error") if r.get(k)}
@@ -166,8 +175,8 @@ class Inspector:
         }
         if rt.spec is not None:
             data["schema"] = rt.spec.config_schema()
-            data["package_dir"] = rt.spec.package_dir
-            data["docs"] = rt.spec.docs
+            data["package_dir"] = self._path(rt.spec.package_dir)
+            data["docs"] = self._path(rt.spec.docs)
             data["doc"] = rt.spec.doc
         if rt.config is not None and hasattr(rt.config, "model_dump"):
             data["effective_config"] = _redact(rt.config.model_dump(mode="json"), rt.entry.config or {})

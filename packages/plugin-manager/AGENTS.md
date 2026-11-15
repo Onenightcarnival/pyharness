@@ -1,6 +1,6 @@
 # pyharness-plugin-manager
 
-`plugin_manager` 工具、插件编写技能、两个系统提示词段。
+`plugin_manager` 工具、插件编写技能、包的只读挂载、系统提示词段。
 
 | 条目 | entry point | 插件 | 注入 |
 |---|---|---|---|
@@ -11,7 +11,7 @@
 
 | 文件 | 内容 |
 |---|---|
-| `__init__.py` | `plugin_manager` 工具、技能挂载、简短的提示词段 |
+| `__init__.py` | `plugin_manager` 工具、技能挂载、包的只读挂载、提示词段 |
 | `dev_context.py` | 提示词段 `dev-context` |
 | `reference.py` | 技能 `pyharness-composition-reference` 的 `references/packages.md` 的渲染 |
 | `prompts.toml` | 模型可见的文本 |
@@ -22,7 +22,8 @@
 | 配置 | 作用 | 面向的预设 |
 |---|---|---|
 | `guidance` | 系统提示词中的简短段 | 没有技能的预设（`standard`） |
-| `skills` | 本包的 `skills/` 挂载到 `/skills/pyharness/` | `creator` |
+| `skills` | 本包的 `skills/` 挂载到 `/skills/pyharness/` | `skills_presets`（`creator`） |
+| `sources` | 已加载的包只读挂载到 `/harness/<模块名>/`；提示词段 `harness-sources` | `skills_presets`（`creator`） |
 
 ## 技能
 
@@ -31,6 +32,16 @@
 | 位置 | `skills/<name>/SKILL.md` |
 | 技能 | `pyharness-plugin-development`、`editing-pyharness-compositions`、`pyharness-composition-reference`、`agent-experience` |
 | 模板 | `skills/pyharness-plugin-development/templates/` |
+
+## 包的只读挂载
+
+| 项 | 契约 |
+|---|---|
+| 范围 | 内核 `pyharness` 与每个已加载条目的包：`source_roots()` |
+| 挂载点 | `/harness/<模块名>/`，经 `ctx.agentLoop.add_mount`；只读 |
+| 挂载的目录 | `pyharness.package_root`：源码检出为含 `pyproject.toml`、`AGENTS.md` 与模块目录的发行目录；已安装的 wheel 为模块目录 |
+| 路径的出处 | `harness_inspect topic=config` 的 `docs` 与 `package_dir` |
+| 提示词段 `harness-sources` | 挂载点与路径的出处；order 55 |
 
 ## `plugin_manager` 工具
 

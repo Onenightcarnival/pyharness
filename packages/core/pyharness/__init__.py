@@ -7,7 +7,7 @@ from .events import EventModeError, UndeclaredEventError
 from .harness import Harness
 from .lifecycle import BOOT_FAILURE_EXIT_CODE, RESTART_EXIT_CODE, Lifecycle
 from .loader import EntryState, Loader
-from .plugin import BUNDLE_GROUP, PLUGIN_GROUP, PluginDef, PluginError, define_plugin
+from .plugin import BUNDLE_GROUP, PLUGIN_GROUP, PluginDef, PluginError, define_plugin, package_root
 from .profile import Profile
 from .resources import package_prompts, package_toml
 
@@ -38,6 +38,7 @@ __all__ = [
     "UndeclaredEventError",
     "define_plugin",
     "package_prompts",
+    "package_root",
     "package_toml",
     "unwrap",
 ]

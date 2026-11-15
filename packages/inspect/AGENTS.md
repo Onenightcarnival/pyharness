@@ -29,6 +29,11 @@
 | `prompt` | 系统提示词的段 | |
 | `ui` | Web UI 扩展槽与已注册的客户端模块（`ctx.webui`） | |
 
+| `package_dir`、`docs`（`config`、带 `name` 的 `plugins`） | 值 |
+|---|---|
+| 包在 `ctx.agentLoop` 的只读挂载内 | 挂载内的路径，文件工具可读 |
+| 其余 | 磁盘路径 |
+
 ## 脱敏
 
 | 生效配置中的值 | 输出 |
