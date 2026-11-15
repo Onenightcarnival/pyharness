@@ -12,7 +12,8 @@
 
 | 文件 | 内容 |
 |---|---|
-| `__init__.py` | `Config`、`Inspector`、`apply` |
+| `__init__.py` | 导出 |
+| `plugin.py` | `Config`、`Inspector`、`apply` |
 | `prompts.toml` | 模型可见的文本 |
 
 ## 主题

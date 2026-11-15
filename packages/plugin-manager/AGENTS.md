@@ -11,7 +11,8 @@
 
 | 文件 | 内容 |
 |---|---|
-| `__init__.py` | `plugin_manager` 工具、技能挂载、包的只读挂载、提示词段 |
+| `__init__.py` | 导出 |
+| `plugin.py` | `plugin_manager` 工具、技能挂载、包的只读挂载、提示词段 |
 | `dev_context.py` | 提示词段 `dev-context` |
 | `reference.py` | 技能 `pyharness-composition-reference` 的 `references/packages.md` 的渲染 |
 | `prompts.toml` | 模型可见的文本 |

@@ -12,7 +12,8 @@
 
 | 文件 | 内容 |
 |---|---|
-| `__init__.py` | `AskUserService`、`Config`、问题与回答的模型、`normalize_answers` |
+| `__init__.py` | 导出 |
+| `service.py` | `AskUserService`、`Config`、问题与回答的模型、`normalize_answers` |
 | `prompts.toml` | 模型可见的文本 |
 
 ## 流程

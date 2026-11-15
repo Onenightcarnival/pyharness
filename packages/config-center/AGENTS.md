@@ -14,7 +14,8 @@
 
 | 文件 | 内容 |
 |---|---|
-| `__init__.py` | `ConfigCenterService`、`Config`、路由 |
+| `__init__.py` | 导出 |
+| `service.py` | `ConfigCenterService`、`Config`、路由 |
 | `skills.py` | `SkillStore`：用户技能 |
 | `environment.py` | `BunManager`：受管 bun |
 | `config.toml` | 受管 bun 的常量；`environment.py` 读取 |

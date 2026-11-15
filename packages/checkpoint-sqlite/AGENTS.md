@@ -12,7 +12,8 @@ SQLite 上的持久化提供者：`ctx.checkpointer` 与 `ctx.store`。
 
 | 文件 | 内容 |
 |---|---|
-| `__init__.py` | `Config`、`apply` |
+| `__init__.py` | 导出 |
+| `plugin.py` | `Config`、`apply` |
 
 ## 服务
 

@@ -12,7 +12,8 @@ MCP 服务器的工具：启动时注册进 `ctx.tools`。
 
 | 文件 | 内容 |
 |---|---|
-| `__init__.py` | `MCPService`、`managed_bun` |
+| `__init__.py` | 导出 |
+| `service.py` | `MCPService`、`managed_bun` |
 | `config.py` | `mcp` 条目的配置模型 |
 | `templates.py` | MCP 服务器传输字符串中的凭据模板 |
 

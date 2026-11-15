@@ -11,7 +11,8 @@
 
 | 文件 | 内容 |
 |---|---|
-| `__init__.py` | `ToolsService`、`ToolCall`、`ToolRecord`、`ToolError` |
+| `__init__.py` | 导出 |
+| `service.py` | `ToolsService`、`ToolCall`、`ToolRecord`、`ToolError` |
 
 ## 服务
 

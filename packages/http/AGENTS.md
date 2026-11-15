@@ -11,7 +11,8 @@ FastAPI 应用及其 uvicorn 服务器。
 
 | 文件 | 内容 |
 |---|---|
-| `__init__.py` | `HttpService`、`HttpConfig` |
+| `__init__.py` | 导出 |
+| `service.py` | `HttpService`、`HttpConfig` |
 
 ## 服务
 

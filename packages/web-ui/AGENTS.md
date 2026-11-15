@@ -14,7 +14,8 @@ Web UI 页面，以及供插件使用的客户端模块注册表。
 
 | 文件 | 内容 |
 |---|---|
-| `__init__.py` | `WebUIService`、`Config`、`SLOTS`、`ClientModule`、`PrefsStore`、路由 |
+| `__init__.py` | 导出 |
+| `service.py` | `WebUIService`、`Config`、`SLOTS`、`ClientModule`、`PrefsStore`、路由 |
 | `index.html` | 页面 |
 | `vendor/` | `VENDOR_FILES` 的脚本 |
 

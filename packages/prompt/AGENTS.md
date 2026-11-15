@@ -11,7 +11,8 @@
 
 | 文件 | 内容 |
 |---|---|
-| `__init__.py` | `PromptService`、`Section` |
+| `__init__.py` | 导出 |
+| `service.py` | `PromptService`、`Section` |
 
 ## 服务
 

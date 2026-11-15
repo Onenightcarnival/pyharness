@@ -12,7 +12,8 @@
 
 | 文件 | 内容 |
 |---|---|
-| `__init__.py` | `BUNDLE`：`bundle.yaml` 的路径 |
+| `__init__.py` | 导出 |
+| `bundle.py` | `BUNDLE`：`bundle.yaml` 的路径 |
 | `bundle.yaml` | bundle 的 patch |
 
 ## 条目
