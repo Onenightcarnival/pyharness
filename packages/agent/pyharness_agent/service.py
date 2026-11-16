@@ -243,21 +243,28 @@ class AgentService(Service):
             raise NotContinuable(f"a turn that failed with {failure['code']} cannot be continued; send a new message")
         return self.start_run(session_id, kind="retry", model=model)
 
-    async def _on_model_retry(self, retry: Any) -> None:
-        handle = self._runs.get(retry.session_id) if retry.session_id else None
+    async def publish(self, session_id: str | None, event: dict[str, Any]) -> bool:
+        """Publish ``event`` on the session's running turn; returns whether one is running."""
+        handle = self._runs.get(session_id) if session_id else None
         if handle is None or handle.done:
-            return
-        event = {
-            "type": "retry",
-            "attempt": retry.attempt,
-            "max_retries": retry.max_retries,
-            "code": retry.code,
-            "message": retry.message,
-            "delay_ms": retry.delay_ms,
-        }
+            return False
         if handle.recorder is not None:
             handle.recorder.observe_event(event)
         await handle.publish(event)
+        return True
+
+    async def _on_model_retry(self, retry: Any) -> None:
+        await self.publish(
+            retry.session_id,
+            {
+                "type": "retry",
+                "attempt": retry.attempt,
+                "max_retries": retry.max_retries,
+                "code": retry.code,
+                "message": retry.message,
+                "delay_ms": retry.delay_ms,
+            },
+        )
 
     def busy(self, session_id: str) -> bool:
         handle = self._runs.get(session_id)

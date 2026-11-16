@@ -45,7 +45,7 @@
 
 ## 运行事件
 
-类型：`reasoning`、`token`、`image`、`tool_call`、`tool_result`、`compact`、`retry`、`interrupt`、`error`、`done`。
+类型：`reasoning`、`token`、`image`、`tool_call`、`tool_result`、`compact`、`retry`、`interrupt`、`error`、`done`，以及插件经 `publish` 发布的类型。
 
 | 类型 | 契约 |
 |---|---|
@@ -56,6 +56,7 @@
 | `error` 的字段 | `code`（`pyharness_llm` 的失败代码）、`message`、`continuable` |
 | `done` 的 `extras` | `agent/turn-end` 的 `turn.extras` |
 | `done` 的 `extras.turn` | 新的每轮记录 |
+| `publish(session_id, event)` | 把 `event` 发布到会话正在运行的轮次；没有运行中的轮次时返回 `False` |
 
 ## 总线事件
 
