@@ -566,6 +566,8 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 .drow[data-state='error'] .summary { color: var(--error); }
 .drow[data-state='rejected'] .summary { color: var(--warn-label); }
 .drow[data-state='waiting'] .leadIcon { color: var(--warn); }
+.drow .reviewTag { flex: none; gap: 4px; margin-left: 8px; }
+.drow .reviewTag .ico { width: 12px; height: 12px; }
 .dbody { display: none; }
 .disclosure[data-open] .dbody { display: block; }
 .ioCard { display: flex; flex-direction: column; margin: 4px 0 6px 4px; border: 0.5px solid var(--border-l1); border-radius: var(--r-lg); background: var(--code-block); font: 11px/16px var(--mono); overflow: hidden; }
@@ -1128,9 +1130,12 @@ Object.assign(T, zh ? {
   pickTitle: '可用模型', pickSearch: '搜索模型', selectAll: '全选', deselectAll: '取消全选', addSelected: '添加所选', selected: (n) => `已选 ${n}`, noMatch: '没有匹配的模型',
   test: '测试连接', testing: '测试中…', testOk: (ms) => `连接成功 · ${ms} ms`, apply: '应用', applying: '保存中…', applied: '已应用；下次请求起生效。', cancel: '取消', remove: '删除', removeConfirm: (t) => `删除提供方「${t}」？其模型与已保存的密钥一并移除。`, removed: '已删除',
   fetching: '获取中…', modelsFound: (n) => `找到 ${n} 个模型`, modelsNone: '该提供方不支持列出模型。', needModel: '至少添加一个模型。', needId: '请填写提供方 ID。', needUrl: '请填写 Base URL。', dupId: '提供方 ID 已存在。', noneLeft: '预置提供方均已添加。',
-  modeTitle: { 'read-only': '仅可查看', 'workspace-write': '工作区内修改', 'full-access': '完全权限' }, modeDesc: { 'read-only': '文件工具只读，不提供 shell。', 'workspace-write': '可写工作区内文件；受控工具需批准。', 'full-access': '工作区写入与 shell 均不再询问。' },
+  modeTitle: { 'read-only': '仅可查看', 'workspace-write': '工作区内修改', 'full-access': '完全权限', 'auto-review': '自动审查' }, modeDesc: { 'read-only': '文件工具只读，不提供 shell。', 'workspace-write': '可写工作区内文件；受控工具需批准。', 'full-access': '工作区写入与 shell 均不再询问。', 'auto-review': '需批准的操作先由模型审查：放行的直接执行，其余的再询问。' },
   presetTitle: { standard: '标准', creator: '创造' }, presetDesc: { standard: '日常工作：文件、shell、子 agent；不暴露插件管理。', creator: '标准之上加 harness 检查、插件管理与插件编写 skills：扩展 harness 本身。' },
   workspace_: '工作区', mode_: '权限', preset_: '预设', browseDir: '浏览目录…', pickDir: '选择目录…', pickerOpen: '系统目录选择器已打开，请在对话框中选择。', chooseDir: '选择此目录', upDir: '上级目录', showHidden: '显示隐藏目录', dirTitle: '选择工作区目录', notSelectable: '该目录不能作为工作区', forgetWorkspace: '从列表移除',
+  autoReviewConfirm: '自动审查（实验性）：需批准的操作先由模型判断，放行后直接执行、不再询问。模型可能误判，每次审查多一次模型请求。切换到自动审查？',
+  reviewLabel: '审查', reviewTag: { allow: '自动放行', deny: '审查未放行', error: '审查失败' }, riskLabel: { low: '低风险', medium: '中风险', high: '高风险' },
+  reviewDenied: (reason) => (reason ? `自动审查未放行：${reason}` : '自动审查未放行此调用。'), reviewFailed: (error) => `自动审查失败（${error}），需要你来决定。`,
   fullAccessConfirm: '完全权限：agent 的写入与 shell 命令不再询问。切换到完全权限？', switchLabel: '切换', sessionDefaults: '会话默认', defaultPreset: '新会话预设', defaultMode: '新会话权限', fixedForSession: '会话已创建，工作区不可更改',
   removeImage: '移除图片', tooManyImages: (n) => `最多 ${n} 张图片`, imageTooLarge: '图片过大（压缩后仍超过 8 MB）', modelNoImages: (m) => `${m} 不接受图像输入；在设置里勾选该模型的「图像」或换一个模型`, notAnImage: '只支持 PNG、JPEG、GIF、WebP 图片',
   defaultTag: '默认', selectModel: '选择模型', manageModels: '管理模型…', noModels: '没有可用模型；先在设置里添加提供方。', modelSelected: (n) => `已切换到 ${n}`, modelsCount: (n) => `${n} 个模型`, readonly: '无 profile：设置只读。', showKey: '显示 / 隐藏密钥',
@@ -1150,9 +1155,12 @@ Object.assign(T, zh ? {
   pickTitle: 'Available models', pickSearch: 'Search models', selectAll: 'Select all', deselectAll: 'Deselect all', addSelected: 'Add selected', selected: (n) => `${n} selected`, noMatch: 'No matching models',
   test: 'Test connection', testing: 'Testing…', testOk: (ms) => `Connected · ${ms} ms`, apply: 'Apply', applying: 'Saving…', applied: 'Applied; in effect from the next request.', cancel: 'Cancel', remove: 'Remove', removeConfirm: (t) => `Remove provider "${t}"? Its models and stored key are removed.`, removed: 'Removed',
   fetching: 'Fetching…', modelsFound: (n) => `${n} models found`, modelsNone: 'This provider cannot list models.', needModel: 'Add at least one model.', needId: 'A provider ID is required.', needUrl: 'A base URL is required.', dupId: 'That provider ID already exists.', noneLeft: 'Every preset provider is already added.',
-  modeTitle: { 'read-only': 'Read only', 'workspace-write': 'Workspace write', 'full-access': 'Full access' }, modeDesc: { 'read-only': 'File tools read only; no shell.', 'workspace-write': 'Writes inside the workspace; gated tools ask for approval.', 'full-access': 'Workspace writes and the shell without approval prompts.' },
+  modeTitle: { 'read-only': 'Read only', 'workspace-write': 'Workspace write', 'full-access': 'Full access', 'auto-review': 'Auto review' }, modeDesc: { 'read-only': 'File tools read only; no shell.', 'workspace-write': 'Writes inside the workspace; gated tools ask for approval.', 'full-access': 'Workspace writes and the shell without approval prompts.', 'auto-review': 'A model reviews each call that needs approval: allowed calls run, the rest ask you.' },
   presetTitle: { standard: 'Standard', creator: 'Creator' }, presetDesc: { standard: 'Everyday work: files, shell, subagents; plugin management stays out of the way.', creator: 'Standard plus harness inspection, plugin management and the plugin-authoring skills.' },
   workspace_: 'Workspace', mode_: 'Permissions', preset_: 'Preset', browseDir: 'Browse…', pickDir: 'Choose directory…', pickerOpen: 'The system folder dialog is open; choose a directory there.', chooseDir: 'Use this directory', upDir: 'Up', showHidden: 'Show hidden', dirTitle: 'Choose a workspace directory', notSelectable: 'This directory cannot be a workspace', forgetWorkspace: 'Remove from list',
+  autoReviewConfirm: 'Auto review (experimental): a model decides each call that needs approval, and a call it allows runs without asking. The model can misjudge, and every review is one more model request. Switch to auto review?',
+  reviewLabel: 'Review', reviewTag: { allow: 'Auto-allowed', deny: 'Review denied', error: 'Review failed' }, riskLabel: { low: 'low risk', medium: 'medium risk', high: 'high risk' },
+  reviewDenied: (reason) => (reason ? `Auto review denied this call: ${reason}` : 'Auto review denied this call.'), reviewFailed: (error) => `Auto review failed (${error}); the call needs your decision.`,
   fullAccessConfirm: 'Full access: writes and shell commands run without asking. Switch to full access?', switchLabel: 'Switch', sessionDefaults: 'Session defaults', defaultPreset: 'Preset for new sessions', defaultMode: 'Permissions for new sessions', fixedForSession: 'The workspace is fixed once a session exists',
   removeImage: 'Remove image', tooManyImages: (n) => `At most ${n} images`, imageTooLarge: 'Image too large (over 8 MB after compression)', modelNoImages: (m) => `${m} does not accept image input; tick Image for the model in Settings or pick another model`, notAnImage: 'Only PNG, JPEG, GIF and WebP images',
   defaultTag: 'default', selectModel: 'Select model', manageModels: 'Manage models…', noModels: 'No models available; add a provider in Settings.', modelSelected: (n) => `Switched to ${n}`, modelsCount: (n) => `${n} models`, readonly: 'No profile: settings are read-only.', showKey: 'Show / hide key',
@@ -1863,7 +1871,7 @@ function addTool(call) {
   el.querySelector('.summary').textContent = argSummary(call.name, call.args);
   el.querySelector('[data-in]').textContent = JSON.stringify(call.args ?? {}, null, 2);
   el.querySelector('.drow').onclick = () => el.toggleAttribute('data-open');
-  mountRow(el); return el;
+  mountRow(el); markReview(el, reviews.get(call.id)); return el;
 }
 function finishTool(el, result) {
   if (!el) return;
@@ -1879,6 +1887,19 @@ function finishTool(el, result) {
   card.querySelector('[data-out]').textContent = result.content ?? '';
 }
 function findTool(id) { return id ? log().querySelector(`.tool[data-tool-id="${CSS.escape(id)}"]`) : null; }
+// Auto review: records by tool call id; a record can arrive before its tool row.
+const reviews = new Map();
+const reviewKind = (r) => (r.error ? 'error' : r.decision === 'allow' ? 'allow' : 'deny');
+const reviewNote = (r) => (r.error ? T.reviewFailed(r.error) : T.reviewDenied(r.reason));
+function markReview(el, review) {
+  if (!el || !review) return;
+  el._review = review; el.querySelector('.reviewTag')?.remove(); el.querySelector('[data-review]')?.closest('.ioSection')?.remove();
+  const kind = reviewKind(review);
+  const detail = [T.reviewTag[kind], T.riskLabel[review.risk], review.reason || review.error].filter(Boolean).join(' · ');
+  el.querySelector('.drow').insertAdjacentHTML('beforeend', `<span class="tag reviewTag" data-tone="${kind === 'allow' ? 'outline' : 'warning'}" title="${esc(detail)}">${icon('shield')}${esc(T.reviewTag[kind])}</span>`);
+  el.querySelector('.ioCard').insertAdjacentHTML('afterbegin', `<div class="ioSection"><span class="ioLabel">${esc(T.reviewLabel)}</span><span class="ioText" data-review></span></div><div class="ioDivider"></div>`);
+  el.querySelector('[data-review]').textContent = detail;
+}
 function addReasoning(text) {
   const el = document.createElement('div'); el.className = 'disclosure reasoning';
   el.innerHTML = `<button class="drow" type="button"><span class="lead"><span class="leadIcon">${icon('bulb')}</span>${icon('chev-right', 'ico chevron')}</span><span class="dtitle">${esc(T.thought)}</span></button><div class="dbody"><div class="reasoningBody md compact"></div></div>`;
@@ -1936,6 +1957,7 @@ function renderHistory(messages, changes, turns) {
     else if (m.role === 'ai') {
       if (m.reasoning) addReasoning(m.reasoning);
       if (m.content || (m.images && m.images.length)) addImages(addAI(m.content), m.images);
+      if (m.harness && m.harness.kind === 'auto-review') for (const [id, r] of Object.entries(m.harness.reviews || {})) reviews.set(id, r);
       for (const tc of m.tool_calls || []) addTool(tc);
     } else if (m.role === 'tool') {
       const el = findTool(m.tool_call_id) || addTool({ id: m.tool_call_id, name: m.name || 'tool', args: {} });
@@ -1999,6 +2021,7 @@ async function consume(res) {
             if (!findTool(ev.id)) addTool(ev);
             showRunning(true); scrollToEnd(); break;
           }
+          case 'tool_review': reviews.set(ev.id, ev); markReview(findTool(ev.id), ev); break;
           case 'tool_result':
             ai = null; reasoning = null;
             finishTool(findTool(ev.id) || addTool({ id: ev.id, name: ev.name, args: {} }), ev);
@@ -2056,7 +2079,8 @@ function renderApproval(interrupts) {
   });
   if (!reqs.length) return;
   const card = document.createElement('div'); card.className = 'approval';
-  const desc = reqs.map((r) => r.description || '').find((d) => d && !/^Tool execution requires approval/.test(d));
+  const held = [...log().querySelectorAll('.tool')].find((el) => el.querySelector('.drow').dataset.state === 'waiting' && el._review && el._review.decision !== 'allow');
+  const desc = held ? reviewNote(held._review) : reqs.map((r) => r.description || '').find((d) => d && !/^Tool execution requires approval/.test(d));
   card.innerHTML = `<div class="strip">${icon('alert')}<span>${esc(T.approvalStrip)}</span></div>
     <div class="body"><div class="headline2">${esc(reqs.length === 1 ? T.approvalOne : T.approvalMany(reqs.length))}</div>
     ${desc ? `<p class="description">${esc(desc.split('\n')[0])}</p>` : ''}
@@ -2472,7 +2496,8 @@ function currentWorkspace() { return state.session ? (state.session.workspace ||
 function workspaceName(path) { const w = (state.workspaces?.recent || []).find((x) => x.root === path); return w ? w.name : (path.split('/').filter(Boolean).pop() || path); }
 function currentMode() { return (state.session ? state.session.mode : state.sessionMode) || state.agent?.default_mode || ''; }
 function currentPreset() { return (state.session ? state.session.preset : state.sessionPreset) || state.agent?.default_preset || ''; }
-const MODE_ICON = { 'read-only': 'eye', 'workspace-write': 'pencil', 'full-access': 'unlock' };
+const MODE_ICON = { 'read-only': 'eye', 'workspace-write': 'pencil', 'full-access': 'unlock', 'auto-review': 'shield' };
+const MODE_CONFIRM = { 'full-access': 'fullAccessConfirm', 'auto-review': 'autoReviewConfirm' };  // mode id -> T key
 function renderSessionChips() {
   const ws = currentWorkspace(); const name = workspaceName(ws);
   const mode = currentMode(); const preset = currentPreset();
@@ -2500,7 +2525,7 @@ async function openModeMenu(anchor) {
   const cur = currentMode();
   openChipMenu(anchor, `<div class="menuGroup">${esc(T.mode_)}</div>` + (state.agent?.modes || []).map((m) => rowHtml(m.id, modeLabel(m.id), T.modeDesc[m.id] || m.description, m.id === cur, '', MODE_ICON[m.id])).join(''), async (id) => {
     closeChipMenu();
-    if (id === 'full-access' && cur !== 'full-access' && !(await confirmDialog(T.fullAccessConfirm, T.switchLabel, modeLabel('full-access')))) return;
+    if (MODE_CONFIRM[id] && id !== cur && !(await confirmDialog(T[MODE_CONFIRM[id]], T.switchLabel, modeLabel(id)))) return;
     if (state.current) { try { state.session = await json(`/sessions/${state.current}/mode`, { method: 'PUT', body: JSON.stringify({ mode: id }) }); } catch (err) { toast(err.message); return; } }
     else state.sessionMode = id;
     renderSessionChips();
@@ -3165,7 +3190,7 @@ function renderSettingsNav() {
 onSlot('settings.sections', renderSettingsNav);
 function generalMarkup() {
   const a = state.agent || { modes: [], default_mode: '' }; const theme = storedTheme() || 'system';
-  const modes = a.modes.map((m) => `<option value="${esc(m.id)}" ${m.id === a.default_mode ? 'selected' : ''}>${esc(modeLabel(m.id))}</option>`).join('');
+  const modes = a.modes.filter((m) => m.builtin !== false).map((m) => `<option value="${esc(m.id)}" ${m.id === a.default_mode ? 'selected' : ''}>${esc(modeLabel(m.id))}</option>`).join('');
   return `<h3 class="sectionTitle">${esc(T.tabGeneral)}</h3><p class="sectionIntro">${esc(T.settingsIntro)}</p>
     <div class="srow"><div class="main"><div class="title">${esc(T.defaultMode)}</div><div class="desc">${esc(T.modeDesc[a.default_mode] || '')}</div></div><div class="ctl"><div class="selectWrap"><select class="select" data-field="defaultMode">${modes}</select>${icon('chev-down', 'ico chev')}</div></div></div>
     <div class="srow"><div class="main"><div class="title">${esc(T.language)}</div><div class="desc">${esc(T.languageHint)}</div></div><div class="ctl"><span class="tag" data-tone="outline">${zh ? '中文' : 'English'}</span></div></div>
