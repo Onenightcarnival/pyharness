@@ -612,6 +612,7 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 /* approval */
 .approval { width: 100%; max-width: var(--chat-width); margin-bottom: 8px; overflow: hidden; border: 1px solid var(--warn-secondary); border-radius: var(--r-xl); background: var(--input-major); box-shadow: var(--shadow-lv2); }
 .approval .strip { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--warn-tertiary); color: var(--warn); font-size: 13px; line-height: 18px; }
+.approval .strip .countdown { margin-left: auto; font-variant-numeric: tabular-nums; }
 .approval .body { display: flex; flex-direction: column; gap: 6px; max-height: 336px; overflow-y: auto; padding: 12px 16px 0; }
 .approval .headline2 { font-size: 15px; font-weight: 500; line-height: 24px; color: var(--label-primary); }
 .approval .description { margin: 0; color: var(--label-secondary); font-size: 13px; line-height: 20px; }
@@ -1087,7 +1088,7 @@ const T = zh ? {
   recRetry: '重试', retryAttempt: (n) => `第 ${n} 次重试`, retryWait: '等待', failureCode: '失败类型',
   placeholderBusy: 'agent 工作中…', collapse: '收起侧边栏', expand: '展开侧边栏', attach: '添加图片（也可粘贴或拖入）', send: '发送', stop: '停止',
   thinking: '思考中', thought: '思考过程', toolRunning: '运行中', copy: '复制', copied: '已复制', del: '删除会话', deleted: '会话已删除',
-  approvalStrip: '待批准', approve: '批准', reject: '拒绝', cmdCompact: '压缩较早的对话历史', cmdHelp: '列出可用命令', cmdNew: '新建会话', cmdModel: '切换模型', cmdMode: '切换权限模式', cmdSettings: '打开设置', cmdFiles: '在右侧栏打开工作区文件', cmdTerminal: '在右侧栏打开终端', cmdJobs: '在右侧栏查看后台任务', cmdClear: '收起已完成的工作步骤', commandsTitle: '命令', referencesTitle: '文件', noCommands: '没有匹配的命令', noFiles: '没有匹配的文件', helpIntro: '可用命令：', refHint: '输入 @ 引用工作区文件，/ 使用命令', questionStrip: 'agent 有问题要问你', questionPending: '先回答上面的问题', questionTurn: '等待回答', submitAnswers: '提交回答', skipAll: '全部跳过', customAnswer: '其他…', customPlaceholder: '输入你的回答', chooseOne: '选一项', chooseMany: '可多选', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
+  approvalStrip: '待批准', approvalCountdown: (t) => `${t} 后自动拒绝`, approvalExpired: '已超时，正在拒绝…', approvalTimeout: '审批时限', approvalTimeoutHint: '工具审批等待决定的最长时间；到期后自动拒绝，agent 继续。', noTimeout: '不超时', minutes: (n) => `${n} 分钟`, hours: (n) => `${n} 小时`, seconds: (n) => `${n} 秒`, approve: '批准', reject: '拒绝', cmdCompact: '压缩较早的对话历史', cmdHelp: '列出可用命令', cmdNew: '新建会话', cmdModel: '切换模型', cmdMode: '切换权限模式', cmdSettings: '打开设置', cmdFiles: '在右侧栏打开工作区文件', cmdTerminal: '在右侧栏打开终端', cmdJobs: '在右侧栏查看后台任务', cmdClear: '收起已完成的工作步骤', commandsTitle: '命令', referencesTitle: '文件', noCommands: '没有匹配的命令', noFiles: '没有匹配的文件', helpIntro: '可用命令：', refHint: '输入 @ 引用工作区文件，/ 使用命令', questionStrip: 'agent 有问题要问你', questionPending: '先回答上面的问题', questionTurn: '等待回答', submitAnswers: '提交回答', skipAll: '全部跳过', customAnswer: '其他…', customPlaceholder: '输入你的回答', chooseOne: '选一项', chooseMany: '可多选', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
   restarting: '重启中：应用插件变更…', restarted: (g) => `第 ${g} 代已启动`, rolledBack: (g) => `变更启动失败；第 ${g} 代运行上一份配置`, offline: '离线', online: '在线', gen: (g) => `第 ${g} 代`,
   unsupervised: '未托管', noSessions: '无会话', input: '输入', output: '输出', error: '错误', cancelled: '已停止', untitled: '未命名会话',
   searchPlugins: '搜索插件', installTitle: '添加插件', installHint: '从 PyPI 按包名安装（可带版本，如 pyh-example==0.1.0），或安装本机的 bundle 目录。安装会先预检，通过后在空闲时重启生效。', srcPackage: 'PyPI 包', srcPath: '本地目录', packagePlaceholder: '包名，如 pyh-example 或 pyh-example==0.1.0', chooseDir: '选择目录…', install: '安装', installing: '安装中…', restartScheduled: '已保存，正在等待空闲后重启…', savedRestartRequired: '已保存，下次启动生效（当前未由 supervisor 管理）', uninstall: '卸载', uninstallConfirm: (n) => `卸载 bundle ${n}？其条目会从 profile 中移除，重启后生效。`, enablePlugin: '启用', disablePlugin: '停用', restartNow: '立即重启', restartRequested: '已请求重启，等待运行中的轮次结束', entriesOf: (n) => `${n} 个条目`, noMatches: '没有匹配的条目', pluginsTitle: '插件', pluginsIntro: '当前 profile 的插件组合。变更路径：agent 编写或安装 → 预检 → 重启生效。', addPlugin: '添加插件', gotIt: '知道了', addPluginHow: '两种方式：\n1. 在「创造」预设的会话里描述想要的能力，agent 会编写并安装插件；\n2. 在终端运行 pyh plugin install <bundle 目录或包名>，然后 pyh restart。',
@@ -1105,7 +1106,7 @@ const T = zh ? {
   recRetry: 'Retry', retryAttempt: (n) => `retry ${n}`, retryWait: 'Wait', failureCode: 'Failure',
   placeholderBusy: 'The agent is working…', collapse: 'Collapse sidebar', expand: 'Expand sidebar', attach: 'Add images (paste or drop works too)', send: 'Send', stop: 'Stop',
   thinking: 'Thinking', thought: 'Thoughts', toolRunning: 'Running', copy: 'Copy', copied: 'Copied', del: 'Delete session', deleted: 'Session deleted',
-  approvalStrip: 'Awaiting approval', approve: 'Approve', reject: 'Reject', cmdCompact: 'Compact older conversation history', cmdHelp: 'List available commands', cmdNew: 'Start a new session', cmdModel: 'Choose the model', cmdMode: 'Choose the permission mode', cmdSettings: 'Open settings', cmdFiles: 'Open workspace files in the sidebar', cmdTerminal: 'Open a terminal in the sidebar', cmdJobs: 'Show background jobs in the sidebar', cmdClear: 'Collapse finished work details', commandsTitle: 'Commands', referencesTitle: 'Files', noCommands: 'No matching commands', noFiles: 'No matching files', helpIntro: 'Available commands:', refHint: 'Type @ to reference a workspace file, / for commands', questionStrip: 'The agent has a question for you', questionPending: 'Answer the question above first', questionTurn: 'Waiting for your answer', submitAnswers: 'Submit answers', skipAll: 'Skip all', customAnswer: 'Other…', customPlaceholder: 'Type your answer', chooseOne: 'Choose one', chooseMany: 'Choose any', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
+  approvalStrip: 'Awaiting approval', approvalCountdown: (t) => `rejected in ${t}`, approvalExpired: 'Timed out; rejecting…', approvalTimeout: 'Approval time limit', approvalTimeoutHint: 'How long a tool approval waits for a decision; after that it is rejected and the agent goes on.', noTimeout: 'No limit', minutes: (n) => `${n} min`, hours: (n) => `${n} h`, seconds: (n) => `${n} s`, approve: 'Approve', reject: 'Reject', cmdCompact: 'Compact older conversation history', cmdHelp: 'List available commands', cmdNew: 'Start a new session', cmdModel: 'Choose the model', cmdMode: 'Choose the permission mode', cmdSettings: 'Open settings', cmdFiles: 'Open workspace files in the sidebar', cmdTerminal: 'Open a terminal in the sidebar', cmdJobs: 'Show background jobs in the sidebar', cmdClear: 'Collapse finished work details', commandsTitle: 'Commands', referencesTitle: 'Files', noCommands: 'No matching commands', noFiles: 'No matching files', helpIntro: 'Available commands:', refHint: 'Type @ to reference a workspace file, / for commands', questionStrip: 'The agent has a question for you', questionPending: 'Answer the question above first', questionTurn: 'Waiting for your answer', submitAnswers: 'Submit answers', skipAll: 'Skip all', customAnswer: 'Other…', customPlaceholder: 'Type your answer', chooseOne: 'Choose one', chooseMany: 'Choose any', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
   restarting: 'Restarting: applying plugin changes…', restarted: (g) => `Generation ${g} started`, rolledBack: (g) => `Change failed to boot; generation ${g} runs the previous configuration`, offline: 'Offline', online: 'Online', gen: (g) => `generation ${g}`,
   unsupervised: 'unsupervised', noSessions: 'No sessions', input: 'Input', output: 'Output', error: 'Error', cancelled: 'Stopped', untitled: 'Untitled session',
   searchPlugins: 'Search plugins', installTitle: 'Add plugin', installHint: 'Install a package from PyPI by name (optionally with a version, e.g. pyh-example==0.1.0), or a bundle directory on this machine. The install is preflighted, then the harness restarts when idle.', srcPackage: 'PyPI package', srcPath: 'Local directory', packagePlaceholder: 'Package name, e.g. pyh-example or pyh-example==0.1.0', chooseDir: 'Choose folder…', install: 'Install', installing: 'Installing…', restartScheduled: 'Saved; restarting once idle…', savedRestartRequired: 'Saved; applies on the next start (no supervisor)', uninstall: 'Uninstall', uninstallConfirm: (n) => `Uninstall bundle ${n}? Its entries leave the profile after the restart.`, enablePlugin: 'Enable', disablePlugin: 'Disable', restartNow: 'Restart now', restartRequested: 'Restart requested; waiting for running turns to finish', entriesOf: (n) => `${n} entries`, noMatches: 'No matching entries', pluginsTitle: 'Plugins', pluginsIntro: 'Plugin composition of the current profile. Change path: agent writes or installs → preflight → restart.', addPlugin: 'Add plugin', gotIt: 'Got it', addPluginHow: 'Two ways:\n1. Describe the capability in a session with the Creator preset; the agent writes and installs the plugin.\n2. Run pyh plugin install <bundle directory or package> in a terminal, then pyh restart.',
@@ -1792,7 +1793,7 @@ async function openSession(id) {
   setPhase('active'); $('rbExpand').hidden = rightbar.open; setConvView('chat'); renderStats();
   renderHistory(s.messages, s.changes, s.turns);
   if (s.failure && s.failure.message) addLine(s.failure.message, 'error');
-  renderApproval(s.pending || []);
+  renderApproval(s.pending || [], s.approval_deadline);
   refreshSessions();
   scrollToEnd(true);
   if (s.busy) attach(); else updateComposer();
@@ -2028,7 +2029,7 @@ async function consume(res) {
             showRunning(true); scrollToEnd(); break;
           case 'compact': ai = null; reasoning = null; addCompact(ev, ev.summary); showRunning(true); scrollToEnd(); break;
           case 'references': { const rows = log().querySelectorAll('.userRow'); attachRefs(rows[rows.length - 1], ev.refs); break; }
-          case 'interrupt': renderApproval(ev.interrupts); break;
+          case 'interrupt': renderApproval(ev.interrupts, ev.deadline); break;
           case 'retry':  // the failed attempt's partial answer is void: the call runs again
             if (ai) { ai.remove(); ai = null; }
             if (reasoning) { reasoning.remove(); reasoning = null; }
@@ -2066,7 +2067,22 @@ async function attach() {
 }
 
 /* ---------- approvals ---------- */
-function renderApproval(interrupts) {
+// Time limit of the pending tool approval: the strip counts down; past the deadline the page follows the server's rejection.
+const approvalClock = { timer: null, deadline: null, polls: 0 };
+const clockText = (sec) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+function watchDeadline(card, deadline) {
+  const id = state.current; const label = card.querySelector('.strip .countdown');
+  if (approvalClock.deadline !== deadline) { approvalClock.deadline = deadline; approvalClock.polls = 0; }
+  const tick = () => {
+    const left = Math.ceil(deadline - Date.now() / 1000);
+    if (left > 0) { label.textContent = T.approvalCountdown(clockText(left)); return; }
+    label.textContent = T.approvalExpired; clearInterval(approvalClock.timer); approvalClock.timer = null;
+    if (approvalClock.polls++ < 5) setTimeout(() => { if (state.current === id && card.isConnected) openSession(id); }, 1500);
+  };
+  approvalClock.timer = setInterval(tick, 1000); tick();
+}
+function renderApproval(interrupts, deadline = null) {
+  clearInterval(approvalClock.timer); approvalClock.timer = null;
   const box = $('approval'); box.innerHTML = '';
   const questions = (interrupts || []).filter((i) => i.value && i.value.kind === 'ask_user');
   const reqs = (interrupts || []).flatMap((i) => (i.value && i.value.action_requests) || []);
@@ -2081,7 +2097,7 @@ function renderApproval(interrupts) {
   const card = document.createElement('div'); card.className = 'approval';
   const held = [...log().querySelectorAll('.tool')].find((el) => el.querySelector('.drow').dataset.state === 'waiting' && el._review && el._review.decision !== 'allow');
   const desc = held ? reviewNote(held._review) : reqs.map((r) => r.description || '').find((d) => d && !/^Tool execution requires approval/.test(d));
-  card.innerHTML = `<div class="strip">${icon('alert')}<span>${esc(T.approvalStrip)}</span></div>
+  card.innerHTML = `<div class="strip">${icon('alert')}<span>${esc(T.approvalStrip)}</span><span class="countdown"></span></div>
     <div class="body"><div class="headline2">${esc(reqs.length === 1 ? T.approvalOne : T.approvalMany(reqs.length))}</div>
     ${desc ? `<p class="description">${esc(desc.split('\n')[0])}</p>` : ''}
     ${reqs.map((r) => `<div class="command">${esc(r.name)} ${esc(JSON.stringify(r.args))}</div>`).join('')}</div>
@@ -2089,6 +2105,7 @@ function renderApproval(interrupts) {
   card.querySelector('.reject').onclick = () => decide(reqs.map(() => ({ type: 'reject' })));
   card.querySelector('.primary').onclick = () => decide(reqs.map(() => ({ type: 'approve' })));
   box.appendChild(card);
+  if (deadline) watchDeadline(card, deadline);
   requestAnimationFrame(() => scrollToEnd(true));
 }
 function renderQuestions(interrupt) {
@@ -3191,8 +3208,11 @@ onSlot('settings.sections', renderSettingsNav);
 function generalMarkup() {
   const a = state.agent || { modes: [], default_mode: '' }; const theme = storedTheme() || 'system';
   const modes = a.modes.filter((m) => m.builtin !== false).map((m) => `<option value="${esc(m.id)}" ${m.id === a.default_mode ? 'selected' : ''}>${esc(modeLabel(m.id))}</option>`).join('');
+  const limit = a.approval_timeout || 0; const limits = [0, 60, 300, 900, 3600]; if (!limits.includes(limit)) limits.push(limit);
+  const limitLabel = (s) => (!s ? T.noTimeout : s % 3600 === 0 ? T.hours(s / 3600) : s % 60 === 0 ? T.minutes(s / 60) : T.seconds(s));
   return `<h3 class="sectionTitle">${esc(T.tabGeneral)}</h3><p class="sectionIntro">${esc(T.settingsIntro)}</p>
     <div class="srow"><div class="main"><div class="title">${esc(T.defaultMode)}</div><div class="desc">${esc(T.modeDesc[a.default_mode] || '')}</div></div><div class="ctl"><div class="selectWrap"><select class="select" data-field="defaultMode">${modes}</select>${icon('chev-down', 'ico chev')}</div></div></div>
+    <div class="srow"><div class="main"><div class="title">${esc(T.approvalTimeout)}</div><div class="desc">${esc(T.approvalTimeoutHint)}</div></div><div class="ctl"><div class="selectWrap"><select class="select" data-field="approvalTimeout">${limits.map((s) => `<option value="${s}" ${s === limit ? 'selected' : ''}>${esc(limitLabel(s))}</option>`).join('')}</select>${icon('chev-down', 'ico chev')}</div></div></div>
     <div class="srow"><div class="main"><div class="title">${esc(T.language)}</div><div class="desc">${esc(T.languageHint)}</div></div><div class="ctl"><span class="tag" data-tone="outline">${zh ? '中文' : 'English'}</span></div></div>
     ${[['workDetails', T.workDetails, T.workDetailsHint, [['compact', T.wdCompact], ['standard', T.wdStandard], ['detailed', T.wdDetailed], ['full', T.wdFull]]], ['collapseWhen', T.collapseWhen, T.collapseWhenHint, [['completion', T.cwCompletion], ['next', T.cwNext]]], ['perfUsage', T.perfUsage, T.perfUsageHint, [['detailed', T.puDetailed], ['compact', T.puCompact]]]].map(([key, title, hint, opts]) => `<div class="srow"><div class="main"><div class="title">${esc(title)}</div><div class="desc">${esc(hint)}</div></div><div class="ctl"><div class="selectWrap"><select class="select" data-pref="${key}">${opts.map(([v, l]) => `<option value="${v}" ${uiPrefs[key] === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>${icon('chev-down', 'ico chev')}</div></div></div>`).join('')}
     <div data-compaction></div>
@@ -3204,6 +3224,9 @@ function bindGeneral() {
   const content = $('settingsContent');
   content.querySelector('[data-field="defaultMode"]').onchange = async (e) => {
     try { const r = await json('/settings/agent', { method: 'PUT', body: JSON.stringify({ default_mode: e.target.value }) }); state.agent = { ...state.agent, ...r }; renderSessionChips(); toast(T.applied); content.innerHTML = generalMarkup(); bindGeneral(); } catch (err) { toast(err.message); }
+  };
+  content.querySelector('[data-field="approvalTimeout"]').onchange = async (e) => {
+    try { const r = await json('/settings/agent', { method: 'PUT', body: JSON.stringify({ approval_timeout: +e.target.value || null }) }); state.agent = { ...state.agent, ...r }; toast(T.applied); } catch (err) { toast(err.message); }
   };
   content.querySelector('[data-field="themeCards"]').onclick = (e) => { const c = e.target.closest('[data-theme-choice]'); if (!c) return; setTheme(c.dataset.themeChoice); content.innerHTML = generalMarkup(); bindGeneral(); };
   content.querySelectorAll('[data-pref]').forEach((sel) => { sel.onchange = () => { uiPrefs[sel.dataset.pref] = sel.value; savePrefs(); }; });

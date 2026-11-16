@@ -55,7 +55,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 运行中 | 「思考中」闪光；停止按钮取消当前轮 |
 | 失败重试 | 模型调用失败时按重试策略自动重跑（在提供方 SDK 自带的重试之外）：设置 →「模型」页底部的「失败重试」设全局策略（不重试 / 瞬时错误 / 所有错误、最多重试次数、要重试的失败类型：限流、服务端错误、超时、网络连接、空响应、流中断），提供方编辑卡里的「失败重试」折叠区可单独设置或跟随全局。间隔 1 秒起每次翻倍、最长 30 秒，提供方给了 `Retry-After` 时取较长者。重试时对话里出现一行「模型调用失败（代码），N 秒后重试」，失败那次已流出的半截回复被移除；轨迹里一条「重试」记录。默认不开启 |
 | 继续生成 | 一轮因模型调用失败而结束（限流、服务端错误、超时、网络连接、空响应、流中断）时，空输入框的发送按钮变成播放图标「继续生成」：从失败的那一步接着跑，不追加消息；刷新页面后仍可继续（会话详情带 `failure`）。其它失败（鉴权、上下文超限等）不提供继续，改好配置后重新发消息 |
-| 审批 | 黄色审批卡片停靠在输入框上方；对应工具行标记待批准 |
+| 审批 | 黄色审批卡片停靠在输入框上方；对应工具行标记待批准；设有审批时限时卡片右上角倒计时，到期后调用被拒绝、agent 继续 |
 | 自动审查 | 被审查的工具行带结论标签（自动放行 / 审查未放行 / 审查失败），展开后的「审查」一栏列出风险与理由；未放行时审批卡片显示审查的理由 |
 | 重启 | 输入框上方进度提示；完成后自动重连；续跑消息显示为系统分隔行，回滚时为警告色 |
 | 插件页 | 全局面板不显示会话顶栏（同 dsh）：页面自带标题、简介、刷新与「添加插件」（默认按 PyPI 包名安装，可带版本；或切到本地目录，输入路径或用系统对话框选择；安装 → 预检 → 空闲后重启）。只有装进 profile 的用户插件可操作：其 bundle 行有启用 / 停用开关与卸载按钮，其条目有启用 / 停用开关；随环境安装的内置 bundle（base、creator）及其条目标为「内置」，不可改动，API 对它们返回 409（命令行与 agent 工具不受此限制）。每个变更都走预检，失败时回滚并提示；通过后在 supervisor 下等待空闲重启，页面显示重启进度并自动重连。bundle 与条目卡片用 40px 着色图标块；状态标签只在非运行态显示；「客户端模块」列出各插件的浏览器模块与加载状态 |
@@ -63,7 +63,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 插件槽位 | 页面在加载时读取 `window.__PYH_BOOT__` 的模块清单，依次加载各插件的 `client.js`；模块通过 `ctx.slots.register` 填入槽位：侧边栏面板行、「更多」菜单行、主区面板、输入框旁的停靠位、设置分区、右侧栏 tab。契约见 `pyharness_web_ui` 包文档与创造模式 skill 的 `references/ui-plugin.md` |
 | 模型菜单 | 输入框右下角的模型标签：按提供方分组的模型菜单；选择后写入会话（`PUT /sessions/{id}/model`），下一次请求生效；新会话在创建时带上选择；菜单底部「管理模型…」进入设置 |
 | 会话顶栏 | 两行（同 dsh）：标题行（标题、工作区与预设标签、右侧栏按钮）与视图页签行（对话 / 轨迹，下划线样式）；首页不显示 |
-| 设置对话框 | 800 × 800、28px 圆角、layer-2 底色；左侧 188px 导航（40px 行）；MCP 服务器改在左侧栏「MCP」页管理；「内置插件」有搜索框与按来源分组的两列卡片。「更多 → 设置」或模型菜单的「管理模型…」进入；左侧分区：通用（新会话权限、语言、外观浅色 / 深色 / 跟随系统）、模型、预设（卡片，点击设为新会话默认）、内置插件（条目只读）。「模型」：新会话默认模型（下拉列出全部可选模型，含 AI 订阅等插件发布的路由）；只列出在这里配置的提供方，插件发布的路由（AI 订阅的 Codex / ChatGPT / Antigravity / Grok）不在此列、在各自的页面管理；提供方行（标题、类型、默认标记、密钥状态点、端点、模型数），点击展开编辑卡（同时只开一张）：API Key（只写、可显示）、Base URL（占位符为默认端点）、模型列表（ID、显示名、上下文、最大输出、输入模态勾选：文本 / 图像；「获取可用模型」打开可搜索的勾选列表，端点披露的模态随之带入，「恢复默认模型」）、测试连接、删除（确认框）、应用。「添加模型提供方」：「第三方模型提供方」从预置目录选择（OpenAI、Anthropic、DeepSeek、Google Gemini、OpenRouter；集成包随 pyharness-llm 安装），或「自定义模型 API」填写提供方 ID、显示名、API 协议（OpenAI Chat Completions / Responses / Anthropic Messages）、端点，至少一个模型。应用后立即生效，无需重启；密钥写入 profile 的 `credentials.yaml`，配置只记录引用名 |
+| 设置对话框 | 800 × 800、28px 圆角、layer-2 底色；左侧 188px 导航（40px 行）；MCP 服务器改在左侧栏「MCP」页管理；「内置插件」有搜索框与按来源分组的两列卡片。「更多 → 设置」或模型菜单的「管理模型…」进入；左侧分区：通用（新会话权限、审批时限（不超时 / 1 分钟 / 5 分钟 / 15 分钟 / 1 小时）、语言、外观浅色 / 深色 / 跟随系统）、模型、预设（卡片，点击设为新会话默认）、内置插件（条目只读）。「模型」：新会话默认模型（下拉列出全部可选模型，含 AI 订阅等插件发布的路由）；只列出在这里配置的提供方，插件发布的路由（AI 订阅的 Codex / ChatGPT / Antigravity / Grok）不在此列、在各自的页面管理；提供方行（标题、类型、默认标记、密钥状态点、端点、模型数），点击展开编辑卡（同时只开一张）：API Key（只写、可显示）、Base URL（占位符为默认端点）、模型列表（ID、显示名、上下文、最大输出、输入模态勾选：文本 / 图像；「获取可用模型」打开可搜索的勾选列表，端点披露的模态随之带入，「恢复默认模型」）、测试连接、删除（确认框）、应用。「添加模型提供方」：「第三方模型提供方」从预置目录选择（OpenAI、Anthropic、DeepSeek、Google Gemini、OpenRouter；集成包随 pyharness-llm 安装），或「自定义模型 API」填写提供方 ID、显示名、API 协议（OpenAI Chat Completions / Responses / Anthropic Messages）、端点，至少一个模型。应用后立即生效，无需重启；密钥写入 profile 的 `credentials.yaml`，配置只记录引用名 |
 
 | 适配 | 行为 |
 |---|---|
@@ -91,8 +91,8 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | PUT | `/sessions/{id}` | `{"title"}` | 重命名会话 |
 | PUT | `/sessions/{id}/mode` | `{"mode"}` | 权限模式；下一轮生效 |
 | PUT | `/sessions/{id}/preset` | `{"preset"}` | 预设；下一轮生效 |
-| GET | `/agent` | | 预设、权限模式（`builtin: false`：插件添加，不作新会话默认）、新会话默认 |
-| PUT | `/settings/agent` | `{"default_preset"?, "default_mode"?}` | 新会话默认；写入 profile 补丁 |
+| GET | `/agent` | | 预设、权限模式（`builtin: false`：插件添加，不作新会话默认）、新会话默认、审批时限 `approval_timeout` |
+| PUT | `/settings/agent` | `{"default_preset"?, "default_mode"?, "approval_timeout"?}` | 新会话默认；审批时限（秒，`null`：不超时）；写入 profile 补丁 |
 | GET | `/workspaces` | | 默认与最近工作区 |
 | POST | `/workspaces` | `{"path"}` | 校验并记住工作区 |
 | PUT | `/workspaces` | `{"path", "name"}` | 工作区显示名；空值恢复目录名 |
@@ -110,7 +110,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | POST | `/highlight` | `{"items": [{"code", "lang"?, "filename"?}]}` | 每项的 token span HTML（无匹配 lexer 时为空） |
 | GET | `/highlight.css` | | 浅色与深色主题的 token 配色 |
 | POST | `/workspaces/pick` | `{"path"?: 提示语}` | 本机系统文件夹对话框；取消为 `{"path": null}`；`GET /workspaces` 的 `picker` 为 `native` 或 `browse` |
-| GET | `/sessions/{id}` | | 会话、运行状态、消息、待批准项；上一轮以错误结束时 `failure`：`{"run_id", "code", "message", "continuable"}`，否则 `null` |
+| GET | `/sessions/{id}` | | 会话、运行状态、消息、待批准项及其期限 `approval_deadline`（无时限时 `null`）；上一轮以错误结束时 `failure`：`{"run_id", "code", "message", "continuable"}`，否则 `null` |
 | POST | `/sessions/{id}/messages` | `{"content", "images"?}` | SSE 运行事件；`images` 为 data URL，模型未声明图像输入时 422；`@path` 引用展开成附件块 |
 | GET | `/workspaces/search` | `q`, `root`?, `limit`?, `hidden`?, `fuzzy`? | 工作区里匹配 `q` 的文件与目录（`@` 引用菜单与文件页搜索用）：`limit` 1–500，`hidden=true` 包含点开头的文件与目录（依赖目录始终跳过），`fuzzy=false` 只留子串匹配；`{"entries", "truncated"}` |
 | GET / PUT | `/webui/prefs` | `{"unpinnedPanels": [入口 id]}` | 页面偏好：取消固定的左侧栏入口；写入 `<profile data>/web-ui/prefs.json`，非法请求 400 |
@@ -157,7 +157,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | `tool_result` | 工具结果 |
 | `tool_review` | 自动审查的结论：`id`、`name`、`decision`、`risk`、`reason` 或 `error`；先于对应的 `tool_call` |
 | `retry` | 重试策略即将重跑失败的模型调用：`attempt`、`max_retries`、`code`、`message`、`delay_ms`；失败那次已流出的文本作废 |
-| `interrupt` | 待批准的工具调用 |
+| `interrupt` | 待批准的工具调用；设有审批时限时带 `deadline` |
 | `error` | 错误信息 `message`、失败代码 `code`、可否继续 `continuable` |
 | `done` | 轮次结束 |
 
