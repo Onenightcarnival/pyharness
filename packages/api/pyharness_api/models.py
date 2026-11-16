@@ -34,6 +34,9 @@ class SessionTitle(BaseModel):
 class AgentDefaults(BaseModel):
     default_preset: str | None = None
     default_mode: str | None = None
+    approval_timeout: float | None = Field(
+        None, gt=0, description="Seconds a tool approval waits before it is rejected; null: no limit. Sent to change."
+    )
 
 
 IMAGE_DATA_URL = re.compile(r"^data:image/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$")

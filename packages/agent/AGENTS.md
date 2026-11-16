@@ -58,6 +58,21 @@
 | `done` 的 `extras.turn` | 新的每轮记录 |
 | `publish(session_id, event)` | 把 `event` 发布到会话正在运行的轮次；没有运行中的轮次时返回 `False` |
 
+## 审批时限
+
+| 项 | 契约 |
+|---|---|
+| `config.approval_timeout` | 工具审批等待决定的秒数；`None`（默认）：不超时 |
+| 适用 | 待处理的中断只有一个工具审批，且其中每个调用都允许 `reject` |
+| 期限 | 审批发起时刻 + 时限；`interrupt` 事件的 `deadline`，`approval_deadline(session_id)` |
+| 到期 | 一次 kind 为 `approval` 的运行：每个调用以 `prompts.toml` 的 `approval_timeout` 为理由被拒绝，agent 继续 |
+| 先有决定 | 会话的下一次运行开始时期限作废 |
+| 持久化 | `ctx.store` 的 `("pyharness", "approvals")`：会话 id → `{"deadline"}`；`app/started` 时恢复 |
+| 重启挂起时到期 | 下一代恢复期限后拒绝 |
+| 时限关闭后启动 | 清除留存的期限；待处理的审批继续等待 |
+| `set_approval_timeout(seconds)` | 即时生效，作用于此后发起的审批；持久化由 settings API 完成 |
+| 提问（`ask_user_question`） | 不适用 |
+
 ## 总线事件
 
 | 事件 | 模式 | 监听者 |

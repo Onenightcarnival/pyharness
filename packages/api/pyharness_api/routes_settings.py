@@ -48,16 +48,26 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
     async def model_directory() -> dict[str, Any]:
         return llm().directory()
 
+    def approval_timeout() -> float | None:
+        return getattr(getattr(ctx.get("agents", None), "config", None), "approval_timeout", None)
+
     @router.get("/agent")
     async def agent_options() -> dict[str, Any]:
         loop = ctx.get("agentLoop", None)
         if loop is None or not hasattr(loop, "presets"):
-            return {"presets": [], "modes": [], "default_preset": None, "default_mode": None}
+            return {
+                "presets": [],
+                "modes": [],
+                "default_preset": None,
+                "default_mode": None,
+                "approval_timeout": None,
+            }
         return {
             "presets": loop.presets(),
             "modes": loop.modes(),
             "default_preset": loop.config.default_preset,
             "default_mode": loop.config.default_mode,
+            "approval_timeout": approval_timeout(),
         }
 
     @router.put("/settings/agent")
@@ -69,8 +79,13 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
             defaults = loop.set_defaults(preset=body.default_preset, mode=body.default_mode)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
-        await manage.set_entry_config(profile(), "agent-loop", defaults, merge=True, preflight=False)
-        return {**defaults, "presets": loop.presets(), "modes": loop.modes()}
+        if body.default_preset is not None or body.default_mode is not None:
+            await manage.set_entry_config(profile(), "agent-loop", defaults, merge=True, preflight=False)
+        agents = ctx.get("agents", None)
+        if "approval_timeout" in body.model_fields_set and hasattr(agents, "set_approval_timeout"):
+            limit = {"approval_timeout": agents.set_approval_timeout(body.approval_timeout)}
+            await manage.set_entry_config(profile(), "agents", limit, merge=True, preflight=False)
+        return {**defaults, "presets": loop.presets(), "modes": loop.modes(), "approval_timeout": approval_timeout()}
 
     def compaction_service() -> Any:
         service = ctx.get("compaction", None)

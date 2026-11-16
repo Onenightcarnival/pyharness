@@ -27,6 +27,7 @@ from .messages import (
 from .runs import TURNS, NotContinuable, RestartPending, RunHandle, SessionBusy, Turn, TurnRecorder
 
 NAMESPACE = ("pyharness", "sessions")
+APPROVALS = ("pyharness", "approvals")  # session id -> {"deadline"}: tool approvals that wait under a time limit
 PROMPTS = package_prompts(__file__)
 
 DEFAULT_RESUME: str = PROMPTS["service"]["DEFAULT_RESUME"]
@@ -38,6 +39,23 @@ class AgentConfig(BaseModel):
         DEFAULT_RESUME, description="Continuation message; placeholders ${generation}, ${reasons}, ${rollback}."
     )
     title_chars: int = 60
+    approval_timeout: float | None = Field(
+        None, gt=0, description="Seconds a tool approval waits for a decision before it is rejected; None: no limit."
+    )
+
+
+def rejectable(interrupts: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
+    """
+    Action requests of the pending tool approval; ``None`` unless that approval is the only pending interrupt and
+    each of its calls can be rejected.
+    """
+    if len(interrupts) != 1 or not isinstance(interrupts[0].get("value"), dict):
+        return None
+    value = interrupts[0]["value"]
+    requests, configs = value.get("action_requests") or [], value.get("review_configs") or []
+    if not requests or any("reject" not in (c.get("allowed_decisions") or []) for c in configs):
+        return None
+    return requests
 
 
 class AgentService(Service):
@@ -55,6 +73,8 @@ class AgentService(Service):
         self._runs: dict[str, RunHandle] = {}
         self._turn_seq: dict[str, int] = {}
         self._tasks: set[asyncio.Task[Any]] = set()
+        self._deadlines: dict[str, float] = {}  # session id -> when its pending tool approval is rejected
+        self._timers: dict[str, asyncio.Task[Any]] = {}
 
     async def start(self) -> None:
         self.ctx.define_event("agent/turn-start", "parallel", "listener(turn: Turn) at the start of a run.")
@@ -64,6 +84,7 @@ class AgentService(Service):
         self.ctx.on("app/ready", self._build)
         self.ctx.on("agent/model-retry", self._on_model_retry)
         self.ctx.on("app/started", self._resume_after_restart)
+        self.ctx.on("app/started", self._restore_deadlines)
         self.ctx.on("app/stopping", self.stop)
 
     async def stop(self) -> None:
@@ -292,6 +313,7 @@ class AgentService(Service):
         for item in await self.ctx.store.asearch((*TURNS, session_id), limit=10000):
             await self.ctx.store.adelete((*TURNS, session_id), item.key)
         self._turn_seq.pop(session_id, None)
+        await self._disarm(session_id)
         checkpointer = self.ctx.get("checkpointer", None)
         if checkpointer is not None and hasattr(checkpointer, "adelete_thread"):
             await checkpointer.adelete_thread(session_id)
@@ -369,6 +391,7 @@ class AgentService(Service):
                     model = (record or {}).get("model") or None
                 turn.model = model
                 graph = await self.graph_for(record)
+                await self._disarm(session_id)
                 await self.ctx.parallel("agent/turn-start", turn)
                 async for mode, chunk in graph.astream(
                     payload, self._config(session_id, model), stream_mode=["messages", "updates"]
@@ -381,7 +404,10 @@ class AgentService(Service):
                 interrupts = await self.pending(session_id)
                 if interrupts:
                     outcome = "interrupted"
-                    await handle.publish({"type": "interrupt", "interrupts": interrupts})
+                    deadline = await self._deadline(session_id, interrupts)
+                    await handle.publish(
+                        {"type": "interrupt", "interrupts": interrupts, **({"deadline": deadline} if deadline else {})}
+                    )
             except asyncio.CancelledError:
                 outcome = "cancelled"
             except Exception as exc:
@@ -412,6 +438,65 @@ class AgentService(Service):
                     }
                 )
                 await handle.finish()
+                self._arm(session_id)
+
+    # ------------------------------------------------------------------ approval time limit
+    def approval_deadline(self, session_id: str) -> float | None:
+        """Time (epoch seconds) at which the session's pending tool approval is rejected; ``None`` without one."""
+        return self._deadlines.get(session_id)
+
+    def set_approval_timeout(self, seconds: float | None) -> float | None:
+        """Change the time limit of tool approvals raised from now on (live); the settings API persists it."""
+        if seconds is not None and seconds <= 0:
+            raise ValueError("approval_timeout is a positive number of seconds, or null for no limit")
+        self.config.approval_timeout = seconds
+        return seconds
+
+    async def _deadline(self, session_id: str, interrupts: list[dict[str, Any]]) -> float | None:
+        if self.config.approval_timeout is None or rejectable(interrupts) is None:
+            return None
+        deadline = time.time() + self.config.approval_timeout
+        self._deadlines[session_id] = deadline
+        await self.ctx.store.aput(APPROVALS, session_id, {"deadline": deadline})
+        return deadline
+
+    def _arm(self, session_id: str) -> None:
+        if session_id not in self._deadlines or session_id in self._timers:
+            return
+        task = asyncio.get_running_loop().create_task(self._expire(session_id, self._deadlines[session_id]))
+        self._timers[session_id] = task
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+
+    async def _disarm(self, session_id: str) -> None:
+        timer = self._timers.pop(session_id, None)
+        if timer is not None and timer is not asyncio.current_task():
+            timer.cancel()
+        if self._deadlines.pop(session_id, None) is not None:
+            await self.ctx.store.adelete(APPROVALS, session_id)
+
+    async def _expire(self, session_id: str, deadline: float) -> None:
+        await asyncio.sleep(max(0.0, deadline - time.time()))
+        requests = rejectable(await self.pending(session_id))
+        if requests is None or self.busy(session_id):
+            await self._disarm(session_id)
+            return
+        limit = f"{self.config.approval_timeout or 0:g} s"
+        message = Template(PROMPTS["service"]["approval_timeout"]).substitute(limit=limit)
+        try:
+            self.start_run(session_id, decisions=[{"type": "reject", "message": message}] * len(requests))
+        except RestartPending:  # the next generation restores the deadline and rejects
+            self._timers.pop(session_id, None)
+            return
+        self.ctx.logger.info("session %s: approval of %d call(s) timed out; rejected", session_id, len(requests))
+
+    async def _restore_deadlines(self) -> None:
+        for item in await self.ctx.store.asearch(APPROVALS, limit=10000):
+            if self.config.approval_timeout is None:
+                await self.ctx.store.adelete(APPROVALS, item.key)
+                continue
+            self._deadlines[item.key] = float(item.value["deadline"])
+            self._arm(item.key)
 
     @staticmethod
     def _translate(mode: str, chunk: Any) -> list[dict[str, Any]]:

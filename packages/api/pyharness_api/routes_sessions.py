@@ -105,6 +105,7 @@ def build_sessions_router(ctx: Any) -> APIRouter:
             "busy": agents.busy(session_id),
             "messages": await agents.messages(session_id),
             "pending": await agents.pending(session_id),
+            "approval_deadline": agents.approval_deadline(session_id),
             "failure": await agents.failure(session_id),
             "changes": await changes.summaries(session_id) if changes is not None else [],
             "turns": await agents.turns(session_id),

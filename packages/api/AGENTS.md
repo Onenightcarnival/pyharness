@@ -66,7 +66,7 @@
 | PUT | `/sessions/{id}/model` | `{"model"}` | 为会话选择 `route:model` | `set_session_model` |
 | PUT | `/sessions/{id}/mode` | `{"mode"}` | 权限模式；下一次运行起 | `set_session_mode` |
 | PUT | `/sessions/{id}/preset` | `{"preset"}` | agent 预设；下一次运行起 | `set_session_preset` |
-| GET | `/sessions/{id}` | | 会话、busy、消息、待处理的审批 | `get_session` |
+| GET | `/sessions/{id}` | | 会话、busy、消息、待处理的审批及其期限 `approval_deadline` | `get_session` |
 | GET | `/sessions/{id}/turns` | | 每轮的统计与轨迹记录 | `session_turns` |
 | GET | `/sessions/{id}/changes` | | 每轮的变更文件摘要 | `session_changes` |
 | GET | `/sessions/{id}/changes/{run}/diff` | `?index=` | 所列的一个文件的 hunk；行已高亮 | `session_changes_diff` |
@@ -114,8 +114,8 @@
 | 方法 | 路径 | 请求 | 应答 | 处理函数 |
 |---|---|---|---|---|
 | GET | `/models` | | 选择器目录：路由、模型、默认值 | `model_directory` |
-| GET | `/agent` | | 预设、模式、新会话的默认值 | `agent_options` |
-| PUT | `/settings/agent` | `{"default_preset"?, "default_mode"?}` | 新会话的默认值；持久化 | `put_agent_defaults` |
+| GET | `/agent` | | 预设、模式、新会话的默认值、审批时限 `approval_timeout` | `agent_options` |
+| PUT | `/settings/agent` | `{"default_preset"?, "default_mode"?, "approval_timeout"?}` | 新会话的默认值；审批时限（秒，`null`：不超时）；持久化 | `put_agent_defaults` |
 | GET | `/settings/compaction` | | 压缩设置 | `get_compaction_settings` |
 | PUT | `/settings/compaction` | `{"auto"?, "threshold_ratio"?, "retain_ratio"?, "default_context_window"?, "summary_model"?}` | 压缩设置；立即生效；持久化 | `put_compaction_settings` |
 | GET | `/settings/models` | | 已配置的路由及其凭据状态、目录、`groups`（全部可选模型，含插件发布的路由） | `get_model_settings` |

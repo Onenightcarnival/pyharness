@@ -11,3 +11,8 @@ rollback_note = '''
 Rollback: generation ${gen} failed to boot (${err}). The previous configuration is active;
 the change is not applied.
 '''
+# Reason of a tool call rejected because its approval ran out of time; reaches the model in the tool's result.
+approval_timeout = '''
+no one decided the approval within ${limit}, so the call was not executed. Go on without it, or say in the reply
+what is waiting for the user's decision.
+'''
