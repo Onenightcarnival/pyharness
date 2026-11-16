@@ -41,11 +41,12 @@
 | `add_skills()` | 技能目录，只读挂载到 `/skills/<label>/`；返回 disposer |
 | `add_mount()` | 目录，挂载到给定的虚拟路径；只读，`writable=True` 时可写；挂载点之上的各级目录列出其下的挂载，不含其他内容；返回 disposer |
 | `add_preset()` | agent 预设，归调用方插件所有；返回 disposer |
+| `add_mode()` | 权限模式，归调用方插件所有；`base`：沿用其规则的内置模式；`build`：编辑该模式下 `create_deep_agent` 的关键字参数；返回 disposer |
 | `preset()` | 给定预设 id 或默认预设的 `(id, config)`；未知 id 抛出 `ValueError` |
 | `mode()` | 给定的权限模式 id 或默认模式；未知 id 抛出 `ValueError` |
-| `set_defaults()` | 新会话的默认值（即时生效）；持久化由 settings API 完成 |
+| `set_defaults()` | 新会话的默认值（即时生效）；默认模式只能是内置模式；持久化由 settings API 完成 |
 | `presets()` | 供选择器的名单：`id`、`title`、`description`、`order`、`default`、`owner` |
-| `modes()` | 供选择器的名单：`id`、`title`、`description`、`default` |
+| `modes()` | 供选择器的名单：`id`、`title`、`description`、`default`、`builtin`、`owner` |
 | `skills()` | 已挂载的技能目录：`label`、`path`、`mount`、`owner`、`presets` |
 | `mounts()` | 挂载：`mount`、`path`、`owner`、`presets`、`writable` |
 | `mounted(path)` | 磁盘路径在挂载内对应的虚拟路径；不在任何挂载内：`None` |
@@ -72,6 +73,13 @@
 | `read-only` | 拒绝文件写入；无 `execute` 工具；去掉带 `shell` 标签的工具；审批按配置 |
 | `workspace-write` | 可写 workspace 内；审批按配置 |
 | `full-access` | 可写 workspace 内；无审批门 |
+| 插件添加的模式 | `base` 的效果，再经它的 `build`；按会话选择 |
+
+| 构建顺序 | 内容 |
+|---|---|
+| 1 | `base` 的文件规则、shell 工具、审批门 |
+| 2 | 模式的 `build(kwargs)` |
+| 3 | `agent-loop/build` |
 
 ## 预设
 
@@ -152,7 +160,8 @@
 | 名称 | 契约 |
 |---|---|
 | `SKILLS_MOUNT` | 只读技能挂载的根：`/skills/<label>/` |
-| `MODES` | 按 id 的权限模式：`title`、`description` |
+| `MODES` | 按 id 的内置权限模式：`title`、`description` |
+| `Mode` | 一个权限模式：`id`、`title`、`description`、`base`、`build` |
 | `DEFAULT_SYSTEM_PROMPT` | 系统提示词的身份 section（order 0） |
 | `PresetConfig` | 一个 agent 预设：标题、描述、保留 / 去掉的工具、顺序 |
 | `DEFAULT_PRESETS` | `standard` 与 `creator` |

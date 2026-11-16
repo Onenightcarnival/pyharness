@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, ClassVar
@@ -9,7 +10,7 @@ from langchain.agents.middleware import AgentMiddleware
 
 from pyharness import Service
 
-from .config import MODES, SKILLS_MOUNT, LoopConfig, PresetConfig
+from .config import MODES, SKILLS_MOUNT, LoopConfig, Mode, PresetConfig
 from .graph import build as build_graph
 
 
@@ -29,6 +30,7 @@ class DeepAgentsLoop(Service):
         # (mount, directory, owner, presets, writable)
         self._mounts: list[tuple[str, Path, str, tuple[str, ...] | None, bool]] = []
         self._presets: dict[str, tuple[PresetConfig, str]] = {}  # plugin-added presets: id -> (config, owner)
+        self._modes: dict[str, tuple[Mode, str]] = {}  # plugin-added modes: id -> (mode, owner)
         if self.config.default_mode not in MODES:
             raise ValueError(f"unknown default_mode {self.config.default_mode!r}; one of {', '.join(MODES)}")
 
@@ -189,21 +191,74 @@ class DeepAgentsLoop(Service):
             )
         return sorted(rows, key=lambda r: (r["order"], r["id"]))
 
+    def add_mode(
+        self,
+        id: str,
+        title: str,
+        description: str = "",
+        *,
+        base: str = "workspace-write",
+        build: Callable[[dict[str, Any]], dict[str, Any] | None] | None = None,
+    ) -> Any:
+        """
+        Add a permission mode owned by the calling plugin; returns the disposer.
+
+        | argument  | contract                                                                             |
+        |-----------|--------------------------------------------------------------------------------------|
+        | ``base``  | built-in mode whose file, shell and approval rules the mode keeps                    |
+        | ``build`` | edits the ``create_deep_agent`` kwargs of the mode's graphs, before ``agent-loop/build`` |
+
+        A session selects the mode; the default for new sessions stays a built-in mode.
+        """
+        if id in MODES or id in self._modes:
+            raise ValueError(f"permission mode {id!r} already exists")
+        if base not in MODES:
+            raise ValueError(f"unknown base mode {base!r}; one of {', '.join(MODES)}")
+        self._modes[id] = (Mode(id, title, description, base, build), self.caller.entry_id)
+        return self.caller.on_dispose(lambda: self._modes.pop(id, None))
+
+    def mode_ids(self) -> list[str]:
+        return [*MODES, *self._modes]
+
     def modes(self) -> list[dict[str, Any]]:
-        return [{"id": id, **info, "default": id == self.config.default_mode} for id, info in MODES.items()]
+        """Roster for selectors: ``id``, ``title``, ``description``, ``default``, ``builtin``, ``owner``."""
+        builtin = [
+            {"id": id, **info, "default": id == self.config.default_mode, "builtin": True, "owner": self.ctx.entry_id}
+            for id, info in MODES.items()
+        ]
+        added = [
+            {
+                "id": id,
+                "title": mode.title,
+                "description": mode.description,
+                "default": False,
+                "builtin": False,
+                "owner": owner,
+            }
+            for id, (mode, owner) in self._modes.items()
+        ]
+        return [*builtin, *added]
 
     def mode(self, id: str | None) -> str:
+        """``id`` or the default mode; unknown ids raise ``ValueError``."""
         id = id or self.config.default_mode
-        if id not in MODES:
-            raise ValueError(f"unknown permission mode {id!r}; one of {', '.join(MODES)}")
+        if id not in MODES and id not in self._modes:
+            raise ValueError(f"unknown permission mode {id!r}; one of {', '.join(self.mode_ids())}")
         return id
+
+    def _mode(self, id: str) -> Mode:
+        if id in self._modes:
+            return self._modes[id][0]
+        return Mode(id, MODES[id]["title"], MODES[id]["description"], base=id)
 
     def set_defaults(self, preset: str | None = None, mode: str | None = None) -> dict[str, str]:
         """Change the defaults for new sessions (live); the settings API persists them."""
         if preset is not None:
             self.config.default_preset = self.preset(preset)[0]
         if mode is not None:
-            self.config.default_mode = self.mode(mode)
+            if self.mode(mode) not in MODES:
+                raise ValueError(f"the default permission mode is one of {', '.join(MODES)}; {mode!r} is per session")
+            self.config.default_mode = mode
         return {"default_preset": self.config.default_preset, "default_mode": self.config.default_mode}
 
     # ------------------------------------------------------------------ build
@@ -213,7 +268,7 @@ class DeepAgentsLoop(Service):
         return await build_graph(
             self.ctx,
             self.config,
-            mode=self.mode(mode),
+            mode=self._mode(self.mode(mode)),
             preset=(preset_id, preset_cfg),
             skills=[
                 (f"{SKILLS_MOUNT}/{s}/", p)

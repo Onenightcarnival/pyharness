@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .config import DEFAULT_PRESETS, MODES, SKILLS_MOUNT, LoopConfig, PresetConfig
+from .config import DEFAULT_PRESETS, MODES, SKILLS_MOUNT, LoopConfig, Mode, PresetConfig
 from .middleware import HarnessMiddleware, ModelCall
 from .service import DeepAgentsLoop
 
@@ -11,6 +11,7 @@ __all__ = [
     "DeepAgentsLoop",
     "HarnessMiddleware",
     "LoopConfig",
+    "Mode",
     "ModelCall",
     "PresetConfig",
 ]

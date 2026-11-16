@@ -13,7 +13,7 @@ from langchain.agents.middleware import AgentMiddleware
 from pyharness import package_prompts
 from pyharness_llm import LLMConfigError
 
-from .config import MODES, LoopConfig, PresetConfig
+from .config import LoopConfig, Mode, PresetConfig
 from .middleware import HarnessMiddleware
 
 PROMPTS = package_prompts(__file__)
@@ -145,7 +145,7 @@ async def build(
     ctx: Any,
     config: LoopConfig,
     *,
-    mode: str,
+    mode: Mode,
     preset: tuple[str, PresetConfig],
     skills: list[tuple[str, Path]],
     mounts: list[tuple[str, Path, bool]],
@@ -154,14 +154,14 @@ async def build(
     workspace: str | None = None,
 ) -> Any:
     """
-    Graph for a workspace root (``None``: the default), a permission mode id, a ``(id, config)`` preset, the
+    Graph for a workspace root (``None``: the default), a permission mode, a ``(id, config)`` preset, the
     ``skills`` and ``mounts`` of that preset, and the subagent specs and middleware added by plugins.
     """
     preset_id, preset_cfg = preset
     keep = set(preset_cfg.tools) if preset_cfg.tools is not None else None
     drop = set(preset_cfg.exclude_tools)
     tools = [t for t in ctx.tools.list() if (keep is None or t.name in keep) and t.name not in drop]
-    if mode == "read-only":  # tools tagged `shell` (the persistent bash, background commands) stay out
+    if mode.base == "read-only":  # tools tagged `shell` (the persistent bash, background commands) stay out
         shell_tools = {r.tool.name for r in ctx.tools.records() if "shell" in r.tags}
         tools = [t for t in tools if t.name not in shell_tools]
     registry = {t.name: t for t in tools}
@@ -177,13 +177,13 @@ async def build(
     workspaces = ctx.get("workspace", None)
     ws = workspaces.open(workspace) if workspaces is not None and hasattr(workspaces, "open") else workspaces
     permissions = ws.permissions() if ws is not None and hasattr(ws, "permissions") else []
-    backend, sources, rules = backend_and_skills(ctx, config, skills, mounts, workspace, mode)
+    backend, sources, rules = backend_and_skills(ctx, config, skills, mounts, workspace, mode.base)
     permissions = [*permissions, *rules]
-    interrupt_on = {} if mode == "full-access" else {**ctx.tools.interrupt_on(), **config.interrupt_on}
+    interrupt_on = {} if mode.base == "full-access" else {**ctx.tools.interrupt_on(), **config.interrupt_on}
     root = ws.root if ws is not None and hasattr(ws, "root") else "(none)"
     policy = Template(PROMPTS["graph"]["session_policy"]).substitute(
-        mode_title=MODES[mode]["title"],
-        mode_description=MODES[mode]["description"],
+        mode_title=mode.title,
+        mode_description=mode.description,
         preset_title=preset_cfg.title,
         root=root,
     )
@@ -202,5 +202,7 @@ async def build(
         "memory": config.memory,
         "name": "pyharness",
     }
+    if mode.build is not None:
+        kwargs = mode.build(kwargs) or kwargs
     kwargs = await ctx.waterfall("agent-loop/build", kwargs, final=lambda kw: kw)
     return create_deep_agent(**{k: v for k, v in kwargs.items() if v is not None})

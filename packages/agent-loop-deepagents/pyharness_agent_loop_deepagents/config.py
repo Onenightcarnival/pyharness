@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -14,6 +16,18 @@ SKILLS_MOUNT = "/skills"
 MODES: dict[str, dict[str, str]] = {
     id: {"title": m["title"], "description": m["description"]} for id, m in _CFG["MODES"].items()
 }
+
+
+@dataclass(frozen=True)
+class Mode:
+    """Permission mode: the file, shell and approval rules of the built-in mode ``base``, then ``build``."""
+
+    id: str
+    title: str
+    description: str
+    base: str
+    build: Callable[[dict[str, Any]], dict[str, Any] | None] | None = None  # on the create_deep_agent kwargs
+
 
 DEFAULT_SYSTEM_PROMPT: str = PROMPTS["config"]["DEFAULT_SYSTEM_PROMPT"]
 
@@ -33,7 +47,8 @@ class LoopConfig(BaseModel):
     model: str | None = Field(None, description="Model spec; None selects ctx.llm's default.")
     default_preset: str = Field("standard", description="Agent preset for new sessions.")
     default_mode: str = Field(
-        "workspace-write", description="Permission mode for new sessions: read-only, workspace-write, full-access."
+        "workspace-write",
+        description="Built-in permission mode for new sessions: read-only, workspace-write, full-access.",
     )
     presets: dict[str, PresetConfig] = Field(
         default_factory=lambda: dict(DEFAULT_PRESETS), description="Agent presets by id."
