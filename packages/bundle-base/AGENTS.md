@@ -28,6 +28,7 @@
 | `workspace` | `pyharness-workspace` |
 | `agent-loop` | `pyharness-agent-loop-deepagents` |
 | `agents` | `pyharness-agent` |
+| `auto-review` | `pyharness-auto-review` |
 | `compaction` | `pyharness-compaction` |
 | `workspace-changes` | `pyharness-workspace-changes` |
 | `inspect` | `pyharness-inspect` |

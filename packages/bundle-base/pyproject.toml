@@ -10,6 +10,7 @@ dependencies = [
     "pyharness-tools==0.1.0",
     "pyharness-mcp==0.1.0",
     "pyharness-ask-user==0.1.0",
+    "pyharness-auto-review==0.1.0",
     "pyharness-prompt==0.1.0",
     "pyharness-agent==0.1.0",
     "pyharness-agent-loop-deepagents==0.1.0",

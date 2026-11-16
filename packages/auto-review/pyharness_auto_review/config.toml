@@ -1,0 +1,17 @@
+[MODE]
+id = "auto-review"
+title = "Auto review"
+description = "Workspace writes and the shell; a model reviews each gated tool call before it runs, and a call it denies asks the user."
+
+# Approval card text of a gated call the review did not allow.
+[NOTES]
+denied = "Auto review denied this call: ${reason}"
+denied_plain = "Auto review denied this call."
+failed = "Auto review failed (${error}); the call needs your decision."
+unreviewed = "Auto review did not cover this call."
+
+# Size of the session history a review reads.
+[HISTORY]
+items = 200
+text_chars = 20000
+args_chars = 2000

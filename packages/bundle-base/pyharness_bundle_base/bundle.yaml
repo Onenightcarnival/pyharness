@@ -38,6 +38,10 @@ patch:
   - id: agents
     name: pyharness-agent
 
+  # Auto review permission mode: a model reviews each gated tool call; a call it denies asks the user.
+  - id: auto-review
+    name: pyharness-auto-review
+
   # Context compaction: ctx.compaction; automatic under pressure, /compact on demand.
   - id: compaction
     name: pyharness-compaction

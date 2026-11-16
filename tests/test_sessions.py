@@ -89,11 +89,14 @@ async def test_presets_select_tools_skills_and_prompt_sections(profile):
             assert creator["preset"] == "creator"
             assert (await c.post("/api/sessions", json={"preset": "nope"})).status_code == 422
             options = (await c.get("/api/agent")).json()
-            assert options["default_preset"] == "standard" and [m["id"] for m in options["modes"]] == [
-                "read-only",
-                "workspace-write",
-                "full-access",
+            assert options["default_preset"] == "standard" and [(m["id"], m["builtin"]) for m in options["modes"]] == [
+                ("read-only", True),
+                ("workspace-write", True),
+                ("full-access", True),
+                ("auto-review", False),
             ]
+            refused = await c.put("/api/settings/agent", json={"default_mode": "auto-review"})
+            assert refused.status_code == 422 and "per session" in refused.json()["detail"]
         await agents.start_run(standard["id"], "x").wait()
         await agents.start_run(creator["id"], "y").wait()
         prompts = [c["messages"][0][1] for c in scripted.CALLS if "messages" in c]
