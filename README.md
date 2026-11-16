@@ -60,7 +60,7 @@ uv run pyh run
 | `pyh run [--patch FILE] [--no-supervisor]` | 运行 profile |
 | `pyh dump-config` | 组合后的配置树；每个条目标注来源层 |
 | `pyh preflight [-v]` | 独立进程启动当前配置，输出报告 |
-| `pyh exec "<prompt>"` | 无 HTTP 运行一轮；`http` 停用，`api`、`web-ui` 为 `PENDING` |
+| `pyh exec "<prompt>" [--mode ID] [--approvals stop\|reject]` | 无 HTTP 运行一轮；`http` 停用，`api`、`web-ui` 为 `PENDING`。需要审批的工具调用：`stop`（默认）以退出码 2 结束，`reject` 拒绝后继续 |
 | `pyh plugin list` | 条目与状态 |
 | `pyh plugin install <dir>` / `uninstall <bundle>` | 安装 / 卸载 bundle；预检，失败即恢复 |
 | `pyh plugin enable <id>` / `disable <id>` | 启用 / 停用条目 |

@@ -16,6 +16,8 @@ from .profile import Profile
 from .supervisor import Supervisor, signal_restart
 from .worker import run_generation, setup_logging
 
+HEADLESS = "headless run: no one answers approvals"  # reason of a call rejected by `pyh exec --approvals reject`
+
 
 def _profile(args: argparse.Namespace, *, must_exist: bool = True) -> Profile:
     profile = Profile(args.profile, args.home)
@@ -117,34 +119,50 @@ def cmd_exec(args: argparse.Namespace) -> int:
         harness = Harness(profile, patch=[p for p in patch if _has_entry(profile, p["id"])], extra_patches=args.patch)
         async with harness:
             agents = harness.get("agents")
-            session = await agents.create_session(title=args.prompt[:60])
+            session = await agents.create_session(title=args.prompt[:60], mode=args.mode)
             events = agents.start_run(session["id"], args.prompt)
             exit_code = 0
-            async for event in events.subscribe():
-                kind = event["type"]
-                if kind == "token":
-                    print(event["text"], end="", flush=True)
-                elif kind == "tool_call":
-                    print(
-                        f"\n[tool] {event['name']}({json.dumps(event.get('args', {}), ensure_ascii=False)})",
-                        file=sys.stderr,
-                    )
-                elif kind == "tool_result":
-                    print(f"[tool result] {str(event.get('content', ''))[:300]}", file=sys.stderr)
-                elif kind == "interrupt":
-                    print(
-                        f"\n[approval needed] {json.dumps(event['interrupts'], ensure_ascii=False)[:800]}",
-                        file=sys.stderr,
-                    )
-                    exit_code = 2
-                elif kind == "error":
-                    print(f"\n[error] {event['message']}", file=sys.stderr)
-                    exit_code = 1
+            while events is not None:
+                requests: list[dict[str, Any]] | None = None
+                async for event in events.subscribe():
+                    kind = event["type"]
+                    if kind == "token":
+                        print(event["text"], end="", flush=True)
+                    elif kind == "tool_call":
+                        print(
+                            f"\n[tool] {event['name']}({json.dumps(event.get('args', {}), ensure_ascii=False)})",
+                            file=sys.stderr,
+                        )
+                    elif kind == "tool_result":
+                        print(f"[tool result] {str(event.get('content', ''))[:300]}", file=sys.stderr)
+                    elif kind == "interrupt":
+                        requests = _approval_requests(event["interrupts"]) if args.approvals == "reject" else None
+                        print(
+                            f"\n[{'approval rejected' if requests else 'approval needed'}] "
+                            f"{json.dumps(event['interrupts'], ensure_ascii=False)[:800]}",
+                            file=sys.stderr,
+                        )
+                        exit_code = exit_code if requests else 2
+                    elif kind == "error":
+                        print(f"\n[error] {event['message']}", file=sys.stderr)
+                        exit_code = 1
+                events = (
+                    agents.start_run(session["id"], decisions=[{"type": "reject", "message": HEADLESS}] * len(requests))
+                    if requests
+                    else None
+                )
             print()
             print(f"session: {session['id']}", file=sys.stderr)
             return exit_code
 
     return asyncio.run(main())
+
+
+def _approval_requests(interrupts: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
+    """Action requests of the pending approval; ``None`` unless that approval is the only pending interrupt."""
+    if len(interrupts) != 1 or not isinstance(interrupts[0].get("value"), dict):
+        return None
+    return interrupts[0]["value"].get("action_requests") or None
 
 
 def _has_entry(profile: Profile, entry_id: str) -> bool:
@@ -202,6 +220,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("prompt")
     p.add_argument("--patch", action="append", default=[])
     p.add_argument("--http-entry", default="http", help="entry disabled for the run; '' disables none")
+    p.add_argument("--mode", default=None, help="permission mode of the session (default: the profile's)")
+    p.add_argument(
+        "--approvals",
+        choices=["stop", "reject"],
+        default="stop",
+        help="a tool call that asks for approval: stop the run with exit code 2 (default), or reject it and go on",
+    )
     p.add_argument("--log-level", default=None)
     p.set_defaults(func=cmd_exec)
     return parser
