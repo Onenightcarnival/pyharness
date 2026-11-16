@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import subprocess
+import time
 
 import httpx
 
@@ -114,6 +116,21 @@ async def test_turn_changes_from_git_snapshots(home, workspace):
     status = git(ws, "status", "--porcelain")
     assert " M a.py" in status and "?? new.txt" in status and "A " not in status
     assert "pyh-changes" not in git(ws, "count-objects", "-v")
+
+
+async def test_snapshot_sees_an_edit_made_in_the_second_of_the_commit(home, workspace):
+    profile = Profile.init("web", home=str(home))
+    async with Harness(profile, patch=patch([])) as h:
+        changes = h.get("workspaceChanges")
+        await asyncio.sleep(1.02 - time.time() % 1)  # the start of a second
+        (workspace / "a.py").write_text("def f():\n    return 1\n")
+        git(workspace, "init", "-q")
+        git(workspace, "add", "-A")
+        git(workspace, "commit", "-q", "-m", "init")
+        (workspace / "a.py").write_text("def f():\n    return 2\n")  # same size, same second: stat data is equal
+        await asyncio.sleep(1.05 - time.time() % 1)  # a later second
+        repo = await changes._repo_for(None)
+        assert await changes._snapshot("s", repo) != git(workspace, "rev-parse", "HEAD^{tree}").strip()
 
 
 async def test_non_git_workspace_records_nothing(home, workspace):

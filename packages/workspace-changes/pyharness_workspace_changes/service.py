@@ -196,7 +196,8 @@ class WorkspaceChangesService(Service):
     async def _snapshot(self, session_id: str, repo: Repo) -> str:
         private = self._dir(session_id)
         if repo.index.exists():
-            shutil.copyfile(repo.index, private / "index")
+            # With its timestamp: git re-reads a file modified in the second its index was written.
+            shutil.copy2(repo.index, private / "index")
         else:
             (private / "index").unlink(missing_ok=True)
         env = self._env(session_id, repo)
