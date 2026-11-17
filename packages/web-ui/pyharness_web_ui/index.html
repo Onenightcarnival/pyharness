@@ -3215,7 +3215,6 @@ function generalMarkup() {
   return `<h3 class="sectionTitle">${esc(T.tabGeneral)}</h3><p class="sectionIntro">${esc(T.settingsIntro)}</p>
     <div class="srow"><div class="main"><div class="title">${esc(T.defaultMode)}</div><div class="desc">${esc(T.modeDesc[a.default_mode] || '')}</div></div><div class="ctl"><div class="selectWrap"><select class="select" data-field="defaultMode">${modes}</select>${icon('chev-down', 'ico chev')}</div></div></div>
     <div class="srow"><div class="main"><div class="title">${esc(T.approvalTimeout)}</div><div class="desc">${esc(T.approvalTimeoutHint)}</div></div><div class="ctl"><div class="selectWrap"><select class="select" data-field="approvalTimeout">${limits.map((s) => `<option value="${s}" ${s === limit ? 'selected' : ''}>${esc(limitLabel(s))}</option>`).join('')}</select>${icon('chev-down', 'ico chev')}</div></div></div>
-    <div class="srow"><div class="main"><div class="title">${esc(T.language)}</div><div class="desc">${esc(T.languageHint)}</div></div><div class="ctl"><span class="tag" data-tone="outline">${zh ? '中文' : 'English'}</span></div></div>
     <div data-compaction></div>`;
 }
 function bindGeneral() {
@@ -3233,6 +3232,7 @@ function appearanceMarkup() {
   return `<h3 class="sectionTitle">${esc(T.tabAppearance)}</h3><p class="sectionIntro">${esc(T.appearanceIntro)}</p>
     <div class="srow" style="flex-direction:column;align-items:stretch"><div class="main"><div class="title">${esc(T.theme)}</div><div class="desc">${esc(T.appearanceHint)}</div></div>
       <div class="themeCards" data-field="themeCards">${[['light', 'sun', T.themeLight], ['dark', 'moon', T.themeDark], ['system', 'panel', T.themeSystem]].map(([id, ic, label]) => `<button type="button" class="themeCard" data-theme-choice="${id}" aria-pressed="${theme === id}">${icon(ic)}<span>${esc(label)}</span></button>`).join('')}</div></div>
+    <div class="srow"><div class="main"><div class="title">${esc(T.language)}</div><div class="desc">${esc(T.languageHint)}</div></div><div class="ctl"><span class="tag" data-tone="outline">${zh ? '中文' : 'English'}</span></div></div>
     ${[['workDetails', T.workDetails, T.workDetailsHint, [['compact', T.wdCompact], ['standard', T.wdStandard], ['detailed', T.wdDetailed], ['full', T.wdFull]]], ['collapseWhen', T.collapseWhen, T.collapseWhenHint, [['completion', T.cwCompletion], ['next', T.cwNext]]], ['perfUsage', T.perfUsage, T.perfUsageHint, [['detailed', T.puDetailed], ['compact', T.puCompact]]]].map(([key, title, hint, opts]) => `<div class="srow"><div class="main"><div class="title">${esc(title)}</div><div class="desc">${esc(hint)}</div></div><div class="ctl"><div class="selectWrap"><select class="select" data-pref="${key}">${opts.map(([v, l]) => `<option value="${v}" ${uiPrefs[key] === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>${icon('chev-down', 'ico chev')}</div></div></div>`).join('')}
     <div data-sidebar-entries></div>`;
 }
