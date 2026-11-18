@@ -63,7 +63,7 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 |---|---|
 | 1. 定版本 | `uv run python scripts/set_version.py <version>`，单独一个提交 |
 | 2. 演练 | Actions 页手动运行 `release`，`index` 选 `testpypi` |
-| 3. 发布 | 推送标签 `v<version>`：`release` 校验标签与版本一致，构建、检查、上传 PyPI |
+| 3. 发布 | 在 GitHub 上发布 Release，标签 `v<version>`：`release` 校验标签与版本一致，构建、检查、上传 PyPI |
 
 | 仓库 secret | 用途 |
 |---|---|
