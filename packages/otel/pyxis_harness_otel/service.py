@@ -15,7 +15,7 @@ from opentelemetry.trace import SpanKind
 
 from pyxis_harness import Service, manage
 
-from .config import SECRET_REF, Config
+from .config import SECRET_REF, VERSION, Config
 from .pipeline import Pipeline
 from .spans import build_turn_spans
 
@@ -132,7 +132,7 @@ class OtelService(Service):
             "running": p is not None,
             "exportedBatches": p.exporter.batches if p else 0,
             "exportedSpans": p.exporter.spans if p else 0,
-            "version": "0.1.0",
+            "version": VERSION,
         }
         if p is not None:
             out["traceEndpoint"] = p.trace_endpoint

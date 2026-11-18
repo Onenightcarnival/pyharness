@@ -14,7 +14,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExportResult
 
-from .config import DEFAULT_SERVICE, Config
+from .config import DEFAULT_SERVICE, VERSION, Config
 from .spans import AGENT_SYSTEM
 
 LANGFUSE_RE = re.compile(r"langfuse", re.IGNORECASE)
@@ -125,7 +125,7 @@ class Pipeline:
                 export_timeout_millis=config.export_timeout_ms,
             )
         )
-        self.tracer = self.provider.get_tracer("pyxis-harness-otel", "0.1.0")
+        self.tracer = self.provider.get_tracer("pyxis-harness-otel", VERSION)
 
     def flush(self, timeout_ms: int = 20000) -> bool:
         return self.provider.force_flush(timeout_ms)

@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from importlib import metadata
+
 from pydantic import BaseModel, Field
 
 DEFAULT_SERVICE = "pyxis-harness"
+VERSION = metadata.version("pyxis-harness-otel")
 SECRET_REF = "OTEL_SECRET_KEY"
 
 
