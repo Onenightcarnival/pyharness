@@ -38,6 +38,8 @@ def test_every_package_has_an_agents_md_and_ships_it():
         docs = package / "AGENTS.md"
         assert docs.is_file() and docs.read_text().startswith("# "), f"{package.name}: AGENTS.md with a title"
         wheel = tomllib.loads((package / "pyproject.toml").read_text())["tool"]["hatch"]["build"]["targets"]["wheel"]
+        if wheel.get("bypass-selection"):  # a distribution of dependencies only
+            continue
         (module,) = wheel["packages"]
         assert wheel["force-include"] == {"AGENTS.md": f"{module}/AGENTS.md"}, package.name
 

@@ -29,6 +29,7 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 | `packages/*` | 内核插件；每个包一个 entry point |
 | `packages/*/AGENTS.md` | 子包的设计文档；代码文件不带文件头文档 |
 | `packages/*/<模块>/__init__.py` | 导入与 `__all__`；实现在具名模块中（`service.py`、`plugin.py`、`bundle.py`） |
+| `packages/meta` | `pyxis-harness`：只有依赖的入口发行包 |
 | `packages/bundle-base` | `base` bundle |
 | `packages/bundle-creator` | `creator` bundle：插件编写 skills |
 | `packages/plugin-manager/pyxis_harness_plugin_manager/skills` | agent 可读的 skills；`references/packages.md` 由 `scripts/gen_packages.py` 生成 |
