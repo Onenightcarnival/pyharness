@@ -5,7 +5,7 @@ description = "PyxisHarness: an everything-is-a-plugin agent harness — the ker
 license = "MIT"
 requires-python = ">=3.12"
 readme = "AGENTS.md"
-authors = [{ name = "PyxisHarness contributors" }]
+authors = [{ name = "Onenightcarnival" }]
 keywords = ["agent", "llm", "harness", "plugin", "langgraph", "deepagents"]
 classifiers = [
     "Development Status :: 3 - Alpha",
