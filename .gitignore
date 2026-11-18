@@ -24,3 +24,4 @@ htmlcov/
 
 # Claude desktop app
 .claude/
+/manual/*.pdf
