@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-checkpoint-postgres"
 version = "0.1.0"
-description = "pyharness plugin: PostgreSQL checkpointer and store"
+description = "PyxisHarness plugin: PostgreSQL checkpointer and store"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = ["pyharness-core==0.1.0", "langgraph-checkpoint-postgres==3.2.0", "psycopg[binary]==3.3.6", "psycopg-pool==3.3.3"]

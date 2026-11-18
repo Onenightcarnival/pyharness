@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>PyHarness</title>
+<title>PyxisHarness</title>
 <style>
 /* Design tokens: DeepSeek Harness Web theme. Neutral-bluish scale, 0.5px hairlines,
    radius ladder 4–28, soft elevation. Token names: local to this page. */
@@ -986,7 +986,7 @@ textarea.input { height: auto; padding: 8px 12px; line-height: 20px; resize: ver
   <div class="scrim" id="scrim"></div>
   <aside class="sidebar" id="sidebar">
     <div class="logoRow" id="logoRow">
-      <span class="brand"><svg class="brandMark"><use href="#i-mark"/></svg><span class="brandName">PyHarness</span></span>
+      <span class="brand"><svg class="brandMark"><use href="#i-mark"/></svg><span class="brandName">PyxisHarness</span></span>
       <button class="iconButton collapseSidebar" id="collapse" data-i18n-title="collapse"><svg class="ico"><use href="#i-panel"/></svg></button>
     </div>
     <button class="newSession" id="newSession" data-i18n-title="newSession"><svg class="ico"><use href="#i-plus-circle"/></svg><span data-i18n="newSession"></span></button>
@@ -1509,7 +1509,7 @@ async function refreshHealth() {
   try {
     const h = await json('/health');
     state.health = h; state.generation = h.generation; emitPlugin('health', h);
-    $('profileName').textContent = h.profile || 'pyharness';
+    $('profileName').textContent = h.profile || 'PyxisHarness';
     $('profileMeta').innerHTML = `<span class="dot" data-state="${h.restart_pending ? 'warn' : 'on'}"></span>`;
     renderModelChip(); renderSessionChips();
     return h;

@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-bundle-base"
 version = "0.1.0"
-description = "pyharness bundle: base plugin set"
+description = "PyxisHarness bundle: base plugin set"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [

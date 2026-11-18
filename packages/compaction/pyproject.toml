@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-compaction"
 version = "0.1.0"
-description = "pyharness plugin: context compaction — a checkpoint summary replaces older history"
+description = "PyxisHarness plugin: context compaction — a checkpoint summary replaces older history"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [

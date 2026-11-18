@@ -2,7 +2,7 @@
 
 [DeepSeek Harness (dsh)](https://github.com/deepseek-ai/deepseek-harness)：TypeScript，Cordis 引擎。
 
-| dsh | pyharness |
+| dsh | PyxisHarness |
 |---|---|
 | Cordis：服务容器、`inject`、类型化事件、可逆副作用 | `pyharness-core`：`Context`、`inject`、`EventBus`、`on_dispose` / `effect` / `enter` |
 | 事件模式 emit / parallel / serial / bail / waterfall | 同名模式，另有 `series`：按序运行全部监听者，异常抛出；用于生命周期 |
@@ -22,7 +22,7 @@
 
 ## 生效方式
 
-| | dsh | pyharness |
+| | dsh | PyxisHarness |
 |---|---|---|
 | 副作用归属追踪 | 有 | 有 |
 | 归属追踪的用途 | 热替换、卸载 | 有序关闭、失败插件清理 |
@@ -51,14 +51,14 @@ bundle 中条目的位置（`after` / `before` / `parent`）对应 mount 路径�
 
 ## 未覆盖
 
-| dsh 能力 | pyharness |
+| dsh 能力 | PyxisHarness |
 |---|---|
 | 插件的浏览器端（client slot） | 有；槽位种类对齐 dsh（list / keyed），未做 chain 类型与独立构建链 |
 | 右侧栏 | 每会话标签布局、开始页、文件树、文档预览（Markdown / 代码 / 纯文本 / 图片）、终端 tab（PTY + xterm.js）、后台任务 tab、全屏形态；未做分栏、浮窗与浏览器 tab |
-| 代码高亮 | dsh 用 Shiki（浏览器端 TextMate grammar）；pyharness 用服务端 Pygments，回复定稿后高亮 |
+| 代码高亮 | dsh 用 Shiki（浏览器端 TextMate grammar）；PyxisHarness 用服务端 Pygments，回复定稿后高亮 |
 | 改动文件卡片与 review | 有：git 快照摘要、轮末卡片、右侧栏 diff tab（单栏 / 左右）；未做文件工具编辑的兜底捕获，非 git 工作区不记录 |
 | 轮次过程折叠 | 有：过程组 + 四档展示模式 + 收起时机；dsh 的滚动跟随与折叠动画未做 |
-| 会话统计 / token 用量 | 有：每轮 stats 持久化、统计条与弹层、每轮用量行、上下文占用圆环（需模型声明上下文窗口）；dsh 的 token-meter 做逐节点估算，pyharness 只按最近用量加估算 |
+| 会话统计 / token 用量 | 有：每轮 stats 持久化、统计条与弹层、每轮用量行、上下文占用圆环（需模型声明上下文窗口）；dsh 的 token-meter 做逐节点估算，PyxisHarness 只按最近用量加估算 |
 | 斜杠命令（`dsh-commands` + `dsh-client-ui-commands`）与 `@` 引用（`dsh-client-ui-reference` + `dsh-file-references`） | 有：页面侧命令注册表（内置 compact / new / model / mode / files / terminal / jobs / clear / settings / help，插件 `ctx.commands.register`）与 `/` 菜单；`@` 文件菜单（`/workspaces/search`）与 host 侧展开成附件块；未做 dsh 的 host 命令注册表与会话日志记录、`@session` 引用、原子引用胶囊 |
 | 常驻 shell（`dsh-tool-bash-persistent` + `dsh-terminals`）、后台任务（`dsh-tool-jobs` + `dsh-api-job-controller`）、终端 tab（`dsh-api-terminal-controller`） | 有：`pyharness-terminal`，`bash` 每会话常驻（管道 + 结束标记，不用 tmux）、`run_in_background` / `job_output` / `job_list` / `job_kill`、PTY 终端 WebSocket；dsh 的沙箱策略（`dsh-bash-sandbox`）与 headless xterm 回放未做（这里保留字节缓冲） |
 | `ask_user_question`（`dsh-tool-ask-user` + `dsh-user-questions` + 问题卡片） | 有：`pyharness-ask-user`，同样的问题 / 答案结构（id、options、multi_select、selected、custom）；用 LangGraph interrupt 暂停，`POST /sessions/{id}/answers` 续跑；未做 dsh 的 timed 模式（超时后继续工作、稍后补答） |

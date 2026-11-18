@@ -1,4 +1,4 @@
-# pyharness
+# PyxisHarness
 
 一切皆插件的 agent harness，Python 实现；架构对照 [DeepSeek Harness (dsh)](https://github.com/deepseek-ai/deepseek-harness)。
 

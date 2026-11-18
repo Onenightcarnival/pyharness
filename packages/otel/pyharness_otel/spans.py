@@ -7,7 +7,7 @@ from typing import Any
 from opentelemetry import trace
 from opentelemetry.trace import SpanKind, Status, StatusCode
 
-AGENT_SYSTEM = "pyharness"
+AGENT_SYSTEM = "pyxis-harness"
 FINISH = {"tool-calls": "tool_calls", "max-tokens": "length", "aborted": "cancelled", "stop": "stop", "error": "error"}
 
 

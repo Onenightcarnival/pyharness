@@ -262,7 +262,7 @@ async def _serve(deps: GatewayDeps, protocol: str, key: dict[str, Any], request:
 
 def create_app(deps: GatewayDeps) -> FastAPI:
     """The gateway application; the caller serves it."""
-    app = FastAPI(title="pyharness gateway", docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(title="PyxisHarness gateway", docs_url=None, redoc_url=None, openapi_url=None)
 
     @app.api_route("/{path:path}", methods=METHODS)
     async def handle(request: Request) -> Response:

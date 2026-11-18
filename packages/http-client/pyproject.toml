@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-http-client"
 version = "0.1.0"
-description = "pyharness plugin: HTTP API request tool (targets with injected auth, saved requests, history, event streams) with the http_* tools and the HTTP page"
+description = "PyxisHarness plugin: HTTP API request tool (targets with injected auth, saved requests, history, event streams) with the http_* tools and the HTTP page"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [

@@ -33,7 +33,7 @@ saved_restart_required = "Saved. Unsupervised harness: the change applies on the
 GUIDANCE = '''
 ## This harness
 The harness implementation is installed outside the workspace; its files are not workspace files.
-"This page" or "the Web UI" means the pyharness Web UI served by this process; its data comes from the API.
+"This page" or "the Web UI" means the PyxisHarness Web UI served by this process; its data comes from the API.
 Profile files change only through `plugin_manager`.
 '''
 

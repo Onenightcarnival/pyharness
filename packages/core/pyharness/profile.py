@@ -33,7 +33,7 @@ try:
 except ImportError:  # pragma: no cover - POSIX only
     fcntl = None
 
-PATCH_HEADER = "# Patch operations addressed by entry id. Managed by pyharness; comments are not preserved.\n"
+PATCH_HEADER = "# Patch operations addressed by entry id. Managed by PyxisHarness; comments are not preserved.\n"
 
 TEMPLATES: dict[str, dict[str, Any]] = package_toml(__file__)["profile"]["TEMPLATES"]  # name -> title, bundles
 

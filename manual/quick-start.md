@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |---|---|
-| 结果 | pyharness 运行起来；agent 写出并安装一个插件：左侧边栏的「骰子」页面，加一个 `roll_dice` 工具 |
+| 结果 | PyxisHarness 运行起来；agent 写出并安装一个插件：左侧边栏的「骰子」页面，加一个 `roll_dice` 工具 |
 | 用时 | 约 10 分钟 |
 | 前置 | Python 3.12、uv、一个模型 API（OpenAI、Anthropic、DeepSeek、Gemini、OpenRouter，或 OpenAI / Anthropic 兼容端点） |
 
@@ -98,7 +98,7 @@ uv run pyh run
 
 ## 6. 重启与验证
 
-重启由 pyharness 自己完成。对话里出现「第 2 代已启动」的分隔行，会话在新一代进程里继续，agent 调用新工具、请求页面的接口来验证，最后给出结果：
+重启由 PyxisHarness 自己完成。对话里出现「第 2 代已启动」的分隔行，会话在新一代进程里继续，agent 调用新工具、请求页面的接口来验证，最后给出结果：
 
 ![验证结果](images/06-verified.png)
 

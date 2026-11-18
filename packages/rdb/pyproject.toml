@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-rdb"
 version = "0.1.0"
-description = "pyharness plugin: relational database workbench (SQLite / PostgreSQL / MySQL / GaussDB) with db_* tools and the Database page"
+description = "PyxisHarness plugin: relational database workbench (SQLite / PostgreSQL / MySQL / GaussDB) with db_* tools and the Database page"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [

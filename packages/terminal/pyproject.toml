@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-terminal"
 version = "0.1.0"
-description = "pyharness plugin: persistent bash tool, background jobs, PTY terminals for the Web UI"
+description = "PyxisHarness plugin: persistent bash tool, background jobs, PTY terminals for the Web UI"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [

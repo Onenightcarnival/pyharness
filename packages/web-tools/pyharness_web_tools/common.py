@@ -13,7 +13,7 @@ from .config import Config
 
 PROMPTS = package_prompts(__file__)
 NOTICE: str = PROMPTS["common"]["NOTICE"]
-USER_AGENT = "pyharness/0.1 (+https://github.com/pyharness)"
+USER_AGENT = "pyxis-harness/0.1 (+https://pypi.org/project/pyxis-harness/)"
 
 
 class Pacer:

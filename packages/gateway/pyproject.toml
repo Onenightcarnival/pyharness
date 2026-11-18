@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-gateway"
 version = "0.1.0"
-description = "pyharness plugin: local LLM API gateway over the configured model routes (OpenAI Chat Completions, OpenAI Responses, Anthropic Messages) with API keys and usage accounting"
+description = "PyxisHarness plugin: local LLM API gateway over the configured model routes (OpenAI Chat Completions, OpenAI Responses, Anthropic Messages) with API keys and usage accounting"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [

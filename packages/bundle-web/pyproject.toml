@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-bundle-web"
 version = "0.1.0"
-description = "pyharness bundle: web_search (DeepSeek native search) and web_fetch tools; optional"
+description = "PyxisHarness bundle: web_search (DeepSeek native search) and web_fetch tools; optional"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = ["pyharness-core==0.1.0", "pyharness-web-tools==0.1.0"]

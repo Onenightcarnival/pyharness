@@ -18,7 +18,7 @@ class HttpConfig(BaseModel):
     port: int = 8765
     serve: bool = Field(True, description="Bind the server on app/serve.")
     log_level: str = "warning"
-    title: str = "pyharness"
+    title: str = "PyxisHarness"
     shutdown_timeout: int = Field(5, description="Seconds for in-flight requests when stopping.")
 
 

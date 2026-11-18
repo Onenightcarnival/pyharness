@@ -52,7 +52,7 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 | 挂载点 | `creator` 预设会话的 `/plugins/`；可写，只读模式除外 |
 | 归属 | profile：与会话的工作区无关；安装进同一个 profile 的 `site/` |
 | 接口 | `ctx.agentLoop.add_mount(mount, directory, presets, writable=True)` |
-| 对照 dsh | 源码随包分发、agent 可读；pyharness 只读，扩展经插件完成 |
+| 对照 dsh | 源码随包分发、agent 可读；PyxisHarness 只读，扩展经插件完成 |
 
 每个 `SKILL.md` 小于 8000 字符。其他插件：`ctx.agentLoop.add_skills(directory, label, presets=None)` 挂载自己的 skills 目录，随插件停止卸载；`ctx.agentLoop.add_preset(id, title, description, tools=…, exclude_tools=…)` 添加预设；`ctx.prompt.add(..., presets=[…])` 限定提示词片段。
 

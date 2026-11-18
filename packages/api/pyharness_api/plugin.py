@@ -29,5 +29,5 @@ def build_router(ctx: Any) -> APIRouter:
 
 
 def apply(ctx: Any, config: Config) -> None:
-    ctx.http.include_router(build_router(ctx), prefix=config.prefix, tags=["pyharness"])
-    ctx.http.include_router(build_settings_router(ctx, config.llm_entry), prefix=config.prefix, tags=["pyharness"])
+    ctx.http.include_router(build_router(ctx), prefix=config.prefix, tags=["pyxis-harness"])
+    ctx.http.include_router(build_settings_router(ctx, config.llm_entry), prefix=config.prefix, tags=["pyxis-harness"])

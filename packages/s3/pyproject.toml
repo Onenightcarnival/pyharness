@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-s3"
 version = "0.1.0"
-description = "pyharness plugin: S3-compatible object storage browser (MinIO / OSS / COS / R2 / AWS) with s3_* tools and the S3 page"
+description = "PyxisHarness plugin: S3-compatible object storage browser (MinIO / OSS / COS / R2 / AWS) with s3_* tools and the S3 page"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [

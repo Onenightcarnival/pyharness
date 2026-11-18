@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-http"
 version = "0.1.0"
-description = "pyharness plugin: FastAPI application and uvicorn server (ctx.http)"
+description = "PyxisHarness plugin: FastAPI application and uvicorn server (ctx.http)"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = ["pyharness-core==0.1.0", "fastapi==0.162.0", "uvicorn==0.54.0"]

@@ -115,7 +115,7 @@ CLI 与 `plugin_manager` 工具共用 `pyharness.manage`。
 续跑消息：
 
 ```
-[pyharness] Restarted into generation {generation}.
+[PyxisHarness] Restarted into generation {generation}.
 Reason: {reasons}.
 Rollback: generation {gen} failed to boot ({err}). The previous configuration is active; the change is not applied.
 Task: the task in progress continues. Tools of newly enabled plugins are available; harness_inspect shows the active plugins.

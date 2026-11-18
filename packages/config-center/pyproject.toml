@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-config-center"
 version = "0.1.0"
-description = "pyharness plugin: configuration center — MCP page with connection test, skills management, managed bun runtime for JS MCP servers"
+description = "PyxisHarness plugin: configuration center — MCP page with connection test, skills management, managed bun runtime for JS MCP servers"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [

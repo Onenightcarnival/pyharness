@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-llm"
 version = "0.1.0"
-description = "pyharness plugin: chat-model provider registry (ctx.llm)"
+description = "PyxisHarness plugin: chat-model provider registry (ctx.llm)"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [

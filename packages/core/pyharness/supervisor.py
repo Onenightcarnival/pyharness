@@ -202,7 +202,7 @@ def signal_restart(profile: Profile) -> bool:
     if not hasattr(signal, "SIGHUP"):
         return False
     cmdline = Path(f"/proc/{pid}/cmdline")
-    if cmdline.parent.parent.exists():  # /proc: the pid must belong to a pyharness process
+    if cmdline.parent.parent.exists():  # /proc: the pid must belong to a PyxisHarness process
         try:
             if b"pyharness" not in cmdline.read_bytes() and b"pyh" not in cmdline.read_bytes():
                 return False

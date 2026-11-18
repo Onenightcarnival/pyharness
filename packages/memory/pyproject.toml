@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-memory"
 version = "0.1.0"
-description = "pyharness plugin: layered career memory (profile, work, projects, lessons) with version history; memory_get / memory_save tools and the Memory page"
+description = "PyxisHarness plugin: layered career memory (profile, work, projects, lessons) with version history; memory_get / memory_save tools and the Memory page"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [

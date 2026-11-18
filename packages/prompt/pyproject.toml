@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-prompt"
 version = "0.1.0"
-description = "pyharness plugin: ordered system-prompt sections (ctx.prompt)"
+description = "PyxisHarness plugin: ordered system-prompt sections (ctx.prompt)"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = ["pyharness-core==0.1.0"]

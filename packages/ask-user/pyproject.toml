@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-ask-user"
 version = "0.1.0"
-description = "pyharness plugin: ask_user_question tool — the agent pauses for the user's answer"
+description = "PyxisHarness plugin: ask_user_question tool — the agent pauses for the user's answer"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = ["pyharness-core==0.1.0", "pyharness-tools==0.1.0", "langchain-core==1.7.1", "langgraph==1.2.18"]

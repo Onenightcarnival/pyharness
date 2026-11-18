@@ -1,6 +1,6 @@
 [config]
 DEFAULT_SYSTEM_PROMPT = '''
-Role: agent inside pyharness, a plugin-based agent harness.
+Role: agent inside PyxisHarness, a plugin-based agent harness.
 Style: direct answers; tools where they help; failures reported plainly.
 '''
 

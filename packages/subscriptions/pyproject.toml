@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-subscriptions"
 version = "0.1.0"
-description = "pyharness plugin: Codex, ChatGPT, Google Antigravity and Grok subscriptions as model routes and tools, with the AI subscriptions page"
+description = "PyxisHarness plugin: Codex, ChatGPT, Google Antigravity and Grok subscriptions as model routes and tools, with the AI subscriptions page"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [

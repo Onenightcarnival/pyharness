@@ -1,7 +1,7 @@
 [project]
 name = "pyharness-api"
 version = "0.1.0"
-description = "pyharness plugin: REST and SSE API under /api"
+description = "PyxisHarness plugin: REST and SSE API under /api"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [

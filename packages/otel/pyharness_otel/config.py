@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-DEFAULT_SERVICE = "pyharness"
+DEFAULT_SERVICE = "pyxis-harness"
 SECRET_REF = "OTEL_SECRET_KEY"
 
 
