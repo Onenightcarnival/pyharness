@@ -6,7 +6,7 @@ import types
 import pytest
 from pydantic import BaseModel
 
-from pyharness import Harness, Service, ServiceConflict
+from pyxis_harness import Harness, Service, ServiceConflict
 
 ORDER: list[str] = []
 

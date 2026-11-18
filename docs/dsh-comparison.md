@@ -11,7 +11,7 @@
 | profile + bundle + `cordis.patch.yml` | profile + bundle（entry point）+ `harness.patch.yaml`；按 id 寻址的分层 patch |
 | `isolate` | 组条目的 `isolate: [key]` |
 | HMR：进程内热替换 | 换代：supervisor + worker generation |
-| Plugin Manager + 创造模式（`cordis` preset：`dsh-tool-cordis` + skills） | `plugin_manager` + `harness_inspect` + `creator` bundle：skills 挂载到 `/skills/pyharness/`，deepagents skills 中间件按需加载 |
+| Plugin Manager + 创造模式（`cordis` preset：`dsh-tool-cordis` + skills） | `plugin_manager` + `harness_inspect` + `creator` bundle：skills 挂载到 `/skills/pyxis-harness/`，deepagents skills 中间件按需加载 |
 | `dsh-harness-dev-context` | `pyxis-harness-dev-context` 提示词段 |
 | 源码随包分发，agent 按实现所在路径读取 | `creator` 预设：已加载的包只读挂载到 `/harness/<模块名>/`（`AGENTS.md` 与源码） |
 | `dsh-skill` + `dsh-skill-filesystem` + `dsh-tool-skill` | deepagents `SkillsMiddleware`；`ctx.agentLoop.add_skills` |

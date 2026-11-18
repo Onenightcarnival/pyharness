@@ -19,7 +19,7 @@ agent 的分层职业记忆（profile → work → project → lesson），带�
 | `store.py` | 职业记忆模型及其 SQLite 存储 |
 | `tools.py` | `memory_get` / `memory_save` LangChain 工具、类型化变更的 schema |
 | `routes.py` | 记忆页的 FastAPI 路由 |
-| `prompts.toml` | 模型可见文本；`pyharness.package_prompts(__file__)` 加载 |
+| `prompts.toml` | 模型可见文本；`pyxis_harness.package_prompts(__file__)` 加载 |
 | `client.js` | 浏览器模块 |
 
 ## 服务

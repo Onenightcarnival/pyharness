@@ -23,7 +23,7 @@
 | 配置 | 作用 | 面向的预设 |
 |---|---|---|
 | `guidance` | 系统提示词中的简短段 | 没有技能的预设（`standard`） |
-| `skills` | 本包的 `skills/` 挂载到 `/skills/pyharness/` | `skills_presets`（`creator`） |
+| `skills` | 本包的 `skills/` 挂载到 `/skills/pyxis-harness/` | `skills_presets`（`creator`） |
 | `sources` | 已加载的包只读挂载到 `/harness/<模块名>/`；提示词段 `harness-sources` | `skills_presets`（`creator`） |
 
 ## 技能
@@ -38,9 +38,9 @@
 
 | 项 | 契约 |
 |---|---|
-| 范围 | 内核 `pyharness` 与每个已加载条目的包：`source_roots()` |
+| 范围 | 内核 `pyxis_harness` 与每个已加载条目的包：`source_roots()` |
 | 挂载点 | `/harness/<模块名>/`，经 `ctx.agentLoop.add_mount`；只读 |
-| 挂载的目录 | `pyharness.package_root`：源码检出为含 `pyproject.toml`、`AGENTS.md` 与模块目录的发行目录；已安装的 wheel 为模块目录 |
+| 挂载的目录 | `pyxis_harness.package_root`：源码检出为含 `pyproject.toml`、`AGENTS.md` 与模块目录的发行目录；已安装的 wheel 为模块目录 |
 | 路径的出处 | `harness_inspect topic=config` 的 `docs` 与 `package_dir` |
 | 提示词段 `harness-sources` | 挂载点与路径的出处；order 55 |
 
@@ -66,7 +66,7 @@
 
 | 步骤 | 结果 |
 |---|---|
-| 变更动作 | `pyharness.manage` 事务：变更 → preflight → 保留或还原 |
+| 变更动作 | `pyxis_harness.manage` 事务：变更 → preflight → 保留或还原 |
 | 被拒绝 | 返回错误；profile 不变 |
 | 已保存，受托管 | 当前轮次结束后重启；发起调用的会话继续 |
 | 已保存，未受托管 | 下次启动时生效 |
@@ -81,7 +81,7 @@
 
 | 行 | 值 | 条件 |
 |---|---|---|
-| `installation` | `pyharness` 包的目录 | |
+| `installation` | `pyxis_harness` 包的目录 | |
 | `profile` | profile 的名称与目录 | 有活动的 profile |
 | `default workspace` | `ctx.workspace.root` | 工作区已激活 |
 | `Web UI` | `ctx.http` 给出的 `http://host:port/`；API 在 `/api` 下 | |
@@ -105,5 +105,5 @@
 | 项 | 契约 |
 |---|---|
 | 表 | 以使用它的模块命名：`[plugin_manager]`、`[dev_context]`；`[tools]`：工具描述 |
-| 读取 | `pyharness.package_prompts`；每个字符串值去掉首尾空白 |
+| 读取 | `pyxis_harness.package_prompts`；每个字符串值去掉首尾空白 |
 | 占位符 | `string.Template` 语法（`${name}`） |

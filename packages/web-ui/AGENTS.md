@@ -60,7 +60,7 @@ Web UI 页面，以及供插件使用的客户端模块注册表。
 window.__PyhModules__.load({
   id: "<entry id>",
   factory(require) {
-    const { h, icon, esc, toast } = require("pyharness");
+    const { h, icon, esc, toast } = require("pyxis-harness");
     return { apply(ctx) {
         ctx.slots.register({ slot: "main", key: "my-panel", label: "My panel", icon: "box" },
                            (el, props) => { el.textContent = "hi"; return () => {}; });

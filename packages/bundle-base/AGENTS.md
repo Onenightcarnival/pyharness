@@ -5,7 +5,7 @@
 | 项 | 值 |
 |---|---|
 | bundle | `base` |
-| entry point | `pyharness.bundles`：`base = pyharness_bundle_base:BUNDLE` |
+| entry point | `pyxis_harness.bundles`：`base = pyxis_harness_bundle_base:BUNDLE` |
 
 ## 文件
 

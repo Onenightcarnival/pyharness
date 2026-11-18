@@ -119,5 +119,5 @@
 | 项 | 规则 |
 |---|---|
 | 表名 | 使用该文本的模块 |
-| 加载 | `pyharness.package_prompts`；每个字符串值去除首尾空白 |
+| 加载 | `pyxis_harness.package_prompts`；每个字符串值去除首尾空白 |
 | 占位符 | `string.Template` 语法（`${name}`） |

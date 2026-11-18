@@ -15,8 +15,8 @@ from typing import Any
 import httpx
 import pytest
 
-from pyharness import Harness, Profile
-from pyharness_http_client.engine import (
+from pyxis_harness import Harness, Profile
+from pyxis_harness_http_client.engine import (
     HttpEngine,
     PolicyError,
     SendOptions,
@@ -26,8 +26,8 @@ from pyharness_http_client.engine import (
     is_textual,
     mask_secrets,
 )
-from pyharness_http_client.protocol import SseParser, join_url, parse_sse, substitute
-from pyharness_http_client.store import (
+from pyxis_harness_http_client.protocol import SseParser, join_url, parse_sse, substitute
+from pyxis_harness_http_client.store import (
     HistoryStore,
     RequestStore,
     StoreError,
@@ -38,7 +38,7 @@ from pyharness_http_client.store import (
     summarize,
     usable_request_auth,
 )
-from pyharness_http_client.tools import build_tools, render_exchange, to_output
+from pyxis_harness_http_client.tools import build_tools, render_exchange, to_output
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 ORIGIN = "http://api.test"

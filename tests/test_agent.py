@@ -11,7 +11,7 @@ import httpx
 import pytest
 from langchain_core.messages import ToolMessage
 
-from pyharness import Harness, Profile
+from pyxis_harness import Harness, Profile
 from testkit import scripted, tools as testtools
 
 
@@ -57,7 +57,7 @@ async def test_tool_call_flows_through_pipeline_and_persists(profile):
         assert testtools.RESULTS == [("shout", "HI")]
         # System prompt: plugin sections (identity, plugin authoring).
         system = next(c for c in scripted.CALLS if "messages" in c)["messages"][0]
-        assert system[0] == "system" and "pyharness" in system[1] and "Extending this harness" in system[1]
+        assert system[0] == "system" and "PyxisHarness" in system[1] and "Extending this harness" in system[1]
 
     # Next generation: same history (SQLite checkpointer, store).
     async with Harness(profile, patch=scripted_patch([]), generation=2) as h2:

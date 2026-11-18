@@ -8,7 +8,7 @@ from textwrap import dedent
 
 import pytest
 
-from pyharness import Harness, Profile, manage
+from pyxis_harness import Harness, Profile, manage
 from testkit import tools as testtools
 
 
@@ -55,7 +55,7 @@ async def test_install_preflight_boot_and_uninstall(profile, example_bundle, tmp
 async def test_broken_bundle_is_rejected_and_rolled_back(profile, example_bundle, tmp_path):
     broken = tmp_path / "broken-audit"
     shutil.copytree(example_bundle, broken)
-    plugin = broken / "pyharness_audit" / "plugin.py"
+    plugin = broken / "pyxis_harness_audit" / "plugin.py"
     plugin.write_text(
         plugin.read_text().replace('inject = ["tools"]', 'inject = ["tools"]\nraise ImportError("deliberately broken")')
     )
@@ -88,7 +88,7 @@ async def test_bundle_without_entry_point_is_rejected(profile, tmp_path):
     )
     result = await manage.install_bundle(profile, pkg)
     assert result["application"] == "rejected"
-    assert "pyharness.bundles" in result["error"]
+    assert "pyxis_harness.bundles" in result["error"]
     assert profile.site_distributions() == []
 
 

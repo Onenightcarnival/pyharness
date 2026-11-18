@@ -20,8 +20,8 @@ S3 兼容对象存储浏览器（MinIO / OSS / COS / R2 / AWS）。
 | `engine.py` | boto3 client 之上的 S3 操作；在此边界上 key 相对于 profile 前缀 |
 | `tools.py` | `s3_*` LangChain 工具 |
 | `routes.py` | S3 页的 FastAPI 路由 |
-| `config.toml` | 包数据；`pyharness.package_toml(__file__)` 加载 |
-| `prompts.toml` | 模型可见文本；`pyharness.package_prompts(__file__)` 加载 |
+| `config.toml` | 包数据；`pyxis_harness.package_toml(__file__)` 加载 |
+| `prompts.toml` | 模型可见文本；`pyxis_harness.package_prompts(__file__)` 加载 |
 | `client.js` | 浏览器模块 |
 
 ## 服务

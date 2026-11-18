@@ -18,7 +18,7 @@
 | `common.py` | `search.py` 与 `fetch.py` 共用 |
 | `search.py` | `web_search`：DeepSeek 搜索 |
 | `fetch.py` | `web_fetch`：HTTP GET，正文化为可读文本 |
-| `prompts.toml` | 模型可见文本；`pyharness.package_prompts(__file__)` 加载 |
+| `prompts.toml` | 模型可见文本；`pyxis_harness.package_prompts(__file__)` 加载 |
 
 ## 工具
 

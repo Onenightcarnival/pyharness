@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from pyharness.config import ConfigError, compose, interpolate, parse_ops, tree_to_data
+from pyxis_harness.config import ConfigError, compose, interpolate, parse_ops, tree_to_data
 
 
 def layers(*named):

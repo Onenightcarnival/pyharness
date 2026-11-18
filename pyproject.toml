@@ -103,13 +103,13 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"packages/core/pyharness/cli.py" = ["T201"]
-"packages/core/pyharness/preflight.py" = ["T201"]
+"packages/core/pyxis_harness/cli.py" = ["T201"]
+"packages/core/pyxis_harness/preflight.py" = ["T201"]
 "scripts/*" = ["T201"]
 "tests/*" = ["SLF001"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["pyharness", "testkit"]
+known-first-party = ["pyxis_harness", "testkit"]
 required-imports = ["from __future__ import annotations"]
 combine-as-imports = true
 

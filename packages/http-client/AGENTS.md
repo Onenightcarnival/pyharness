@@ -17,7 +17,7 @@ HTTP API 请求工具：注入鉴权的 API 目标、已存请求、页面与 ag
 | `__init__.py` | 导出 |
 | `config.py` | `Config` |
 | `config.toml` | 上限、默认值、线路层的表；每个模块一张表，模块以 `package_toml(__file__)` 读取自己的表 |
-| `prompts.toml` | 模型可见的文本；以 `pyharness.package_prompts(__file__)` 读取 |
+| `prompts.toml` | 模型可见的文本；以 `pyxis_harness.package_prompts(__file__)` 读取 |
 | `protocol.py` | 线路常量、`join_url`、`substitute`、`SseParser` |
 | `store.py` | 三个存储及其记录的校验 |
 | `engine.py` | `HttpEngine`：主机策略、鉴权、重定向、正文上限、事件流、掩码 |

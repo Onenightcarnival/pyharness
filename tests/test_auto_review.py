@@ -6,8 +6,8 @@ import httpx
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from pyharness import Harness, Profile, cli
-from pyharness_auto_review import Review, ReviewError, history, parse, prompt, review_of
+from pyxis_harness import Harness, Profile, cli
+from pyxis_harness_auto_review import Review, ReviewError, history, parse, prompt, review_of
 from testkit import scripted, tools as testtools
 
 

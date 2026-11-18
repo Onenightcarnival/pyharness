@@ -10,8 +10,8 @@ import time
 
 import httpx
 
-from pyharness import Harness, Profile
-from pyharness_workspace_changes import parse_unified
+from pyxis_harness import Harness, Profile
+from pyxis_harness_workspace_changes import parse_unified
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 

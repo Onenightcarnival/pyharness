@@ -10,8 +10,8 @@ import httpx
 import pytest
 import yaml
 
-from pyharness import Harness, Profile
-from pyharness_workspace import WorkspaceError
+from pyxis_harness import Harness, Profile
+from pyxis_harness_workspace import WorkspaceError
 from testkit import scripted
 
 
@@ -103,9 +103,9 @@ async def test_presets_select_tools_skills_and_prompt_sections(profile):
         assert "Agent preset: Standard" in prompts[0] and "Extending this harness" in prompts[0]
         assert (
             "Agent preset: Creator" in prompts[1]
-            and "/skills/pyharness/pyxis-harness-plugin-development/SKILL.md" in prompts[1]
+            and "/skills/pyxis-harness/pyxis-harness-plugin-development/SKILL.md" in prompts[1]
         )
-        assert "/skills/pyharness/" not in prompts[0]  # the user skills mount (config-center) is in every preset
+        assert "/skills/pyxis-harness/" not in prompts[0]  # the user skills mount (config-center) is in every preset
         # Tool sets per graph: the standard graph has no plugin_manager tool.
         standard_graph = await agents.graph_for(standard)
         creator_graph = await agents.graph_for(creator)

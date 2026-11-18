@@ -10,9 +10,9 @@ import httpx
 import pytest
 import yaml
 
-from pyharness import Harness, Profile
-from pyharness_web_tools import format_search, html_to_text, map_search_response, parse_search_response
-from pyharness_web_tools.common import Pacer
+from pyxis_harness import Harness, Profile
+from pyxis_harness_web_tools import format_search, html_to_text, map_search_response, parse_search_response
+from pyxis_harness_web_tools.common import Pacer
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 PAGE = dedent(
@@ -39,7 +39,7 @@ API_RESPONSE = {
 
 SEARCH_RESPONSE = {
     "content": [
-        {"type": "server_tool_use", "name": "web_search", "input": {"query": "pyharness"}},
+        {"type": "server_tool_use", "name": "web_search", "input": {"query": "pyxis_harness"}},
         {
             "type": "web_search_tool_result",
             "content": [
@@ -111,7 +111,7 @@ async def test_tools_over_mock_transport_and_optional_bundle(home, monkeypatch):
         seen.append(request)
         if request.url.path == "/v1/tools/search":
             assert request.headers["authorization"] == "Bearer sk-test" and "x-api-key" not in request.headers
-            assert json.loads(request.content) == {"query": "pyharness", "count": 10, "need_content": False}
+            assert json.loads(request.content) == {"query": "pyxis_harness", "count": 10, "need_content": False}
             if request.url.host == "moved.test":
                 return httpx.Response(302, headers={"location": "https://elsewhere.test/"})
             if request.url.host == "busy.test":
@@ -122,7 +122,7 @@ async def test_tools_over_mock_transport_and_optional_bundle(home, monkeypatch):
             body = json.loads(request.content)
             assert (
                 body["tools"][0]["type"] == "web_search_20250305"
-                and "pyharness" in body["messages"][0]["content"][0]["text"]
+                and "pyxis_harness" in body["messages"][0]["content"][0]["text"]
             )
             return httpx.Response(200, json=SEARCH_RESPONSE)
         if request.url.path == "/page":
@@ -140,12 +140,12 @@ async def test_tools_over_mock_transport_and_optional_bundle(home, monkeypatch):
         tools = {t.name: t for t in h.get("tools").list()}
         assert {"web_search", "web_fetch"} <= set(tools)
         # No key: the tool answers with instructions instead of failing the turn.
-        missing = await tools["web_search"].ainvoke({"query": "pyharness"})
+        missing = await tools["web_search"].ainvoke({"query": "pyxis_harness"})
         assert missing.startswith("Error:") and "DEEPSEEK_API_KEY" in missing
         assert web.status()["search"]["configured"] is False
         profile.credentials.set("DEEPSEEK_API_KEY", "sk-test")
         # Default provider: one direct Search API request; the sources carry their summaries.
-        out = await tools["web_search"].ainvoke({"query": "pyharness"})
+        out = await tools["web_search"].ainvoke({"query": "pyxis_harness"})
         assert "- [Result A](https://a.test/1) — A long summary of the page with details (2026-10-01)" in out
         assert "- [b.test](https://b.test/2)" in out and "Cite the relevant URLs" in out
         assert seen[-1].url == "https://api.deepseek.com/v1/tools/search"
@@ -154,13 +154,13 @@ async def test_tools_over_mock_transport_and_optional_bundle(home, monkeypatch):
         assert status["provider"] == "deepseek-search-api" and status["base_url"] == "https://api.deepseek.com/v1/tools"
         # A redirect and a rate limit fail the search with the endpoint named.
         web.config.search_base_url = "https://moved.test/v1/tools"
-        moved = await tools["web_search"].ainvoke({"query": "pyharness"})
+        moved = await tools["web_search"].ainvoke({"query": "pyxis_harness"})
         assert moved.startswith("Error: DeepSeek API error (HTTP 302)") and "moved.test" in moved
         web.config.search_base_url = "https://busy.test/v1/tools/"
-        assert "HTTP 429): slow down" in await tools["web_search"].ainvoke({"query": "pyharness"})
+        assert "HTTP 429): slow down" in await tools["web_search"].ainvoke({"query": "pyxis_harness"})
         # The legacy provider: a Messages call with the web_search server tool, an answer with cited sources.
         web.config.search_provider = "deepseek-legacy"
-        out = await tools["web_search"].ainvoke({"query": "pyharness"})
+        out = await tools["web_search"].ainvoke({"query": "pyxis_harness"})
         assert (
             "A says hi. B too." in out
             and "[Result A](https://a.test/1)" in out

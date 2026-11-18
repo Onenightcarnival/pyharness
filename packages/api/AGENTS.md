@@ -22,7 +22,7 @@
 | `routes_settings.py` | agent 默认值、压缩、模型路由与凭据 |
 | `references.py` | `@path` 引用 |
 | `highlight.py` | Pygments 高亮 |
-| `config.toml` | `pyharness_api` 的数据；每个模块一张表；`package_toml(__file__)` 读取 |
+| `config.toml` | `pyxis_harness_api` 的数据；每个模块一张表；`package_toml(__file__)` 读取 |
 
 ## 插件入口（`plugin.py`）
 

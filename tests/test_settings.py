@@ -13,9 +13,9 @@ import httpx
 import pytest
 import yaml
 
-from pyharness import CredentialStore, Harness, Profile
-from pyharness.credentials import reference_for
-from pyharness_llm import (
+from pyxis_harness import CredentialStore, Harness, Profile
+from pyxis_harness.credentials import reference_for
+from pyxis_harness_llm import (
     LLMConfig,
     LLMConfigError,
     ProviderConfig,

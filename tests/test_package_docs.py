@@ -6,7 +6,7 @@ import ast
 import tomllib
 from pathlib import Path
 
-from pyharness.plugin import load_plugin, plugin_entry_points
+from pyxis_harness.plugin import load_plugin, plugin_entry_points
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGES = sorted(p for p in (ROOT / "packages").iterdir() if (p / "pyproject.toml").is_file())

@@ -39,7 +39,7 @@
 | `pyxis-harness-http-client` | `http-client` | `httpClient` | HTTP API 请求工具（对齐 dsh-http）：API 目标（Base URL、认证 bearer / basic / header / query、固定 header、`{{变量}}`、允许的额外 host、变更开关、内网开关、超时），密钥只留在宿主、交给页面与 agent 的内容里一律遮罩；保存的请求（每个目标 500 个）与不绑定目标的请求（完整 URL，仅页面可用，agent 不可调用也不可见）；请求历史由页面与 agent 共用（默认保留 200 条，正文各截 32 KiB）；重定向最多 5 跳、逐跳检查允许的 host、跨 origin 去掉凭证；`text/event-stream` 逐事件读取，停止、超时、1 MiB 上限都保留已收到的内容；工具 `http_targets`、`http_request`（非 GET / HEAD / OPTIONS 需目标开启变更且 `confirm=true`）、`http_history`，「允许 Agent 使用」开启时注册；数据在 `<profile data>/toolkit/http-client/`（`targets.json`、`requests.json`、`history.jsonl`，0600）；`/api/http-client/*` 路由；左侧栏「HTTP」全页 |
 | `pyxis-harness-bundle-toolkit` | — | — | `toolkit` bundle：工具箱各模块（memory、rdb、s3、config-center、otel、subscriptions、gateway、http-client）；`builtin: true`，每个 profile 必含、不可关闭、不可卸载；左侧栏入口可取消固定，收进「更多」菜单 |
 
-条目 id 与配置：`packages/bundle-base/pyharness_bundle_base/bundle.yaml`。
+条目 id 与配置：`packages/bundle-base/pyxis_harness_bundle_base/bundle.yaml`。
 
 可选 bundle：bundle 定义里 `optional: true` 的 bundle 不必写进 profile 的 `bundles` 列表就会生效（排在显式列表之后），profile 清单的 `disabled` 列表把它关掉；插件页与 `PUT /plugins/bundles/{name}` 对这类 bundle 允许开关，不允许卸载。内置 bundle（`base`）仍然只读。
 
@@ -145,11 +145,11 @@ class MyLoop(Service):
 
 ## 第三方 bundle
 
-安装来源有两种：本地 bundle 目录（`pyh plugin install ./my-bundle`，Web 界面可用系统对话框选目录），或 PyPI 包（`pyh plugin install pyh-example==0.1.0`，`--index-url` 指定其他索引）。两种都装进 profile 的 `site/`，先预检再重启；包必须声明 `pyharness.bundles` 入口点，否则拒绝并回滚。
+安装来源有两种：本地 bundle 目录（`pyh plugin install ./my-bundle`，Web 界面可用系统对话框选目录），或 PyPI 包（`pyh plugin install pyh-example==0.1.0`，`--index-url` 指定其他索引）。两种都装进 profile 的 `site/`，先预检再重启；包必须声明 `pyxis_harness.bundles` 入口点，否则拒绝并回滚。
 
 | 部分 | 内容 |
 |---|---|
-| `pyproject.toml` | entry point `pyharness.plugins`（代码）、`pyharness.bundles`（bundle 文件） |
+| `pyproject.toml` | entry point `pyxis_harness.plugins`（代码）、`pyxis_harness.bundles`（bundle 文件） |
 | `bundle.yaml` | `title`、`description`、`patch`；`after` / `before` / `parent` 决定条目在配置树中的位置 |
 
 ```yaml

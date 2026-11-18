@@ -16,11 +16,11 @@ import httpx
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
-from pyharness import Harness, Profile
-from pyharness_subscriptions import SubscriptionsService
-from pyharness_subscriptions.antigravity import AntigravityProvider
-from pyharness_subscriptions.antigravity_client import CLI_VERSION_FALLBACK, build_user_agent, parse_cli_version
-from pyharness_subscriptions.antigravity_wire import (
+from pyxis_harness import Harness, Profile
+from pyxis_harness_subscriptions import SubscriptionsService
+from pyxis_harness_subscriptions.antigravity import AntigravityProvider
+from pyxis_harness_subscriptions.antigravity_client import CLI_VERSION_FALLBACK, build_user_agent, parse_cli_version
+from pyxis_harness_subscriptions.antigravity_wire import (
     AntigravityTranslator,
     build_request,
     efforts_for,
@@ -28,13 +28,13 @@ from pyharness_subscriptions.antigravity_wire import (
     thinking_config,
     to_contents,
 )
-from pyharness_subscriptions.codex import CodexProvider
-from pyharness_subscriptions.codex_tools import SearchArgs, validate_commands
-from pyharness_subscriptions.common import LlmError, http_error, jwt_claims, reset_delay_ms, session_uuid
-from pyharness_subscriptions.grok import tier_name
-from pyharness_subscriptions.oauth import FlowSpec, LoginAttempt, LoginError
-from pyharness_subscriptions.responses import ResponsesTranslator, to_responses_input
-from pyharness_subscriptions.store import AuthStore, CatalogCache, ProviderSettings
+from pyxis_harness_subscriptions.codex import CodexProvider
+from pyxis_harness_subscriptions.codex_tools import SearchArgs, validate_commands
+from pyxis_harness_subscriptions.common import LlmError, http_error, jwt_claims, reset_delay_ms, session_uuid
+from pyxis_harness_subscriptions.grok import tier_name
+from pyxis_harness_subscriptions.oauth import FlowSpec, LoginAttempt, LoginError
+from pyxis_harness_subscriptions.responses import ResponsesTranslator, to_responses_input
+from pyxis_harness_subscriptions.store import AuthStore, CatalogCache, ProviderSettings
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 

@@ -18,15 +18,15 @@ dependencies = [
     "cryptography==50.0.2",
 ]
 
-[project.entry-points."pyharness.plugins"]
-pyxis-harness-subscriptions = "pyharness_subscriptions:SubscriptionsService"
+[project.entry-points."pyxis_harness.plugins"]
+pyxis-harness-subscriptions = "pyxis_harness_subscriptions:SubscriptionsService"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["pyharness_subscriptions"]
+packages = ["pyxis_harness_subscriptions"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"AGENTS.md" = "pyharness_subscriptions/AGENTS.md"
+"AGENTS.md" = "pyxis_harness_subscriptions/AGENTS.md"

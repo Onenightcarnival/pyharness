@@ -10,8 +10,8 @@ import json
 import httpx
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
-from pyharness import Harness, Profile
-from pyharness_otel import OtelService, normalize_endpoint, signal_url
+from pyxis_harness import Harness, Profile
+from pyxis_harness_otel import OtelService, normalize_endpoint, signal_url
 from test_agent import scripted_patch
 from testkit import scripted
 
@@ -95,7 +95,7 @@ async def test_turn_trace_and_routes(home):
             and agent.attributes["langfuse.session.id"] == session["id"]
         )
         assert (
-            entry.attributes["pyharness.turn.end_reason"] == "completed"
+            entry.attributes["pyxis_harness.turn.end_reason"] == "completed"
             and json.loads(entry.attributes["gen_ai.input.messages"])[0]["parts"][0]["content"] == "say hi"
         )
         assert json.loads(agent.attributes["gen_ai.output.messages"])[0]["parts"][0]["content"] == "done: hi"

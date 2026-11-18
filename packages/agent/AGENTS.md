@@ -53,7 +53,7 @@
 | `compact` 的字段 | `removed`、`before_tokens`、`after_tokens`、`trigger`、`summary` |
 | `retry` | 路由的重试策略重跑失败的模型调用；失败那次已流出的文本作废 |
 | `retry` 的字段 | `attempt`、`max_retries`、`code`、`message`、`delay_ms` |
-| `error` 的字段 | `code`（`pyharness_llm` 的失败代码）、`message`、`continuable` |
+| `error` 的字段 | `code`（`pyxis_harness_llm` 的失败代码）、`message`、`continuable` |
 | `done` 的 `extras` | `agent/turn-end` 的 `turn.extras` |
 | `done` 的 `extras.turn` | 新的每轮记录 |
 | `publish(session_id, event)` | 把 `event` 发布到会话正在运行的轮次；没有运行中的轮次时返回 `False` |
@@ -113,5 +113,5 @@
 | 项 | 契约 |
 |---|---|
 | 表名 | 使用该表的模块名 |
-| 加载 | `pyharness.package_prompts`；每个字符串值去除首尾空白 |
+| 加载 | `pyxis_harness.package_prompts`；每个字符串值去除首尾空白 |
 | 占位符 | `string.Template` 语法：`${name}` |

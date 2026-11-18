@@ -5,7 +5,7 @@ agent 编写插件、安装进自己的 profile，在下一代中使用。
 | 预设 | 工具 | agent 看到的 |
 |---|---|---|
 | `standard` | 不含 `plugin_manager`、`harness_inspect` | 系统提示词中三行「Extending this harness」：指向 Creator 预设 |
-| `creator` | 全部 | skill 目录（`/skills/pyharness/`）；完整流程按需由 `read_file` 加载；包的设计文档与源码（`/harness/`） |
+| `creator` | 全部 | skill 目录（`/skills/pyxis-harness/`）；完整流程按需由 `read_file` 加载；包的设计文档与源码（`/harness/`） |
 
 预设按会话选择（输入框的「预设」标签），对照 dsh 的 agent preset；`creator` bundle 只把新会话默认预设设为 `creator`（`pyh init --template creator`）。
 
@@ -23,13 +23,13 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 
 ## skills
 
-`pyxis-harness-plugin-manager` 包内的 `skills/` 目录经 `ctx.agentLoop.add_skills(dir, "pyharness", presets=["creator"])` 只读挂载到 `creator` 预设会话的 `/skills/pyharness/`（deepagents `CompositeBackend` 路由；写入被拒绝）。deepagents 的 skills 中间件在系统提示词里列出 skill 名称与描述；正文由 agent 用 `read_file` 按需读取。
+`pyxis-harness-plugin-manager` 包内的 `skills/` 目录经 `ctx.agentLoop.add_skills(dir, "pyxis-harness", presets=["creator"])` 只读挂载到 `creator` 预设会话的 `/skills/pyxis-harness/`（deepagents `CompositeBackend` 路由；写入被拒绝）。deepagents 的 skills 中间件在系统提示词里列出 skill 名称与描述；正文由 agent 用 `read_file` 按需读取。
 
 | skill | 内容 |
 |---|---|
 | `pyxis-harness-plugin-development` | 流程：inspect → template → 写入 `/plugins/<name>/` → `install_bundle` → 读结果 → 新一代验证；`references/`：bundle 与插件形式、扩展点与实践、HTTP 路由、验证；`templates/basic`、`templates/tool-and-route` |
 | `editing-pyxis-harness-compositions` | patch 方言：按 id 寻址、`merge`、`remove`、`parent` / `before` / `after`、`disabled`、`isolate`、插值；分层 |
-| `pyxis-harness-composition-reference` | `references/packages.md`：环境中全部 `pyharness.plugins` / `pyharness.bundles` entry point；`scripts/gen_packages.py` 生成，测试校验未过期 |
+| `pyxis-harness-composition-reference` | `references/packages.md`：环境中全部 `pyxis_harness.plugins` / `pyxis_harness.bundles` entry point；`scripts/gen_packages.py` 生成，测试校验未过期 |
 | `agent-experience` | 工具定义、提示词片段、skill、子 agent、状态消息的写法 |
 
 知识来源顺序：运行时检查（`harness_inspect`）→ 包的 `AGENTS.md`（`topic=config` 的 `docs`）与包目录中的源码（`package_dir`）→ skill 的参考文件。
@@ -99,7 +99,7 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 |---|---|---|
 | `require_approval` | `true` | 变更动作需人工批准 |
 | `guidance` | `true` | 没有 skills 的预设的三行插件编写片段 |
-| `skills` | `true` | 挂载插件编写 skills 到 `/skills/pyharness/` |
+| `skills` | `true` | 挂载插件编写 skills 到 `/skills/pyxis-harness/` |
 | `sources` | `true` | 已加载的包只读挂载到 `/harness/<模块名>/` |
 | `skills_presets` | `["creator"]` | 看到 skills、包挂载与插件源码目录的预设 |
 

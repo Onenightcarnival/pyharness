@@ -5,10 +5,10 @@
 | 项 | 值 |
 |---|---|
 | 分发包 | `pyxis-harness-core` |
-| 模块 | `pyharness` |
-| 命令 | `pyh`（`pyharness.cli:main`） |
+| 模块 | `pyxis_harness` |
+| 命令 | `pyh`（`pyxis_harness.cli:main`） |
 | 插件 entry point | 无 |
-| entry point 组 | `pyharness.plugins`、`pyharness.bundles` |
+| entry point 组 | `pyxis_harness.plugins`、`pyxis_harness.bundles` |
 | 数据根 | `$PYH_HOME`（默认 `~/.pyharness`） |
 
 ## 文件
@@ -30,7 +30,7 @@
 | `preflight.py` | 预检：独立进程中试启动 |
 | `worker.py`、`supervisor.py` | 进程模型 |
 | `cli.py` | `pyh` 命令行 |
-| `config.toml` | `pyharness` 的数据；每个模块一张表；`package_toml(__file__)` 加载 |
+| `config.toml` | `pyxis_harness` 的数据；每个模块一张表；`package_toml(__file__)` 加载 |
 
 ## Context（`context.py`）
 
@@ -94,7 +94,7 @@ waterfall 监听者 `listener(*args, next)`：
 | 插件形式 | 契约 |
 |---|---|
 | 模块，或带 `apply` 的对象 | `apply(ctx[, config])`；可选 `name`、`inject`、`Config`、`doc` |
-| `pyharness.Service` 子类 | 在 `key` 下提供一个服务 |
+| `pyxis_harness.Service` 子类 | 在 `key` 下提供一个服务 |
 | `define_plugin` 的返回值 | 属性同模块形式 |
 
 | 属性 | 含义 |
@@ -111,8 +111,8 @@ waterfall 监听者 `listener(*args, next)`：
 
 | entry point 组 | 内容 | 引用方式 |
 |---|---|---|
-| `pyharness.plugins` | 插件 | 条目的 `name`：entry point 名，或 `module[:attr]` |
-| `pyharness.bundles` | bundle（组合层） | `profile.yaml` 中的 bundle 名 |
+| `pyxis_harness.plugins` | 插件 | 条目的 `name`：entry point 名，或 `module[:attr]` |
+| `pyxis_harness.bundles` | bundle（组合层） | `profile.yaml` 中的 bundle 名 |
 
 ## Loader（`loader.py`）
 
@@ -210,7 +210,7 @@ profile：harness home 中具名、持久的装配。harness home：`$PYH_HOME`�
 
 ## Worker（`worker.py`）
 
-worker 进程：一代 harness。`python -m pyharness.worker --profile web`
+worker 进程：一代 harness。`python -m pyxis_harness.worker --profile web`
 
 1. 组合 profile；启动全部插件
 2. `app/ready`、`app/serve`

@@ -9,8 +9,8 @@ import json
 
 import httpx
 
-from pyharness import Harness, Profile
-from pyharness_web_ui import VENDOR, PrefsStore
+from pyxis_harness import Harness, Profile
+from pyxis_harness_web_ui import VENDOR, PrefsStore
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 UI_PLUGIN = {"id": "uiplugin", "name": "testkit.uiplugin", "after": "web-ui", "config": {"greeting": "hello"}}

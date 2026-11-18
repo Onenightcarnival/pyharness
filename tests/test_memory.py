@@ -10,9 +10,9 @@ import json
 import httpx
 import pytest
 
-from pyharness import Harness, Profile
-from pyharness_memory import MemoryService
-from pyharness_memory.store import MemoryStore, MemoryStoreError, sort_entries
+from pyxis_harness import Harness, Profile
+from pyxis_harness_memory import MemoryService
+from pyxis_harness_memory.store import MemoryStore, MemoryStoreError, sort_entries
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 

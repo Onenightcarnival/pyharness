@@ -58,5 +58,5 @@
 | 项 | 契约 |
 |---|---|
 | 表 | 以使用它的模块命名：`[checkpoint]`、`[service]` |
-| 读取 | `pyharness.package_prompts`；每个字符串值去掉首尾空白 |
+| 读取 | `pyxis_harness.package_prompts`；每个字符串值去掉首尾空白 |
 | 占位符 | `string.Template` 语法（`${name}`） |

@@ -31,7 +31,7 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 | `packages/*/<模块>/__init__.py` | 导入与 `__all__`；实现在具名模块中（`service.py`、`plugin.py`、`bundle.py`） |
 | `packages/bundle-base` | `base` bundle |
 | `packages/bundle-creator` | `creator` bundle：插件编写 skills |
-| `packages/plugin-manager/pyharness_plugin_manager/skills` | agent 可读的 skills；`references/packages.md` 由 `scripts/gen_packages.py` 生成 |
+| `packages/plugin-manager/pyxis_harness_plugin_manager/skills` | agent 可读的 skills；`references/packages.md` 由 `scripts/gen_packages.py` 生成 |
 | `scripts/` | 维护脚本 |
 | `examples/pyxis-harness-audit` | 第三方 bundle 示例；不属于 workspace |
 | `examples/patches` | patch 示例：Postgres、shell |

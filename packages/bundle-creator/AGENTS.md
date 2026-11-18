@@ -5,7 +5,7 @@
 | 项 | 值 |
 |---|---|
 | bundle | `creator` |
-| entry point | `pyharness.bundles`：`creator = pyharness_bundle_creator:BUNDLE` |
+| entry point | `pyxis_harness.bundles`：`creator = pyxis_harness_bundle_creator:BUNDLE` |
 
 ## 文件
 

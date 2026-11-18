@@ -16,11 +16,11 @@ from pathlib import Path
 import httpx
 import pytest
 
-from pyharness import Harness, Profile
-from pyharness_config_center import ConfigCenterService
-from pyharness_config_center.environment import BunManager
-from pyharness_config_center.skills import SkillError, SkillStore
-from pyharness_mcp import ServerConfig, connection_of
+from pyxis_harness import Harness, Profile
+from pyxis_harness_config_center import ConfigCenterService
+from pyxis_harness_config_center.environment import BunManager
+from pyxis_harness_config_center.skills import SkillError, SkillStore
+from pyxis_harness_mcp import ServerConfig, connection_of
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 MCP_SERVER = Path(__file__).with_name("testkit") / "mcp_server.py"

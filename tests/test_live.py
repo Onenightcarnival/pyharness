@@ -17,7 +17,7 @@ import time
 
 import httpx
 
-from pyharness import Profile
+from pyxis_harness import Profile
 
 
 def free_port() -> int:
@@ -74,7 +74,7 @@ def test_agent_extends_itself_across_a_restart(home, example_bundle):
         ]
     )
     proc = subprocess.Popen(
-        [sys.executable, "-m", "pyharness.cli", "--home", str(home), "run", "-p", "web"],
+        [sys.executable, "-m", "pyxis_harness.cli", "--home", str(home), "run", "-p", "web"],
         env=dict(os.environ),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,

@@ -99,7 +99,7 @@ MCP 服务器列表的保存：API 的 `PUT /api/settings/mcp`，重启后生效
 | 位置 | `<profile data>/toolkit/bun/` |
 | 版本 | 固定：`BUN_VERSION` |
 | 校验 | 发行版的 `SHASUMS256.txt` |
-| 使用方 | 命令为裸 `bun` / `bunx` 的 MCP 服务器：`pyharness_mcp.managed_bun` |
+| 使用方 | 命令为裸 `bun` / `bunx` 的 MCP 服务器：`pyxis_harness_mcp.managed_bun` |
 | `PATH` | 不改动 |
 
 | `config.toml` 的键 | 含义 |

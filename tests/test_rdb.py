@@ -12,9 +12,9 @@ from textwrap import dedent
 import httpx
 import pytest
 
-from pyharness import Harness, Profile
-from pyharness_rdb import RdbService, engine as eng
-from pyharness_rdb.store import ProfileStore, StoreError
+from pyxis_harness import Harness, Profile
+from pyxis_harness_rdb import RdbService, engine as eng
+from pyxis_harness_rdb.store import ProfileStore, StoreError
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 

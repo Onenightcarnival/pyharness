@@ -12,10 +12,10 @@ Example third-party bundle.
 
 | file | content |
 |---|---|
-| `pyharness_audit/__init__.py` | exports |
-| `pyharness_audit/plugin.py` | the plugin: `Config`, `apply` |
-| `pyharness_audit/bundle.py` | `BUNDLE`: the path of `bundle.yaml` |
-| `pyharness_audit/bundle.yaml` | mount position of the entry |
+| `pyxis_harness_audit/__init__.py` | exports |
+| `pyxis_harness_audit/plugin.py` | the plugin: `Config`, `apply` |
+| `pyxis_harness_audit/bundle.py` | `BUNDLE`: the path of `bundle.yaml` |
+| `pyxis_harness_audit/bundle.yaml` | mount position of the entry |
 
 Install (preflighted; a failed preflight leaves the profile unchanged):
 

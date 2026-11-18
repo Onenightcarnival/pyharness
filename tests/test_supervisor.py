@@ -7,7 +7,7 @@ import os
 import subprocess
 import sys
 
-from pyharness import Profile
+from pyxis_harness import Profile
 
 
 def test_restart_into_broken_config_rolls_back(home, tmp_path):
@@ -17,7 +17,7 @@ def test_restart_into_broken_config_rolls_back(home, tmp_path):
 
     env = dict(os.environ)
     proc = subprocess.run(
-        [sys.executable, "-m", "pyharness.cli", "--home", str(home), "run", "-p", "sup", "--boot-timeout", "60"],
+        [sys.executable, "-m", "pyxis_harness.cli", "--home", str(home), "run", "-p", "sup", "--boot-timeout", "60"],
         env=env,
         capture_output=True,
         check=False,

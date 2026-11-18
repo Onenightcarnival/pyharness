@@ -22,7 +22,7 @@ agent 的每会话持久 shell、后台作业、Web UI 的 PTY 终端。
 | `pty.py` | Web UI 的 PTY 终端：每个终端一个交互式 shell、一个回滚缓冲区、订阅者队列 |
 | `tools.py` | 终端服务之上的 LangChain 工具：`bash`、`run_in_background`、`job_*` |
 | `routes.py` | HTTP 路由：终端状态、作业、终端、终端 WebSocket |
-| `prompts.toml` | 模型可见文本；`pyharness.package_prompts(__file__)` 加载 |
+| `prompts.toml` | 模型可见文本；`pyxis_harness.package_prompts(__file__)` 加载 |
 | `client.js` | 浏览器模块 |
 
 ## 工具

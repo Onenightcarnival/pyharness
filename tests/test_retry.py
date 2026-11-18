@@ -8,9 +8,9 @@ import httpx
 import pytest
 import yaml
 
-from pyharness import Harness, Profile
-from pyharness_llm import CONTINUABLE_CODES, RetryPolicy, failure_code, retry_after_ms
-from pyharness_llm.catalog import translate_options
+from pyxis_harness import Harness, Profile
+from pyxis_harness_llm import CONTINUABLE_CODES, RetryPolicy, failure_code, retry_after_ms
+from pyxis_harness_llm.catalog import translate_options
 from testkit import scripted
 from testkit.scripted import ScriptedError
 
@@ -276,7 +276,7 @@ async def test_gemini_protocol_lists_models_and_builds_the_client(profile, monke
 
     async with Harness(profile, patch=patch([{"content": "hi"}])) as h, client(h) as c:
         llm = h.get("llm")
-        monkeypatch.setattr("pyharness_llm.service.httpx.AsyncClient", mocked)
+        monkeypatch.setattr("pyxis_harness_llm.service.httpx.AsyncClient", mocked)
         for base in ("https://g.test", "https://g.test/v1beta"):
             found = await llm.list_models("gem", None, protocol="gemini", base_url=base, api_key="k-1")
             assert [m["id"] for m in found["models"]] == ["gemini-9-pro"]

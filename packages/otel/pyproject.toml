@@ -16,15 +16,15 @@ dependencies = [
     "opentelemetry-exporter-otlp-proto-http==1.45.1",
 ]
 
-[project.entry-points."pyharness.plugins"]
-pyxis-harness-otel = "pyharness_otel:OtelService"
+[project.entry-points."pyxis_harness.plugins"]
+pyxis-harness-otel = "pyxis_harness_otel:OtelService"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["pyharness_otel"]
+packages = ["pyxis_harness_otel"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"AGENTS.md" = "pyharness_otel/AGENTS.md"
+"AGENTS.md" = "pyxis_harness_otel/AGENTS.md"

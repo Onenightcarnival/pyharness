@@ -27,8 +27,8 @@
 | `pool.py` | 连接的打开（主机顺序、`target_session_attrs`）与按 profile 的 `Pool` |
 | `sql.py` | 语句文本：分类、切分、SQL 字面量、JSON 安全的值 |
 | `query.py` | 驱动之上的引擎级操作：一条受保护的语句、表描述、分页行、表格编辑转 SQL、结果的 CSV 渲染与面向模型的渲染 |
-| `config.toml` | 包数据；`pyharness.package_toml(__file__)` 加载 |
-| `prompts.toml` | 模型可见文本；`pyharness.package_prompts(__file__)` 加载 |
+| `config.toml` | 包数据；`pyxis_harness.package_toml(__file__)` 加载 |
+| `prompts.toml` | 模型可见文本；`pyxis_harness.package_prompts(__file__)` 加载 |
 | `client.js` | 浏览器模块 |
 
 ## 服务

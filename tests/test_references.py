@@ -6,9 +6,9 @@ from textwrap import dedent
 
 import httpx
 
-from pyharness import Harness, Profile
-from pyharness_api.references import expand, search, strip_attachments, tokens
-from pyharness_workspace import Workspace
+from pyxis_harness import Harness, Profile
+from pyxis_harness_api.references import expand, search, strip_attachments, tokens
+from pyxis_harness_workspace import Workspace
 from test_agent import scripted_patch, sse_events
 from testkit import scripted
 

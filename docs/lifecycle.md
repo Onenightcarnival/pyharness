@@ -5,7 +5,7 @@
 | 角色 | 进程 | 职责 |
 |---|---|---|
 | supervisor | `pyh run` | 一次运行一代 worker；重启、回滚 |
-| worker | `python -m pyharness.worker` | 一代 harness：组合、启动插件、提供服务 |
+| worker | `python -m pyxis_harness.worker` | 一代 harness：组合、启动插件、提供服务 |
 | 预检 | 独立解释器 | 启动候选配置，不对外服务 |
 
 状态在进程外：
@@ -76,7 +76,7 @@ SIGHUP（`pyh restart`、`pyh plugin ...`）走同一路径，不触发回滚。
 
 ## 变更事务
 
-CLI 与 `plugin_manager` 工具共用 `pyharness.manage`。
+CLI 与 `plugin_manager` 工具共用 `pyxis_harness.manage`。
 
 1. 快照：profile 文件；安装、卸载时另含 `site/`
 2. 变更：安装或移除分发包，改 `profile.yaml` 或 profile patch

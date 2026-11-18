@@ -47,5 +47,5 @@
 | 项 | 契约 |
 |---|---|
 | 表 | `[tools]`：工具描述，键为工具名 |
-| 读取 | `pyharness.package_prompts`；每个字符串值去掉首尾空白 |
+| 读取 | `pyxis_harness.package_prompts`；每个字符串值去掉首尾空白 |
 | 占位符 | `string.Template` 语法（`${name}`） |

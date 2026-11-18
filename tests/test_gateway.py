@@ -17,18 +17,18 @@ import httpx
 import pytest
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
 
-from pyharness import Harness, Profile
-from pyharness_gateway import anthropic_messages, openai_chat, openai_responses
-from pyharness_gateway.backend import LangChainBackend, UpstreamError
-from pyharness_gateway.chunks import BlockAssembler, normalize
-from pyharness_gateway.drafts import GatewayError, Generation, materialize
-from pyharness_gateway.images import ImageResolver, sniff_media_type
-from pyharness_gateway.keys import KeyStore, KeyStoreError, presented_key
-from pyharness_gateway.listener import Listener
-from pyharness_gateway.models import ModelCatalog, ModelResolutionError, Target
-from pyharness_gateway.server import GatewayDeps, create_app
-from pyharness_gateway.settings import SettingsError, SettingsStore
-from pyharness_gateway.usage import UsageStore, parse_filter, range_start
+from pyxis_harness import Harness, Profile
+from pyxis_harness_gateway import anthropic_messages, openai_chat, openai_responses
+from pyxis_harness_gateway.backend import LangChainBackend, UpstreamError
+from pyxis_harness_gateway.chunks import BlockAssembler, normalize
+from pyxis_harness_gateway.drafts import GatewayError, Generation, materialize
+from pyxis_harness_gateway.images import ImageResolver, sniff_media_type
+from pyxis_harness_gateway.keys import KeyStore, KeyStoreError, presented_key
+from pyxis_harness_gateway.listener import Listener
+from pyxis_harness_gateway.models import ModelCatalog, ModelResolutionError, Target
+from pyxis_harness_gateway.server import GatewayDeps, create_app
+from pyxis_harness_gateway.settings import SettingsError, SettingsStore
+from pyxis_harness_gateway.usage import UsageStore, parse_filter, range_start
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 USAGE = {"input_tokens": 10, "output_tokens": 5, "cache_read_tokens": 2, "reasoning_tokens": 1}

@@ -14,15 +14,15 @@ dependencies = [
     "websockets==17.3",
 ]
 
-[project.entry-points."pyharness.plugins"]
-pyxis-harness-terminal = "pyharness_terminal:TerminalService"
+[project.entry-points."pyxis_harness.plugins"]
+pyxis-harness-terminal = "pyxis_harness_terminal:TerminalService"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["pyharness_terminal"]
+packages = ["pyxis_harness_terminal"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"AGENTS.md" = "pyharness_terminal/AGENTS.md"
+"AGENTS.md" = "pyxis_harness_terminal/AGENTS.md"

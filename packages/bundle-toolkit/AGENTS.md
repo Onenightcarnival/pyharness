@@ -5,7 +5,7 @@
 | 项 | 值 |
 |---|---|
 | bundle | `toolkit` |
-| entry point | `pyharness.bundles`：`toolkit = pyharness_bundle_toolkit:BUNDLE` |
+| entry point | `pyxis_harness.bundles`：`toolkit = pyxis_harness_bundle_toolkit:BUNDLE` |
 | `builtin: true` | 属于每个 profile；不可关闭 |
 | Web UI | 左侧栏入口可取消固定，收进「更多」菜单 |
 

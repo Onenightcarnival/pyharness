@@ -35,7 +35,7 @@
 
 | 成员 | 契约 |
 |---|---|
-| `build()` | `pyharness_agent_loop_deepagents.graph.build` |
+| `build()` | `pyxis_harness_agent_loop_deepagents.graph.build` |
 | `add_subagent()` | 声明式子 agent spec，归调用方插件所有；返回 disposer |
 | `add_middleware()` | LangChain `AgentMiddleware`，排在 `HarnessMiddleware` 之后；返回 disposer |
 | `add_skills()` | 技能目录，只读挂载到 `/skills/<label>/`；返回 disposer |
@@ -178,5 +178,5 @@
 | 项 | 契约 |
 |---|---|
 | 表名 | 使用该表的模块名 |
-| 加载 | `pyharness.package_prompts`；每个字符串值去除首尾空白 |
+| 加载 | `pyxis_harness.package_prompts`；每个字符串值去除首尾空白 |
 | 占位符 | `string.Template` 语法：`${name}` |

@@ -14,10 +14,10 @@ from pathlib import Path
 
 import pytest
 
-from pyharness import Harness, Profile, manage
-from pyharness.events import EventBus
-from pyharness.preflight import run_preflight
-from pyharness_agent import RestartPending
+from pyxis_harness import Harness, Profile, manage
+from pyxis_harness.events import EventBus
+from pyxis_harness.preflight import run_preflight
+from pyxis_harness_agent import RestartPending
 from testkit import tools as testtools
 
 
@@ -112,7 +112,7 @@ def _variant(example: Path, dest: Path, version: str, broken: bool) -> Path:
     pyproject = dest / "pyproject.toml"
     pyproject.write_text(pyproject.read_text().replace('version = "0.1.0"', f'version = "{version}"'))
     if broken:
-        plugin = dest / "pyharness_audit" / "plugin.py"
+        plugin = dest / "pyxis_harness_audit" / "plugin.py"
         plugin.write_text(
             plugin.read_text().replace('inject = ["tools"]', 'inject = ["tools"]\nraise ImportError("broken upgrade")')
         )
@@ -218,7 +218,7 @@ def test_sighup_restarts_without_rollback(home, tmp_path):
     markers = tmp_path / "markers"
     profile.save_patch([{"id": "marker", "name": "testkit.marker", "config": {"marker_dir": str(markers)}}])
     proc = subprocess.Popen(
-        [sys.executable, "-m", "pyharness.cli", "--home", str(home), "run", "-p", "sig"],
+        [sys.executable, "-m", "pyxis_harness.cli", "--home", str(home), "run", "-p", "sig"],
         env=dict(os.environ),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,

@@ -7,8 +7,8 @@ import pytest
 import yaml
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from pyharness import Harness, Profile
-from pyharness_compaction import checkpoint_message, cut_index, is_checkpoint, measure, summary_of
+from pyxis_harness import Harness, Profile
+from pyxis_harness_compaction import checkpoint_message, cut_index, is_checkpoint, measure, summary_of
 from test_agent import scripted_patch, sse_events
 from testkit import scripted
 

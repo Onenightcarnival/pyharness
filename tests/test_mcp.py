@@ -9,8 +9,8 @@ from typing import Any
 import httpx
 import yaml
 
-from pyharness import Harness, Profile
-from pyharness_mcp import MASK, Config, MCPService, ServerConfig, connection_of, expand, redact, references, slug
+from pyxis_harness import Harness, Profile
+from pyxis_harness_mcp import MASK, Config, MCPService, ServerConfig, connection_of, expand, redact, references, slug
 
 SERVER = Path(__file__).with_name("testkit") / "mcp_server.py"
 HTTP_OFF = {"id": "http", "config": {"serve": False}}

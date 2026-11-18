@@ -6,15 +6,15 @@ license = "MIT"
 requires-python = ">=3.12"
 dependencies = ["pyxis-harness-core==0.1.0", "pyxis-harness-tools==0.1.0", "httpx==0.28.1", "langchain-core==1.7.1"]
 
-[project.entry-points."pyharness.plugins"]
-pyxis-harness-web-tools = "pyharness_web_tools:WebToolsService"
+[project.entry-points."pyxis_harness.plugins"]
+pyxis-harness-web-tools = "pyxis_harness_web_tools:WebToolsService"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["pyharness_web_tools"]
+packages = ["pyxis_harness_web_tools"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"AGENTS.md" = "pyharness_web_tools/AGENTS.md"
+"AGENTS.md" = "pyxis_harness_web_tools/AGENTS.md"

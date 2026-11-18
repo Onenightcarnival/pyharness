@@ -5,7 +5,7 @@
 | 项 | 值 |
 |---|---|
 | bundle | `web` |
-| entry point | `pyharness.bundles`：`web = pyharness_bundle_web:BUNDLE` |
+| entry point | `pyxis_harness.bundles`：`web = pyxis_harness_bundle_web:BUNDLE` |
 | `optional: true` | 默认开启；在插件页关闭 |
 
 ## 文件

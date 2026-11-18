@@ -10,8 +10,8 @@ from pathlib import Path
 import httpx
 import pytest
 
-from pyharness import Harness, Profile
-from pyharness_terminal import ShellSession, Terminal, clip, pty_available
+from pyxis_harness import Harness, Profile
+from pyxis_harness_terminal import ShellSession, Terminal, clip, pty_available
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 posix = pytest.mark.skipif(sys.platform == "win32", reason="POSIX shell")

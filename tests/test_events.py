@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from pyharness.events import EventBus, EventModeError, UndeclaredEventError
+from pyxis_harness.events import EventBus, EventModeError, UndeclaredEventError
 
 
 async def test_modes():

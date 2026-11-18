@@ -6,8 +6,8 @@ import time
 import httpx
 import pytest
 
-from pyharness import Harness, Profile
-from pyharness_agent.service import APPROVALS, rejectable
+from pyxis_harness import Harness, Profile
+from pyxis_harness_agent.service import APPROVALS, rejectable
 from testkit import tools as testtools
 
 DANGER = {"content": "", "tool_calls": [{"name": "danger", "args": {"target": "prod"}, "id": "d1"}]}

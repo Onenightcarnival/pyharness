@@ -8,9 +8,9 @@ import re
 import pytest
 
 from conftest import ROOT
-from pyharness import Harness, Profile
-from pyharness_plugin_manager import SKILLS_DIR, render_template, template_variants
-from pyharness_plugin_manager.reference import PACKAGES_MD, render_packages
+from pyxis_harness import Harness, Profile
+from pyxis_harness_plugin_manager import SKILLS_DIR, render_template, template_variants
+from pyxis_harness_plugin_manager.reference import PACKAGES_MD, render_packages
 from testkit import scripted
 
 SKILLS = {
@@ -76,7 +76,10 @@ async def test_creator_profile_mounts_skills_read_only(home):
             "tool_calls": [
                 {
                     "name": "read_file",
-                    "args": {"file_path": "/skills/pyharness/pyxis-harness-plugin-development/SKILL.md", "limit": 1000},
+                    "args": {
+                        "file_path": "/skills/pyxis-harness/pyxis-harness-plugin-development/SKILL.md",
+                        "limit": 1000,
+                    },
                     "id": "r1",
                 }
             ],
@@ -84,7 +87,7 @@ async def test_creator_profile_mounts_skills_read_only(home):
         {
             "content": "",
             "tool_calls": [
-                {"name": "write_file", "args": {"file_path": "/skills/pyharness/x.md", "content": "x"}, "id": "w1"}
+                {"name": "write_file", "args": {"file_path": "/skills/pyxis-harness/x.md", "content": "x"}, "id": "w1"}
             ],
         },
         {
@@ -97,13 +100,13 @@ async def test_creator_profile_mounts_skills_read_only(home):
     async with Harness(profile, patch=patch_for(replies)) as h:
         mounts = h.get("agentLoop").skills()
         assert {
-            "label": "pyharness",
+            "label": "pyxis-harness",
             "path": str(SKILLS_DIR),
-            "mount": "/skills/pyharness/",
+            "mount": "/skills/pyxis-harness/",
             "owner": "plugin-manager",
             "presets": ["creator"],
         } in mounts
-        assert [m["label"] for m in mounts] == ["pyharness", "user"] and mounts[1][
+        assert [m["label"] for m in mounts] == ["pyxis-harness", "user"] and mounts[1][
             "owner"
         ] == "config-center"  # user skills: every preset
         assert h.get("agentLoop").config.default_preset == "creator"
@@ -121,13 +124,13 @@ async def test_creator_profile_mounts_skills_read_only(home):
         assert results["w2"]["status"] == "success"  # the workspace itself stays writable
         system = next(c for c in scripted.CALLS if "messages" in c)["messages"][0][1]
         for name in SKILLS:
-            assert f"/skills/pyharness/{name}/SKILL.md" in system
+            assert f"/skills/pyxis-harness/{name}/SKILL.md" in system
         assert "Extending this harness" not in system
 
 
 async def test_creator_preset_reads_the_mounted_packages(home):
     profile = Profile.init("creator", template="creator", home=str(home))
-    docs = "/harness/pyharness_llm/AGENTS.md"
+    docs = "/harness/pyxis_harness_llm/AGENTS.md"
     replies = [
         {"content": "", "tool_calls": [{"name": "read_file", "args": {"file_path": docs}, "id": "r1"}]},
         {
@@ -135,7 +138,7 @@ async def test_creator_preset_reads_the_mounted_packages(home):
             "tool_calls": [
                 {
                     "name": "read_file",
-                    "args": {"file_path": "/harness/pyharness_llm/pyharness_llm/service.py"},
+                    "args": {"file_path": "/harness/pyxis_harness_llm/pyxis_harness_llm/service.py"},
                     "id": "r2",
                 }
             ],
@@ -152,9 +155,9 @@ async def test_creator_preset_reads_the_mounted_packages(home):
     async with Harness(profile, patch=patch_for(replies)) as h:
         loop, agents = h.get("agentLoop"), h.get("agents")
         mounts = {m["mount"]: m for m in loop.mounts()}
-        assert mounts["/harness/pyharness/"]["path"] == str(ROOT / "packages" / "core")  # the kernel
-        assert mounts["/harness/pyharness_llm/"] == {
-            "mount": "/harness/pyharness_llm/",
+        assert mounts["/harness/pyxis_harness/"]["path"] == str(ROOT / "packages" / "core")  # the kernel
+        assert mounts["/harness/pyxis_harness_llm/"] == {
+            "mount": "/harness/pyxis_harness_llm/",
             "path": str(ROOT / "packages" / "llm"),
             "owner": "plugin-manager",
             "presets": ["creator"],
@@ -166,9 +169,9 @@ async def test_creator_preset_reads_the_mounted_packages(home):
 
         inspect = next(t for t in h.get("tools").list() if t.name == "harness_inspect")
         config = json.loads(inspect.invoke({"topic": "config", "name": "llm"}))
-        assert config["docs"] == docs and config["package_dir"] == "/harness/pyharness_llm/pyharness_llm/"
+        assert config["docs"] == docs and config["package_dir"] == "/harness/pyxis_harness_llm/pyxis_harness_llm/"
         entry = json.loads(inspect.invoke({"topic": "plugins", "name": "dev-context"}))[0]
-        assert entry["docs"] == "/harness/pyharness_plugin_manager/AGENTS.md"
+        assert entry["docs"] == "/harness/pyxis_harness_plugin_manager/AGENTS.md"
 
         session = await agents.create_session()
         events = await agents.start_run(session["id"], "go").wait()
@@ -176,7 +179,9 @@ async def test_creator_preset_reads_the_mounted_packages(home):
         assert results["r1"]["status"] == "success" and "# pyxis-harness-llm" in results["r1"]["content"]
         assert results["r2"]["status"] == "success" and "class LLMService" in results["r2"]["content"]
         assert results["w1"]["status"] == "error" and "denied" in results["w1"]["content"]
-        assert all(f"/harness/{module}/" in results["l1"]["content"] for module in ("pyharness", "pyharness_llm"))
+        assert all(
+            f"/harness/{module}/" in results["l1"]["content"] for module in ("pyxis_harness", "pyxis_harness_llm")
+        )
 
         session = await agents.create_session(preset="standard")
         events = await agents.start_run(session["id"], "go").wait()

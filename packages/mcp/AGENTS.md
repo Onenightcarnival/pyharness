@@ -55,7 +55,7 @@ MCP 服务器的工具：启动时注册进 `ctx.tools`。
 
 | 项 | 契约 |
 |---|---|
-| 语法 | `${credential:REF}`；`REF` 遵循 `pyharness.credentials.REFERENCE` |
+| 语法 | `${credential:REF}`；`REF` 遵循 `pyxis_harness.credentials.REFERENCE` |
 | 字段 | `command`、`args`、`env` 的值、`cwd`、`url`、`headers` 的值 |
 | 混合 | 一个值含字面文本与任意数量的模板（`Bearer ${credential:GH_TOKEN}`） |
 | 其余文本 | 字面量；`REF` 非法的 `${credential:...}` 亦然 |

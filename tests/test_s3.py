@@ -8,9 +8,9 @@ import io
 import httpx
 import pytest
 
-from pyharness import Harness, Profile
-from pyharness_s3 import S3Service, engine as eng
-from pyharness_s3.store import ProfileStore, StoreError
+from pyxis_harness import Harness, Profile
+from pyxis_harness_s3 import S3Service, engine as eng
+from pyxis_harness_s3.store import ProfileStore, StoreError
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 

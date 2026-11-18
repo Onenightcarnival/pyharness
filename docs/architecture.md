@@ -4,7 +4,7 @@
 
 ## 插件
 
-插件：Python 分发包，entry point 组 `pyharness.plugins`。
+插件：Python 分发包，entry point 组 `pyxis_harness.plugins`。
 
 | 形式 | 契约 |
 |---|---|

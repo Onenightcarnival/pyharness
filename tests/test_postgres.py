@@ -12,7 +12,7 @@ import uuid
 
 import pytest
 
-from pyharness import Harness, Profile
+from pyxis_harness import Harness, Profile
 
 DSN = os.environ.get("PYH_TEST_POSTGRES_DSN")
 pytestmark = pytest.mark.skipif(not DSN, reason="PYH_TEST_POSTGRES_DSN unset")
