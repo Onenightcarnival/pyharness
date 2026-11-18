@@ -10,7 +10,7 @@ from .middleware import ReviewMiddleware, reviewed
 
 MODE: dict[str, str] = package_toml(__file__)["MODE"]
 
-name = "pyharness-auto-review"
+name = "pyxis-harness-auto-review"
 doc = "Auto review permission mode: a model reviews each gated tool call before it runs; a denied call asks the user."
 inject = ["agentLoop", "llm"]
 

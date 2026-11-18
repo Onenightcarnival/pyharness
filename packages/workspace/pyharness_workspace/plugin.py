@@ -7,7 +7,7 @@ from .config import Config
 from .registry import Workspaces
 from .workspace import DEFAULT_WORKSPACE, Workspace
 
-name = "pyharness-workspace"
+name = "pyxis-harness-workspace"
 doc = "Workspace provider: ``ctx.workspace`` (workspace registry) and ``ctx.backend`` (default deepagents backend)."
 inject = ["tools"]
 

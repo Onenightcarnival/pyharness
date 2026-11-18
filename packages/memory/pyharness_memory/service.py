@@ -97,7 +97,7 @@ class MemoryService(Service):
     """Career memory: store, tools, prompt section, routes and the Memory page module."""
 
     key = "memory"
-    name = "pyharness-memory"
+    name = "pyxis-harness-memory"
     inject: ClassVar[list[str]] = ["tools", "prompt", "http"]
     Config = Config
 
@@ -121,7 +121,7 @@ class MemoryService(Service):
 
     async def start(self) -> None:
         self.store = MemoryStore(self._path(), busy_timeout=self.config.busy_timeout)
-        self.ctx.http.include_router(build_router(self), prefix="/api", tags=["pyharness-memory"])
+        self.ctx.http.include_router(build_router(self), prefix="/api", tags=["pyxis-harness-memory"])
         self.sync()
         webui = self.ctx.get("webui", None)
         if webui is not None and hasattr(webui, "register_client"):

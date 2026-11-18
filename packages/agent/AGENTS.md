@@ -1,4 +1,4 @@
-# pyharness-agent
+# pyxis-harness-agent
 
 会话与运行：跑在 `ctx.agentLoop` 构建的图之上。
 

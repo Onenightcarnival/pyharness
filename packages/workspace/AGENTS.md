@@ -1,4 +1,4 @@
-# pyharness-workspace
+# pyxis-harness-workspace
 
 工作区提供者：工作区注册表与默认的 deepagents backend。
 

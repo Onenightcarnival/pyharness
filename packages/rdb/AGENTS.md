@@ -1,4 +1,4 @@
-# pyharness-rdb
+# pyxis-harness-rdb
 
 关系数据库工作台：SQLite / PostgreSQL / GaussDB / MySQL（MariaDB）。
 

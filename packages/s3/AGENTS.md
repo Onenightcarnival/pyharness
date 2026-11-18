@@ -1,4 +1,4 @@
-# pyharness-s3
+# pyxis-harness-s3
 
 S3 兼容对象存储浏览器（MinIO / OSS / COS / R2 / AWS）。
 

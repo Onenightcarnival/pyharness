@@ -12,7 +12,7 @@ from pyharness import Service, package_prompts, unwrap
 
 PROMPTS = package_prompts(__file__)
 
-name = "pyharness-inspect"
+name = "pyxis-harness-inspect"
 doc = "``harness_inspect`` tool: read-only view of the running harness."
 inject = ["tools"]
 

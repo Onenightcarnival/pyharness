@@ -1,4 +1,4 @@
-# pyharness-web-tools
+# pyxis-harness-web-tools
 
 `web_search` 与 `web_fetch` 工具。
 

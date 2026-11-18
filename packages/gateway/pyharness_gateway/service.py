@@ -23,7 +23,7 @@ class GatewayService(Service):
     """Local LLM API gateway over the routes of ``ctx.llm``."""
 
     key = "gateway"
-    name = "pyharness-gateway"
+    name = "pyxis-harness-gateway"
     inject: ClassVar[list[str]] = ["llm", "http", "webui"]
     Config = Config
 
@@ -64,7 +64,7 @@ class GatewayService(Service):
     async def start(self) -> None:
         if self.keys.ensure_one(INITIAL_KEY_NAME) is not None:
             self.ctx.logger.info('gateway: API key "%s" generated; copy it from the API gateway page', INITIAL_KEY_NAME)
-        self.ctx.http.include_router(build_router(self), prefix="/api/gateway", tags=["pyharness-gateway"])
+        self.ctx.http.include_router(build_router(self), prefix="/api/gateway", tags=["pyxis-harness-gateway"])
         self.ctx.webui.register_client(Path(__file__).with_name("client.js"))
         self.ctx.on("app/serve", self._listen)
         self.ctx.on("app/stopping", self.listener.close)

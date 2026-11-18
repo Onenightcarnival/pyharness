@@ -1,13 +1,13 @@
 [project]
-name = "pyharness-inspect"
+name = "pyxis-harness-inspect"
 version = "0.1.0"
 description = "PyxisHarness plugin: harness_inspect tool"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core==0.1.0", "pyharness-tools==0.1.0", "langchain-core==1.7.1"]
+dependencies = ["pyxis-harness-core==0.1.0", "pyxis-harness-tools==0.1.0", "langchain-core==1.7.1"]
 
 [project.entry-points."pyharness.plugins"]
-pyharness-inspect = "pyharness_inspect"
+pyxis-harness-inspect = "pyharness_inspect"
 
 [build-system]
 requires = ["hatchling"]

@@ -21,7 +21,7 @@ A plugin that outgrows `plugin.py` splits into modules (`service.py`, `tools.py`
 | `pyharness.plugins` | `<dist> = "<module>"` | the plugin; an entry's `name` refers to it |
 | `pyharness.bundles` | `<bundle> = "<module>:BUNDLE"` | `BUNDLE` is the path of `bundle.yaml` |
 
-`dependencies` lists only packages the harness does not provide, each pinned to an exact version (`httpx==0.28.1`). Provided: `pyharness-core`, `pydantic`, `langchain-core`, `langchain`, `fastapi`. A dependency is installed with `pip --target` into the profile `site/`; an unavailable package rejects the installation.
+`dependencies` lists only packages the harness does not provide, each pinned to an exact version (`httpx==0.28.1`). Provided: `pyxis-harness-core`, `pydantic`, `langchain-core`, `langchain`, `fastapi`. A dependency is installed with `pip --target` into the profile `site/`; an unavailable package rejects the installation.
 
 `bundle.yaml`:
 
@@ -30,7 +30,7 @@ title: Audit log
 description: One line.
 patch:
   - id: audit            # entry id; unique in the tree
-    name: pyharness-audit  # plugin entry-point name
+    name: pyxis-harness-audit  # plugin entry-point name
     after: tools          # position; or before / parent
     config:
       path: ${data_dir}/audit.jsonl
@@ -43,7 +43,7 @@ Variables: `${data_dir}`, `${profile_dir}`, `${runtime_dir}`, `${home}`, `${cwd}
 Module with `apply`:
 
 ```python
-name = "pyharness-audit"  # optional; defaults to the entry-point name
+name = "pyxis-harness-audit"  # optional; defaults to the entry-point name
 inject = ["tools"]  # services required before start; missing → entry PENDING
 
 

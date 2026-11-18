@@ -1,4 +1,4 @@
-# pyharness-auto-review
+# pyxis-harness-auto-review
 
 权限模式「自动审查」：带审批门的工具调用先由模型审查，放行的直接执行，其余的交给用户审批。
 

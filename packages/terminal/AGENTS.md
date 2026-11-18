@@ -1,4 +1,4 @@
-# pyharness-terminal
+# pyxis-harness-terminal
 
 agent 的每会话持久 shell、后台作业、Web UI 的 PTY 终端。
 

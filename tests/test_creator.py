@@ -14,9 +14,9 @@ from pyharness_plugin_manager.reference import PACKAGES_MD, render_packages
 from testkit import scripted
 
 SKILLS = {
-    "pyharness-plugin-development",
-    "editing-pyharness-compositions",
-    "pyharness-composition-reference",
+    "pyxis-harness-plugin-development",
+    "editing-pyxis-harness-compositions",
+    "pyxis-harness-composition-reference",
     "agent-experience",
 }
 
@@ -45,7 +45,7 @@ def test_skill_files_are_well_formed():
 def test_packages_reference_is_fresh():
     assert PACKAGES_MD.read_text(encoding="utf-8") == render_packages(), "run: uv run python scripts/gen_packages.py"
     text = PACKAGES_MD.read_text(encoding="utf-8")
-    assert "| `pyharness-plugin-manager` | function |" in text
+    assert "| `pyxis-harness-plugin-manager` | function |" in text
     assert "| `creator` | Creator |" in text
 
 
@@ -76,7 +76,7 @@ async def test_creator_profile_mounts_skills_read_only(home):
             "tool_calls": [
                 {
                     "name": "read_file",
-                    "args": {"file_path": "/skills/pyharness/pyharness-plugin-development/SKILL.md", "limit": 1000},
+                    "args": {"file_path": "/skills/pyharness/pyxis-harness-plugin-development/SKILL.md", "limit": 1000},
                     "id": "r1",
                 }
             ],
@@ -173,7 +173,7 @@ async def test_creator_preset_reads_the_mounted_packages(home):
         session = await agents.create_session()
         events = await agents.start_run(session["id"], "go").wait()
         results = {e["id"]: e for e in events if e["type"] == "tool_result"}
-        assert results["r1"]["status"] == "success" and "# pyharness-llm" in results["r1"]["content"]
+        assert results["r1"]["status"] == "success" and "# pyxis-harness-llm" in results["r1"]["content"]
         assert results["r2"]["status"] == "success" and "class LLMService" in results["r2"]["content"]
         assert results["w1"]["status"] == "error" and "denied" in results["w1"]["content"]
         assert all(f"/harness/{module}/" in results["l1"]["content"] for module in ("pyharness", "pyharness_llm"))
@@ -181,7 +181,7 @@ async def test_creator_preset_reads_the_mounted_packages(home):
         session = await agents.create_session(preset="standard")
         events = await agents.start_run(session["id"], "go").wait()
         results = {e["id"]: e for e in events if e["type"] == "tool_result"}
-        assert "# pyharness-llm" not in results["r3"]["content"]
+        assert "# pyxis-harness-llm" not in results["r3"]["content"]
 
 
 async def test_creator_preset_writes_the_profile_plugin_sources(home, tmp_path):

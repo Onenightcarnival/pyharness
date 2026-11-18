@@ -16,12 +16,12 @@ from pyharness import manage, package_prompts, package_root
 
 PROMPTS = package_prompts(__file__)
 
-name = "pyharness-plugin-manager"
+name = "pyxis-harness-plugin-manager"
 doc = "``plugin_manager`` tool, the plugin-authoring skills, the package and plugin-source mounts, the prompt sections."
 inject = ["tools", "prompt", "agentLoop"]
 
 SKILLS_DIR = Path(__file__).with_name("skills")
-TEMPLATES_DIR = SKILLS_DIR / "pyharness-plugin-development" / "templates"
+TEMPLATES_DIR = SKILLS_DIR / "pyxis-harness-plugin-development" / "templates"
 SOURCES_MOUNT = "/harness"
 PLUGINS_MOUNT = "/plugins"
 PLUGINS_DIR = "plugins"  # under the profile's Documents directory

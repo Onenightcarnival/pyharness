@@ -1,13 +1,13 @@
 [project]
-name = "pyharness-prompt"
+name = "pyxis-harness-prompt"
 version = "0.1.0"
 description = "PyxisHarness plugin: ordered system-prompt sections (ctx.prompt)"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core==0.1.0"]
+dependencies = ["pyxis-harness-core==0.1.0"]
 
 [project.entry-points."pyharness.plugins"]
-pyharness-prompt = "pyharness_prompt:PromptService"
+pyxis-harness-prompt = "pyharness_prompt:PromptService"
 
 [build-system]
 requires = ["hatchling"]

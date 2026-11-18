@@ -4,7 +4,7 @@
 
 | 层 | 实现 |
 |---|---|
-| 内核 | `pyharness-core`：服务容器、类型化事件、分层组合、Loader、supervisor |
+| 内核 | `pyxis-harness-core`：服务容器、类型化事件、分层组合、Loader、supervisor |
 | agent loop | deepagents；插件，可替换 |
 | 持久化 | LangGraph checkpointer + store：SQLite 或 Postgres；插件，patch 切换 |
 | HTTP | FastAPI + uvicorn；插件 |
@@ -43,7 +43,7 @@ uv run pyh run         # supervisor + worker: http://127.0.0.1:8765
 默认模型：`echo:echo`，无需凭据。真实模型：
 
 ```bash
-export DEEPSEEK_API_KEY=...         # 预置提供方 openai、anthropic、deepseek、google_genai、openrouter 的集成包随 pyharness-llm 安装
+export DEEPSEEK_API_KEY=...         # 预置提供方 openai、anthropic、deepseek、google_genai、openrouter 的集成包随 pyxis-harness-llm 安装
 export PYH_MODEL=deepseek:deepseek-chat
 uv run pyh run
 ```

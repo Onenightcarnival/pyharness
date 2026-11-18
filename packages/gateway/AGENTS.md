@@ -1,4 +1,4 @@
-# pyharness-gateway
+# pyxis-harness-gateway
 
 本地 LLM API 网关：`ctx.llm` 的模型路由，以 OpenAI Chat Completions、OpenAI Responses、Anthropic Messages 三种协议在独立监听器上提供；API key；逐请求用量记账。
 

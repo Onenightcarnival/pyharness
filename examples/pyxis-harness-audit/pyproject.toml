@@ -1,14 +1,14 @@
 [project]
-name = "pyharness-audit"
+name = "pyxis-harness-audit"
 version = "0.1.0"
 description = "Example third-party bundle: tool-call audit log, tool denylist, /audit route"
 license = "MIT"
 requires-python = ">=3.12"
-# Provided by the harness: pyharness-core, pydantic, langchain-core, fastapi.
+# Provided by the harness: pyxis-harness-core, pydantic, langchain-core, fastapi.
 dependencies = []
 
 [project.entry-points."pyharness.plugins"]
-pyharness-audit = "pyharness_audit"
+pyxis-harness-audit = "pyharness_audit"
 
 [project.entry-points."pyharness.bundles"]
 audit = "pyharness_audit:BUNDLE"

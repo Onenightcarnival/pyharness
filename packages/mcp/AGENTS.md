@@ -1,4 +1,4 @@
-# pyharness-mcp
+# pyxis-harness-mcp
 
 MCP 服务器的工具：启动时注册进 `ctx.tools`。
 

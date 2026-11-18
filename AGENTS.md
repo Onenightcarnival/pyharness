@@ -33,7 +33,7 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 | `packages/bundle-creator` | `creator` bundle：插件编写 skills |
 | `packages/plugin-manager/pyharness_plugin_manager/skills` | agent 可读的 skills；`references/packages.md` 由 `scripts/gen_packages.py` 生成 |
 | `scripts/` | 维护脚本 |
-| `examples/pyharness-audit` | 第三方 bundle 示例；不属于 workspace |
+| `examples/pyxis-harness-audit` | 第三方 bundle 示例；不属于 workspace |
 | `examples/patches` | patch 示例：Postgres、shell |
 | `tests/` | 测试 |
 | `tests/testkit` | 测试用插件 |

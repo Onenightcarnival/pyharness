@@ -18,7 +18,7 @@ from .tools import background_tool, bash_tool, job_tools
 
 class TerminalService(Service):
     key = "terminal"
-    name = "pyharness-terminal"
+    name = "pyxis-harness-terminal"
     inject: ClassVar[list[str]] = ["tools", "http"]
     Config = Config
 
@@ -41,7 +41,7 @@ class TerminalService(Service):
             self.ctx.tools.register(background_tool(self), approval=self.config.approval, tags=("shell", "jobs"))
             for tool in job_tools(self):
                 self.ctx.tools.register(tool, tags=("jobs",))
-        self.ctx.http.include_router(make_router(self), prefix="/api", tags=["pyharness-terminal"])
+        self.ctx.http.include_router(make_router(self), prefix="/api", tags=["pyxis-harness-terminal"])
         webui = self.ctx.get("webui", None)
         if webui is not None and hasattr(webui, "register_client"):
             webui.register_client(Path(__file__).with_name("client.js"))

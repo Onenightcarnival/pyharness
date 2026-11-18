@@ -1,11 +1,11 @@
 [project]
-name = "pyharness-llm"
+name = "pyxis-harness-llm"
 version = "0.1.0"
 description = "PyxisHarness plugin: chat-model provider registry (ctx.llm)"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
-    "pyharness-core==0.1.0",
+    "pyxis-harness-core==0.1.0",
     "langchain==1.4.7",
     "langchain-core==1.7.1",
     "langchain-openai==1.7.3",
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.entry-points."pyharness.plugins"]
-pyharness-llm = "pyharness_llm:LLMService"
+pyxis-harness-llm = "pyharness_llm:LLMService"
 
 [build-system]
 requires = ["hatchling"]

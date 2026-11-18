@@ -25,7 +25,7 @@ class OtelService(Service):
     """Turn traces to an OTLP backend; the Observability settings page."""
 
     key = "otel"
-    name = "pyharness-otel"
+    name = "pyxis-harness-otel"
     inject: ClassVar[list[str]] = ["http", "webui"]
     Config = Config
 
@@ -38,7 +38,7 @@ class OtelService(Service):
     # ------------------------------------------------------------------ lifecycle
     async def start(self) -> None:
         self.ctx.on("agent/turn-end", self._on_turn_end)
-        self.ctx.http.include_router(self._router(), prefix="/api/otel", tags=["pyharness-otel"])
+        self.ctx.http.include_router(self._router(), prefix="/api/otel", tags=["pyxis-harness-otel"])
         self.ctx.webui.register_client(Path(__file__).with_name("client.js"))
         self.apply()
 
@@ -209,7 +209,7 @@ class OtelService(Service):
         try:
             tracer = pipeline.tracer
             with tracer.start_as_current_span(
-                "pyharness-otel connection test", kind=SpanKind.INTERNAL, attributes={"pyharness.otel.test": True}
+                "pyxis-harness-otel connection test", kind=SpanKind.INTERNAL, attributes={"pyharness.otel.test": True}
             ) as s1:
                 trace_ids.append(format(s1.get_span_context().trace_id, "032x"))
             if not await asyncio.to_thread(pipeline.flush):
@@ -218,7 +218,7 @@ class OtelService(Service):
                 raise HTTPException(502, f"connectivity test failed: {pipeline.exporter.last_error}")
             payload = base64.b64encode(random.randbytes(600 * 1024)).decode()
             with tracer.start_as_current_span(
-                "pyharness-otel payload test",
+                "pyxis-harness-otel payload test",
                 attributes={"pyharness.otel.test": True, "pyharness.otel.test.payload": payload},
             ) as s2:
                 trace_ids.append(format(s2.get_span_context().trace_id, "032x"))

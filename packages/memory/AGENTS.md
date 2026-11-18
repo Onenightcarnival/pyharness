@@ -1,4 +1,4 @@
-# pyharness-memory
+# pyxis-harness-memory
 
 agent 的分层职业记忆（profile → work → project → lesson），带版本历史。
 

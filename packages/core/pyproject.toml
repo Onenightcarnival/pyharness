@@ -1,5 +1,5 @@
 [project]
-name = "pyharness-core"
+name = "pyxis-harness-core"
 version = "0.1.0"
 description = "PyxisHarness kernel: service container, typed events, layered composition, generation lifecycle"
 license = "MIT"

@@ -71,7 +71,7 @@ class MCPService(Service):
     """MCP servers as tools."""
 
     key = "mcp"
-    name = "pyharness-mcp"
+    name = "pyxis-harness-mcp"
     inject: ClassVar[list[str]] = ["tools"]
     Config = Config
 

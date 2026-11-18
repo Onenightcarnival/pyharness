@@ -1,4 +1,4 @@
-# pyharness-otel
+# pyxis-harness-otel
 
 agent 回合的 OpenTelemetry 导出（GenAI 语义约定），目标为 OTLP/HTTP 后端，如 Langfuse。
 

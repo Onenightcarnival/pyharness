@@ -20,7 +20,7 @@ class HttpClientService(Service):
     """HTTP API request tool: targets, saved requests, history, the ``http_*`` tools and the HTTP page."""
 
     key = "httpClient"
-    name = "pyharness-http-client"
+    name = "pyxis-harness-http-client"
     inject: ClassVar[list[str]] = ["tools", "prompt", "http", "webui"]
     Config = Config
 
@@ -47,7 +47,7 @@ class HttpClientService(Service):
 
     # ------------------------------------------------------------------ lifecycle
     async def start(self) -> None:
-        self.ctx.http.include_router(build_router(self), prefix="/api/http-client", tags=["pyharness-http-client"])
+        self.ctx.http.include_router(build_router(self), prefix="/api/http-client", tags=["pyxis-harness-http-client"])
         self.ctx.webui.register_client(Path(__file__).with_name("client.js"))
         self.sync()
 

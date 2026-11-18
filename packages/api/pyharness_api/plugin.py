@@ -10,7 +10,7 @@ from .routes_sessions import build_sessions_router
 from .routes_settings import build_settings_router
 from .routes_workspaces import build_workspaces_router
 
-name = "pyharness-api"
+name = "pyxis-harness-api"
 doc = "REST and SSE API over ``ctx.agents``, under ``/api`` on ``ctx.http``."
 inject = ["http", "agents", "llm"]
 

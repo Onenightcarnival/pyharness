@@ -1,4 +1,4 @@
-# pyharness-bundle-base
+# pyxis-harness-bundle-base
 
 `base` bundle：`web` profile 模板的插件集合。
 
@@ -19,22 +19,22 @@
 
 | 条目 | 包 |
 |---|---|
-| `llm` | `pyharness-llm` |
-| `tools` | `pyharness-tools` |
-| `prompt` | `pyharness-prompt` |
-| `mcp` | `pyharness-mcp` |
-| `ask-user` | `pyharness-ask-user` |
-| `checkpoint` | `pyharness-checkpoint-sqlite` |
-| `workspace` | `pyharness-workspace` |
-| `agent-loop` | `pyharness-agent-loop-deepagents` |
-| `agents` | `pyharness-agent` |
-| `auto-review` | `pyharness-auto-review` |
-| `compaction` | `pyharness-compaction` |
-| `workspace-changes` | `pyharness-workspace-changes` |
-| `inspect` | `pyharness-inspect` |
-| `plugin-manager` | `pyharness-plugin-manager` |
-| `dev-context` | `pyharness-dev-context` |
-| `http` | `pyharness-http` |
-| `api` | `pyharness-api` |
-| `web-ui` | `pyharness-web-ui` |
-| `terminal` | `pyharness-terminal` |
+| `llm` | `pyxis-harness-llm` |
+| `tools` | `pyxis-harness-tools` |
+| `prompt` | `pyxis-harness-prompt` |
+| `mcp` | `pyxis-harness-mcp` |
+| `ask-user` | `pyxis-harness-ask-user` |
+| `checkpoint` | `pyxis-harness-checkpoint-sqlite` |
+| `workspace` | `pyxis-harness-workspace` |
+| `agent-loop` | `pyxis-harness-agent-loop-deepagents` |
+| `agents` | `pyxis-harness-agent` |
+| `auto-review` | `pyxis-harness-auto-review` |
+| `compaction` | `pyxis-harness-compaction` |
+| `workspace-changes` | `pyxis-harness-workspace-changes` |
+| `inspect` | `pyxis-harness-inspect` |
+| `plugin-manager` | `pyxis-harness-plugin-manager` |
+| `dev-context` | `pyxis-harness-dev-context` |
+| `http` | `pyxis-harness-http` |
+| `api` | `pyxis-harness-api` |
+| `web-ui` | `pyxis-harness-web-ui` |
+| `terminal` | `pyxis-harness-terminal` |

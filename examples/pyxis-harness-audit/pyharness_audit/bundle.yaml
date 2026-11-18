@@ -2,7 +2,7 @@ title: Audit log
 description: Tool-call JSONL log, tool denylist, GET /audit.
 patch:
   - id: audit
-    name: pyharness-audit
+    name: pyxis-harness-audit
     after: tools
     config:
       path: ${data_dir}/audit.jsonl

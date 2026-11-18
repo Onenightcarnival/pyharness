@@ -1,4 +1,4 @@
-# pyharness-ask-user
+# pyxis-harness-ask-user
 
 `ask_user_question` 工具：agent 向用户提问并等待回答。
 

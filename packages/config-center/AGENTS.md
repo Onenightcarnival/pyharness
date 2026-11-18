@@ -1,4 +1,4 @@
-# pyharness-config-center
+# pyxis-harness-config-center
 
 配置中心：MCP 页、用户技能、JavaScript MCP 服务器的受管 bun 运行时。
 

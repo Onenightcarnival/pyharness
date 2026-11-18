@@ -1,10 +1,10 @@
 [project]
-name = "pyharness-monorepo"
+name = "pyxis-harness-monorepo"
 version = "0.1.0"
 description = "PyxisHarness workspace: kernel and kernel plugins"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-agent", "pyharness-agent-loop-deepagents", "pyharness-api", "pyharness-ask-user", "pyharness-auto-review", "pyharness-bundle-base", "pyharness-bundle-creator", "pyharness-bundle-toolkit", "pyharness-bundle-web", "pyharness-checkpoint-postgres", "pyharness-checkpoint-sqlite", "pyharness-compaction", "pyharness-config-center", "pyharness-core", "pyharness-gateway", "pyharness-http", "pyharness-http-client", "pyharness-inspect", "pyharness-llm", "pyharness-mcp", "pyharness-memory", "pyharness-otel", "pyharness-plugin-manager", "pyharness-terminal", "pyharness-prompt", "pyharness-rdb", "pyharness-s3", "pyharness-subscriptions", "pyharness-tools", "pyharness-web-tools", "pyharness-web-ui", "pyharness-workspace", "pyharness-workspace-changes"]
+dependencies = ["pyxis-harness-agent", "pyxis-harness-agent-loop-deepagents", "pyxis-harness-api", "pyxis-harness-ask-user", "pyxis-harness-auto-review", "pyxis-harness-bundle-base", "pyxis-harness-bundle-creator", "pyxis-harness-bundle-toolkit", "pyxis-harness-bundle-web", "pyxis-harness-checkpoint-postgres", "pyxis-harness-checkpoint-sqlite", "pyxis-harness-compaction", "pyxis-harness-config-center", "pyxis-harness-core", "pyxis-harness-gateway", "pyxis-harness-http", "pyxis-harness-http-client", "pyxis-harness-inspect", "pyxis-harness-llm", "pyxis-harness-mcp", "pyxis-harness-memory", "pyxis-harness-otel", "pyxis-harness-plugin-manager", "pyxis-harness-terminal", "pyxis-harness-prompt", "pyxis-harness-rdb", "pyxis-harness-s3", "pyxis-harness-subscriptions", "pyxis-harness-tools", "pyxis-harness-web-tools", "pyxis-harness-web-ui", "pyxis-harness-workspace", "pyxis-harness-workspace-changes"]
 
 [dependency-groups]
 dev = ["pytest==9.2.0", "pytest-asyncio==1.4.1", "httpx==0.28.1", "pip==26.2.2", "ruff==0.17.3"]
@@ -16,39 +16,39 @@ package = false
 members = ["packages/*"]
 
 [tool.uv.sources]
-pyharness-agent = { workspace = true }
-pyharness-agent-loop-deepagents = { workspace = true }
-pyharness-api = { workspace = true }
-pyharness-bundle-base = { workspace = true }
-pyharness-bundle-creator = { workspace = true }
-pyharness-checkpoint-postgres = { workspace = true }
-pyharness-checkpoint-sqlite = { workspace = true }
-pyharness-core = { workspace = true }
-pyharness-gateway = { workspace = true }
-pyharness-http = { workspace = true }
-pyharness-http-client = { workspace = true }
-pyharness-inspect = { workspace = true }
-pyharness-llm = { workspace = true }
-pyharness-mcp = { workspace = true }
-pyharness-memory = { workspace = true }
-pyharness-otel = { workspace = true }
-pyharness-compaction = { workspace = true }
-pyharness-config-center = { workspace = true }
-pyharness-ask-user = { workspace = true }
-pyharness-auto-review = { workspace = true }
-pyharness-terminal = { workspace = true }
-pyharness-web-tools = { workspace = true }
-pyharness-bundle-toolkit = { workspace = true }
-pyharness-bundle-web = { workspace = true }
-pyharness-plugin-manager = { workspace = true }
-pyharness-prompt = { workspace = true }
-pyharness-rdb = { workspace = true }
-pyharness-s3 = { workspace = true }
-pyharness-subscriptions = { workspace = true }
-pyharness-tools = { workspace = true }
-pyharness-web-ui = { workspace = true }
-pyharness-workspace = { workspace = true }
-pyharness-workspace-changes = { workspace = true }
+pyxis-harness-agent = { workspace = true }
+pyxis-harness-agent-loop-deepagents = { workspace = true }
+pyxis-harness-api = { workspace = true }
+pyxis-harness-bundle-base = { workspace = true }
+pyxis-harness-bundle-creator = { workspace = true }
+pyxis-harness-checkpoint-postgres = { workspace = true }
+pyxis-harness-checkpoint-sqlite = { workspace = true }
+pyxis-harness-core = { workspace = true }
+pyxis-harness-gateway = { workspace = true }
+pyxis-harness-http = { workspace = true }
+pyxis-harness-http-client = { workspace = true }
+pyxis-harness-inspect = { workspace = true }
+pyxis-harness-llm = { workspace = true }
+pyxis-harness-mcp = { workspace = true }
+pyxis-harness-memory = { workspace = true }
+pyxis-harness-otel = { workspace = true }
+pyxis-harness-compaction = { workspace = true }
+pyxis-harness-config-center = { workspace = true }
+pyxis-harness-ask-user = { workspace = true }
+pyxis-harness-auto-review = { workspace = true }
+pyxis-harness-terminal = { workspace = true }
+pyxis-harness-web-tools = { workspace = true }
+pyxis-harness-bundle-toolkit = { workspace = true }
+pyxis-harness-bundle-web = { workspace = true }
+pyxis-harness-plugin-manager = { workspace = true }
+pyxis-harness-prompt = { workspace = true }
+pyxis-harness-rdb = { workspace = true }
+pyxis-harness-s3 = { workspace = true }
+pyxis-harness-subscriptions = { workspace = true }
+pyxis-harness-tools = { workspace = true }
+pyxis-harness-web-ui = { workspace = true }
+pyxis-harness-workspace = { workspace = true }
+pyxis-harness-workspace-changes = { workspace = true }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -59,7 +59,7 @@ testpaths = ["tests"]
 line-length = 120
 src = [".", "packages/*", "tests"]
 target-version = "py312"
-extend-exclude = [".venv", "examples/pyharness-audit/build"]
+extend-exclude = [".venv", "examples/pyxis-harness-audit/build"]
 
 [tool.ruff.format]
 docstring-code-format = true

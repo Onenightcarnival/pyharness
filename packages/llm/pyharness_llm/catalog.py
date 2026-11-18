@@ -16,7 +16,7 @@ _CATALOG = package_toml(__file__)
 # ``[PROTOCOLS.<id>]``: title, LangChain type, model options, models listing API.
 PROTOCOLS: dict[str, dict[str, Any]] = _CATALOG["PROTOCOLS"]
 
-# Provider types the settings page offers; their integration packages are dependencies of pyharness-llm.
+# Provider types the settings page offers; their integration packages are dependencies of pyxis-harness-llm.
 PRESETS: list[str] = _CATALOG["PRESETS"]
 
 # Curated facts per LangChain provider type. Missing types fall back to generic ``api_key`` / ``base_url`` keywords;

@@ -1,4 +1,4 @@
-# pyharness-checkpoint-sqlite
+# pyxis-harness-checkpoint-sqlite
 
 SQLite 上的持久化提供者：`ctx.checkpointer` 与 `ctx.store`。
 
@@ -28,6 +28,6 @@ SQLite 上的持久化提供者：`ctx.checkpointer` 与 `ctx.store`。
 
 ```yaml
 - id: checkpoint
-  name: pyharness-checkpoint-postgres
+  name: pyxis-harness-checkpoint-postgres
   config: {dsn: "${env:PYH_POSTGRES_DSN}"}
 ```

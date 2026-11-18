@@ -1,4 +1,4 @@
-# pyharness-web-ui
+# pyxis-harness-web-ui
 
 Web UI 页面，以及供插件使用的客户端模块注册表。
 

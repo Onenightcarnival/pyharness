@@ -6,7 +6,7 @@ from typing import Any
 
 from pyharness.plugin import bundle_entry_points, load_bundle, load_plugin, plugin_entry_points
 
-PACKAGES_MD = Path(__file__).with_name("skills") / "pyharness-composition-reference" / "references" / "packages.md"
+PACKAGES_MD = Path(__file__).with_name("skills") / "pyxis-harness-composition-reference" / "references" / "packages.md"
 
 HEADER = dedent(
     """

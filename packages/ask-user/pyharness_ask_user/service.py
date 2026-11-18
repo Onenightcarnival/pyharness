@@ -62,7 +62,7 @@ def normalize_answers(questions: list[dict[str, Any]], raw: Any) -> list[dict[st
 
 class AskUserService(Service):
     key = "askUser"
-    name = "pyharness-ask-user"
+    name = "pyxis-harness-ask-user"
     inject: ClassVar[list[str]] = ["tools"]
     Config = Config
 

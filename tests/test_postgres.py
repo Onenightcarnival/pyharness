@@ -24,14 +24,14 @@ async def test_postgres_provider_replaces_sqlite(home):
 
     def patch(replies):
         return [
-            {"id": "checkpoint", "name": "pyharness-checkpoint-postgres", "config": {"dsn": DSN}},
+            {"id": "checkpoint", "name": "pyxis-harness-checkpoint-postgres", "config": {"dsn": DSN}},
             {"id": "scripted", "name": "testkit.scripted", "after": "llm", "config": {"replies": replies}},
             {"id": "llm", "config": {"default": "scripted:test"}},
             {"id": "http", "config": {"serve": False}},
         ]
 
     async with Harness(profile, patch=patch([{"content": "stored in postgres"}])) as h:
-        assert h.loader.get("checkpoint").spec.name == "pyharness-checkpoint-postgres"
+        assert h.loader.get("checkpoint").spec.name == "pyxis-harness-checkpoint-postgres"
         agents = h.get("agents")
         session = await agents.create_session(title=title)
         await agents.start_run(session["id"], "hello").wait()

@@ -1,5 +1,5 @@
 ---
-name: editing-pyharness-compositions
+name: editing-pyxis-harness-compositions
 description: "Use when writing or reading a bundle patch (bundle.yaml) or the profile patch of this harness: changing an entry's config, position, or disabled state, inserting or removing entries, isolating services in a group, and checking how layers compose."
 ---
 
@@ -34,14 +34,14 @@ patch:
   - id: checkpoint               # delete
     remove: true
   - id: audit                    # new id: insert; name or children required
-    name: pyharness-audit
+    name: pyxis-harness-audit
     after: tools                 # position: after / before <id>, or parent <group id>
     config:
       path: ${data_dir}/audit.jsonl
   - id: experiments              # group: children form a sub-tree
     children:
       - id: scratch-tools
-        name: pyharness-tools
+        name: pyxis-harness-tools
     isolate: [tools]             # the group gets its own `tools`; outer providers are invisible for that key
 ```
 

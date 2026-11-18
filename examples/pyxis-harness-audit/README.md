@@ -1,4 +1,4 @@
-# pyharness-audit
+# pyxis-harness-audit
 
 Example third-party bundle.
 
@@ -20,7 +20,7 @@ Example third-party bundle.
 Install (preflighted; a failed preflight leaves the profile unchanged):
 
 ```sh
-uv run pyh plugin install examples/pyharness-audit
+uv run pyh plugin install examples/pyxis-harness-audit
 ```
 
 Configuration, in the profile patch:

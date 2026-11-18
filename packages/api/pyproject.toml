@@ -1,19 +1,19 @@
 [project]
-name = "pyharness-api"
+name = "pyxis-harness-api"
 version = "0.1.0"
 description = "PyxisHarness plugin: REST and SSE API under /api"
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
-    "pyharness-core==0.1.0",
-    "pyharness-agent==0.1.0",
-    "pyharness-llm==0.1.0",
+    "pyxis-harness-core==0.1.0",
+    "pyxis-harness-agent==0.1.0",
+    "pyxis-harness-llm==0.1.0",
     "fastapi==0.162.0",
     "pygments==2.21.0",
 ]
 
 [project.entry-points."pyharness.plugins"]
-pyharness-api = "pyharness_api"
+pyxis-harness-api = "pyharness_api"
 
 [build-system]
 requires = ["hatchling"]

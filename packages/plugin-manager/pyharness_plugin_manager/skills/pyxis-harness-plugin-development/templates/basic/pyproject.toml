@@ -3,7 +3,7 @@ name = "__DIST__"
 version = "0.1.0"
 description = "__TITLE__"
 requires-python = ">=3.12"
-# Provided by the harness: pyharness-core, pydantic, langchain-core, fastapi. Others: exact pins, "name==version".
+# Provided by the harness: pyxis-harness-core, pydantic, langchain-core, fastapi. Others: exact pins, "name==version".
 dependencies = []
 
 [project.entry-points."pyharness.plugins"]

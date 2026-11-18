@@ -1,4 +1,4 @@
-# pyharness-agent-loop-deepagents
+# pyxis-harness-agent-loop-deepagents
 
 默认的 agent loop，基于 deepagents。
 

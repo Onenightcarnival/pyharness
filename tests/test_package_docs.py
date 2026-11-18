@@ -58,7 +58,7 @@ def test_sources_have_no_file_header():
 
 
 def test_plugin_specs_report_their_docs():
-    assert load_plugin("pyharness-llm").docs == str(ROOT / "packages" / "llm" / "AGENTS.md")
+    assert load_plugin("pyxis-harness-llm").docs == str(ROOT / "packages" / "llm" / "AGENTS.md")
     for name in plugin_entry_points():
         spec = load_plugin(name)
         assert spec.docs and Path(spec.docs).is_file(), name

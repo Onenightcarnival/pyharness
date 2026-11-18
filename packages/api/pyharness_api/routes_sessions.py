@@ -122,7 +122,7 @@ def build_sessions_router(ctx: Any) -> APIRouter:
 
     @router.get("/sessions/{session_id}/changes")
     async def session_changes(session_id: str) -> dict[str, Any]:
-        """Changed-file summaries of the session's turns (``pyharness-workspace-changes``)."""
+        """Changed-file summaries of the session's turns (``pyxis-harness-workspace-changes``)."""
         await require(session_id)
         changes = ctx.get("workspaceChanges", None)
         return {"changes": await changes.summaries(session_id) if changes is not None else []}

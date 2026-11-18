@@ -1,4 +1,4 @@
-# pyharness-api
+# pyxis-harness-api
 
 `ctx.agents` 之上的 REST 与 SSE API：`ctx.http` 的 `/api` 下。
 

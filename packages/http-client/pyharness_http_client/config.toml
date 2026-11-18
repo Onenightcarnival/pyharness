@@ -44,7 +44,7 @@ MAX_REDIRECTS = 5
 # Request body cap stored in an exchange.
 REQUEST_BODY_BYTES = 65536
 MASK = "••••••"
-USER_AGENT = "pyharness-http-client/0.1"
+USER_AGENT = "pyxis-harness-http-client/0.1"
 # Request headers whose values are credentials. Lower-case.
 CREDENTIAL_HEADERS = [
     "authorization",

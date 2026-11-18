@@ -18,7 +18,7 @@ class DeepAgentsLoop(Service):
     """deepagents graph built from the services of other plugins."""
 
     key = "agentLoop"
-    name = "pyharness-agent-loop-deepagents"
+    name = "pyxis-harness-agent-loop-deepagents"
     inject: ClassVar[list[str]] = ["llm", "tools", "prompt", "checkpointer"]
     Config = LoopConfig
 

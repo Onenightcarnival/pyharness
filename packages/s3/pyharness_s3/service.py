@@ -30,7 +30,7 @@ class S3Service(Service):
     """S3 browser: profiles, clients, tools, routes and the S3 page module."""
 
     key = "s3"
-    name = "pyharness-s3"
+    name = "pyxis-harness-s3"
     inject: ClassVar[list[str]] = ["tools", "prompt", "http"]
     Config = Config
 
@@ -61,7 +61,7 @@ class S3Service(Service):
         )
         self.store = ProfileStore(self._path(), credentials)
         self.store.subscribe(self._on_store_change)
-        self.ctx.http.include_router(build_router(self), prefix="/api", tags=["pyharness-s3"])
+        self.ctx.http.include_router(build_router(self), prefix="/api", tags=["pyxis-harness-s3"])
         self.sync()
         webui = self.ctx.get("webui", None)
         if webui is not None and hasattr(webui, "register_client"):

@@ -1,4 +1,4 @@
-# pyharness-http-client
+# pyxis-harness-http-client
 
 HTTP API 请求工具：注入鉴权的 API 目标、已存请求、页面与 agent 共用的请求历史、边到达边读取的事件流。
 

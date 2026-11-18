@@ -23,13 +23,13 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 
 ## skills
 
-`pyharness-plugin-manager` 包内的 `skills/` 目录经 `ctx.agentLoop.add_skills(dir, "pyharness", presets=["creator"])` 只读挂载到 `creator` 预设会话的 `/skills/pyharness/`（deepagents `CompositeBackend` 路由；写入被拒绝）。deepagents 的 skills 中间件在系统提示词里列出 skill 名称与描述；正文由 agent 用 `read_file` 按需读取。
+`pyxis-harness-plugin-manager` 包内的 `skills/` 目录经 `ctx.agentLoop.add_skills(dir, "pyharness", presets=["creator"])` 只读挂载到 `creator` 预设会话的 `/skills/pyharness/`（deepagents `CompositeBackend` 路由；写入被拒绝）。deepagents 的 skills 中间件在系统提示词里列出 skill 名称与描述；正文由 agent 用 `read_file` 按需读取。
 
 | skill | 内容 |
 |---|---|
-| `pyharness-plugin-development` | 流程：inspect → template → 写入 `/plugins/<name>/` → `install_bundle` → 读结果 → 新一代验证；`references/`：bundle 与插件形式、扩展点与实践、HTTP 路由、验证；`templates/basic`、`templates/tool-and-route` |
-| `editing-pyharness-compositions` | patch 方言：按 id 寻址、`merge`、`remove`、`parent` / `before` / `after`、`disabled`、`isolate`、插值；分层 |
-| `pyharness-composition-reference` | `references/packages.md`：环境中全部 `pyharness.plugins` / `pyharness.bundles` entry point；`scripts/gen_packages.py` 生成，测试校验未过期 |
+| `pyxis-harness-plugin-development` | 流程：inspect → template → 写入 `/plugins/<name>/` → `install_bundle` → 读结果 → 新一代验证；`references/`：bundle 与插件形式、扩展点与实践、HTTP 路由、验证；`templates/basic`、`templates/tool-and-route` |
+| `editing-pyxis-harness-compositions` | patch 方言：按 id 寻址、`merge`、`remove`、`parent` / `before` / `after`、`disabled`、`isolate`、插值；分层 |
+| `pyxis-harness-composition-reference` | `references/packages.md`：环境中全部 `pyharness.plugins` / `pyharness.bundles` entry point；`scripts/gen_packages.py` 生成，测试校验未过期 |
 | `agent-experience` | 工具定义、提示词片段、skill、子 agent、状态消息的写法 |
 
 知识来源顺序：运行时检查（`harness_inspect`）→ 包的 `AGENTS.md`（`topic=config` 的 `docs`）与包目录中的源码（`package_dir`）→ skill 的参考文件。
@@ -105,7 +105,7 @@ supervisor ──▶ 第 N+1 代 ──▶ 续跑消息 ──▶ agent 验证�
 
 ### `dev-context` 提示词段
 
-`pyharness-dev-context`（base bundle 的 `dev-context` 条目）：告诉 agent harness 实现在工作区之外、「这个页面」指本进程的 Web 界面、profile 文件只经 `plugin_manager` 修改；随后列出安装目录、profile 目录、工作区、Web 界面地址。
+`pyxis-harness-dev-context`（base bundle 的 `dev-context` 条目）：告诉 agent harness 实现在工作区之外、「这个页面」指本进程的 Web 界面、profile 文件只经 `plugin_manager` 修改；随后列出安装目录、profile 目录、工作区、Web 界面地址。
 
 ## 边界
 

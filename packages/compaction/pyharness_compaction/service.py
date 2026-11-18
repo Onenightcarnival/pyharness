@@ -82,7 +82,7 @@ class CompactionMiddleware(AgentMiddleware):
 
 class CompactionService(Service):
     key = "compaction"
-    name = "pyharness-compaction"
+    name = "pyxis-harness-compaction"
     inject: ClassVar[list[str]] = ["agentLoop", "llm"]
     Config = Config
 

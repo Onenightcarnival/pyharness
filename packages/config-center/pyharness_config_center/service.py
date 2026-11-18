@@ -30,7 +30,7 @@ class ConfigCenterService(Service):
     """MCP page, skills and the managed runtime."""
 
     key = "configCenter"
-    name = "pyharness-config-center"
+    name = "pyxis-harness-config-center"
     inject: ClassVar[list[str]] = ["http", "webui", "agentLoop"]
     Config = Config
 
@@ -53,7 +53,7 @@ class ConfigCenterService(Service):
         self.skills = SkillStore(data)
         self.bun = BunManager(data / "bun", self.config.bun_version)
         self.ctx.agentLoop.add_skills(self.skills.enabled_dir, "user", presets=self.config.skills_presets)
-        self.ctx.http.include_router(self._router(), prefix="/api/config-center", tags=["pyharness-config-center"])
+        self.ctx.http.include_router(self._router(), prefix="/api/config-center", tags=["pyxis-harness-config-center"])
         self.ctx.webui.register_client(Path(__file__).with_name("client.js"))
 
     # ------------------------------------------------------------------ routes

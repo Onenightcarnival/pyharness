@@ -10,7 +10,7 @@ from pyharness import package_prompts
 
 PROMPTS = package_prompts(__file__)
 
-name = "pyharness-dev-context"
+name = "pyxis-harness-dev-context"
 doc = "Prompt section ``dev-context``: where this harness runs."
 inject = ["prompt"]
 

@@ -164,7 +164,7 @@ def make_tools(provider: Client, service: Any) -> list[Any]:
             return f"Error: {exc}"
         length = args.response_length or "short"
         body = {
-            "id": f"pyharness-subscriptions:{service.current_session_id() or uuid.uuid4()}",
+            "id": f"pyxis-harness-subscriptions:{service.current_session_id() or uuid.uuid4()}",
             "model": SEARCH_MODEL,
             "input": "\n".join(q["q"] for q in commands.get("search_query", []))
             or json.dumps(commands, ensure_ascii=False),

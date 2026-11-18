@@ -1,10 +1,10 @@
 [project]
-name = "pyharness-bundle-creator"
+name = "pyxis-harness-bundle-creator"
 version = "0.1.0"
 description = "PyxisHarness bundle: creator mode (plugin-authoring skills for the agent)"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core==0.1.0", "pyharness-plugin-manager==0.1.0"]
+dependencies = ["pyxis-harness-core==0.1.0", "pyxis-harness-plugin-manager==0.1.0"]
 
 [project.entry-points."pyharness.bundles"]
 creator = "pyharness_bundle_creator:BUNDLE"

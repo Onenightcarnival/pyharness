@@ -160,7 +160,7 @@ class WebUIService(Service):
     """The Web UI page and the client-module registry."""
 
     key = "webui"
-    name = "pyharness-web-ui"
+    name = "pyxis-harness-web-ui"
     inject: ClassVar[list[str]] = ["http"]
     Config = Config
 

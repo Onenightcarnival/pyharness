@@ -46,7 +46,7 @@ class SubscriptionsService(Service):
     """Subscriptions: providers, model routes, tools, the AI subscriptions page."""
 
     key = "subscriptions"
-    name = "pyharness-subscriptions"
+    name = "pyxis-harness-subscriptions"
     inject: ClassVar[list[str]] = ["llm", "tools", "http", "webui"]
     Config = Config
 
@@ -96,7 +96,9 @@ class SubscriptionsService(Service):
         for provider in self.providers.values():
             provider.stream_idle_timeout = self.config.stream_idle_timeout
         self._route_disposer = self.ctx.llm.register(ROUTE_TYPE, self._factory)
-        self.ctx.http.include_router(build_router(self), prefix="/api/subscriptions", tags=["pyharness-subscriptions"])
+        self.ctx.http.include_router(
+            build_router(self), prefix="/api/subscriptions", tags=["pyxis-harness-subscriptions"]
+        )
         self.ctx.webui.register_client(Path(__file__).with_name("client.js"))
         self.ctx.on("agent/turn-start", self._on_turn_start)
         await self.sync_routes(discover=False)

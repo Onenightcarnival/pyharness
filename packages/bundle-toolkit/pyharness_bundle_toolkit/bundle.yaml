@@ -4,35 +4,35 @@ builtin: true
 patch:
   # Career memory (profile → work → project → lesson) with version history: ctx.memory, memory_get / memory_save, the Memory page.
   - id: memory
-    name: pyharness-memory
+    name: pyxis-harness-memory
     after: web-ui
   # Relational databases (SQLite / PostgreSQL / GaussDB / MySQL): ctx.rdb, db_* tools, the Database page.
   - id: rdb
-    name: pyharness-rdb
+    name: pyxis-harness-rdb
     after: memory
   # S3-compatible object storage: ctx.s3, s3_* tools, the S3 page.
   - id: s3
-    name: pyharness-s3
+    name: pyxis-harness-s3
     after: rdb
   # Configuration center: the MCP page (connection test), user skills, the managed bun runtime.
   - id: config-center
-    name: pyharness-config-center
+    name: pyxis-harness-config-center
     after: s3
   # OpenTelemetry export of turns (Settings → Observability): ctx.otel.
   - id: otel
-    name: pyharness-otel
+    name: pyxis-harness-otel
     after: config-center
   # AI subscriptions (Codex, ChatGPT, Antigravity, Grok) as model routes and tools: ctx.subscriptions.
   - id: subscriptions
-    name: pyharness-subscriptions
+    name: pyxis-harness-subscriptions
     after: otel
   # Local LLM API gateway (OpenAI Chat Completions / Responses, Anthropic Messages) over the model routes, with API
   # keys and usage accounting: ctx.gateway, the API gateway page.
   - id: gateway
-    name: pyharness-gateway
+    name: pyxis-harness-gateway
     after: subscriptions
   # HTTP API request tool (targets with injected auth, saved requests, history, event streams): ctx.httpClient,
   # http_* tools, the HTTP page.
   - id: http-client
-    name: pyharness-http-client
+    name: pyxis-harness-http-client
     after: gateway

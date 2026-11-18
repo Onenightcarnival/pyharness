@@ -1,13 +1,13 @@
 [project]
-name = "pyharness-agent"
+name = "pyxis-harness-agent"
 version = "0.1.0"
 description = "PyxisHarness plugin: sessions, runs, approvals, resume (ctx.agents)"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core==0.1.0", "pyharness-llm==0.1.0", "langchain-core==1.7.1", "langgraph==1.2.18"]
+dependencies = ["pyxis-harness-core==0.1.0", "pyxis-harness-llm==0.1.0", "langchain-core==1.7.1", "langgraph==1.2.18"]
 
 [project.entry-points."pyharness.plugins"]
-pyharness-agent = "pyharness_agent:AgentService"
+pyxis-harness-agent = "pyharness_agent:AgentService"
 
 [build-system]
 requires = ["hatchling"]

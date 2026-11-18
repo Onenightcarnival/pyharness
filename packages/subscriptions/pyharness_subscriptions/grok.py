@@ -79,7 +79,7 @@ class GrokProvider(Provider):
             timeout=180.0,
             scope=SCOPE,
             client_id=CLIENT_ID,
-            extra_params={"plan": "generic", "referrer": "pyharness-subscriptions"},
+            extra_params={"plan": "generic", "referrer": "pyxis-harness-subscriptions"},
             use_nonce=True,
         )
 

@@ -7,7 +7,7 @@ from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.store.sqlite.aio import AsyncSqliteStore
 from pydantic import BaseModel, Field
 
-name = "pyharness-checkpoint-sqlite"
+name = "pyxis-harness-checkpoint-sqlite"
 doc = "Persistence provider on SQLite: ``ctx.checkpointer`` and ``ctx.store``."
 inject: list[str] = []
 

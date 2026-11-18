@@ -9,7 +9,7 @@
 | `ctx.http.routes()` | flattened route list (`harness_inspect topic=routes`) |
 | `ctx.http.contributions()` | which plugin contributed which prefix |
 
-Reserved prefixes: `/api` (`pyharness-api`), `/` (`pyharness-web-ui`), `/docs` and `/openapi.json` (FastAPI). Choose a prefix named after the bundle.
+Reserved prefixes: `/api` (`pyxis-harness-api`), `/` (`pyxis-harness-web-ui`), `/docs` and `/openapi.json` (FastAPI). Choose a prefix named after the bundle.
 
 Pages: a plugin that extends the Web UI itself (a panel, a sidebar row, a settings or right-sidebar tab) registers a browser module with `ctx.webui` and fills a slot; see `references/ui-plugin.md`. A standalone page is an HTML response on a route of its own, self-contained (no external requests), reading data from its own JSON routes; it is a separate document and does not inherit the Web UI theme.
 

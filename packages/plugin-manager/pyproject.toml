@@ -1,14 +1,14 @@
 [project]
-name = "pyharness-plugin-manager"
+name = "pyxis-harness-plugin-manager"
 version = "0.1.0"
 description = "PyxisHarness plugins: plugin_manager tool, plugin-authoring skills, dev-context prompt section"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core==0.1.0", "pyharness-tools==0.1.0", "langchain==1.4.7"]
+dependencies = ["pyxis-harness-core==0.1.0", "pyxis-harness-tools==0.1.0", "langchain==1.4.7"]
 
 [project.entry-points."pyharness.plugins"]
-pyharness-plugin-manager = "pyharness_plugin_manager"
-pyharness-dev-context = "pyharness_plugin_manager.dev_context"
+pyxis-harness-plugin-manager = "pyharness_plugin_manager"
+pyxis-harness-dev-context = "pyharness_plugin_manager.dev_context"
 
 [build-system]
 requires = ["hatchling"]

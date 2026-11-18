@@ -49,7 +49,7 @@ async def test_install_preflight_boot_and_uninstall(profile, example_bundle, tmp
     removed = await manage.uninstall_bundle(profile, "audit")
     assert removed["application"] == "saved"
     assert profile.bundles() == ["base", "toolkit", "web"]
-    assert not any(d.name == "pyharness-audit" for d in profile.site_distributions())
+    assert not any(d.name == "pyxis-harness-audit" for d in profile.site_distributions())
 
 
 async def test_broken_bundle_is_rejected_and_rolled_back(profile, example_bundle, tmp_path):
@@ -65,7 +65,7 @@ async def test_broken_bundle_is_rejected_and_rolled_back(profile, example_bundle
     assert result["stage"] == "preflight"
     assert any("deliberately broken" in str(e.get("error")) for e in result["errors"])
     assert profile.read_state() == before
-    assert not any(d.name == "pyharness-audit" for d in profile.site_distributions())
+    assert not any(d.name == "pyxis-harness-audit" for d in profile.site_distributions())
 
 
 async def test_bundle_without_entry_point_is_rejected(profile, tmp_path):

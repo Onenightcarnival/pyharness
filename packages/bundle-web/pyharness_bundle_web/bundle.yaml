@@ -4,5 +4,5 @@ optional: true
 patch:
   # Web tools: ctx.web. Search key: the DEEPSEEK_API_KEY credential (Settings → Models, DeepSeek route) or the environment.
   - id: web-tools
-    name: pyharness-web-tools
+    name: pyxis-harness-web-tools
     after: mcp

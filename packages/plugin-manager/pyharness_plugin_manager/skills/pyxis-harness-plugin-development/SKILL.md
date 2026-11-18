@@ -1,5 +1,5 @@
 ---
-name: pyharness-plugin-development
+name: pyxis-harness-plugin-development
 description: "Use when designing, reviewing, writing, installing, enabling, disabling, configuring, or debugging a plugin, bundle, tool, event listener, prompt section, or HTTP route of this harness profile, and when a request needs a capability the current tools do not have."
 ---
 
@@ -31,7 +31,7 @@ Read the references below and inspect the proposed or existing plugin against th
 
 ## Enable, disable, configure a shipped plugin
 
-`plugin_manager action=set_plugin_enabled target=<entry id> enabled=<bool>` toggles an entry; `set_bundle_enabled` toggles a bundle. Configuration of an existing entry changes through a bundle whose patch overrides that entry (`editing-pyharness-compositions` skill): `id`, `config`, `merge: true`.
+`plugin_manager action=set_plugin_enabled target=<entry id> enabled=<bool>` toggles an entry; `set_bundle_enabled` toggles a bundle. Configuration of an existing entry changes through a bundle whose patch overrides that entry (`editing-pyxis-harness-compositions` skill): `id`, `config`, `merge: true`.
 
 ## Knowledge sources, in order
 
@@ -52,5 +52,5 @@ Paths are relative to this skill's directory, which the skill catalog shows. Rea
 | Web UI panels, sidebar rows, settings and right-sidebar tabs: browser module, slots, `ctx.host.call` | `references/ui-plugin.md` |
 | What can be verified after the restart, and what cannot | `references/verification.md` |
 | Starter files | `templates/basic/`, `templates/tool-and-route/`, `templates/ui-panel/` |
-| Patch dialect: ids, merge, remove, position, interpolation, isolate | the `editing-pyharness-compositions` skill |
-| Installed plugin packages and bundles | the `pyharness-composition-reference` skill |
+| Patch dialect: ids, merge, remove, position, interpolation, isolate | the `editing-pyxis-harness-compositions` skill |
+| Installed plugin packages and bundles | the `pyxis-harness-composition-reference` skill |

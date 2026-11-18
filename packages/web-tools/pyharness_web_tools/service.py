@@ -15,7 +15,7 @@ from .search import search as search_web, search_tool
 
 class WebToolsService(Service):
     key = "web"
-    name = "pyharness-web-tools"
+    name = "pyxis-harness-web-tools"
     inject: ClassVar[list[str]] = ["tools"]
     Config = Config
 

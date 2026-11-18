@@ -1,5 +1,5 @@
 [common]
-USER_AGENT = "pyharness-subscriptions/0.1 (+https://github.com/Onenightcarnival/dsh-toolkit)"
+USER_AGENT = "pyxis-harness-subscriptions/0.1 (+https://github.com/Onenightcarnival/dsh-toolkit)"
 # JSON fields searched for a rate-limit reset (seconds, epoch seconds or epoch ms).
 RESET_FIELDS = [
     "resets_in_seconds",

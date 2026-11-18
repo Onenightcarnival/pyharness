@@ -28,7 +28,7 @@ class PromptService(Service):
     """Ordered system-prompt sections."""
 
     key = "prompt"
-    name = "pyharness-prompt"
+    name = "pyxis-harness-prompt"
 
     def __init__(self, ctx: Any, config: Any) -> None:
         super().__init__(ctx, config)

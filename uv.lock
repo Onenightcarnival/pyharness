@@ -8,40 +8,40 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "pyharness-agent",
-    "pyharness-agent-loop-deepagents",
-    "pyharness-api",
-    "pyharness-ask-user",
-    "pyharness-auto-review",
-    "pyharness-bundle-base",
-    "pyharness-bundle-creator",
-    "pyharness-bundle-toolkit",
-    "pyharness-bundle-web",
-    "pyharness-checkpoint-postgres",
-    "pyharness-checkpoint-sqlite",
-    "pyharness-compaction",
-    "pyharness-config-center",
-    "pyharness-core",
-    "pyharness-gateway",
-    "pyharness-http",
-    "pyharness-http-client",
-    "pyharness-inspect",
-    "pyharness-llm",
-    "pyharness-mcp",
-    "pyharness-memory",
-    "pyharness-monorepo",
-    "pyharness-otel",
-    "pyharness-plugin-manager",
-    "pyharness-prompt",
-    "pyharness-rdb",
-    "pyharness-s3",
-    "pyharness-subscriptions",
-    "pyharness-terminal",
-    "pyharness-tools",
-    "pyharness-web-tools",
-    "pyharness-web-ui",
-    "pyharness-workspace",
-    "pyharness-workspace-changes",
+    "pyxis-harness-agent",
+    "pyxis-harness-agent-loop-deepagents",
+    "pyxis-harness-api",
+    "pyxis-harness-ask-user",
+    "pyxis-harness-auto-review",
+    "pyxis-harness-bundle-base",
+    "pyxis-harness-bundle-creator",
+    "pyxis-harness-bundle-toolkit",
+    "pyxis-harness-bundle-web",
+    "pyxis-harness-checkpoint-postgres",
+    "pyxis-harness-checkpoint-sqlite",
+    "pyxis-harness-compaction",
+    "pyxis-harness-config-center",
+    "pyxis-harness-core",
+    "pyxis-harness-gateway",
+    "pyxis-harness-http",
+    "pyxis-harness-http-client",
+    "pyxis-harness-inspect",
+    "pyxis-harness-llm",
+    "pyxis-harness-mcp",
+    "pyxis-harness-memory",
+    "pyxis-harness-monorepo",
+    "pyxis-harness-otel",
+    "pyxis-harness-plugin-manager",
+    "pyxis-harness-prompt",
+    "pyxis-harness-rdb",
+    "pyxis-harness-s3",
+    "pyxis-harness-subscriptions",
+    "pyxis-harness-terminal",
+    "pyxis-harness-tools",
+    "pyxis-harness-web-tools",
+    "pyxis-harness-web-ui",
+    "pyxis-harness-workspace",
+    "pyxis-harness-workspace-changes",
 ]
 
 [[package]]
@@ -1640,824 +1640,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pyharness-agent"
-version = "0.1.0"
-source = { editable = "packages/agent" }
-dependencies = [
-    { name = "langchain-core" },
-    { name = "langgraph" },
-    { name = "pyharness-core" },
-    { name = "pyharness-llm" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "langgraph", specifier = "==1.2.18" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-llm", editable = "packages/llm" },
-]
-
-[[package]]
-name = "pyharness-agent-loop-deepagents"
-version = "0.1.0"
-source = { editable = "packages/agent-loop-deepagents" }
-dependencies = [
-    { name = "deepagents" },
-    { name = "langchain" },
-    { name = "langgraph" },
-    { name = "pyharness-core" },
-    { name = "pyharness-llm" },
-    { name = "pyharness-tools" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "deepagents", specifier = "==0.7.32" },
-    { name = "langchain", specifier = "==1.4.7" },
-    { name = "langgraph", specifier = "==1.2.18" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-llm", editable = "packages/llm" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-]
-
-[[package]]
-name = "pyharness-api"
-version = "0.1.0"
-source = { editable = "packages/api" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "pygments" },
-    { name = "pyharness-agent" },
-    { name = "pyharness-core" },
-    { name = "pyharness-llm" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", specifier = "==0.162.0" },
-    { name = "pygments", specifier = "==2.21.0" },
-    { name = "pyharness-agent", editable = "packages/agent" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-llm", editable = "packages/llm" },
-]
-
-[[package]]
-name = "pyharness-ask-user"
-version = "0.1.0"
-source = { editable = "packages/ask-user" }
-dependencies = [
-    { name = "langchain-core" },
-    { name = "langgraph" },
-    { name = "pyharness-core" },
-    { name = "pyharness-tools" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "langgraph", specifier = "==1.2.18" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-]
-
-[[package]]
-name = "pyharness-auto-review"
-version = "0.1.0"
-source = { editable = "packages/auto-review" }
-dependencies = [
-    { name = "langchain" },
-    { name = "langchain-core" },
-    { name = "langgraph" },
-    { name = "pyharness-agent-loop-deepagents" },
-    { name = "pyharness-core" },
-    { name = "pyharness-llm" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "langchain", specifier = "==1.4.7" },
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "langgraph", specifier = "==1.2.18" },
-    { name = "pyharness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-llm", editable = "packages/llm" },
-]
-
-[[package]]
-name = "pyharness-bundle-base"
-version = "0.1.0"
-source = { editable = "packages/bundle-base" }
-dependencies = [
-    { name = "pyharness-agent" },
-    { name = "pyharness-agent-loop-deepagents" },
-    { name = "pyharness-api" },
-    { name = "pyharness-ask-user" },
-    { name = "pyharness-auto-review" },
-    { name = "pyharness-checkpoint-postgres" },
-    { name = "pyharness-checkpoint-sqlite" },
-    { name = "pyharness-compaction" },
-    { name = "pyharness-core" },
-    { name = "pyharness-http" },
-    { name = "pyharness-inspect" },
-    { name = "pyharness-llm" },
-    { name = "pyharness-mcp" },
-    { name = "pyharness-plugin-manager" },
-    { name = "pyharness-prompt" },
-    { name = "pyharness-terminal" },
-    { name = "pyharness-tools" },
-    { name = "pyharness-web-ui" },
-    { name = "pyharness-workspace" },
-    { name = "pyharness-workspace-changes" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pyharness-agent", editable = "packages/agent" },
-    { name = "pyharness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
-    { name = "pyharness-api", editable = "packages/api" },
-    { name = "pyharness-ask-user", editable = "packages/ask-user" },
-    { name = "pyharness-auto-review", editable = "packages/auto-review" },
-    { name = "pyharness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
-    { name = "pyharness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
-    { name = "pyharness-compaction", editable = "packages/compaction" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-http", editable = "packages/http" },
-    { name = "pyharness-inspect", editable = "packages/inspect" },
-    { name = "pyharness-llm", editable = "packages/llm" },
-    { name = "pyharness-mcp", editable = "packages/mcp" },
-    { name = "pyharness-plugin-manager", editable = "packages/plugin-manager" },
-    { name = "pyharness-prompt", editable = "packages/prompt" },
-    { name = "pyharness-terminal", editable = "packages/terminal" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-    { name = "pyharness-web-ui", editable = "packages/web-ui" },
-    { name = "pyharness-workspace", editable = "packages/workspace" },
-    { name = "pyharness-workspace-changes", editable = "packages/workspace-changes" },
-]
-
-[[package]]
-name = "pyharness-bundle-creator"
-version = "0.1.0"
-source = { editable = "packages/bundle-creator" }
-dependencies = [
-    { name = "pyharness-core" },
-    { name = "pyharness-plugin-manager" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-plugin-manager", editable = "packages/plugin-manager" },
-]
-
-[[package]]
-name = "pyharness-bundle-toolkit"
-version = "0.1.0"
-source = { editable = "packages/bundle-toolkit" }
-dependencies = [
-    { name = "pyharness-core" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "pyharness-core", editable = "packages/core" }]
-
-[[package]]
-name = "pyharness-bundle-web"
-version = "0.1.0"
-source = { editable = "packages/bundle-web" }
-dependencies = [
-    { name = "pyharness-core" },
-    { name = "pyharness-web-tools" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-web-tools", editable = "packages/web-tools" },
-]
-
-[[package]]
-name = "pyharness-checkpoint-postgres"
-version = "0.1.0"
-source = { editable = "packages/checkpoint-postgres" }
-dependencies = [
-    { name = "langgraph-checkpoint-postgres" },
-    { name = "psycopg", extra = ["binary"] },
-    { name = "psycopg-pool" },
-    { name = "pyharness-core" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "langgraph-checkpoint-postgres", specifier = "==3.2.0" },
-    { name = "psycopg", extras = ["binary"], specifier = "==3.3.6" },
-    { name = "psycopg-pool", specifier = "==3.3.3" },
-    { name = "pyharness-core", editable = "packages/core" },
-]
-
-[[package]]
-name = "pyharness-checkpoint-sqlite"
-version = "0.1.0"
-source = { editable = "packages/checkpoint-sqlite" }
-dependencies = [
-    { name = "aiosqlite" },
-    { name = "langgraph-checkpoint-sqlite" },
-    { name = "pyharness-core" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiosqlite", specifier = "==0.22.1" },
-    { name = "langgraph-checkpoint-sqlite", specifier = "==3.1.2" },
-    { name = "pyharness-core", editable = "packages/core" },
-]
-
-[[package]]
-name = "pyharness-compaction"
-version = "0.1.0"
-source = { editable = "packages/compaction" }
-dependencies = [
-    { name = "langchain" },
-    { name = "langchain-core" },
-    { name = "langgraph" },
-    { name = "pyharness-agent-loop-deepagents" },
-    { name = "pyharness-core" },
-    { name = "pyharness-llm" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "langchain", specifier = "==1.4.7" },
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "langgraph", specifier = "==1.2.18" },
-    { name = "pyharness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-llm", editable = "packages/llm" },
-]
-
-[[package]]
-name = "pyharness-config-center"
-version = "0.1.0"
-source = { editable = "packages/config-center" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "pydantic" },
-    { name = "pyharness-agent-loop-deepagents" },
-    { name = "pyharness-core" },
-    { name = "pyharness-http" },
-    { name = "pyharness-mcp" },
-    { name = "pyharness-web-ui" },
-    { name = "pyyaml" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", specifier = "==0.162.0" },
-    { name = "httpx", specifier = "==0.28.1" },
-    { name = "pydantic", specifier = "==2.14.1" },
-    { name = "pyharness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-http", editable = "packages/http" },
-    { name = "pyharness-mcp", editable = "packages/mcp" },
-    { name = "pyharness-web-ui", editable = "packages/web-ui" },
-    { name = "pyyaml", specifier = "==6.0.3" },
-]
-
-[[package]]
-name = "pyharness-core"
-version = "0.1.0"
-source = { editable = "packages/core" }
-dependencies = [
-    { name = "packaging" },
-    { name = "pydantic" },
-    { name = "pyyaml" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "packaging", specifier = "==26.3" },
-    { name = "pydantic", specifier = "==2.14.1" },
-    { name = "pyyaml", specifier = "==6.0.3" },
-]
-
-[[package]]
-name = "pyharness-gateway"
-version = "0.1.0"
-source = { editable = "packages/gateway" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "langchain-core" },
-    { name = "pydantic" },
-    { name = "pyharness-core" },
-    { name = "pyharness-http" },
-    { name = "pyharness-llm" },
-    { name = "pyharness-web-ui" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", specifier = "==0.162.0" },
-    { name = "httpx", specifier = "==0.28.1" },
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "pydantic", specifier = "==2.14.1" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-http", editable = "packages/http" },
-    { name = "pyharness-llm", editable = "packages/llm" },
-    { name = "pyharness-web-ui", editable = "packages/web-ui" },
-    { name = "uvicorn", specifier = "==0.54.0" },
-]
-
-[[package]]
-name = "pyharness-http"
-version = "0.1.0"
-source = { editable = "packages/http" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "pyharness-core" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", specifier = "==0.162.0" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "uvicorn", specifier = "==0.54.0" },
-]
-
-[[package]]
-name = "pyharness-http-client"
-version = "0.1.0"
-source = { editable = "packages/http-client" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "langchain-core" },
-    { name = "pydantic" },
-    { name = "pyharness-core" },
-    { name = "pyharness-http" },
-    { name = "pyharness-prompt" },
-    { name = "pyharness-tools" },
-    { name = "pyharness-web-ui" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", specifier = "==0.162.0" },
-    { name = "httpx", specifier = "==0.28.1" },
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "pydantic", specifier = "==2.14.1" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-http", editable = "packages/http" },
-    { name = "pyharness-prompt", editable = "packages/prompt" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-    { name = "pyharness-web-ui", editable = "packages/web-ui" },
-]
-
-[[package]]
-name = "pyharness-inspect"
-version = "0.1.0"
-source = { editable = "packages/inspect" }
-dependencies = [
-    { name = "langchain-core" },
-    { name = "pyharness-core" },
-    { name = "pyharness-tools" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-]
-
-[[package]]
-name = "pyharness-llm"
-version = "0.1.0"
-source = { editable = "packages/llm" }
-dependencies = [
-    { name = "httpx" },
-    { name = "langchain" },
-    { name = "langchain-anthropic" },
-    { name = "langchain-core" },
-    { name = "langchain-deepseek" },
-    { name = "langchain-google-genai" },
-    { name = "langchain-openai" },
-    { name = "langchain-openrouter" },
-    { name = "pyharness-core" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "httpx", specifier = "==0.28.1" },
-    { name = "langchain", specifier = "==1.4.7" },
-    { name = "langchain-anthropic", specifier = "==1.7.7" },
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "langchain-deepseek", specifier = "==1.1.1" },
-    { name = "langchain-google-genai", specifier = "==4.4.2" },
-    { name = "langchain-openai", specifier = "==1.7.3" },
-    { name = "langchain-openrouter", specifier = "==0.2.9" },
-    { name = "pyharness-core", editable = "packages/core" },
-]
-
-[[package]]
-name = "pyharness-mcp"
-version = "0.1.0"
-source = { editable = "packages/mcp" }
-dependencies = [
-    { name = "langchain-core" },
-    { name = "langchain-mcp-adapters" },
-    { name = "pyharness-core" },
-    { name = "pyharness-tools" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "langchain-mcp-adapters", specifier = "==0.3.2" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-]
-
-[[package]]
-name = "pyharness-memory"
-version = "0.1.0"
-source = { editable = "packages/memory" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "langchain-core" },
-    { name = "langgraph" },
-    { name = "pydantic" },
-    { name = "pyharness-core" },
-    { name = "pyharness-http" },
-    { name = "pyharness-prompt" },
-    { name = "pyharness-tools" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", specifier = "==0.162.0" },
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "langgraph", specifier = "==1.2.18" },
-    { name = "pydantic", specifier = "==2.14.1" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-http", editable = "packages/http" },
-    { name = "pyharness-prompt", editable = "packages/prompt" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-]
-
-[[package]]
-name = "pyharness-monorepo"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "pyharness-agent" },
-    { name = "pyharness-agent-loop-deepagents" },
-    { name = "pyharness-api" },
-    { name = "pyharness-ask-user" },
-    { name = "pyharness-auto-review" },
-    { name = "pyharness-bundle-base" },
-    { name = "pyharness-bundle-creator" },
-    { name = "pyharness-bundle-toolkit" },
-    { name = "pyharness-bundle-web" },
-    { name = "pyharness-checkpoint-postgres" },
-    { name = "pyharness-checkpoint-sqlite" },
-    { name = "pyharness-compaction" },
-    { name = "pyharness-config-center" },
-    { name = "pyharness-core" },
-    { name = "pyharness-gateway" },
-    { name = "pyharness-http" },
-    { name = "pyharness-http-client" },
-    { name = "pyharness-inspect" },
-    { name = "pyharness-llm" },
-    { name = "pyharness-mcp" },
-    { name = "pyharness-memory" },
-    { name = "pyharness-otel" },
-    { name = "pyharness-plugin-manager" },
-    { name = "pyharness-prompt" },
-    { name = "pyharness-rdb" },
-    { name = "pyharness-s3" },
-    { name = "pyharness-subscriptions" },
-    { name = "pyharness-terminal" },
-    { name = "pyharness-tools" },
-    { name = "pyharness-web-tools" },
-    { name = "pyharness-web-ui" },
-    { name = "pyharness-workspace" },
-    { name = "pyharness-workspace-changes" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "httpx" },
-    { name = "pip" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pyharness-agent", editable = "packages/agent" },
-    { name = "pyharness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
-    { name = "pyharness-api", editable = "packages/api" },
-    { name = "pyharness-ask-user", editable = "packages/ask-user" },
-    { name = "pyharness-auto-review", editable = "packages/auto-review" },
-    { name = "pyharness-bundle-base", editable = "packages/bundle-base" },
-    { name = "pyharness-bundle-creator", editable = "packages/bundle-creator" },
-    { name = "pyharness-bundle-toolkit", editable = "packages/bundle-toolkit" },
-    { name = "pyharness-bundle-web", editable = "packages/bundle-web" },
-    { name = "pyharness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
-    { name = "pyharness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
-    { name = "pyharness-compaction", editable = "packages/compaction" },
-    { name = "pyharness-config-center", editable = "packages/config-center" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-gateway", editable = "packages/gateway" },
-    { name = "pyharness-http", editable = "packages/http" },
-    { name = "pyharness-http-client", editable = "packages/http-client" },
-    { name = "pyharness-inspect", editable = "packages/inspect" },
-    { name = "pyharness-llm", editable = "packages/llm" },
-    { name = "pyharness-mcp", editable = "packages/mcp" },
-    { name = "pyharness-memory", editable = "packages/memory" },
-    { name = "pyharness-otel", editable = "packages/otel" },
-    { name = "pyharness-plugin-manager", editable = "packages/plugin-manager" },
-    { name = "pyharness-prompt", editable = "packages/prompt" },
-    { name = "pyharness-rdb", editable = "packages/rdb" },
-    { name = "pyharness-s3", editable = "packages/s3" },
-    { name = "pyharness-subscriptions", editable = "packages/subscriptions" },
-    { name = "pyharness-terminal", editable = "packages/terminal" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-    { name = "pyharness-web-tools", editable = "packages/web-tools" },
-    { name = "pyharness-web-ui", editable = "packages/web-ui" },
-    { name = "pyharness-workspace", editable = "packages/workspace" },
-    { name = "pyharness-workspace-changes", editable = "packages/workspace-changes" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "httpx", specifier = "==0.28.1" },
-    { name = "pip", specifier = "==26.2.2" },
-    { name = "pytest", specifier = "==9.2.0" },
-    { name = "pytest-asyncio", specifier = "==1.4.1" },
-    { name = "ruff", specifier = "==0.17.3" },
-]
-
-[[package]]
-name = "pyharness-otel"
-version = "0.1.0"
-source = { editable = "packages/otel" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "opentelemetry-api" },
-    { name = "opentelemetry-exporter-otlp-proto-http" },
-    { name = "opentelemetry-sdk" },
-    { name = "pydantic" },
-    { name = "pyharness-core" },
-    { name = "pyharness-http" },
-    { name = "pyharness-web-ui" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", specifier = "==0.162.0" },
-    { name = "httpx", specifier = "==0.28.1" },
-    { name = "opentelemetry-api", specifier = "==1.45.1" },
-    { name = "opentelemetry-exporter-otlp-proto-http", specifier = "==1.45.1" },
-    { name = "opentelemetry-sdk", specifier = "==1.45.1" },
-    { name = "pydantic", specifier = "==2.14.1" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-http", editable = "packages/http" },
-    { name = "pyharness-web-ui", editable = "packages/web-ui" },
-]
-
-[[package]]
-name = "pyharness-plugin-manager"
-version = "0.1.0"
-source = { editable = "packages/plugin-manager" }
-dependencies = [
-    { name = "langchain" },
-    { name = "pyharness-core" },
-    { name = "pyharness-tools" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "langchain", specifier = "==1.4.7" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-]
-
-[[package]]
-name = "pyharness-prompt"
-version = "0.1.0"
-source = { editable = "packages/prompt" }
-dependencies = [
-    { name = "pyharness-core" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "pyharness-core", editable = "packages/core" }]
-
-[[package]]
-name = "pyharness-rdb"
-version = "0.1.0"
-source = { editable = "packages/rdb" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "langchain-core" },
-    { name = "psycopg", extra = ["binary"] },
-    { name = "pydantic" },
-    { name = "pyharness-core" },
-    { name = "pyharness-http" },
-    { name = "pyharness-prompt" },
-    { name = "pyharness-tools" },
-    { name = "pymysql" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", specifier = "==0.162.0" },
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "psycopg", extras = ["binary"], specifier = "==3.3.6" },
-    { name = "pydantic", specifier = "==2.14.1" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-http", editable = "packages/http" },
-    { name = "pyharness-prompt", editable = "packages/prompt" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-    { name = "pymysql", specifier = "==1.2.3" },
-]
-
-[[package]]
-name = "pyharness-s3"
-version = "0.1.0"
-source = { editable = "packages/s3" }
-dependencies = [
-    { name = "boto3" },
-    { name = "fastapi" },
-    { name = "langchain-core" },
-    { name = "pydantic" },
-    { name = "pyharness-core" },
-    { name = "pyharness-http" },
-    { name = "pyharness-prompt" },
-    { name = "pyharness-tools" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "boto3", specifier = "==1.43.123" },
-    { name = "fastapi", specifier = "==0.162.0" },
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "pydantic", specifier = "==2.14.1" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-http", editable = "packages/http" },
-    { name = "pyharness-prompt", editable = "packages/prompt" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-]
-
-[[package]]
-name = "pyharness-subscriptions"
-version = "0.1.0"
-source = { editable = "packages/subscriptions" }
-dependencies = [
-    { name = "cryptography" },
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "langchain-core" },
-    { name = "langgraph" },
-    { name = "pydantic" },
-    { name = "pyharness-core" },
-    { name = "pyharness-http" },
-    { name = "pyharness-llm" },
-    { name = "pyharness-tools" },
-    { name = "pyharness-web-ui" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "cryptography", specifier = "==50.0.2" },
-    { name = "fastapi", specifier = "==0.162.0" },
-    { name = "httpx", specifier = "==0.28.1" },
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "langgraph", specifier = "==1.2.18" },
-    { name = "pydantic", specifier = "==2.14.1" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-http", editable = "packages/http" },
-    { name = "pyharness-llm", editable = "packages/llm" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-    { name = "pyharness-web-ui", editable = "packages/web-ui" },
-]
-
-[[package]]
-name = "pyharness-terminal"
-version = "0.1.0"
-source = { editable = "packages/terminal" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "langchain-core" },
-    { name = "langgraph" },
-    { name = "pyharness-core" },
-    { name = "pyharness-http" },
-    { name = "pyharness-tools" },
-    { name = "websockets" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", specifier = "==0.162.0" },
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "langgraph", specifier = "==1.2.18" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-http", editable = "packages/http" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-    { name = "websockets", specifier = "==17.3" },
-]
-
-[[package]]
-name = "pyharness-tools"
-version = "0.1.0"
-source = { editable = "packages/tools" }
-dependencies = [
-    { name = "langchain" },
-    { name = "langchain-core" },
-    { name = "pyharness-core" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "langchain", specifier = "==1.4.7" },
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "pyharness-core", editable = "packages/core" },
-]
-
-[[package]]
-name = "pyharness-web-tools"
-version = "0.1.0"
-source = { editable = "packages/web-tools" }
-dependencies = [
-    { name = "httpx" },
-    { name = "langchain-core" },
-    { name = "pyharness-core" },
-    { name = "pyharness-tools" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "httpx", specifier = "==0.28.1" },
-    { name = "langchain-core", specifier = "==1.7.1" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-tools", editable = "packages/tools" },
-]
-
-[[package]]
-name = "pyharness-web-ui"
-version = "0.1.0"
-source = { editable = "packages/web-ui" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "pyharness-core" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", specifier = "==0.162.0" },
-    { name = "pyharness-core", editable = "packages/core" },
-]
-
-[[package]]
-name = "pyharness-workspace"
-version = "0.1.0"
-source = { editable = "packages/workspace" }
-dependencies = [
-    { name = "deepagents" },
-    { name = "pyharness-core" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "deepagents", specifier = "==0.7.32" },
-    { name = "pyharness-core", editable = "packages/core" },
-]
-
-[[package]]
-name = "pyharness-workspace-changes"
-version = "0.1.0"
-source = { editable = "packages/workspace-changes" }
-dependencies = [
-    { name = "pyharness-agent" },
-    { name = "pyharness-core" },
-    { name = "pyharness-workspace" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pyharness-agent", editable = "packages/agent" },
-    { name = "pyharness-core", editable = "packages/core" },
-    { name = "pyharness-workspace", editable = "packages/workspace" },
-]
-
-[[package]]
 name = "pyjwt"
 version = "2.15.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2556,6 +1738,824 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/eb/61/caa39686032d2ebdd04ff0ab5cbe163126c0066d98e00c9018646e42393b/pywin32-312-cp315-cp315-win32.whl", hash = "sha256:5c1fbe4a937a73ae9297384a3da38518cbc694c68ad8a809b2e19acd350f03ed", size = 6471159, upload-time = "2026-06-04T07:49:50.035Z" },
     { url = "https://files.pythonhosted.org/packages/0f/cd/7e1de64a4a6f69c04214169657ccab0d93a670ea50e35eb8f489d7378249/pywin32-312-cp315-cp315-win_amd64.whl", hash = "sha256:c2f03a0f73f804a13c2735b99392b0cd426bb4f2c4d0178e5ac966a0f21618d5", size = 7025293, upload-time = "2026-06-04T07:49:54.857Z" },
     { url = "https://files.pythonhosted.org/packages/23/ed/4532e9388e65fa16b46776ef47ad631a64eda1631884488af707666350ed/pywin32-312-cp315-cp315-win_arm64.whl", hash = "sha256:a8597d28f267b39074aef51fa593530082b39cbe5a074226096857b1fed2dfb9", size = 6840337, upload-time = "2026-06-04T07:49:57.531Z" },
+]
+
+[[package]]
+name = "pyxis-harness-agent"
+version = "0.1.0"
+source = { editable = "packages/agent" }
+dependencies = [
+    { name = "langchain-core" },
+    { name = "langgraph" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-llm" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "langgraph", specifier = "==1.2.18" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-llm", editable = "packages/llm" },
+]
+
+[[package]]
+name = "pyxis-harness-agent-loop-deepagents"
+version = "0.1.0"
+source = { editable = "packages/agent-loop-deepagents" }
+dependencies = [
+    { name = "deepagents" },
+    { name = "langchain" },
+    { name = "langgraph" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-llm" },
+    { name = "pyxis-harness-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "deepagents", specifier = "==0.7.32" },
+    { name = "langchain", specifier = "==1.4.7" },
+    { name = "langgraph", specifier = "==1.2.18" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-llm", editable = "packages/llm" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+]
+
+[[package]]
+name = "pyxis-harness-api"
+version = "0.1.0"
+source = { editable = "packages/api" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "pygments" },
+    { name = "pyxis-harness-agent" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-llm" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "pygments", specifier = "==2.21.0" },
+    { name = "pyxis-harness-agent", editable = "packages/agent" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-llm", editable = "packages/llm" },
+]
+
+[[package]]
+name = "pyxis-harness-ask-user"
+version = "0.1.0"
+source = { editable = "packages/ask-user" }
+dependencies = [
+    { name = "langchain-core" },
+    { name = "langgraph" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "langgraph", specifier = "==1.2.18" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+]
+
+[[package]]
+name = "pyxis-harness-auto-review"
+version = "0.1.0"
+source = { editable = "packages/auto-review" }
+dependencies = [
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "langgraph" },
+    { name = "pyxis-harness-agent-loop-deepagents" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-llm" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "langchain", specifier = "==1.4.7" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "langgraph", specifier = "==1.2.18" },
+    { name = "pyxis-harness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-llm", editable = "packages/llm" },
+]
+
+[[package]]
+name = "pyxis-harness-bundle-base"
+version = "0.1.0"
+source = { editable = "packages/bundle-base" }
+dependencies = [
+    { name = "pyxis-harness-agent" },
+    { name = "pyxis-harness-agent-loop-deepagents" },
+    { name = "pyxis-harness-api" },
+    { name = "pyxis-harness-ask-user" },
+    { name = "pyxis-harness-auto-review" },
+    { name = "pyxis-harness-checkpoint-postgres" },
+    { name = "pyxis-harness-checkpoint-sqlite" },
+    { name = "pyxis-harness-compaction" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-http" },
+    { name = "pyxis-harness-inspect" },
+    { name = "pyxis-harness-llm" },
+    { name = "pyxis-harness-mcp" },
+    { name = "pyxis-harness-plugin-manager" },
+    { name = "pyxis-harness-prompt" },
+    { name = "pyxis-harness-terminal" },
+    { name = "pyxis-harness-tools" },
+    { name = "pyxis-harness-web-ui" },
+    { name = "pyxis-harness-workspace" },
+    { name = "pyxis-harness-workspace-changes" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pyxis-harness-agent", editable = "packages/agent" },
+    { name = "pyxis-harness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
+    { name = "pyxis-harness-api", editable = "packages/api" },
+    { name = "pyxis-harness-ask-user", editable = "packages/ask-user" },
+    { name = "pyxis-harness-auto-review", editable = "packages/auto-review" },
+    { name = "pyxis-harness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
+    { name = "pyxis-harness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
+    { name = "pyxis-harness-compaction", editable = "packages/compaction" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-http", editable = "packages/http" },
+    { name = "pyxis-harness-inspect", editable = "packages/inspect" },
+    { name = "pyxis-harness-llm", editable = "packages/llm" },
+    { name = "pyxis-harness-mcp", editable = "packages/mcp" },
+    { name = "pyxis-harness-plugin-manager", editable = "packages/plugin-manager" },
+    { name = "pyxis-harness-prompt", editable = "packages/prompt" },
+    { name = "pyxis-harness-terminal", editable = "packages/terminal" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+    { name = "pyxis-harness-web-ui", editable = "packages/web-ui" },
+    { name = "pyxis-harness-workspace", editable = "packages/workspace" },
+    { name = "pyxis-harness-workspace-changes", editable = "packages/workspace-changes" },
+]
+
+[[package]]
+name = "pyxis-harness-bundle-creator"
+version = "0.1.0"
+source = { editable = "packages/bundle-creator" }
+dependencies = [
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-plugin-manager" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-plugin-manager", editable = "packages/plugin-manager" },
+]
+
+[[package]]
+name = "pyxis-harness-bundle-toolkit"
+version = "0.1.0"
+source = { editable = "packages/bundle-toolkit" }
+dependencies = [
+    { name = "pyxis-harness-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pyxis-harness-core", editable = "packages/core" }]
+
+[[package]]
+name = "pyxis-harness-bundle-web"
+version = "0.1.0"
+source = { editable = "packages/bundle-web" }
+dependencies = [
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-web-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-web-tools", editable = "packages/web-tools" },
+]
+
+[[package]]
+name = "pyxis-harness-checkpoint-postgres"
+version = "0.1.0"
+source = { editable = "packages/checkpoint-postgres" }
+dependencies = [
+    { name = "langgraph-checkpoint-postgres" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "psycopg-pool" },
+    { name = "pyxis-harness-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "langgraph-checkpoint-postgres", specifier = "==3.2.0" },
+    { name = "psycopg", extras = ["binary"], specifier = "==3.3.6" },
+    { name = "psycopg-pool", specifier = "==3.3.3" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+]
+
+[[package]]
+name = "pyxis-harness-checkpoint-sqlite"
+version = "0.1.0"
+source = { editable = "packages/checkpoint-sqlite" }
+dependencies = [
+    { name = "aiosqlite" },
+    { name = "langgraph-checkpoint-sqlite" },
+    { name = "pyxis-harness-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiosqlite", specifier = "==0.22.1" },
+    { name = "langgraph-checkpoint-sqlite", specifier = "==3.1.2" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+]
+
+[[package]]
+name = "pyxis-harness-compaction"
+version = "0.1.0"
+source = { editable = "packages/compaction" }
+dependencies = [
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "langgraph" },
+    { name = "pyxis-harness-agent-loop-deepagents" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-llm" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "langchain", specifier = "==1.4.7" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "langgraph", specifier = "==1.2.18" },
+    { name = "pyxis-harness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-llm", editable = "packages/llm" },
+]
+
+[[package]]
+name = "pyxis-harness-config-center"
+version = "0.1.0"
+source = { editable = "packages/config-center" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pyxis-harness-agent-loop-deepagents" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-http" },
+    { name = "pyxis-harness-mcp" },
+    { name = "pyxis-harness-web-ui" },
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "pydantic", specifier = "==2.14.1" },
+    { name = "pyxis-harness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-http", editable = "packages/http" },
+    { name = "pyxis-harness-mcp", editable = "packages/mcp" },
+    { name = "pyxis-harness-web-ui", editable = "packages/web-ui" },
+    { name = "pyyaml", specifier = "==6.0.3" },
+]
+
+[[package]]
+name = "pyxis-harness-core"
+version = "0.1.0"
+source = { editable = "packages/core" }
+dependencies = [
+    { name = "packaging" },
+    { name = "pydantic" },
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "packaging", specifier = "==26.3" },
+    { name = "pydantic", specifier = "==2.14.1" },
+    { name = "pyyaml", specifier = "==6.0.3" },
+]
+
+[[package]]
+name = "pyxis-harness-gateway"
+version = "0.1.0"
+source = { editable = "packages/gateway" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "langchain-core" },
+    { name = "pydantic" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-http" },
+    { name = "pyxis-harness-llm" },
+    { name = "pyxis-harness-web-ui" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "pydantic", specifier = "==2.14.1" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-http", editable = "packages/http" },
+    { name = "pyxis-harness-llm", editable = "packages/llm" },
+    { name = "pyxis-harness-web-ui", editable = "packages/web-ui" },
+    { name = "uvicorn", specifier = "==0.54.0" },
+]
+
+[[package]]
+name = "pyxis-harness-http"
+version = "0.1.0"
+source = { editable = "packages/http" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "pyxis-harness-core" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "uvicorn", specifier = "==0.54.0" },
+]
+
+[[package]]
+name = "pyxis-harness-http-client"
+version = "0.1.0"
+source = { editable = "packages/http-client" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "langchain-core" },
+    { name = "pydantic" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-http" },
+    { name = "pyxis-harness-prompt" },
+    { name = "pyxis-harness-tools" },
+    { name = "pyxis-harness-web-ui" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "pydantic", specifier = "==2.14.1" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-http", editable = "packages/http" },
+    { name = "pyxis-harness-prompt", editable = "packages/prompt" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+    { name = "pyxis-harness-web-ui", editable = "packages/web-ui" },
+]
+
+[[package]]
+name = "pyxis-harness-inspect"
+version = "0.1.0"
+source = { editable = "packages/inspect" }
+dependencies = [
+    { name = "langchain-core" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+]
+
+[[package]]
+name = "pyxis-harness-llm"
+version = "0.1.0"
+source = { editable = "packages/llm" }
+dependencies = [
+    { name = "httpx" },
+    { name = "langchain" },
+    { name = "langchain-anthropic" },
+    { name = "langchain-core" },
+    { name = "langchain-deepseek" },
+    { name = "langchain-google-genai" },
+    { name = "langchain-openai" },
+    { name = "langchain-openrouter" },
+    { name = "pyxis-harness-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "langchain", specifier = "==1.4.7" },
+    { name = "langchain-anthropic", specifier = "==1.7.7" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "langchain-deepseek", specifier = "==1.1.1" },
+    { name = "langchain-google-genai", specifier = "==4.4.2" },
+    { name = "langchain-openai", specifier = "==1.7.3" },
+    { name = "langchain-openrouter", specifier = "==0.2.9" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+]
+
+[[package]]
+name = "pyxis-harness-mcp"
+version = "0.1.0"
+source = { editable = "packages/mcp" }
+dependencies = [
+    { name = "langchain-core" },
+    { name = "langchain-mcp-adapters" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "langchain-mcp-adapters", specifier = "==0.3.2" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+]
+
+[[package]]
+name = "pyxis-harness-memory"
+version = "0.1.0"
+source = { editable = "packages/memory" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "langchain-core" },
+    { name = "langgraph" },
+    { name = "pydantic" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-http" },
+    { name = "pyxis-harness-prompt" },
+    { name = "pyxis-harness-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "langgraph", specifier = "==1.2.18" },
+    { name = "pydantic", specifier = "==2.14.1" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-http", editable = "packages/http" },
+    { name = "pyxis-harness-prompt", editable = "packages/prompt" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+]
+
+[[package]]
+name = "pyxis-harness-monorepo"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "pyxis-harness-agent" },
+    { name = "pyxis-harness-agent-loop-deepagents" },
+    { name = "pyxis-harness-api" },
+    { name = "pyxis-harness-ask-user" },
+    { name = "pyxis-harness-auto-review" },
+    { name = "pyxis-harness-bundle-base" },
+    { name = "pyxis-harness-bundle-creator" },
+    { name = "pyxis-harness-bundle-toolkit" },
+    { name = "pyxis-harness-bundle-web" },
+    { name = "pyxis-harness-checkpoint-postgres" },
+    { name = "pyxis-harness-checkpoint-sqlite" },
+    { name = "pyxis-harness-compaction" },
+    { name = "pyxis-harness-config-center" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-gateway" },
+    { name = "pyxis-harness-http" },
+    { name = "pyxis-harness-http-client" },
+    { name = "pyxis-harness-inspect" },
+    { name = "pyxis-harness-llm" },
+    { name = "pyxis-harness-mcp" },
+    { name = "pyxis-harness-memory" },
+    { name = "pyxis-harness-otel" },
+    { name = "pyxis-harness-plugin-manager" },
+    { name = "pyxis-harness-prompt" },
+    { name = "pyxis-harness-rdb" },
+    { name = "pyxis-harness-s3" },
+    { name = "pyxis-harness-subscriptions" },
+    { name = "pyxis-harness-terminal" },
+    { name = "pyxis-harness-tools" },
+    { name = "pyxis-harness-web-tools" },
+    { name = "pyxis-harness-web-ui" },
+    { name = "pyxis-harness-workspace" },
+    { name = "pyxis-harness-workspace-changes" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "httpx" },
+    { name = "pip" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pyxis-harness-agent", editable = "packages/agent" },
+    { name = "pyxis-harness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
+    { name = "pyxis-harness-api", editable = "packages/api" },
+    { name = "pyxis-harness-ask-user", editable = "packages/ask-user" },
+    { name = "pyxis-harness-auto-review", editable = "packages/auto-review" },
+    { name = "pyxis-harness-bundle-base", editable = "packages/bundle-base" },
+    { name = "pyxis-harness-bundle-creator", editable = "packages/bundle-creator" },
+    { name = "pyxis-harness-bundle-toolkit", editable = "packages/bundle-toolkit" },
+    { name = "pyxis-harness-bundle-web", editable = "packages/bundle-web" },
+    { name = "pyxis-harness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
+    { name = "pyxis-harness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
+    { name = "pyxis-harness-compaction", editable = "packages/compaction" },
+    { name = "pyxis-harness-config-center", editable = "packages/config-center" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-gateway", editable = "packages/gateway" },
+    { name = "pyxis-harness-http", editable = "packages/http" },
+    { name = "pyxis-harness-http-client", editable = "packages/http-client" },
+    { name = "pyxis-harness-inspect", editable = "packages/inspect" },
+    { name = "pyxis-harness-llm", editable = "packages/llm" },
+    { name = "pyxis-harness-mcp", editable = "packages/mcp" },
+    { name = "pyxis-harness-memory", editable = "packages/memory" },
+    { name = "pyxis-harness-otel", editable = "packages/otel" },
+    { name = "pyxis-harness-plugin-manager", editable = "packages/plugin-manager" },
+    { name = "pyxis-harness-prompt", editable = "packages/prompt" },
+    { name = "pyxis-harness-rdb", editable = "packages/rdb" },
+    { name = "pyxis-harness-s3", editable = "packages/s3" },
+    { name = "pyxis-harness-subscriptions", editable = "packages/subscriptions" },
+    { name = "pyxis-harness-terminal", editable = "packages/terminal" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+    { name = "pyxis-harness-web-tools", editable = "packages/web-tools" },
+    { name = "pyxis-harness-web-ui", editable = "packages/web-ui" },
+    { name = "pyxis-harness-workspace", editable = "packages/workspace" },
+    { name = "pyxis-harness-workspace-changes", editable = "packages/workspace-changes" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "pip", specifier = "==26.2.2" },
+    { name = "pytest", specifier = "==9.2.0" },
+    { name = "pytest-asyncio", specifier = "==1.4.1" },
+    { name = "ruff", specifier = "==0.17.3" },
+]
+
+[[package]]
+name = "pyxis-harness-otel"
+version = "0.1.0"
+source = { editable = "packages/otel" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "opentelemetry-sdk" },
+    { name = "pydantic" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-http" },
+    { name = "pyxis-harness-web-ui" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "opentelemetry-api", specifier = "==1.45.1" },
+    { name = "opentelemetry-exporter-otlp-proto-http", specifier = "==1.45.1" },
+    { name = "opentelemetry-sdk", specifier = "==1.45.1" },
+    { name = "pydantic", specifier = "==2.14.1" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-http", editable = "packages/http" },
+    { name = "pyxis-harness-web-ui", editable = "packages/web-ui" },
+]
+
+[[package]]
+name = "pyxis-harness-plugin-manager"
+version = "0.1.0"
+source = { editable = "packages/plugin-manager" }
+dependencies = [
+    { name = "langchain" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "langchain", specifier = "==1.4.7" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+]
+
+[[package]]
+name = "pyxis-harness-prompt"
+version = "0.1.0"
+source = { editable = "packages/prompt" }
+dependencies = [
+    { name = "pyxis-harness-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pyxis-harness-core", editable = "packages/core" }]
+
+[[package]]
+name = "pyxis-harness-rdb"
+version = "0.1.0"
+source = { editable = "packages/rdb" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "langchain-core" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "pydantic" },
+    { name = "pymysql" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-http" },
+    { name = "pyxis-harness-prompt" },
+    { name = "pyxis-harness-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "psycopg", extras = ["binary"], specifier = "==3.3.6" },
+    { name = "pydantic", specifier = "==2.14.1" },
+    { name = "pymysql", specifier = "==1.2.3" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-http", editable = "packages/http" },
+    { name = "pyxis-harness-prompt", editable = "packages/prompt" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+]
+
+[[package]]
+name = "pyxis-harness-s3"
+version = "0.1.0"
+source = { editable = "packages/s3" }
+dependencies = [
+    { name = "boto3" },
+    { name = "fastapi" },
+    { name = "langchain-core" },
+    { name = "pydantic" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-http" },
+    { name = "pyxis-harness-prompt" },
+    { name = "pyxis-harness-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "boto3", specifier = "==1.43.123" },
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "pydantic", specifier = "==2.14.1" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-http", editable = "packages/http" },
+    { name = "pyxis-harness-prompt", editable = "packages/prompt" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+]
+
+[[package]]
+name = "pyxis-harness-subscriptions"
+version = "0.1.0"
+source = { editable = "packages/subscriptions" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "langchain-core" },
+    { name = "langgraph" },
+    { name = "pydantic" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-http" },
+    { name = "pyxis-harness-llm" },
+    { name = "pyxis-harness-tools" },
+    { name = "pyxis-harness-web-ui" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cryptography", specifier = "==50.0.2" },
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "langgraph", specifier = "==1.2.18" },
+    { name = "pydantic", specifier = "==2.14.1" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-http", editable = "packages/http" },
+    { name = "pyxis-harness-llm", editable = "packages/llm" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+    { name = "pyxis-harness-web-ui", editable = "packages/web-ui" },
+]
+
+[[package]]
+name = "pyxis-harness-terminal"
+version = "0.1.0"
+source = { editable = "packages/terminal" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "langchain-core" },
+    { name = "langgraph" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-http" },
+    { name = "pyxis-harness-tools" },
+    { name = "websockets" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "langgraph", specifier = "==1.2.18" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-http", editable = "packages/http" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+    { name = "websockets", specifier = "==17.3" },
+]
+
+[[package]]
+name = "pyxis-harness-tools"
+version = "0.1.0"
+source = { editable = "packages/tools" }
+dependencies = [
+    { name = "langchain" },
+    { name = "langchain-core" },
+    { name = "pyxis-harness-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "langchain", specifier = "==1.4.7" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+]
+
+[[package]]
+name = "pyxis-harness-web-tools"
+version = "0.1.0"
+source = { editable = "packages/web-tools" }
+dependencies = [
+    { name = "httpx" },
+    { name = "langchain-core" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-tools" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+]
+
+[[package]]
+name = "pyxis-harness-web-ui"
+version = "0.1.0"
+source = { editable = "packages/web-ui" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "pyxis-harness-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = "==0.162.0" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+]
+
+[[package]]
+name = "pyxis-harness-workspace"
+version = "0.1.0"
+source = { editable = "packages/workspace" }
+dependencies = [
+    { name = "deepagents" },
+    { name = "pyxis-harness-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "deepagents", specifier = "==0.7.32" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+]
+
+[[package]]
+name = "pyxis-harness-workspace-changes"
+version = "0.1.0"
+source = { editable = "packages/workspace-changes" }
+dependencies = [
+    { name = "pyxis-harness-agent" },
+    { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-workspace" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pyxis-harness-agent", editable = "packages/agent" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-workspace", editable = "packages/workspace" },
 ]
 
 [[package]]

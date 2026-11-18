@@ -31,7 +31,7 @@ class RdbService(Service):
     """Database workbench: profiles, connections, tools, routes and the Database page module."""
 
     key = "rdb"
-    name = "pyharness-rdb"
+    name = "pyxis-harness-rdb"
     inject: ClassVar[list[str]] = ["tools", "prompt", "http"]
     Config = Config
 
@@ -62,7 +62,7 @@ class RdbService(Service):
         )
         self.store = ProfileStore(self._path(), credentials)
         self.store.subscribe(self.sync)
-        self.ctx.http.include_router(build_router(self), prefix="/api", tags=["pyharness-rdb"])
+        self.ctx.http.include_router(build_router(self), prefix="/api", tags=["pyxis-harness-rdb"])
         self.sync()
         self._sweeper = asyncio.create_task(self._sweep())
         webui = self.ctx.get("webui", None)

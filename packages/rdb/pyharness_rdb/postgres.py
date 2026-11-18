@@ -23,7 +23,7 @@ class PgDriver(Driver):
         self.kind = kind
         self.conn = psycopg.connect(
             host=host, port=port, dbname=database, user=user, password=password, connect_timeout=CONNECT_TIMEOUT_S,
-            application_name="pyharness-rdb", sslmode="require" if ssl else "prefer", autocommit=True,
+            application_name="pyxis-harness-rdb", sslmode="require" if ssl else "prefer", autocommit=True,
         )  # fmt: skip
         self.node = f"{host}:{port}"
         self._database = database

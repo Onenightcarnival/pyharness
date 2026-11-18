@@ -280,7 +280,7 @@ class ResponsesChatModel(BaseChatModel):
 
     @property
     def _llm_type(self) -> str:
-        return f"pyharness-subscriptions-{self.label}"
+        return f"pyxis-harness-subscriptions-{self.label}"
 
     @property
     def _identifying_params(self) -> dict[str, Any]:

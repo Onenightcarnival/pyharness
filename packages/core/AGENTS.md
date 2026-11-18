@@ -1,10 +1,10 @@
-# pyharness-core
+# pyxis-harness-core
 
 内核：一切皆插件的 agent harness，基于 FastAPI、deepagents、LangGraph。模型适配器、工具、agent loop、持久化、HTTP API 都是插件。
 
 | 项 | 值 |
 |---|---|
-| 分发包 | `pyharness-core` |
+| 分发包 | `pyxis-harness-core` |
 | 模块 | `pyharness` |
 | 命令 | `pyh`（`pyharness.cli:main`） |
 | 插件 entry point | 无 |

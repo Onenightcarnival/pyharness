@@ -8,7 +8,7 @@ from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel, Field
 
-name = "pyharness-checkpoint-postgres"
+name = "pyxis-harness-checkpoint-postgres"
 doc = "Persistence provider on PostgreSQL: ``ctx.checkpointer`` and ``ctx.store``."
 inject: list[str] = []
 

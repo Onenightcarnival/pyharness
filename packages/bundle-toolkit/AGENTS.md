@@ -1,4 +1,4 @@
-# pyharness-bundle-toolkit
+# pyxis-harness-bundle-toolkit
 
 `toolkit` bundle：内置的 toolkit 模块。
 
@@ -21,11 +21,11 @@
 
 | 条目 | 包 | 模块 |
 |---|---|---|
-| `memory` | `pyharness-memory` | 记忆 |
-| `rdb` | `pyharness-rdb` | 关系数据库 |
-| `s3` | `pyharness-s3` | S3 |
-| `config-center` | `pyharness-config-center` | 技能、MCP 页 |
-| `otel` | `pyharness-otel` | OpenTelemetry 导出 |
-| `subscriptions` | `pyharness-subscriptions` | 订阅 |
-| `gateway` | `pyharness-gateway` | API 网关 |
-| `http-client` | `pyharness-http-client` | HTTP 客户端 |
+| `memory` | `pyxis-harness-memory` | 记忆 |
+| `rdb` | `pyxis-harness-rdb` | 关系数据库 |
+| `s3` | `pyxis-harness-s3` | S3 |
+| `config-center` | `pyxis-harness-config-center` | 技能、MCP 页 |
+| `otel` | `pyxis-harness-otel` | OpenTelemetry 导出 |
+| `subscriptions` | `pyxis-harness-subscriptions` | 订阅 |
+| `gateway` | `pyxis-harness-gateway` | API 网关 |
+| `http-client` | `pyxis-harness-http-client` | HTTP 客户端 |

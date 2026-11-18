@@ -10,7 +10,7 @@ from fastapi import APIRouter
 from langchain_core.messages import ToolMessage
 from pydantic import BaseModel, Field
 
-name = "pyharness-audit"
+name = "pyxis-harness-audit"
 doc = "Tool-call audit: a denylist, a JSONL log and ``GET /audit``."
 inject = ["tools"]
 

@@ -52,4 +52,4 @@ def workspace(home: Path) -> Path:
 
 @pytest.fixture
 def example_bundle() -> Path:
-    return ROOT / "examples" / "pyharness-audit"
+    return ROOT / "examples" / "pyxis-harness-audit"

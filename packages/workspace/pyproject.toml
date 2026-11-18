@@ -1,13 +1,13 @@
 [project]
-name = "pyharness-workspace"
+name = "pyxis-harness-workspace"
 version = "0.1.0"
 description = "PyxisHarness plugin: agent workspace and deepagents backend"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core==0.1.0", "deepagents==0.7.32"]
+dependencies = ["pyxis-harness-core==0.1.0", "deepagents==0.7.32"]
 
 [project.entry-points."pyharness.plugins"]
-pyharness-workspace = "pyharness_workspace"
+pyxis-harness-workspace = "pyharness_workspace"
 
 [build-system]
 requires = ["hatchling"]

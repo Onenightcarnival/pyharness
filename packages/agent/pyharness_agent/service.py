@@ -62,7 +62,7 @@ class AgentService(Service):
     """Sessions, runs, approvals, post-restart continuation."""
 
     key = "agents"
-    name = "pyharness-agent"
+    name = "pyxis-harness-agent"
     inject: ClassVar[list[str]] = ["agentLoop", "store"]
     Config = AgentConfig
 

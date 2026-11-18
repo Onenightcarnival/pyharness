@@ -1,10 +1,10 @@
 [project]
-name = "pyharness-bundle-toolkit"
+name = "pyxis-harness-bundle-toolkit"
 version = "0.1.0"
 description = "PyxisHarness bundle: the toolkit (memory, databases, S3, skills, MCP page, subscriptions, OpenTelemetry, API gateway, HTTP client); built in"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core==0.1.0"]
+dependencies = ["pyxis-harness-core==0.1.0"]
 
 [project.entry-points."pyharness.bundles"]
 toolkit = "pyharness_bundle_toolkit:BUNDLE"

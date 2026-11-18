@@ -30,7 +30,7 @@ class WorkspaceChangesService(Service):
     """Per-turn changed-file summaries and diffs."""
 
     key = "workspaceChanges"
-    name = "pyharness-workspace-changes"
+    name = "pyxis-harness-workspace-changes"
     inject: ClassVar[list[str]] = ["agents", "workspace", "store"]
     Config = Config
 

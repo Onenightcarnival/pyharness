@@ -1,13 +1,13 @@
 [project]
-name = "pyharness-checkpoint-sqlite"
+name = "pyxis-harness-checkpoint-sqlite"
 version = "0.1.0"
 description = "PyxisHarness plugin: SQLite checkpointer and store"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core==0.1.0", "langgraph-checkpoint-sqlite==3.1.2", "aiosqlite==0.22.1"]
+dependencies = ["pyxis-harness-core==0.1.0", "langgraph-checkpoint-sqlite==3.1.2", "aiosqlite==0.22.1"]
 
 [project.entry-points."pyharness.plugins"]
-pyharness-checkpoint-sqlite = "pyharness_checkpoint_sqlite"
+pyxis-harness-checkpoint-sqlite = "pyharness_checkpoint_sqlite"
 
 [build-system]
 requires = ["hatchling"]

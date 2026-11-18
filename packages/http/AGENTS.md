@@ -1,4 +1,4 @@
-# pyharness-http
+# pyxis-harness-http
 
 FastAPI 应用及其 uvicorn 服务器。
 

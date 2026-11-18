@@ -168,8 +168,8 @@ async def test_turn_trace_and_routes(home):
             )
             names = {s.name for s in exporter.get_finished_spans()}
             assert {
-                "pyharness-otel connection test",
-                "pyharness-otel payload test",
+                "pyxis-harness-otel connection test",
+                "pyxis-harness-otel payload test",
                 "enter_ai_application_system",
             } <= names
             assert (await c.post("/api/otel/verify", json={})).status_code == 409

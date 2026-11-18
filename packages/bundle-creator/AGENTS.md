@@ -1,4 +1,4 @@
-# pyharness-bundle-creator
+# pyxis-harness-bundle-creator
 
 `creator` bundle：新会话默认使用 `creator` agent 预设（`creator` profile 模板）。
 

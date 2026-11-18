@@ -1,4 +1,4 @@
-# pyharness-checkpoint-postgres
+# pyxis-harness-checkpoint-postgres
 
 PostgreSQL 上的持久化提供者：`ctx.checkpointer` 与 `ctx.store`。
 

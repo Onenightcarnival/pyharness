@@ -1,4 +1,4 @@
-# pyharness-subscriptions
+# pyxis-harness-subscriptions
 
 AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Google Antigravity、Grok（xAI），经各自的 OAuth 流程登录。
 

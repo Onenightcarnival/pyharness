@@ -1,6 +1,6 @@
 # 内核
 
-`pyharness-core`：服务容器、类型化事件、分层组合、Loader。
+`pyxis-harness-core`：服务容器、类型化事件、分层组合、Loader。
 
 ## 插件
 
@@ -18,7 +18,7 @@
 | `inject` | 启动前必须存在的服务 key |
 | `Config` | pydantic 模型；校验条目的 `config` |
 
-条目的 `name` 引用插件：entry point 名（`pyharness-tools`）或 `module[:attr]`（`testkit.scripted`）。
+条目的 `name` 引用插件：entry point 名（`pyxis-harness-tools`）或 `module[:attr]`（`testkit.scripted`）。
 
 ```python
 name = "my-plugin"

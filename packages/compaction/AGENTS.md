@@ -1,4 +1,4 @@
-# pyharness-compaction
+# pyxis-harness-compaction
 
 上下文压缩：一条检查点摘要替换较早的历史。
 

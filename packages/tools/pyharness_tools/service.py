@@ -48,7 +48,7 @@ class ToolsService(Service):
     """Tool registry and the ``tools/execute`` → ``tools/result`` pipeline."""
 
     key = "tools"
-    name = "pyharness-tools"
+    name = "pyxis-harness-tools"
 
     def __init__(self, ctx: Any, config: Any) -> None:
         super().__init__(ctx, config)

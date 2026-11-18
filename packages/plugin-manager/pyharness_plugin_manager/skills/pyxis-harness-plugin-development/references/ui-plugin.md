@@ -1,6 +1,6 @@
 # Web UI plugins: panels, rows, tabs
 
-The Web UI (`pyharness-web-ui`, service key `webui`) loads one browser module per plugin and offers named slots the module fills. A plugin that extends the page lists `"webui"` in `inject`; without the service (headless runs) it stays `pending`, which is the intended behavior.
+The Web UI (`pyxis-harness-web-ui`, service key `webui`) loads one browser module per plugin and offers named slots the module fills. A plugin that extends the page lists `"webui"` in `inject`; without the service (headless runs) it stays `pending`, which is the intended behavior.
 
 ## Server side
 

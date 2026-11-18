@@ -1,13 +1,13 @@
 [project]
-name = "pyharness-tools"
+name = "pyxis-harness-tools"
 version = "0.1.0"
 description = "PyxisHarness plugin: tool registry, execution pipeline, approval gates (ctx.tools)"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core==0.1.0", "langchain==1.4.7", "langchain-core==1.7.1"]
+dependencies = ["pyxis-harness-core==0.1.0", "langchain==1.4.7", "langchain-core==1.7.1"]
 
 [project.entry-points."pyharness.plugins"]
-pyharness-tools = "pyharness_tools:ToolsService"
+pyxis-harness-tools = "pyharness_tools:ToolsService"
 
 [build-system]
 requires = ["hatchling"]

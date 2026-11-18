@@ -1,13 +1,13 @@
 [project]
-name = "pyharness-workspace-changes"
+name = "pyxis-harness-workspace-changes"
 version = "0.1.0"
 description = "PyxisHarness plugin: files changed per turn, from git work-tree snapshots"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core==0.1.0", "pyharness-agent==0.1.0", "pyharness-workspace==0.1.0"]
+dependencies = ["pyxis-harness-core==0.1.0", "pyxis-harness-agent==0.1.0", "pyxis-harness-workspace==0.1.0"]
 
 [project.entry-points."pyharness.plugins"]
-pyharness-workspace-changes = "pyharness_workspace_changes:WorkspaceChangesService"
+pyxis-harness-workspace-changes = "pyharness_workspace_changes:WorkspaceChangesService"
 
 [build-system]
 requires = ["hatchling"]

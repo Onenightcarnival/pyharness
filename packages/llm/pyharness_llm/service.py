@@ -39,7 +39,7 @@ class EchoChatModel(BaseChatModel):
 
     @property
     def _llm_type(self) -> str:
-        return "pyharness-echo"
+        return "pyxis-harness-echo"
 
     def _generate(
         self, messages: list[BaseMessage], stop: Any = None, run_manager: Any = None, **kwargs: Any
@@ -60,7 +60,7 @@ class LLMService(Service):
     """Chat-model routes; resolves ``route:model`` specs."""
 
     key = "llm"
-    name = "pyharness-llm"
+    name = "pyxis-harness-llm"
     Config = LLMConfig
 
     def __init__(self, ctx: Any, config: LLMConfig) -> None:

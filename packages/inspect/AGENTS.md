@@ -1,4 +1,4 @@
-# pyharness-inspect
+# pyxis-harness-inspect
 
 `harness_inspect` 工具：运行中 harness 的只读视图。
 

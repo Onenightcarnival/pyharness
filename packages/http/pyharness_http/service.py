@@ -34,7 +34,7 @@ class HttpService(Service):
     """FastAPI root application and uvicorn server."""
 
     key = "http"
-    name = "pyharness-http"
+    name = "pyxis-harness-http"
     Config = HttpConfig
 
     def __init__(self, ctx: Any, config: HttpConfig) -> None:

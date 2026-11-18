@@ -1,4 +1,4 @@
-# pyharness-prompt
+# pyxis-harness-prompt
 
 系统提示词：由有序的 section 拼成。
 

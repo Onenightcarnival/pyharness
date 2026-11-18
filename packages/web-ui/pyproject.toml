@@ -1,13 +1,13 @@
 [project]
-name = "pyharness-web-ui"
+name = "pyxis-harness-web-ui"
 version = "0.1.0"
 description = "PyxisHarness plugin: Web UI at / and the client-module registry (ctx.webui)"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyharness-core==0.1.0", "fastapi==0.162.0"]
+dependencies = ["pyxis-harness-core==0.1.0", "fastapi==0.162.0"]
 
 [project.entry-points."pyharness.plugins"]
-pyharness-web-ui = "pyharness_web_ui:WebUIService"
+pyxis-harness-web-ui = "pyharness_web_ui:WebUIService"
 
 [build-system]
 requires = ["hatchling"]

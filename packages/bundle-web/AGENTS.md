@@ -1,6 +1,6 @@
-# pyharness-bundle-web
+# pyxis-harness-bundle-web
 
-`web` bundle：`web_search` 与 `web_fetch` 工具（`pyharness-web-tools`）。
+`web` bundle：`web_search` 与 `web_fetch` 工具（`pyxis-harness-web-tools`）。
 
 | 项 | 值 |
 |---|---|
@@ -20,4 +20,4 @@
 
 | 条目 | 包 |
 |---|---|
-| `web-tools` | `pyharness-web-tools` |
+| `web-tools` | `pyxis-harness-web-tools` |

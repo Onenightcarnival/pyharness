@@ -125,7 +125,7 @@ class Pipeline:
                 export_timeout_millis=config.export_timeout_ms,
             )
         )
-        self.tracer = self.provider.get_tracer("pyharness-otel", "0.1.0")
+        self.tracer = self.provider.get_tracer("pyxis-harness-otel", "0.1.0")
 
     def flush(self, timeout_ms: int = 20000) -> bool:
         return self.provider.force_flush(timeout_ms)

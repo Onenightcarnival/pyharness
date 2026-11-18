@@ -1,11 +1,11 @@
-# pyharness-plugin-manager
+# pyxis-harness-plugin-manager
 
 `plugin_manager` 工具、插件编写技能、包的只读挂载、插件源码目录、系统提示词段。
 
 | 条目 | entry point | 插件 | 注入 |
 |---|---|---|---|
-| `plugin-manager`（`base` bundle） | `pyharness-plugin-manager` | `apply`（函数插件） | `tools`、`prompt`、`agentLoop` |
-| `dev-context`（`base` bundle） | `pyharness-dev-context` | `apply`（函数插件） | `prompt` |
+| `plugin-manager`（`base` bundle） | `pyxis-harness-plugin-manager` | `apply`（函数插件） | `tools`、`prompt`、`agentLoop` |
+| `dev-context`（`base` bundle） | `pyxis-harness-dev-context` | `apply`（函数插件） | `prompt` |
 
 ## 文件
 
@@ -14,7 +14,7 @@
 | `__init__.py` | 导出 |
 | `plugin.py` | `plugin_manager` 工具、技能挂载、包的只读挂载、插件源码目录的挂载、提示词段 |
 | `dev_context.py` | 提示词段 `dev-context` |
-| `reference.py` | 技能 `pyharness-composition-reference` 的 `references/packages.md` 的渲染 |
+| `reference.py` | 技能 `pyxis-harness-composition-reference` 的 `references/packages.md` 的渲染 |
 | `prompts.toml` | 模型可见的文本 |
 | `skills/` | 技能内容 |
 
@@ -31,8 +31,8 @@
 | 项 | 值 |
 |---|---|
 | 位置 | `skills/<name>/SKILL.md` |
-| 技能 | `pyharness-plugin-development`、`editing-pyharness-compositions`、`pyharness-composition-reference`、`agent-experience` |
-| 模板 | `skills/pyharness-plugin-development/templates/` |
+| 技能 | `pyxis-harness-plugin-development`、`editing-pyxis-harness-compositions`、`pyxis-harness-composition-reference`、`agent-experience` |
+| 模板 | `skills/pyxis-harness-plugin-development/templates/` |
 
 ## 包的只读挂载
 
@@ -95,7 +95,7 @@
 
 | 项 | 契约 |
 |---|---|
-| 文件 | 技能 `pyharness-composition-reference` 的 `references/packages.md` |
+| 文件 | 技能 `pyxis-harness-composition-reference` 的 `references/packages.md` |
 | 来源 | 已安装的 entry point |
 | 写入 | `python scripts/gen_packages.py` |
 | 过期 | `tests/test_creator.py` 失败 |

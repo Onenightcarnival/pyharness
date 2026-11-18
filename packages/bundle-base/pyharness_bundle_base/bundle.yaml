@@ -3,72 +3,72 @@ description: Kernel services, the deepagents loop, SQLite persistence, workspace
 patch:
   # Registries: models, tools, prompt sections.
   - id: llm
-    name: pyharness-llm
+    name: pyxis-harness-llm
     config:
       default: ${env:PYH_MODEL:-echo:echo}
   - id: tools
-    name: pyharness-tools
+    name: pyxis-harness-tools
   - id: prompt
-    name: pyharness-prompt
+    name: pyxis-harness-prompt
 
   # MCP servers as tools: ctx.mcp; servers come from Settings → MCP or the profile patch.
   - id: mcp
-    name: pyharness-mcp
+    name: pyxis-harness-mcp
 
   # ask_user_question: the agent pauses for the user's answer (question card in the Web UI).
   - id: ask-user
-    name: pyharness-ask-user
+    name: pyxis-harness-ask-user
 
   # Persistence: ctx.checkpointer, ctx.store. Postgres: patch id `checkpoint` (examples/patches/postgres.yaml).
   - id: checkpoint
-    name: pyharness-checkpoint-sqlite
+    name: pyxis-harness-checkpoint-sqlite
     config:
       path: ${data_dir}/checkpoints.sqlite
       store_path: ${data_dir}/store.sqlite
 
   # Workspace: ctx.workspace, ctx.backend. `execute` tool: shell: true.
   - id: workspace
-    name: pyharness-workspace
+    name: pyxis-harness-workspace
     config:
       shell: false
 
   # Agent loop: ctx.agentLoop. Sessions and runs: ctx.agents.
   - id: agent-loop
-    name: pyharness-agent-loop-deepagents
+    name: pyxis-harness-agent-loop-deepagents
   - id: agents
-    name: pyharness-agent
+    name: pyxis-harness-agent
 
   # Auto review permission mode: a model reviews each gated tool call; a call it denies asks the user.
   - id: auto-review
-    name: pyharness-auto-review
+    name: pyxis-harness-auto-review
 
   # Context compaction: ctx.compaction; automatic under pressure, /compact on demand.
   - id: compaction
-    name: pyharness-compaction
+    name: pyxis-harness-compaction
 
   # Changed files per turn, from git work-tree snapshots: ctx.workspaceChanges.
   - id: workspace-changes
-    name: pyharness-workspace-changes
+    name: pyxis-harness-workspace-changes
 
   # Self-extension: introspection, plugin management, where-am-I prompt section.
   - id: inspect
-    name: pyharness-inspect
+    name: pyxis-harness-inspect
   - id: plugin-manager
-    name: pyharness-plugin-manager
+    name: pyxis-harness-plugin-manager
   - id: dev-context
-    name: pyharness-dev-context
+    name: pyxis-harness-dev-context
 
   # HTTP: server, REST + SSE, Web UI.
   - id: http
-    name: pyharness-http
+    name: pyxis-harness-http
     config:
       host: ${env:PYH_HOST:-127.0.0.1}
       port: ${env:PYH_PORT:-8765}
   - id: api
-    name: pyharness-api
+    name: pyxis-harness-api
   - id: web-ui
-    name: pyharness-web-ui
+    name: pyxis-harness-web-ui
 
   # Persistent bash tool, background jobs and PTY terminals (right-sidebar tab): ctx.terminal.
   - id: terminal
-    name: pyharness-terminal
+    name: pyxis-harness-terminal
