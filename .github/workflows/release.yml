@@ -1,8 +1,8 @@
 name: release
 
 on:
-  release:
-    types: [published]
+  push:
+    tags: ["v*"]
   workflow_dispatch:
     inputs:
       index:
@@ -14,14 +14,16 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # the GitHub Release of a pushed tag
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
       - run: uv sync --locked
-      - name: The release tag names the version of the distributions
-        if: github.event_name == 'release'
+      - name: The tag names the version of the distributions
+        if: github.event_name == 'push'
         run: test "v$(uv run python -c 'import pyxis_harness; print(pyxis_harness.__version__)')" = "$GITHUB_REF_NAME"
       - run: uv run pytest -q tests/test_release.py
       - run: uv build --all-packages
@@ -32,7 +34,14 @@ jobs:
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
       - name: Publish to PyPI
-        if: github.event_name == 'release' || inputs.index == 'pypi'
+        if: github.event_name == 'push' || inputs.index == 'pypi'
         run: uv publish --check-url https://pypi.org/simple/
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      - name: GitHub Release with the distributions; a pre-release for a pre-release version
+        if: github.event_name == 'push'
+        run: |
+          pre=$(uv run python -c 'import pyxis_harness; from packaging.version import Version; print("--prerelease" if Version(pyxis_harness.__version__).is_prerelease else "")')
+          gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes --title "$GITHUB_REF_NAME" $pre
+        env:
+          GH_TOKEN: ${{ github.token }}
