@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-otel"
-version = "0.1.0"
+version = "0.1.0rc1"
 description = "PyxisHarness plugin: OpenTelemetry GenAI export of agent turns (OTLP/HTTP, Langfuse) with the Settings → Observability page"
 license = "MIT"
 requires-python = ">=3.12"
@@ -16,9 +16,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "pyxis-harness-core==0.1.0",
-    "pyxis-harness-http==0.1.0",
-    "pyxis-harness-web-ui==0.1.0",
+    "pyxis-harness-core==0.1.0rc1",
+    "pyxis-harness-http==0.1.0rc1",
+    "pyxis-harness-web-ui==0.1.0rc1",
     "fastapi==0.162.0",
     "pydantic==2.14.1",
     "httpx==0.28.1",

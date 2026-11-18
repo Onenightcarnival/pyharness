@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-mcp"
-version = "0.1.0"
+version = "0.1.0rc1"
 description = "PyxisHarness plugin: MCP servers as tools"
 license = "MIT"
 requires-python = ">=3.12"
@@ -15,7 +15,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dependencies = ["pyxis-harness-core==0.1.0", "pyxis-harness-tools==0.1.0", "langchain-core==1.7.1", "langchain-mcp-adapters==0.3.2"]
+dependencies = ["pyxis-harness-core==0.1.0rc1", "pyxis-harness-tools==0.1.0rc1", "langchain-core==1.7.1", "langchain-mcp-adapters==0.3.2"]
 
 [project.entry-points."pyxis_harness.plugins"]
 pyxis-harness-mcp = "pyxis_harness_mcp:MCPService"
