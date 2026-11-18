@@ -7,6 +7,16 @@
 | 发行包 | `pyxis-harness` |
 | 内容 | 只有依赖；不含模块，不含 entry point |
 | wheel | `bypass-selection`：不选取任何文件 |
+| PyPI 页面 | 本文件 |
+
+## 使用
+
+| 步骤 | 命令 |
+|---|---|
+| 安装 | `pip install pyxis-harness` 或 `uv tool install pyxis-harness`；Python 3.12 及以上 |
+| 创建 profile | `pyh init` |
+| 启动 | `pyh run`；浏览器打开 <http://127.0.0.1:8765> |
+| 文档 | <https://github.com/Onenightcarnival/pyharness> |
 
 ## 依赖
 

@@ -4,10 +4,27 @@ version = "0.1.0"
 description = "PyxisHarness plugin: MCP servers as tools"
 license = "MIT"
 requires-python = ">=3.12"
+readme = "AGENTS.md"
+authors = [{ name = "PyxisHarness contributors" }]
+keywords = ["agent", "llm", "harness", "plugin", "langgraph", "deepagents"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
 dependencies = ["pyxis-harness-core==0.1.0", "pyxis-harness-tools==0.1.0", "langchain-core==1.7.1", "langchain-mcp-adapters==0.3.2"]
 
 [project.entry-points."pyxis_harness.plugins"]
 pyxis-harness-mcp = "pyxis_harness_mcp:MCPService"
+
+[project.urls]
+Homepage = "https://github.com/Onenightcarnival/pyharness"
+Repository = "https://github.com/Onenightcarnival/pyharness"
+Issues = "https://github.com/Onenightcarnival/pyharness/issues"
+Documentation = "https://github.com/Onenightcarnival/pyharness/tree/main/packages/mcp"
 
 [build-system]
 requires = ["hatchling"]
@@ -18,3 +35,6 @@ packages = ["pyxis_harness_mcp"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "AGENTS.md" = "pyxis_harness_mcp/AGENTS.md"
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../LICENSE" = "LICENSE"

@@ -4,6 +4,17 @@ version = "0.1.0"
 description = "PyxisHarness plugin: Codex, ChatGPT, Google Antigravity and Grok subscriptions as model routes and tools, with the AI subscriptions page"
 license = "MIT"
 requires-python = ">=3.12"
+readme = "AGENTS.md"
+authors = [{ name = "PyxisHarness contributors" }]
+keywords = ["agent", "llm", "harness", "plugin", "langgraph", "deepagents"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
 dependencies = [
     "pyxis-harness-core==0.1.0",
     "pyxis-harness-llm==0.1.0",
@@ -21,6 +32,12 @@ dependencies = [
 [project.entry-points."pyxis_harness.plugins"]
 pyxis-harness-subscriptions = "pyxis_harness_subscriptions:SubscriptionsService"
 
+[project.urls]
+Homepage = "https://github.com/Onenightcarnival/pyharness"
+Repository = "https://github.com/Onenightcarnival/pyharness"
+Issues = "https://github.com/Onenightcarnival/pyharness/issues"
+Documentation = "https://github.com/Onenightcarnival/pyharness/tree/main/packages/subscriptions"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -30,3 +47,6 @@ packages = ["pyxis_harness_subscriptions"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "AGENTS.md" = "pyxis_harness_subscriptions/AGENTS.md"
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../LICENSE" = "LICENSE"

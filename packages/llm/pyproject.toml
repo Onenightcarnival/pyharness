@@ -4,6 +4,17 @@ version = "0.1.0"
 description = "PyxisHarness plugin: chat-model provider registry (ctx.llm)"
 license = "MIT"
 requires-python = ">=3.12"
+readme = "AGENTS.md"
+authors = [{ name = "PyxisHarness contributors" }]
+keywords = ["agent", "llm", "harness", "plugin", "langgraph", "deepagents"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
 dependencies = [
     "pyxis-harness-core==0.1.0",
     "langchain==1.4.7",
@@ -19,6 +30,12 @@ dependencies = [
 [project.entry-points."pyxis_harness.plugins"]
 pyxis-harness-llm = "pyxis_harness_llm:LLMService"
 
+[project.urls]
+Homepage = "https://github.com/Onenightcarnival/pyharness"
+Repository = "https://github.com/Onenightcarnival/pyharness"
+Issues = "https://github.com/Onenightcarnival/pyharness/issues"
+Documentation = "https://github.com/Onenightcarnival/pyharness/tree/main/packages/llm"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -28,3 +45,6 @@ packages = ["pyxis_harness_llm"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "AGENTS.md" = "pyxis_harness_llm/AGENTS.md"
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../LICENSE" = "LICENSE"

@@ -4,10 +4,27 @@ version = "0.1.0"
 description = "PyxisHarness bundle: web_search (DeepSeek native search) and web_fetch tools; optional"
 license = "MIT"
 requires-python = ">=3.12"
+readme = "AGENTS.md"
+authors = [{ name = "PyxisHarness contributors" }]
+keywords = ["agent", "llm", "harness", "plugin", "langgraph", "deepagents"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
 dependencies = ["pyxis-harness-core==0.1.0", "pyxis-harness-web-tools==0.1.0"]
 
 [project.entry-points."pyxis_harness.bundles"]
 web = "pyxis_harness_bundle_web:BUNDLE"
+
+[project.urls]
+Homepage = "https://github.com/Onenightcarnival/pyharness"
+Repository = "https://github.com/Onenightcarnival/pyharness"
+Issues = "https://github.com/Onenightcarnival/pyharness/issues"
+Documentation = "https://github.com/Onenightcarnival/pyharness/tree/main/packages/bundle-web"
 
 [build-system]
 requires = ["hatchling"]
@@ -18,3 +35,6 @@ packages = ["pyxis_harness_bundle_web"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "AGENTS.md" = "pyxis_harness_bundle_web/AGENTS.md"
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../LICENSE" = "LICENSE"

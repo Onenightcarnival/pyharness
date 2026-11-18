@@ -4,10 +4,27 @@ version = "0.1.0"
 description = "PyxisHarness plugin: sessions, runs, approvals, resume (ctx.agents)"
 license = "MIT"
 requires-python = ">=3.12"
+readme = "AGENTS.md"
+authors = [{ name = "PyxisHarness contributors" }]
+keywords = ["agent", "llm", "harness", "plugin", "langgraph", "deepagents"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
 dependencies = ["pyxis-harness-core==0.1.0", "pyxis-harness-llm==0.1.0", "langchain-core==1.7.1", "langgraph==1.2.18"]
 
 [project.entry-points."pyxis_harness.plugins"]
 pyxis-harness-agent = "pyxis_harness_agent:AgentService"
+
+[project.urls]
+Homepage = "https://github.com/Onenightcarnival/pyharness"
+Repository = "https://github.com/Onenightcarnival/pyharness"
+Issues = "https://github.com/Onenightcarnival/pyharness/issues"
+Documentation = "https://github.com/Onenightcarnival/pyharness/tree/main/packages/agent"
 
 [build-system]
 requires = ["hatchling"]
@@ -18,3 +35,6 @@ packages = ["pyxis_harness_agent"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "AGENTS.md" = "pyxis_harness_agent/AGENTS.md"
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../LICENSE" = "LICENSE"
