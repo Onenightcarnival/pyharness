@@ -27,15 +27,25 @@
 
 ## 快速开始
 
-| 依赖 | 版本 |
+| 方式 | 依赖 |
 |---|---|
-| Python | 3.12（`.python-version`） |
-| uv | 最新 |
+| 发布版 | Python 3.12 及以上 |
+| 源码 | Python 3.12（`.python-version`）、uv |
+
+发布版：
+
+```bash
+pip install pyxis-harness   # 或 uv tool install pyxis-harness
+pyh init                    # profile: ~/.pyharness/profiles/web
+pyh run                     # supervisor + worker: http://127.0.0.1:8765
+```
+
+源码：
 
 ```bash
 uv sync
-uv run pyh init        # profile: ~/.pyharness/profiles/web
-uv run pyh run         # supervisor + worker: http://127.0.0.1:8765
+uv run pyh init
+uv run pyh run
 ```
 
 默认工作区：`~/Documents/pyharness/<profile>/default-workspace/`；每个会话可另选目录。

@@ -10,6 +10,7 @@ uv run pytest -q                # 全部测试
 uv run ruff format .            # 格式化
 uv run ruff check --fix .       # lint；规则见 pyproject.toml [tool.ruff]
 uv run python scripts/gen_packages.py   # 新增或改动插件包后：重新生成 skills 的包清单
+uv run python scripts/set_version.py X  # 发布前：全部发行包改为版本 X
 ```
 
 | 测试 | 条件 |
@@ -41,12 +42,40 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 | `docs/` | 设计文档 |
 | `manual/` | 用户手册；`images/`：界面的整页截图，1280×800，8 位调色板 PNG |
 | `.github/workflows/ci.yml` | CI，Python 3.12：全量测试；Postgres 测试 |
+| `.github/workflows/release.yml` | 发布：构建全部发行包，上传 PyPI 或 TestPyPI |
 
 ## 代码、文档、注释统一风格要求
 
 1. 声明式。
 2. 不自我解释，仅呈现设计结果。
 3. 通过结构让读者一眼看明白逻辑。
+
+## 发布
+
+| 项 | 内容 |
+|---|---|
+| 发行包 | `packages/*` 各一个；入口 `pyxis-harness`（`packages/meta`）依赖内核与全部 bundle |
+| 版本 | 全部发行包同一个版本，互相以 `==` 锁定；`scripts/set_version.py` 一次改完并更新 `uv.lock` |
+| 元数据 | PyPI 页面取各包的 `AGENTS.md`；`LICENSE` 经源码包进入 wheel |
+| 不变量 | `tests/test_release.py` |
+
+| 步骤 | 做法 |
+|---|---|
+| 1. 定版本 | `uv run python scripts/set_version.py <version>`，单独一个提交 |
+| 2. 演练 | Actions 页手动运行 `release`，`index` 选 `testpypi` |
+| 3. 发布 | 推送标签 `v<version>`：`release` 校验标签与版本一致，构建、检查、上传 PyPI |
+
+| 仓库 secret | 用途 |
+|---|---|
+| `PYPI_API_TOKEN` | 上传 PyPI |
+| `TEST_PYPI_API_TOKEN` | 上传 TestPyPI |
+
+本地构建与检查：
+
+```bash
+uv build --all-packages          # dist/：每个发行包一个源码包、一个 wheel
+uvx twine check --strict dist/*
+```
 
 ## 提交
 
