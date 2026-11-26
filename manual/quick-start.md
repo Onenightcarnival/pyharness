@@ -4,7 +4,8 @@
 |---|---|
 | 结果 | PyxisHarness 运行起来；agent 写出并安装一个插件：左侧边栏的「骰子」页面，加一个 `roll_dice` 工具 |
 | 用时 | 约 10 分钟 |
-| 前置 | Python 3.12、uv、一个模型 API（OpenAI、Anthropic、DeepSeek、Gemini、OpenRouter，或 OpenAI / Anthropic 兼容端点） |
+| 前置 | Python 3.12 及以上、一个模型 API（OpenAI、Anthropic、DeepSeek、Gemini、OpenRouter，或 OpenAI / Anthropic 兼容端点） |
+| 平台 | macOS、Linux、Windows |
 
 | 步骤 | 位置 |
 |---|---|
@@ -20,14 +21,18 @@
 ## 1. 安装与启动
 
 ```bash
-uv sync
-uv run pyh init
-uv run pyh run
+pip install pyxis-harness   # 或 uv tool install pyxis-harness
+pyh init
+pyh run
 ```
+
+从源码运行：见 [README](../README.md#快速开始)。
 
 浏览器打开 <http://127.0.0.1:8765>。
 
 ![首页](images/01-home.png)
+
+`~` 是用户目录；Windows 上为 `C:\Users\<用户名>`。
 
 | 目录 | 内容 |
 |---|---|
@@ -64,6 +69,8 @@ uv run pyh run
 |---|---|
 | 标准 | 日常工作：文件、shell、子 agent |
 | 创造 | 标准之上：检查 harness、编写与安装插件 |
+
+shell 在 macOS 与 Linux 上是 bash，在 Windows 上是 PowerShell。
 
 再把输入框左下角的权限从「工作区内修改」换成「自动审查」，在确认框里点「切换」：
 

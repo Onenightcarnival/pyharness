@@ -29,8 +29,13 @@
 
 | 方式 | 依赖 |
 |---|---|
-| 发布版 | Python 3.12 及以上 |
+| 发布版 | Python 3.12 及以上；PyPI 上为预发布版本，`pip` 与 `uv` 直接安装最新的一个 |
 | 源码 | Python 3.12（`.python-version`）、uv |
+
+| 平台 | agent 的 shell 工具 | 终端标签页 | `pyh restart` |
+|---|---|---|---|
+| macOS、Linux | `bash` | 有 | 有 |
+| Windows | `pwsh`：PowerShell 7，否则系统自带的 Windows PowerShell 5.1 | 无 | 无 |
 
 发布版：
 
@@ -55,7 +60,7 @@ uv run pyh run
 ```bash
 export DEEPSEEK_API_KEY=...         # 预置提供方 openai、anthropic、deepseek、google_genai、openrouter 的集成包随 pyxis-harness-llm 安装
 export PYH_MODEL=deepseek:deepseek-chat
-uv run pyh run
+pyh run
 ```
 
 `PYH_MODEL`：`init_chat_model` 可识别的任意 `provider:model`。
@@ -75,7 +80,7 @@ uv run pyh run
 | `pyh plugin install <dir>` / `uninstall <bundle>` | 安装 / 卸载 bundle；预检，失败即恢复 |
 | `pyh plugin enable <id>` / `disable <id>` | 启用 / 停用条目 |
 | `pyh plugin enable-bundle <bundle>` / `disable-bundle <bundle>` | 启用 / 停用 bundle |
-| `pyh restart` | 运行中的 supervisor 重启 worker（SIGHUP） |
+| `pyh restart` | 运行中的 supervisor 重启 worker（SIGHUP；POSIX） |
 
 ## 环境变量
 
