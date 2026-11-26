@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness"
-version = "0.1.0rc1"
+version = "0.1.0rc2"
 description = "PyxisHarness: an everything-is-a-plugin agent harness — the kernel with the base, toolkit, web and creator bundles"
 license = "MIT"
 requires-python = ">=3.12"
@@ -16,11 +16,11 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "pyxis-harness-core==0.1.0rc1",
-    "pyxis-harness-bundle-base==0.1.0rc1",
-    "pyxis-harness-bundle-toolkit==0.1.0rc1",
-    "pyxis-harness-bundle-web==0.1.0rc1",
-    "pyxis-harness-bundle-creator==0.1.0rc1",
+    "pyxis-harness-core==0.1.0rc2",
+    "pyxis-harness-bundle-base==0.1.0rc2",
+    "pyxis-harness-bundle-toolkit==0.1.0rc2",
+    "pyxis-harness-bundle-web==0.1.0rc2",
+    "pyxis-harness-bundle-creator==0.1.0rc2",
 ]
 
 [project.urls]

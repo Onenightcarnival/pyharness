@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-monorepo"
-version = "0.1.0rc1"
+version = "0.1.0rc2"
 description = "PyxisHarness workspace: kernel and kernel plugins"
 license = "MIT"
 requires-python = ">=3.12"

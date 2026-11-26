@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-http-client"
-version = "0.1.0rc1"
+version = "0.1.0rc2"
 description = "PyxisHarness plugin: HTTP API request tool (targets with injected auth, saved requests, history, event streams) with the http_* tools and the HTTP page"
 license = "MIT"
 requires-python = ">=3.12"
@@ -16,11 +16,11 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "pyxis-harness-core==0.1.0rc1",
-    "pyxis-harness-tools==0.1.0rc1",
-    "pyxis-harness-prompt==0.1.0rc1",
-    "pyxis-harness-http==0.1.0rc1",
-    "pyxis-harness-web-ui==0.1.0rc1",
+    "pyxis-harness-core==0.1.0rc2",
+    "pyxis-harness-tools==0.1.0rc2",
+    "pyxis-harness-prompt==0.1.0rc2",
+    "pyxis-harness-http==0.1.0rc2",
+    "pyxis-harness-web-ui==0.1.0rc2",
     "fastapi==0.162.0",
     "httpx==0.28.1",
     "langchain-core==1.7.1",
