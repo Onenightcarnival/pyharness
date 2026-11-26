@@ -26,7 +26,7 @@ window.__PyhModules__.load({
 });
 ```
 
-`require("pyxis-harness")`: `h(tag, attrs, ...children)` builds elements (`class`, `style` object, `onClick`-style handlers); `icon(name)` returns the SVG markup of a page icon (`box`, `folder`, `file`, `eye`, `plug`, `gear`, `terminal`, `refresh`, `copy`, `pencil`, `x-circle`, …; the sprite in the page lists them as `id="i-<name>"`); `esc(text)` escapes HTML; `toast(text)`; `api(path, init)` fetches `/api<path>` and resolves to the `Response`, `json(path, init)` to its parsed JSON body; both reject with an `Error` whose `message` is the response's `detail` and whose `status` is the HTTP status; `markdown(text)` renders Markdown to HTML; `locale` is `zh` or `en`.
+`require("pyxis-harness")`: `h(tag, attrs, ...children)` builds elements (`class`, `style` object, `onClick`-style handlers; children may be nodes, strings, or arrays of them nested to any depth; `null`, `undefined` and `false` are skipped); `icon(name)` returns the SVG markup of a page icon (`box`, `folder`, `file`, `eye`, `plug`, `gear`, `terminal`, `refresh`, `copy`, `pencil`, `x-circle`, …; the sprite in the page lists them as `id="i-<name>"`); `esc(text)` escapes HTML; `toast(text)`; `api(path, init)` fetches `/api<path>` and resolves to the `Response`, `json(path, init)` to its parsed JSON body; both reject with an `Error` whose `message` is the response's `detail` and whose `status` is the HTTP status; `markdown(text)` renders Markdown to HTML; `locale` is `zh` or `en`.
 
 `ctx` passed to `apply`:
 

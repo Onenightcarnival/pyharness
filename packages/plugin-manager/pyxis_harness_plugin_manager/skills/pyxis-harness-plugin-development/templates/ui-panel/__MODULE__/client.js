@@ -12,7 +12,7 @@ window.__PyhModules__.load({
             h("div", { class: "pageHead" }, h("div", {}, h("h1", { class: "pageTitle" }, "__TITLE__"), h("p", { class: "pageIntro" }, data.greeting))),
             h("div", { class: "group" },
               h("div", { class: "groupHead" }, h("h2", { class: "groupTitle" }, "Tool calls this generation"), h("span", { class: "groupMeta" }, String(rows.length))),
-              rows.length ? h("dl", { class: "kvTable" }, rows.map(([name, n]) => [h("dt", {}, name), h("dd", {}, String(n))])) : h("p", { class: "pageIntro" }, "No tool calls yet."))));
+              rows.length ? h("dl", { class: "kvTable" }, rows.flatMap(([name, n]) => [h("dt", {}, name), h("dd", {}, String(n))])) : h("p", { class: "pageIntro" }, "No tool calls yet."))));
         }
         // The panel: mount renders, re-renders when a run finishes, and returns the cleanup.
         ctx.slots.register({ slot: "main", key: "__BUNDLE__", label: "__TITLE__" }, (el) => {
