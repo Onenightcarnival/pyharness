@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import compileall
 import json
 import re
+import shutil
 
 import pytest
 
 from conftest import ROOT
 from pyxis_harness import Harness, Profile
-from pyxis_harness_plugin_manager import SKILLS_DIR, render_template, template_variants
+from pyxis_harness_plugin_manager import SKILLS_DIR, plugin as plugin_manager, render_template, template_variants
 from pyxis_harness_plugin_manager.reference import PACKAGES_MD, render_packages
 from testkit import scripted
 
@@ -65,6 +67,17 @@ def test_templates_render_without_tokens():
     assert 'id: "my-audit"' in render_template("My Audit", "ui-panel")["pyh_my_audit/client.js"]
     with pytest.raises(ValueError):
         render_template("x", "nope")
+
+
+def test_templates_render_in_an_installed_package(tmp_path, monkeypatch):
+    installed = tmp_path / "templates"
+    shutil.copytree(plugin_manager.TEMPLATES_DIR, installed)
+    assert compileall.compile_dir(installed, quiet=1)  # what pip does to an installed package
+    assert list(installed.rglob("__pycache__/*.pyc"))
+    monkeypatch.setattr(plugin_manager, "TEMPLATES_DIR", installed)
+    for variant in template_variants():
+        files = render_template("My Audit", variant)
+        assert files and not [name for name in files if "__pycache__" in name]
 
 
 async def test_creator_profile_mounts_skills_read_only(home):

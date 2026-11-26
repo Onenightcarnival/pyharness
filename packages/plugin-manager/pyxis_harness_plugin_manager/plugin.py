@@ -82,7 +82,7 @@ def _template_files(variant: str) -> Iterator[tuple[str, str]]:
     if not root.is_dir():
         raise ValueError(f"unknown template {variant!r}; variants: {', '.join(template_variants())}")
     for path in sorted(root.rglob("*")):
-        if path.is_file():
+        if path.is_file() and "__pycache__" not in path.parts:  # an installer compiles the templates' .py files
             yield path.relative_to(root).as_posix(), path.read_text(encoding="utf-8")
 
 
