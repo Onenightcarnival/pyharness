@@ -1783,6 +1783,7 @@ function newSession() {
   $('crumb').textContent = '';
   setPhase('hero'); refreshSessions(); updateComposer(); $('input').focus();
 }
+function setSession(s) { const prev = state.session; state.session = prev && s && prev.id === s.id ? { ...prev, ...s } : s; }
 async function openSession(id) {
   state.current = id; setView('chat');
   let s;
@@ -2246,7 +2247,7 @@ $('composer').addEventListener('submit', async (e) => {
   if (!state.current) {
     let s;
     try { s = await json('/sessions', { method: 'POST', body: JSON.stringify({ title: (text || attachments[0].name).slice(0, 60), model: state.sessionModel, workspace: state.sessionWorkspace, mode: state.sessionMode, preset: state.sessionPreset }) }); } catch (err) { toast(err.message); return; }
-    state.current = s.id; state.session = s; log().innerHTML = ''; curTurn = null; renderSessionChips();
+    state.current = s.id; setSession(s); log().innerHTML = ''; curTurn = null; renderSessionChips();
     $('crumb').textContent = s.title || T.untitled;
     setPhase('active'); setConvView('chat'); renderDock(); renderRightbar(); renderStats(); emitPlugin('session', s); refreshSessions();
   }
@@ -2497,7 +2498,7 @@ async function toggleModelMenu() {
 }
 async function selectModel(spec) {
   if (state.current) {
-    try { const s = await json(`/sessions/${state.current}/model`, { method: 'PUT', body: JSON.stringify({ model: spec }) }); state.sessionModel = s.model || null; }
+    try { const s = await json(`/sessions/${state.current}/model`, { method: 'PUT', body: JSON.stringify({ model: spec }) }); setSession(s); state.sessionModel = s.model || null; renderStats(); }
     catch (err) { toast(err.message); return; }
   } else state.sessionModel = spec;
   renderModelChip(); toast(T.modelSelected(specLabel(spec).name));
@@ -2544,7 +2545,7 @@ async function openModeMenu(anchor) {
   openChipMenu(anchor, `<div class="menuGroup">${esc(T.mode_)}</div>` + (state.agent?.modes || []).map((m) => rowHtml(m.id, modeLabel(m.id), T.modeDesc[m.id] || m.description, m.id === cur, '', MODE_ICON[m.id])).join(''), async (id) => {
     closeChipMenu();
     if (MODE_CONFIRM[id] && id !== cur && !(await confirmDialog(T[MODE_CONFIRM[id]], T.switchLabel, modeLabel(id)))) return;
-    if (state.current) { try { state.session = await json(`/sessions/${state.current}/mode`, { method: 'PUT', body: JSON.stringify({ mode: id }) }); } catch (err) { toast(err.message); return; } }
+    if (state.current) { try { setSession(await json(`/sessions/${state.current}/mode`, { method: 'PUT', body: JSON.stringify({ mode: id }) })); } catch (err) { toast(err.message); return; } }
     else state.sessionMode = id;
     renderSessionChips();
   });
@@ -2554,7 +2555,7 @@ async function openPresetMenu(anchor) {
   const cur = currentPreset();
   openChipMenu(anchor, `<div class="menuGroup">${esc(T.preset_)}</div>` + (state.agent?.presets || []).map((p) => rowHtml(p.id, presetLabel(p.id), T.presetDesc[p.id] || p.description, p.id === cur, p.default ? `<span class="sub">${esc(T.defaultTag)}</span>` : '')).join(''), async (id) => {
     closeChipMenu();
-    if (state.current) { try { state.session = await json(`/sessions/${state.current}/preset`, { method: 'PUT', body: JSON.stringify({ preset: id }) }); } catch (err) { toast(err.message); return; } }
+    if (state.current) { try { setSession(await json(`/sessions/${state.current}/preset`, { method: 'PUT', body: JSON.stringify({ preset: id }) })); } catch (err) { toast(err.message); return; } }
     else state.sessionPreset = id;
     renderSessionChips();
   });

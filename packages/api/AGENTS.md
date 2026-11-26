@@ -81,6 +81,7 @@
 
 | 项 | 契约 |
 |---|---|
+| 单个会话的应答 | 会话记录与 `context_window`：会话模型的上下文窗口（`compaction` 采用的值；无该服务时为模型声明的值） |
 | `/sessions/{id}/messages` 的 `images` | data URL |
 | `/sessions/{id}/messages` 的 `@path` | 引用被展开（`references.py`） |
 | `/sessions/{id}/answers` | 回答待处理的 `ask_user_question` |

@@ -63,7 +63,19 @@ async def test_automatic_and_manual_compaction(profile):
     async with Harness(profile, patch=patch) as h:
         http = h.get("http")
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=http.app), base_url="http://t") as client:
-            sid = (await client.post("/api/sessions", json={})).json()["id"]
+            created = (await client.post("/api/sessions", json={})).json()
+            sid = created["id"]
+            assert created["context_window"] == 600  # no declared window: the one compaction uses
+            assert (await client.get(f"/api/sessions/{sid}")).json()["context_window"] == 600
+            dispose = h.get("llm").publish(
+                {"wide": {"type": "scripted", "models": [{"id": "w1", "context_window": 9000}]}}
+            )
+            switched = (await client.put(f"/api/sessions/{sid}/model", json={"model": "wide:w1"})).json()
+            assert switched["context_window"] == 9000  # the window the model declares
+            assert (await client.put(f"/api/sessions/{sid}/model", json={"model": None})).json()[
+                "context_window"
+            ] == 600
+            dispose()
             first = sse_events((await client.post(f"/api/sessions/{sid}/messages", json={"content": LONG})).text)
             assert [e["type"] for e in first] == ["token", "done"]
             # Second turn: ~800 estimated tokens ≥ 480 → the head (first exchange) becomes a checkpoint.

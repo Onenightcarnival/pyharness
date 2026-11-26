@@ -47,6 +47,12 @@ def build_sessions_router(ctx: Any) -> APIRouter:
             raise HTTPException(404, f"no session {session_id}")
         return session
 
+    def described(record: dict[str, Any]) -> dict[str, Any]:
+        compaction = ctx.get("compaction", None)
+        spec = record.get("model")
+        window = compaction.window(spec) if compaction is not None else ctx.llm.context_window(spec)
+        return {**record, "context_window": window}
+
     @router.get("/sessions")
     async def list_sessions() -> list[dict[str, Any]]:
         return await agents.list_sessions()
@@ -55,25 +61,26 @@ def build_sessions_router(ctx: Any) -> APIRouter:
     async def create_session(body: NewSession | None = None) -> dict[str, Any]:
         body = body or NewSession()
         try:
-            return await agents.create_session(
+            record = await agents.create_session(
                 title=body.title, model=body.model, workspace=body.workspace, mode=body.mode, preset=body.preset
             )
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
+        return described(record)
 
     @router.put("/sessions/{session_id}")
     async def rename_session(session_id: str, body: SessionTitle) -> dict[str, Any]:
         record = await agents.set_title(session_id, body.title)
         if record is None:
             raise HTTPException(404, f"no session {session_id}")
-        return record
+        return described(record)
 
     @router.put("/sessions/{session_id}/model")
     async def set_session_model(session_id: str, body: SessionModel) -> dict[str, Any]:
         record = await agents.set_model(session_id, body.model)
         if record is None:
             raise HTTPException(404, f"no session {session_id}")
-        return record
+        return described(record)
 
     @router.put("/sessions/{session_id}/mode")
     async def set_session_mode(session_id: str, body: SessionMode) -> dict[str, Any]:
@@ -83,7 +90,7 @@ def build_sessions_router(ctx: Any) -> APIRouter:
             raise HTTPException(422, str(exc)) from None
         if record is None:
             raise HTTPException(404, f"no session {session_id}")
-        return record
+        return described(record)
 
     @router.put("/sessions/{session_id}/preset")
     async def set_session_preset(session_id: str, body: SessionPreset) -> dict[str, Any]:
@@ -93,15 +100,14 @@ def build_sessions_router(ctx: Any) -> APIRouter:
             raise HTTPException(422, str(exc)) from None
         if record is None:
             raise HTTPException(404, f"no session {session_id}")
-        return record
+        return described(record)
 
     @router.get("/sessions/{session_id}")
     async def get_session(session_id: str) -> dict[str, Any]:
         session = await require(session_id)
         changes = ctx.get("workspaceChanges", None)
-        llm = ctx.get("llm", None)
         return {
-            **session,
+            **described(session),
             "busy": agents.busy(session_id),
             "messages": await agents.messages(session_id),
             "pending": await agents.pending(session_id),
@@ -109,9 +115,6 @@ def build_sessions_router(ctx: Any) -> APIRouter:
             "failure": await agents.failure(session_id),
             "changes": await changes.summaries(session_id) if changes is not None else [],
             "turns": await agents.turns(session_id),
-            "context_window": llm.context_window(session.get("model"))
-            if llm is not None and hasattr(llm, "context_window")
-            else None,
         }
 
     @router.get("/sessions/{session_id}/turns")
