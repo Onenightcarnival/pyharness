@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -1938,11 +1938,29 @@ name = "pyxis-harness-bundle-toolkit"
 version = "0.1.0rc2"
 source = { editable = "packages/bundle-toolkit" }
 dependencies = [
+    { name = "pyxis-harness-config-center" },
     { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-gateway" },
+    { name = "pyxis-harness-http-client" },
+    { name = "pyxis-harness-memory" },
+    { name = "pyxis-harness-otel" },
+    { name = "pyxis-harness-rdb" },
+    { name = "pyxis-harness-s3" },
+    { name = "pyxis-harness-subscriptions" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pyxis-harness-core", editable = "packages/core" }]
+requires-dist = [
+    { name = "pyxis-harness-config-center", editable = "packages/config-center" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-gateway", editable = "packages/gateway" },
+    { name = "pyxis-harness-http-client", editable = "packages/http-client" },
+    { name = "pyxis-harness-memory", editable = "packages/memory" },
+    { name = "pyxis-harness-otel", editable = "packages/otel" },
+    { name = "pyxis-harness-rdb", editable = "packages/rdb" },
+    { name = "pyxis-harness-s3", editable = "packages/s3" },
+    { name = "pyxis-harness-subscriptions", editable = "packages/subscriptions" },
+]
 
 [[package]]
 name = "pyxis-harness-bundle-web"
@@ -2190,6 +2208,7 @@ name = "pyxis-harness-mcp"
 version = "0.1.0rc2"
 source = { editable = "packages/mcp" }
 dependencies = [
+    { name = "httpx" },
     { name = "langchain-core" },
     { name = "langchain-mcp-adapters" },
     { name = "pyxis-harness-core" },
@@ -2198,6 +2217,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = "==0.28.1" },
     { name = "langchain-core", specifier = "==1.7.1" },
     { name = "langchain-mcp-adapters", specifier = "==0.3.2" },
     { name = "pyxis-harness-core", editable = "packages/core" },
