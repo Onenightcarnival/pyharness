@@ -36,6 +36,14 @@ MCP 服务器的工具：启动时注册进 `ctx.tools`。
 | 工具执行 | 经 `tools/execute` 管线；权限模式与审批适用 |
 | stdio 服务器，命令为裸 `bun` / `bunx` | 配置中心安装的 bun 运行时（`<profile data>/toolkit/bun/`）存在时经它运行；`managed_bun` 查找 |
 
+## HTTP 客户端
+
+| 项 | 契约 |
+|---|---|
+| 适用 | `streamable_http`、`sse` 连接：连接的 `httpx_client_factory` 为 `http_client` |
+| `http_client(headers, timeout, auth)` | `httpx.AsyncClient`，`trust_env=False`：环境变量与系统的代理设置不生效 |
+| 默认超时 | MCP 的默认值：30 秒；读取流 300 秒 |
+
 ## 凭据
 
 `env` 与 `headers` 中的机密不写入配置文件。

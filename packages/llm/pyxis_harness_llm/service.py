@@ -27,6 +27,7 @@ from .config import (
     split_spec,
 )
 from .failures import RETRY_CHOICES
+from .transport import client_options, replace_clients
 
 PROMPTS = package_prompts(__file__)
 PROBE_PROMPT: str = PROMPTS["service"]["PROBE_PROMPT"]
@@ -266,9 +267,12 @@ class LLMService(Service):
                 f"(pip install {info['package'].replace('_', '-')})"
             )
         try:
-            return init_chat_model(model, model_provider=kind, **translate_options(kind, options))
+            translated = translate_options(kind, options)
+            built = init_chat_model(model, model_provider=kind, **{**translated, **client_options(kind, translated)})
+            replace_clients(kind, built, translated)
         except Exception as exc:
             raise LLMConfigError(f"cannot initialise model {spec!r}: {exc}") from exc
+        return built
 
     def resolve(self, spec: str | None = None, **overrides: Any) -> BaseChatModel:
         """Chat model for ``spec`` (``route:model``); ``None`` selects ``config.default``. Instances are cached."""

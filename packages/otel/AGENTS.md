@@ -16,7 +16,7 @@ agent 回合的 OpenTelemetry 导出（GenAI 语义约定），目标为 OTLP/HT
 | `__init__.py` | 导出 |
 | `service.py` | `OtelService`：配置、回合结束钩子、可观测的状态 / 设置 / 测试路由 |
 | `config.py` | 插件配置 |
-| `pipeline.py` | OTLP 端点解析与导出管线：tracer provider、批处理器、计数导出器 |
+| `pipeline.py` | OTLP 端点解析与导出管线：tracer provider、批处理器、计数导出器；导出用的 `requests` 会话 `trust_env=False`，环境变量与系统的代理设置不生效 |
 | `spans.py` | 一个回合的 GenAI span 树 |
 | `client.js` | 浏览器模块 |
 

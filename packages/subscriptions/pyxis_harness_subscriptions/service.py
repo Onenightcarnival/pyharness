@@ -53,7 +53,7 @@ class SubscriptionsService(Service):
     def __init__(self, ctx: Any, config: Config) -> None:
         super().__init__(ctx, config)
         self.providers: dict[str, Provider] = {}
-        self.http = httpx.AsyncClient(follow_redirects=False)
+        self.http = httpx.AsyncClient(follow_redirects=False, trust_env=False)
         self._tool_disposers: dict[str, Any] = {}
         self._route_disposer: Any = None
         self.media: MediaStore | None = None

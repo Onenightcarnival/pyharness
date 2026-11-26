@@ -305,7 +305,7 @@ class OtelService(Service):
     ) -> dict[str, bool]:
         base = re.sub(r"/api/public/otel.*$", "", pipeline.endpoint)
         found = dict.fromkeys(trace_ids, False)
-        async with httpx.AsyncClient(headers=pipeline.headers, timeout=8.0) as client:
+        async with httpx.AsyncClient(headers=pipeline.headers, timeout=8.0, trust_env=False) as client:
             for _ in range(attempts):
                 for tid in [t for t, ok in found.items() if not ok]:
                     try:

@@ -10,7 +10,18 @@ import httpx
 import yaml
 
 from pyxis_harness import Harness, Profile
-from pyxis_harness_mcp import MASK, Config, MCPService, ServerConfig, connection_of, expand, redact, references, slug
+from pyxis_harness_mcp import (
+    MASK,
+    Config,
+    MCPService,
+    ServerConfig,
+    connection_of,
+    expand,
+    http_client,
+    redact,
+    references,
+    slug,
+)
 
 SERVER = Path(__file__).with_name("testkit") / "mcp_server.py"
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
@@ -30,7 +41,11 @@ def test_connection_and_slug():
         "args": ["s.py"],
         "env": {"A": "1"},
     }
-    assert connection_of(ServerConfig(url="http://x/mcp")) == {"transport": "streamable_http", "url": "http://x/mcp"}
+    assert connection_of(ServerConfig(url="http://x/mcp")) == {
+        "transport": "streamable_http",
+        "url": "http://x/mcp",
+        "httpx_client_factory": http_client,
+    }
     assert connection_of(ServerConfig(url="http://x/sse", transport="sse", headers={"Authorization": "t"}))[
         "headers"
     ] == {"Authorization": "t"}

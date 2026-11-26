@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -2342,6 +2342,7 @@ dependencies = [
     { name = "pyxis-harness-core" },
     { name = "pyxis-harness-http" },
     { name = "pyxis-harness-web-ui" },
+    { name = "requests" },
 ]
 
 [package.metadata]
@@ -2355,6 +2356,7 @@ requires-dist = [
     { name = "pyxis-harness-core", editable = "packages/core" },
     { name = "pyxis-harness-http", editable = "packages/http" },
     { name = "pyxis-harness-web-ui", editable = "packages/web-ui" },
+    { name = "requests", specifier = "==2.34.2" },
 ]
 
 [[package]]

@@ -64,7 +64,11 @@ class WebToolsService(Service):
 
     def client(self, timeout: float) -> httpx.AsyncClient:
         return httpx.AsyncClient(
-            timeout=timeout, follow_redirects=True, headers={"user-agent": USER_AGENT}, transport=self.transport
+            timeout=timeout,
+            follow_redirects=True,
+            headers={"user-agent": USER_AGENT},
+            transport=self.transport,
+            trust_env=False,
         )
 
     # ------------------------------------------------------------------ search

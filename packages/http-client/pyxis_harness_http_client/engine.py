@@ -367,7 +367,11 @@ class HttpEngine:
         self.store = store
         self.history = history
         self.client = httpx.AsyncClient(
-            follow_redirects=False, timeout=None, transport=transport, headers={"user-agent": USER_AGENT}
+            follow_redirects=False,
+            timeout=None,
+            transport=transport,
+            headers={"user-agent": USER_AGENT},
+            trust_env=False,
         )
 
     async def aclose(self) -> None:

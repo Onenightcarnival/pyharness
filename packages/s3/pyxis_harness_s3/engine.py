@@ -76,6 +76,7 @@ def make_client(profile: dict[str, Any], secret: str) -> Any:
         "retries": {"max_attempts": 3},
         "connect_timeout": 10,
         "read_timeout": 60,
+        "proxies": {},  # none: the proxy settings of the environment do not apply
     }
     try:
         cfg = BotoConfig(

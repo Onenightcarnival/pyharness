@@ -17,6 +17,7 @@
 | `catalog.py` | provider 目录：线路协议、设置页预设、各 LangChain provider 类型的事实 |
 | `config.toml` | provider 目录与失败码集合；`catalog.py`、`failures.py` 读取 |
 | `failures.py` | 模型调用的失败码 |
+| `transport.py` | 各 provider 的 HTTP 客户端：`client_options`、`replace_clients` |
 | `prompts.toml` | 模型可见文本 |
 
 ## 路由
@@ -62,6 +63,23 @@
 | `probe(...)` | 一次简短补全 |
 | `list_models(...)` | 端点提供的模型 id（OpenAI、Anthropic、Gemini、Ollama 的列表接口） |
 | `retry_policy(spec)` | spec 所属路由的 `RetryPolicy`，否则全局策略，否则 `None` |
+
+## HTTP 客户端（`transport.py`）
+
+模型的 HTTP 客户端一律 `trust_env=False`：环境变量与系统的代理设置不生效。
+
+| provider | 做法 |
+|---|---|
+| `openai`、`deepseek` | 构造参数 `http_client`、`http_async_client`：SDK 的默认客户端 |
+| `google_genai` | 构造参数 `client_args`：`trust_env` 与路由自己的 `client_args` 合并 |
+| `anthropic` | 构造后替换模型的 SDK 客户端；构造函数不接受 HTTP 客户端 |
+| `openrouter` | 构造后替换 SDK 配置里的 HTTP 客户端，保留原有请求头 |
+| 插件注册的 factory | 由 factory 自己负责 |
+
+| 路由带有 | 结果 |
+|---|---|
+| `openai_proxy`、`anthropic_proxy`、`http_client`、`http_async_client`、`client` 之一 | 保留 provider 自己构造的客户端：路由自行指定代理 |
+| `google_genai` 的 `client_args: {proxy: ...}` | 代理生效 |
 
 ## 凭据
 

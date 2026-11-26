@@ -17,7 +17,7 @@ S3 兼容对象存储浏览器（MinIO / OSS / COS / R2 / AWS）。
 | `__init__.py` | 导出 |
 | `service.py` | `s3` 服务：profile、缓存的 boto3 client、`s3_*` 工具注册、提示词段 |
 | `store.py` | 桶 profile 与 agent 访问设置 |
-| `engine.py` | boto3 client 之上的 S3 操作；在此边界上 key 相对于 profile 前缀 |
+| `engine.py` | boto3 client 之上的 S3 操作；在此边界上 key 相对于 profile 前缀；client 的 `proxies` 为空，环境变量的代理设置不生效 |
 | `tools.py` | `s3_*` LangChain 工具 |
 | `routes.py` | S3 页的 FastAPI 路由 |
 | `config.toml` | 包数据；`pyxis_harness.package_toml(__file__)` 加载 |

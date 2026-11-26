@@ -48,7 +48,7 @@ class ImageResolver:
             raise invalid("image URLs must use http or https")
         try:
             async with httpx.AsyncClient(
-                timeout=FETCH_TIMEOUT_S, follow_redirects=True, transport=self.transport
+                timeout=FETCH_TIMEOUT_S, follow_redirects=True, transport=self.transport, trust_env=False
             ) as client:
                 response = await client.get(url)
         except httpx.HTTPError as exc:

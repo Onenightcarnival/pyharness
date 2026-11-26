@@ -150,7 +150,7 @@ class BunManager:
 
     def fetch(self, url: str, on_progress: Any | None = None) -> bytes:
         buf = io.BytesIO()
-        with httpx.stream("GET", url, follow_redirects=True, timeout=DOWNLOAD_TIMEOUT) as res:
+        with httpx.stream("GET", url, follow_redirects=True, timeout=DOWNLOAD_TIMEOUT, trust_env=False) as res:
             if res.status_code != 200:
                 raise RuntimeError(f"bun download failed: HTTP {res.status_code}")
             total = int(res.headers.get("content-length") or 0)

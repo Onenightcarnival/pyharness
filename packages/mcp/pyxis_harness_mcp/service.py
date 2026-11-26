@@ -8,6 +8,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, ClassVar
 
+import httpx
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
 from pyxis_harness import Service
@@ -34,6 +35,21 @@ def managed_bun(data_dir: str | os.PathLike[str] | None) -> tuple[Path, dict[str
     return exe, {"BUN_INSTALL": str(root), "BUN_INSTALL_CACHE_DIR": str(root / "cache"), "NO_UPDATE_NOTIFIER": "1"}
 
 
+def http_client(
+    headers: dict[str, str] | None = None, timeout: httpx.Timeout | None = None, auth: httpx.Auth | None = None
+) -> httpx.AsyncClient:
+    """
+    HTTP client of an MCP connection: MCP's own defaults (30 s; 300 s to read a stream), and ``trust_env=False``
+    so the proxy settings of the environment and of the system do not apply.
+    """
+    return httpx.AsyncClient(
+        headers=headers,
+        timeout=timeout if timeout is not None else httpx.Timeout(30.0, read=300.0),
+        auth=auth,
+        trust_env=False,
+    )
+
+
 def connection_of(cfg: ServerConfig, data_dir: str | os.PathLike[str] | None = None) -> dict[str, Any]:
     """
     The ``langchain-mcp-adapters`` connection for a server configuration. A bare ``bun`` / ``bunx`` command runs
@@ -58,7 +74,7 @@ def connection_of(cfg: ServerConfig, data_dir: str | os.PathLike[str] | None = N
         return conn
     if not cfg.url:
         raise ValueError("a server needs `command` (stdio) or `url` (streamable_http / sse)")
-    conn = {"transport": cfg.transport or "streamable_http", "url": cfg.url}
+    conn = {"transport": cfg.transport or "streamable_http", "url": cfg.url, "httpx_client_factory": http_client}
     if cfg.headers:
         conn["headers"] = dict(cfg.headers)
     return conn

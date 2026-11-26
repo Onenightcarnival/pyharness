@@ -8,6 +8,7 @@ import time
 from collections import deque
 from typing import Any
 
+import requests
 from opentelemetry.exporter.otlp.proto.http import Compression
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import Resource
@@ -97,7 +98,10 @@ class Pipeline:
         self.langfuse = is_langfuse_endpoint(self.endpoint)
         self.headers = basic_auth(config.public_key, secret)
         if exporter is None:
+            session = requests.Session()
+            session.trust_env = False  # the proxy settings of the environment and of the system do not apply
             exporter = OTLPSpanExporter(
+                session=session,
                 endpoint=self.trace_endpoint,
                 headers=self.headers,
                 timeout=max(1, config.export_timeout_ms // 1000),
