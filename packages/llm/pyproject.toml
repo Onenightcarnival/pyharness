@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-llm"
-version = "0.1.1.dev1"
+version = "0.1.1.dev2"
 description = "PyxisHarness plugin: chat-model provider registry (ctx.llm)"
 license = "MIT"
 requires-python = ">=3.12"
@@ -16,7 +16,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "pyxis-harness-core==0.1.1.dev1",
+    "pyxis-harness-core==0.1.1.dev2",
     "langchain==1.4.7",
     "langchain-core==1.7.1",
     "langchain-openai==1.7.3",

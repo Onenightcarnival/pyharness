@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-bundle-web"
-version = "0.1.1.dev1"
+version = "0.1.1.dev2"
 description = "PyxisHarness bundle: web_search (DeepSeek native search) and web_fetch tools; optional"
 license = "MIT"
 requires-python = ">=3.12"
@@ -15,7 +15,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dependencies = ["pyxis-harness-core==0.1.1.dev1", "pyxis-harness-web-tools==0.1.1.dev1"]
+dependencies = ["pyxis-harness-core==0.1.1.dev2", "pyxis-harness-web-tools==0.1.1.dev2"]
 
 [project.entry-points."pyxis_harness.bundles"]
 web = "pyxis_harness_bundle_web:BUNDLE"
