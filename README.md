@@ -105,7 +105,8 @@ pyh run
 | [docs/self-extension.md](docs/self-extension.md) | agent 自扩展流程、工具、审批边界 |
 | [docs/web-ui.md](docs/web-ui.md) | Web 界面、HTTP API |
 | [docs/dsh-comparison.md](docs/dsh-comparison.md) | 与 dsh 的对照 |
-| [AGENTS.md](AGENTS.md) | 开发环境、目录、测试、统一风格要求 |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 开发环境、目录、测试、发布、提交 |
+| [AGENTS.md](AGENTS.md) | 代码、文档、注释的统一风格要求 |
 
 ## 许可证
 
