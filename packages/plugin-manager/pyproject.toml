@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-plugin-manager"
-version = "0.1.0rc2"
+version = "0.1.0rc3"
 description = "PyxisHarness plugins: plugin_manager tool, plugin-authoring skills, dev-context prompt section"
 license = "MIT"
 requires-python = ">=3.12"
@@ -15,7 +15,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dependencies = ["pyxis-harness-core==0.1.0rc2", "pyxis-harness-tools==0.1.0rc2", "langchain==1.4.7"]
+dependencies = ["pyxis-harness-core==0.1.0rc3", "pyxis-harness-tools==0.1.0rc3", "langchain==1.4.7"]
 
 [project.entry-points."pyxis_harness.plugins"]
 pyxis-harness-plugin-manager = "pyxis_harness_plugin_manager"
