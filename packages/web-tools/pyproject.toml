@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-web-tools"
-version = "0.1.0rc4"
+version = "0.1.1.dev1"
 description = "PyxisHarness plugin: web_search through DeepSeek native search and web_fetch"
 license = "MIT"
 requires-python = ">=3.12"
@@ -15,7 +15,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dependencies = ["pyxis-harness-core==0.1.0rc4", "pyxis-harness-tools==0.1.0rc4", "httpx==0.28.1", "langchain-core==1.7.1"]
+dependencies = ["pyxis-harness-core==0.1.1.dev1", "pyxis-harness-tools==0.1.1.dev1", "httpx==0.28.1", "langchain-core==1.7.1"]
 
 [project.entry-points."pyxis_harness.plugins"]
 pyxis-harness-web-tools = "pyxis_harness_web_tools:WebToolsService"

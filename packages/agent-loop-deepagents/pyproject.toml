@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-agent-loop-deepagents"
-version = "0.1.0rc4"
+version = "0.1.1.dev1"
 description = "PyxisHarness plugin: deepagents agent loop (ctx.agentLoop)"
 license = "MIT"
 requires-python = ">=3.12"
@@ -16,9 +16,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "pyxis-harness-core==0.1.0rc4",
-    "pyxis-harness-tools==0.1.0rc4",
-    "pyxis-harness-llm==0.1.0rc4",
+    "pyxis-harness-core==0.1.1.dev1",
+    "pyxis-harness-tools==0.1.1.dev1",
+    "pyxis-harness-llm==0.1.1.dev1",
     "deepagents==0.7.32",
     "langchain==1.4.7",
     "langgraph==1.2.18",

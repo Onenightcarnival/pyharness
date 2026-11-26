@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-auto-review"
-version = "0.1.0rc4"
+version = "0.1.1.dev1"
 description = "PyxisHarness plugin: Auto review permission mode — a model reviews each gated tool call before it runs"
 license = "MIT"
 requires-python = ">=3.12"
@@ -16,9 +16,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "pyxis-harness-core==0.1.0rc4",
-    "pyxis-harness-agent-loop-deepagents==0.1.0rc4",
-    "pyxis-harness-llm==0.1.0rc4",
+    "pyxis-harness-core==0.1.1.dev1",
+    "pyxis-harness-agent-loop-deepagents==0.1.1.dev1",
+    "pyxis-harness-llm==0.1.1.dev1",
     "langchain==1.4.7",
     "langchain-core==1.7.1",
     "langgraph==1.2.18",

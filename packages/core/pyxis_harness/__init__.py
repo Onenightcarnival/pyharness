@@ -11,7 +11,7 @@ from .plugin import BUNDLE_GROUP, PLUGIN_GROUP, PluginDef, PluginError, define_p
 from .profile import Profile
 from .resources import package_prompts, package_toml
 
-__version__ = "0.1.0rc4"
+__version__ = "0.1.1.dev1"
 
 __all__ = [
     "BOOT_FAILURE_EXIT_CODE",
