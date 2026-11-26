@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import sys
 from textwrap import dedent
 
 import pytest
@@ -165,3 +166,8 @@ async def test_install_package_rejects_a_bad_requirement(profile):
     result = await manage.install_package(profile, "not a requirement")
     assert result["application"] == "rejected" and result["stage"] == "install"
     assert "not a package requirement" in result["error"]
+
+
+async def test_installer_output_is_plain_text():
+    code, out = await manage._run([sys.executable, "-c", "import os; print(os.environ['NO_COLOR'])"])
+    assert (code, out.strip()) == (0, "1")
