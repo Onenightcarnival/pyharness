@@ -11,7 +11,7 @@ import pytest
 import yaml
 
 from pyxis_harness import Harness, Profile
-from pyxis_harness_workspace import WorkspaceError, registry
+from pyxis_harness_workspace import WorkspaceError, picker, registry
 from testkit import scripted
 
 
@@ -254,17 +254,62 @@ async def test_workspace_and_session_rename(profile, tmp_path):
         assert (await c.put("/api/sessions/nope", json={"title": "x"})).status_code == 404
 
 
-def test_windows_picker_opens_in_front_and_reports_utf8(monkeypatch):
-    monkeypatch.setattr(registry.sys, "platform", "win32")
-    monkeypatch.setattr(registry.shutil, "which", lambda name: f"C:/bin/{name}.exe" if name == "powershell" else None)
-    picker = registry.Workspaces.__new__(registry.Workspaces)
-    picker.config = registry.Config()
-    command = picker._native_command("Choose")
-    assert command[:6] == ["C:/bin/powershell.exe", "-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-Command"]
-    script = command[6]
+def test_windows_dialogs_powershell_then_tk(monkeypatch):
+    monkeypatch.setattr(picker.sys, "platform", "win32")
+    monkeypatch.setattr(picker.shutil, "which", lambda name: f"C:/bin/{name}.exe" if name == "powershell" else None)
+    powershell, tk = picker.dialogs("Choose 'it'")
+    assert (powershell.name, tk.name) == ("powershell", "tk")
+    assert powershell.command[:6] == [
+        "C:/bin/powershell.exe",
+        "-NoProfile",
+        "-STA",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+    ]
+    script = powershell.command[6]
+    assert script.startswith(
+        "$ErrorActionPreference = 'Stop';"
+    )  # an error exits non-zero instead of passing as a cancel
     assert "TopMost = $true" in script and "$d.ShowDialog($owner)" in script
-    assert "UTF8Encoding $false" in script and "$d.Description = 'Choose'" in script
-    assert picker.picker() == "native"
-    monkeypatch.setattr(registry.shutil, "which", lambda name: None)
-    assert picker._native_command("Choose") is None and picker.picker() == "browse"
-    assert ({} if sys.platform != "win32" else registry.PICKER_PROCESS) == registry.PICKER_PROCESS
+    assert "UTF8Encoding $false" in script and "$d.Description = 'Choose it'" in script
+    assert tk.command[:2] == [sys.executable, "-c"] and tk.command[3] == "Choose it"
+    compile(tk.command[2], "<tk dialog>", "exec")
+    # Without PowerShell the Tk dialog remains.
+    monkeypatch.setattr(picker.shutil, "which", lambda name: None)
+    assert [d.name for d in picker.dialogs("Choose")] == ["tk"]
+
+
+def test_dialog_outcomes_tell_a_cancel_from_a_failure():
+    plain = picker.Dialog("powershell", ["x"])
+    assert plain.outcome(0, "C:\\work\r\n", "") == ("chosen", "C:\\work")
+    assert plain.outcome(0, "\ufeff/tmp/work/\n", "") == ("chosen", "/tmp/work")
+    assert plain.outcome(0, "\n", "") == ("cancelled", "")
+    assert plain.outcome(1, "", "Add-Type : Cannot add type.\n  + CategoryInfo : blocked\n") == (
+        "failed",
+        "+ CategoryInfo : blocked",
+    )
+    assert plain.outcome(3, "", "") == ("failed", "exit code 3")
+    osascript = picker.Dialog("osascript", ["x"], cancel_codes=(1,), cancel_text="-128")
+    assert osascript.outcome(1, "", "execution error: User canceled. (-128)") == ("cancelled", "")
+    assert osascript.outcome(1, "", "execution error: No user interaction allowed. (-1713)")[0] == "failed"
+    zenity = picker.Dialog("zenity", ["x"], cancel_codes=(1,))
+    assert zenity.outcome(1, "", "") == ("cancelled", "") and zenity.outcome(5, "", "")[0] == "failed"
+
+
+async def test_a_failed_dialog_gives_way_to_the_next_and_then_to_an_error(profile, tmp_path, monkeypatch):
+    chosen = tmp_path / "picked"
+    chosen.mkdir()
+    broken = picker.Dialog("first", [sys.executable, "-c", "import sys; sys.exit('blocked by policy')"])
+    missing = picker.Dialog("absent", [str(tmp_path / "no-such-program")])
+    working = picker.Dialog("second", [sys.executable, "-c", f"print({str(chosen)!r})"])
+    async with Harness(profile, patch=patch([])) as h:
+        ws = h.get("workspace")
+        monkeypatch.setattr(registry, "dialogs", lambda prompt, command=None: [broken, missing, working])
+        assert ws.picker() == "native" and await ws.pick() == str(chosen.resolve())
+        monkeypatch.setattr(registry, "dialogs", lambda prompt, command=None: [broken, missing])
+        with pytest.raises(WorkspaceError, match=r"the folder dialog failed \(first: blocked by policy; absent: "):
+            await ws.pick()
+        async with client(h) as c:  # the page shows the reason and opens its own directory browser
+            response = await c.post("/api/workspaces/pick", json={})
+            assert response.status_code == 422 and "blocked by policy" in response.json()["detail"]

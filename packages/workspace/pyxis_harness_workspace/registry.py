@@ -2,26 +2,18 @@ from __future__ import annotations
 
 import asyncio
 import os
-import shutil
 import subprocess
-import sys
 import time
 from pathlib import Path
-from textwrap import dedent
 from typing import Any
 
 from deepagents.backends import FilesystemBackend, LocalShellBackend
 
 from .config import Config
+from .picker import dialogs, run as run_dialog
 from .workspace import Workspace, WorkspaceError
 
 NAMESPACE = ("pyharness", "workspaces")
-# How the picker's process runs. Windows: its output is UTF-8, and it opens no console window of its own.
-PICKER_PROCESS: dict[str, Any] = (
-    {"encoding": "utf-8", "errors": "replace", "creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0)}
-    if sys.platform == "win32"
-    else {}
-)
 
 
 class Workspaces:
@@ -164,42 +156,11 @@ class Workspaces:
         return True
 
     # ------------------------------------------------------------------ OS picker
-    def _native_command(self, prompt: str) -> list[str] | None:
-        if self.config.picker_command:
-            return list(self.config.picker_command)
-        if sys.platform == "darwin" and shutil.which("osascript"):
-            return ["osascript", "-e", f'POSIX path of (choose folder with prompt "{prompt}")']
-        if sys.platform == "win32":
-            shell = shutil.which("powershell") or shutil.which("pwsh")
-            if shell is None:
-                return None
-            # The owner is a topmost form: the dialog opens in front of the browser instead of behind it.
-            # The path is written as UTF-8 without a byte-order mark.
-            ps = dedent(
-                f"""
-                [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false;
-                Add-Type -AssemblyName System.Windows.Forms;
-                [System.Windows.Forms.Application]::EnableVisualStyles();
-                $owner = New-Object System.Windows.Forms.Form -Property @{{ TopMost = $true; ShowInTaskbar = $false }};
-                $d = New-Object System.Windows.Forms.FolderBrowserDialog;
-                $d.Description = '{prompt}'; $d.ShowNewFolderButton = $true;
-                if ($d.ShowDialog($owner) -eq 'OK') {{ Write-Output $d.SelectedPath }};
-                $owner.Dispose()
-                """
-            ).strip()
-            return [shell, "-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-Command", ps]
-        if os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
-            if shutil.which("zenity"):
-                return ["zenity", "--file-selection", "--directory", f"--title={prompt}"]
-            if shutil.which("kdialog"):
-                return ["kdialog", "--getexistingdirectory", str(Path.home()), "--title", prompt]
-        return None
-
     def picker(self) -> str:
         """``native`` when an OS folder dialog can open on this machine, else ``browse``."""
         if self.config.picker == "browse":
             return "browse"
-        if self.config.picker == "native" or self._native_command("x") is not None:
+        if self.config.picker == "native" or dialogs("x", self.config.picker_command):
             return "native"
         return "browse"
 
@@ -207,31 +168,30 @@ class Workspaces:
         """
         Open the OS folder dialog; the chosen absolute path, ``None`` when cancelled.
 
-        Raises ``WorkspaceError`` without a dialog.
+        The dialogs of this machine are tried in order: one that fails is logged and the next one opens.
+        Raises ``WorkspaceError`` without a dialog, when every dialog failed, and when nobody answers in
+        ``config.picker_timeout``.
         """
-        command = self._native_command(prompt.replace('"', "").replace("'", "")) if self.picker() == "native" else None
-        if command is None:
+        candidates = dialogs(prompt, self.config.picker_command) if self.picker() == "native" else []
+        if not candidates:
             raise WorkspaceError("no native directory picker on this host")
-
-        def run() -> str | None:
-            proc = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                timeout=self.config.picker_timeout,
-                check=False,
-                **PICKER_PROCESS,
-            )
-            output = proc.stdout.strip().lstrip("\ufeff")
-            if proc.returncode != 0 or not output:
-                return None  # cancelled
-            return output.rstrip("/") or "/"
-
-        try:
-            chosen = await asyncio.get_running_loop().run_in_executor(None, run)
-        except subprocess.TimeoutExpired:
-            raise WorkspaceError("the directory dialog timed out") from None
-        return str(Path(chosen).expanduser().resolve()) if chosen else None
+        failures: list[str] = []
+        for dialog in candidates:
+            try:
+                kind, value = await asyncio.get_running_loop().run_in_executor(
+                    None, run_dialog, dialog, self.config.picker_timeout
+                )
+            except subprocess.TimeoutExpired:
+                raise WorkspaceError("the directory dialog timed out") from None
+            except OSError as exc:
+                kind, value = "failed", f"{type(exc).__name__}: {exc}"
+            if kind == "chosen":
+                return str(Path(value).expanduser().resolve())
+            if kind == "cancelled":
+                return None
+            self.ctx.logger.warning("folder dialog %s failed: %s", dialog.name, value)
+            failures.append(f"{dialog.name}: {value}")
+        raise WorkspaceError("the folder dialog failed (" + "; ".join(failures) + ")")
 
     def browse(self, path: str | None = None) -> dict[str, Any]:
         """One directory level for a picker: ``path``, ``parent``, ``dirs`` (name-sorted, hidden flagged), ``home``."""

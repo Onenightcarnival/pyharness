@@ -19,6 +19,7 @@
 | `plugin.py` | `apply`：提供 `ctx.workspace` 与 `ctx.backend` |
 | `workspace.py` | `Workspace`、`WorkspaceError`、`DEFAULT_WORKSPACE` |
 | `registry.py` | `Workspaces`：打开、backend、最近使用、选择器、浏览 |
+| `picker.py` | 系统文件夹对话框：`Dialog`、`dialogs`、`run` |
 
 ## 默认工作区
 
@@ -56,13 +57,28 @@
 | `rename(path, name)` | 工作区的显示名；`None` 恢复为目录名 |
 | `browse(path)` | 一层目录：仅子目录；供应用内选择器使用 |
 | `picker()` | `native`（本机的系统文件夹对话框）或 `browse` |
-| `pick(prompt)` | 打开系统文件夹对话框；所选的绝对路径，或 `None` |
+| `pick(prompt)` | 依次尝试本机的对话框；所选的绝对路径，取消时 `None`；全部失败、无对话框或超时抛出 `WorkspaceError` |
 
-| 平台 | 原生对话框 |
+| 平台 | 对话框，按尝试顺序 |
 |---|---|
 | macOS | `osascript` `choose folder` |
-| Windows | PowerShell（`powershell`，否则 `pwsh`）的 `FolderBrowserDialog`：`-STA`；以置顶窗体为 owner，对话框出现在浏览器之前；路径以无 BOM 的 UTF-8 输出；不另开控制台窗口；两者都不存在时为 `browse` |
-| Linux | `zenity` 或 `kdialog`；有显示环境时 |
+| Windows | PowerShell（`powershell`，否则 `pwsh`）的 `FolderBrowserDialog`；再是解释器自带的 Tk 对话框 |
+| Linux | `zenity`、`kdialog`；有显示环境时 |
+| `config.picker_command` | 只用这一条命令 |
+
+| 对话框进程 | 结果 |
+|---|---|
+| 退出码 0，输出路径 | 选中 |
+| 退出码 0，输出为空 | 取消 |
+| 其他退出码，符合该对话框的取消特征（`osascript` 的 `-128`；`zenity`、`kdialog` 的退出码 1） | 取消 |
+| 其他退出码 | 失败：记入日志，尝试下一个对话框 |
+| 全部失败 | `WorkspaceError` 带各自的原因；页面显示原因并打开页面内的目录浏览器 |
+
+| Windows | 契约 |
+|---|---|
+| PowerShell | `-STA`；`$ErrorActionPreference = 'Stop'`，出错即以非零退出码结束；以置顶窗体为 owner，对话框出现在浏览器之前 |
+| Tk | 置顶的隐藏根窗口作为父窗口；不依赖 PowerShell 与其执行策略 |
+| 输出 | 无 BOM 的 UTF-8；不另开控制台窗口 |
 
 ## `Workspace`（`workspace.py`）
 
