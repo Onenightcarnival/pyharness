@@ -271,10 +271,15 @@ def test_windows_dialogs_powershell_then_tk(monkeypatch):
     assert script.startswith(
         "$ErrorActionPreference = 'Stop';"
     )  # an error exits non-zero instead of passing as a cancel
-    assert "TopMost = $true" in script and "$d.ShowDialog($owner)" in script
     assert "UTF8Encoding $false" in script and "$d.Description = 'Choose it'" in script
+    # The owner is a shown topmost window with a taskbar button; it is raised again after the dialog opens.
+    assert "TopMost = $true" in script and "ShowInTaskbar = $true" in script and "Text = 'Choose it'" in script
+    assert script.index("$owner.Show()") < script.index("$d.ShowDialog($owner)") < script.index("$owner.Close()")
+    assert "$owner.TopMost = $false; $owner.TopMost = $true" in script and "$raise.Start()" in script
+    assert script.count("{") == script.count("}") and script.count("(") == script.count(")")
     assert tk.command[:2] == [sys.executable, "-c"] and tk.command[3] == "Choose it"
     compile(tk.command[2], "<tk dialog>", "exec")
+    assert "withdraw" not in tk.command[2] and 'root.attributes("-topmost", True)' in tk.command[2]
     # Without PowerShell the Tk dialog remains.
     monkeypatch.setattr(picker.shutil, "which", lambda name: None)
     assert [d.name for d in picker.dialogs("Choose")] == ["tk"]

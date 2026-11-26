@@ -16,30 +16,53 @@ PROCESS: dict[str, Any] = (
     else {}
 )
 
-# The owner is a topmost form: the dialog opens in front of the browser instead of behind it. An error stops the
-# script with a non-zero exit code; the path is written as UTF-8 without a byte-order mark.
+# The dialog's owner is a shown window: topmost, transparent, with a taskbar button under the prompt's text. In the
+# first second the owner is made topmost again a few times, which makes the open dialog topmost with it. A dialog
+# that could not take the foreground is still in front of the browser and can be reached from the taskbar.
+# An error stops the script with a non-zero exit code; the path is written as UTF-8 without a byte-order mark.
 POWERSHELL = dedent(
     """
     $ErrorActionPreference = 'Stop';
     [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false;
     Add-Type -AssemblyName System.Windows.Forms;
     [System.Windows.Forms.Application]::EnableVisualStyles();
-    $owner = New-Object System.Windows.Forms.Form -Property @{ TopMost = $true; ShowInTaskbar = $false };
+    $owner = New-Object System.Windows.Forms.Form -Property @{
+        Text = '__PROMPT__'; TopMost = $true; ShowInTaskbar = $true; Opacity = 0;
+        FormBorderStyle = 'None'; StartPosition = 'CenterScreen'; Width = 1; Height = 1 };
+    $state = @{ ticks = 0 };
+    $raise = New-Object System.Windows.Forms.Timer -Property @{ Interval = 250 };
+    $raise.Add_Tick({
+        try { $owner.TopMost = $false; $owner.TopMost = $true } catch { };
+        $state.ticks++; if ($state.ticks -ge 4) { $raise.Stop() } });
+    $owner.Show(); $owner.Activate(); $raise.Start();
     $d = New-Object System.Windows.Forms.FolderBrowserDialog;
     $d.Description = '__PROMPT__'; $d.ShowNewFolderButton = $true;
-    if ($d.ShowDialog($owner) -eq 'OK') { Write-Output $d.SelectedPath };
-    $owner.Dispose()
+    $answer = $d.ShowDialog($owner);
+    $raise.Stop(); $owner.Close();
+    if ($answer -eq 'OK') { Write-Output $d.SelectedPath }
     """
 ).strip()
 
-# The interpreter's own Tk dialog: no PowerShell, no execution policy.
+# The interpreter's own Tk dialog: no PowerShell, no execution policy. Its parent is shown the same way.
 TK = dedent(
     """
     import sys, tkinter
     from tkinter import filedialog
     root = tkinter.Tk()
-    root.withdraw()
+    root.title(sys.argv[1])
+    root.geometry(f"1x1+{root.winfo_screenwidth() // 2}+{root.winfo_screenheight() // 2}")
+    root.attributes("-alpha", 0)
     root.attributes("-topmost", True)
+
+    def raise_again(left):
+        root.attributes("-topmost", False)
+        root.attributes("-topmost", True)
+        if left > 1:
+            root.after(250, raise_again, left - 1)
+
+    root.after(250, raise_again, 4)
+    root.lift()
+    root.focus_force()
     root.update()
     chosen = filedialog.askdirectory(parent=root, title=sys.argv[1], mustexist=True)
     root.destroy()

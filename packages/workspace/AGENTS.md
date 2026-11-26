@@ -76,8 +76,11 @@
 
 | Windows | 契约 |
 |---|---|
-| PowerShell | `-STA`；`$ErrorActionPreference = 'Stop'`，出错即以非零退出码结束；以置顶窗体为 owner，对话框出现在浏览器之前 |
-| Tk | 置顶的隐藏根窗口作为父窗口；不依赖 PowerShell 与其执行策略 |
+| PowerShell | `-STA`；`$ErrorActionPreference = 'Stop'`，出错即以非零退出码结束 |
+| Tk | 解释器自带；不依赖 PowerShell 与其执行策略 |
+| 对话框的 owner | 一个已显示的窗口：置顶、全透明、1×1、屏幕中央；任务栏按钮以提示语为标题 |
+| 置顶 | 对话框打开后的第一秒内，owner 每 250 ms 重新置顶一次，共 4 次；它拥有的对话框随之置顶 |
+| 未取得前台时 | 对话框仍在浏览器之前；点任务栏按钮转到对话框 |
 | 输出 | 无 BOM 的 UTF-8；不另开控制台窗口 |
 
 ## `Workspace`（`workspace.py`）
