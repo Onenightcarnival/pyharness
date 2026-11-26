@@ -18,6 +18,7 @@
 | 插件的浏览器端（client slot） | 有：`ctx.webui.register_client` + 页面槽位（侧边栏行、更多菜单、主区面板、输入框停靠位、设置分区、右侧栏 tab）；模块为无打包的 JS，`window.__PyhModules__.load({id, factory})` |
 | `dsh-sandbox-policy` + `dsh-permission-presets`（read-only / workspace-write / danger-full-access） | `agent-loop` 的权限模式 `read-only` / `workspace-write` / `full-access`：deepagents 文件权限规则、shell 工具有无、审批闸门有无；每会话可切换 |
 | `dsh-experimental-auto-review`（Auto 预设：每个工具调用先由模型审查） | `pyxis-harness-auto-review`：权限模式 `auto-review`，只审带审批门的调用；放行直接执行，其余交给用户审批；`pyh exec --approvals reject` 下拒绝即最终结果 |
+| `dsh-llm-pi-ai` 的 `openai-completions`：流的用量取最后一次上报；思考文本取 `reasoning_content` / `reasoning` / `reasoning_text` | `pyxis-harness-llm` 的 `chat_completions.py`：同样的取法，叠加在 langchain-openai 之上 |
 | `dsh-workspace` + directory picker | `pyxis-harness-workspace` 注册表：每会话工作区根目录、最近列表（`ctx.store`）、目录浏览；默认工作区 `~/Documents/pyharness/<profile>/default-workspace/`（dsh：`<Documents>/deepseek-harness/default-workspace`） |
 
 ## 生效方式

@@ -18,6 +18,7 @@
 | `config.toml` | provider 目录与失败码集合；`catalog.py`、`failures.py` 读取 |
 | `failures.py` | 模型调用的失败码 |
 | `transport.py` | 各 provider 的 HTTP 客户端：`client_options`、`replace_clients` |
+| `chat_completions.py` | Chat Completions 路由的用量与思考文本：`ChatCompletions`、`model_class`、`RunningUsage` |
 | `prompts.toml` | 模型可见文本 |
 
 ## 路由
@@ -63,6 +64,26 @@
 | `probe(...)` | 一次简短补全 |
 | `list_models(...)` | 端点提供的模型 id（OpenAI、Anthropic、Gemini、Ollama 的列表接口） |
 | `retry_policy(spec)` | spec 所属路由的 `RetryPolicy`，否则全局策略，否则 `None` |
+
+## Chat Completions（`chat_completions.py`）
+
+`openai`、`deepseek` 两类路由的模型类混入 `ChatCompletions`；做法对照 dsh 的 `openai-completions`。
+
+| 项 | 契约 |
+|---|---|
+| 请求 | 流式请求带 `stream_options: {include_usage: true}`；路由的 `stream_usage: false` 关闭 |
+| 流的用量 | 取最后一次上报：服务在每个分片上报累计值时不重复计入 |
+| 用量的位置 | 分片的 `usage`；没有时取 `choices[0].usage` |
+| 缓存读取 | `prompt_tokens_details.cached_tokens`，否则 `prompt_cache_hit_tokens`，否则 `cached_tokens` |
+| 思考文本 | `reasoning_content`、`reasoning`、`reasoning_text` 中第一个有文本的字段 → `additional_kwargs["reasoning_content"]` |
+| 非流式应答 | 同样的缓存读取与思考文本 |
+| Responses API | 不经过这里 |
+
+| 用量字段 | 含义 |
+|---|---|
+| `input_tokens` | 整个提示，含缓存读取 |
+| `output_tokens` | 含思考 token |
+| 上下文占用 | `input_tokens + output_tokens`，由 `pyxis-harness-compaction` 的 `measure` 计算 |
 
 ## HTTP 客户端（`transport.py`）
 

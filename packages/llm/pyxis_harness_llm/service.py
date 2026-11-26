@@ -16,6 +16,7 @@ from pyxis_harness import Service, package_prompts
 from pyxis_harness.credentials import reference_for
 
 from .catalog import GEMINI_VERSION, PRESETS, PROTOCOLS, translate_options, type_info
+from .chat_completions import KINDS, model_class
 from .config import (
     LLMConfig,
     LLMConfigError,
@@ -268,7 +269,12 @@ class LLMService(Service):
             )
         try:
             translated = translate_options(kind, options)
-            built = init_chat_model(model, model_provider=kind, **{**translated, **client_options(kind, translated)})
+            arguments = {**translated, **client_options(kind, translated)}
+            if kind in KINDS:
+                arguments.setdefault("stream_usage", True)  # ask the service for the usage of a stream
+                built = model_class(kind)(model=model, **arguments)
+            else:
+                built = init_chat_model(model, model_provider=kind, **arguments)
             replace_clients(kind, built, translated)
         except Exception as exc:
             raise LLMConfigError(f"cannot initialise model {spec!r}: {exc}") from exc
