@@ -9,9 +9,10 @@ import types
 
 import httpx
 import pytest
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
 from pyxis_harness import Harness, Profile
+from pyxis_harness_agent_loop_deepagents import ContextMeter, RequestScope, context_sizes
 from testkit import scripted, tools as testtools
 
 
@@ -48,8 +49,15 @@ async def test_tool_call_flows_through_pipeline_and_persists(profile):
             res = await client.post(f"/api/sessions/{session['id']}/messages", json={"content": "shout hi"})
             events = sse_events(res.text)
             kinds = [e["type"] for e in events]
-            assert kinds == ["tool_call", "tool_result", "token", "done"], kinds
-            assert events[1]["content"] == "HI"
+            assert kinds == ["context", "tool_call", "tool_result", "context", "token", "done"], kinds
+            assert events[2]["content"] == "HI"
+            # Each request of the main agent is measured by part before it is sent; the turn keeps the last one.
+            first, second = (e for e in events if e["type"] == "context")
+            assert first["system"] > 100 and first["tools"] > 100 and 0 < first["messages"] < second["messages"]
+            assert (first["system"], first["tools"]) == (second["system"], second["tools"])
+            assert events[-1]["extras"]["turn"]["stats"]["context"] == {
+                part: second[part] for part in ("system", "tools", "messages")
+            }
             assert events[-1]["outcome"] == "completed"
             detail = (await client.get(f"/api/sessions/{session['id']}")).json()
             assert [m["role"] for m in detail["messages"]] == ["human", "ai", "tool", "ai"]
@@ -88,6 +96,7 @@ async def test_approval_gate(profile):
             assert [e["type"] for e in events] == [
                 "tool_call",
                 "tool_result",
+                "context",
                 "token",
                 "done",
             ]  # approved call is re-announced
@@ -278,7 +287,7 @@ async def test_reasoning_cancel_and_delete(profile):
             assert health["model"] == "scripted:test" and health["workspace"]["path"]
             sid = (await client.post("/api/sessions", json={})).json()["id"]
             events = sse_events((await client.post(f"/api/sessions/{sid}/messages", json={"content": "q"})).text)
-            assert [e["type"] for e in events] == ["reasoning", "token", "done"]
+            assert [e["type"] for e in events] == ["context", "reasoning", "token", "done"]
             detail = (await client.get(f"/api/sessions/{sid}")).json()
             assert detail["messages"][-1]["reasoning"] == "think first"
 
@@ -328,8 +337,8 @@ async def test_images_travel_with_messages_and_replies(profile):
                     )
                 ).text
             )
-            assert [e["type"] for e in events] == ["token", "image", "done"], events
-            assert events[1]["url"] == PNG_1PX
+            assert [e["type"] for e in events] == ["context", "token", "image", "done"], events
+            assert events[2]["url"] == PNG_1PX
             call = next(c for c in scripted.CALLS if "messages" in c)
             assert call["images"] == 1 and call["messages"][-1] == ("human", "what is this?")
             history = (await client.get(f"/api/sessions/{sid}")).json()["messages"]
@@ -355,3 +364,42 @@ async def test_images_travel_with_messages_and_replies(profile):
             await client.put(f"/api/sessions/{sid}/model", json={"model": "vision:t1"})
             res = await client.post(f"/api/sessions/{sid}/messages", json={"content": "x", "images": [PNG_1PX]})
             assert res.status_code == 422 and "image input" in res.json()["detail"]
+
+
+def test_context_sizes_by_part():
+    schema = {"type": "function", "function": {"name": "t", "description": "d" * 400, "parameters": {"type": "object"}}}
+    sizes = context_sizes([SystemMessage("s" * 400), HumanMessage("h" * 80), AIMessage("a" * 80)], [schema])
+    assert sizes["system"] == 104  # 400 characters / 4, plus framing
+    assert 100 < sizes["tools"] < 140 and 40 <= sizes["messages"] <= 60
+    assert context_sizes([HumanMessage("hi")], []) | {"messages": 0} == {"system": 0, "tools": 0, "messages": 0}
+
+
+async def test_only_the_main_request_is_measured():
+    published: list[tuple[str, dict]] = []
+
+    class Agents:
+        async def publish(self, session_id, event):
+            published.append((session_id, event))
+            return True
+
+    agents = Agents()
+    meter = ContextMeter(types.SimpleNamespace(get=lambda key, default=None: agents if key == "agents" else default))
+    sent = [[SystemMessage("s" * 40), HumanMessage("hi")]]
+    # A model call outside the main agent's request (a subagent, a reviewer, a summarizer) is not measured.
+    await meter.on_chat_model_start({}, sent, metadata={"thread_id": "s1"})
+    assert published == []
+
+    async def handler(request):
+        await meter.on_chat_model_start({}, sent, metadata={"thread_id": "s1"})
+        return "answer"
+
+    assert await RequestScope().awrap_model_call(types.SimpleNamespace(tools=[]), handler) == "answer"
+    ((session_id, event),) = published
+    assert session_id == "s1" and event | {"messages": 0} == {
+        "type": "context",
+        "system": 14,
+        "tools": 0,
+        "messages": 0,
+    }
+    await meter.on_chat_model_start({}, sent, metadata={"thread_id": "s1"})  # the scope has ended
+    assert len(published) == 1

@@ -77,13 +77,13 @@ async def test_automatic_and_manual_compaction(profile):
             ] == 600
             dispose()
             first = sse_events((await client.post(f"/api/sessions/{sid}/messages", json={"content": LONG})).text)
-            assert [e["type"] for e in first] == ["token", "done"]
+            assert [e["type"] for e in first] == ["context", "token", "done"]
             # Second turn: ~800 estimated tokens ≥ 480 → the head (first exchange) becomes a checkpoint.
             second = sse_events(
                 (await client.post(f"/api/sessions/{sid}/messages", json={"content": LONG + " again"})).text
             )
             kinds = [e["type"] for e in second]
-            assert kinds == ["compact", "token", "done"], kinds
+            assert kinds == ["compact", "context", "token", "done"], kinds  # measured after the compaction
             compact = second[0]
             assert compact["trigger"] == "auto" and compact["removed"] == 2 and "SUMMARY ONE" in compact["summary"]
             assert compact["after_tokens"] < compact["before_tokens"]

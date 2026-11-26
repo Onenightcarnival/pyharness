@@ -45,10 +45,12 @@
 
 ## 运行事件
 
-类型：`reasoning`、`token`、`image`、`tool_call`、`tool_result`、`compact`、`retry`、`interrupt`、`error`、`done`，以及插件经 `publish` 发布的类型。
+类型：`reasoning`、`token`、`image`、`tool_call`、`tool_result`、`context`、`compact`、`retry`、`interrupt`、`error`、`done`，以及插件经 `publish` 发布的类型。
 
 | 类型 | 契约 |
 |---|---|
+| `context` | 主 agent 的一次模型请求按部分估算的 token 数；先于该请求的应答 |
+| `context` 的字段 | `system`、`tools`、`messages` |
 | `compact` | 压缩检查点取代了较早的历史 |
 | `compact` 的字段 | `removed`、`before_tokens`、`after_tokens`、`trigger`、`summary` |
 | `retry` | 路由的重试策略重跑失败的模型调用；失败那次已流出的文本作废 |
@@ -104,6 +106,7 @@
 | 范围 | 每一轮都记录 |
 | 位置 | `ctx.store`，命名空间 `("pyharness", "turns", session_id)`，key 为 run id |
 | `stats` | 步骤数、工具调用数、token 用量、llm / tool / ttft / decode 的墙钟时间、时长、压缩次数 |
+| `stats.context` | 该轮最后一次 `context` 事件：`{"system", "tools", "messages"}`；没有时为 `null` |
 | `records` | 轨迹：user、step、tool、compact、retry、end |
 | `turns(session_id)` | 列出记录 |
 | `done` 事件 | `extras.turn`：新的记录 |

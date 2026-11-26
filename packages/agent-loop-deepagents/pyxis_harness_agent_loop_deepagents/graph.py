@@ -14,7 +14,7 @@ from pyxis_harness import package_prompts
 from pyxis_harness_llm import LLMConfigError
 
 from .config import LoopConfig, Mode, PresetConfig
-from .middleware import HarnessMiddleware
+from .middleware import ContextMeter, HarnessMiddleware, RequestScope
 
 PROMPTS = package_prompts(__file__)
 
@@ -205,4 +205,6 @@ async def build(
     if mode.build is not None:
         kwargs = mode.build(kwargs) or kwargs
     kwargs = await ctx.waterfall("agent-loop/build", kwargs, final=lambda kw: kw)
-    return create_deep_agent(**{k: v for k, v in kwargs.items() if v is not None})
+    kwargs["middleware"] = [*kwargs["middleware"], RequestScope()]
+    graph = create_deep_agent(**{k: v for k, v in kwargs.items() if v is not None})
+    return graph.with_config({"callbacks": [ContextMeter(ctx)]})

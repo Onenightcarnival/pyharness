@@ -15,7 +15,7 @@
 | `__init__.py` | 公开名称 |
 | `service.py` | `DeepAgentsLoop`：`agentLoop` 服务；扩展点、预设与模式、`build()` |
 | `graph.py` | 图的构建：带技能与挂载的 backend、写入拒绝规则、子 agent 解析、`create_deep_agent` |
-| `middleware.py` | `HarnessMiddleware`：LangChain middleware，模型调用与工具调用经 harness 走 |
+| `middleware.py` | `HarnessMiddleware`：LangChain middleware，模型调用与工具调用经 harness 走；`RequestScope`、`ContextMeter`：上下文各部分的估算 |
 | `config.py` | 权限模式、agent 预设、loop 配置 |
 | `config.toml` | 权限模式与内置 agent 预设 |
 | `prompts.toml` | 模型可见的文本 |
@@ -144,6 +144,21 @@
 | 工具调用 | `ctx.tools.execute` |
 
 `ModelCall`：`agent/model-request` 监听者收到的载荷。
+
+## 上下文的估算（`middleware.py`）
+
+| 对象 | 契约 |
+|---|---|
+| `RequestScope` | 主 agent 的 middleware，排在插件的之后（最内层）：标记主 agent 的模型调用正在进行 |
+| `ContextMeter` | 图的回调：模型调用开始时，量取发出的请求，经 `ctx.agents.publish` 发布 `context` 运行事件 |
+| 量取的请求 | 实际发出的那一份：系统消息已含全部 middleware 的追加 |
+| 不量取 | `RequestScope` 之外的模型调用：子 agent、审查模型、压缩的摘要模型 |
+
+| `context_sizes()` 的部分 | 估算 |
+|---|---|
+| `system` | 系统消息的字符数 / 4，加 4 |
+| `tools` | 工具 schema 的 JSON 字符数 / 4，加 4 |
+| `messages` | 其余消息的 `count_tokens_approximately` |
 
 ### 模型调用的重试
 

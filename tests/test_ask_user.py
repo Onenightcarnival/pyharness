@@ -47,9 +47,9 @@ async def test_question_pauses_and_answers_resume(profile):
     ):
         sid = (await c.post("/api/sessions", json={})).json()["id"]
         events = sse_events((await c.post(f"/api/sessions/{sid}/messages", json={"content": "set up"})).text)
-        assert [e["type"] for e in events] == ["tool_call", "interrupt", "done"]
+        assert [e["type"] for e in events] == ["context", "tool_call", "interrupt", "done"]
         assert events[-1]["outcome"] == "interrupted"
-        (pending,) = events[1]["interrupts"]
+        (pending,) = events[2]["interrupts"]
         assert pending["value"]["kind"] == "ask_user" and [q["id"] for q in pending["value"]["questions"]] == [
             "mode",
             "name",
@@ -69,7 +69,7 @@ async def test_question_pauses_and_answers_resume(profile):
             json={"answers": [{"id": "mode", "selected": ["Fast (Recommended)"]}, {"id": "name", "custom": "demo"}]},
         )
         resumed = sse_events(r.text)
-        assert [e["type"] for e in resumed] == ["tool_result", "token", "done"], resumed
+        assert [e["type"] for e in resumed] == ["tool_result", "context", "token", "done"], resumed
         result = json.loads(resumed[0]["content"])
         assert result == {
             "answers": [

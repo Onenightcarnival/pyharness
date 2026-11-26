@@ -81,8 +81,16 @@ async def test_allowed_call_runs_without_approval(profile, workspace):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=http.app), base_url="http://t") as client:
             sid = (await client.post("/api/sessions", json={"mode": "auto-review"})).json()["id"]
             events = sse_events((await client.post(f"/api/sessions/{sid}/messages", json={"content": "go"})).text)
-            assert [e["type"] for e in events] == ["tool_review", "tool_call", "tool_result", "token", "done"]
-            assert events[0] == events[0] | {"id": "d1", "name": "danger", "decision": "allow", "risk": "low"}
+            assert [e["type"] for e in events] == [
+                "context",
+                "tool_review",
+                "tool_call",
+                "tool_result",
+                "context",
+                "token",
+                "done",
+            ]
+            assert events[1] == events[1] | {"id": "d1", "name": "danger", "decision": "allow", "risk": "low"}
             assert events[-1]["outcome"] == "completed"
             assert "".join(e["text"] for e in events if e["type"] == "token") == "finished"  # no reviewer text
             detail = (await client.get(f"/api/sessions/{sid}")).json()

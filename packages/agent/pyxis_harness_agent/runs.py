@@ -111,6 +111,7 @@ class TurnRecorder:
             "reasoning_tokens": 0,
             "usage_steps": 0,
             "last_input_tokens": None,
+            "context": None,  # the latest request by part: {"system", "tools", "messages"} estimated tokens
             "llm_ms": 0,
             "tool_ms": 0,
             "ttft_ms": 0,
@@ -154,6 +155,8 @@ class TurnRecorder:
                 self.stats["tool_ms"] += record["dur_ms"]
             self.step_start = now
             self.first_token = None
+        elif kind == "context":
+            self.stats["context"] = {part: int(event.get(part) or 0) for part in ("system", "tools", "messages")}
         elif kind == "compact":
             self.records.append(
                 {
