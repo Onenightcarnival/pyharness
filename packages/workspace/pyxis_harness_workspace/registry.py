@@ -16,6 +16,12 @@ from .config import Config
 from .workspace import Workspace, WorkspaceError
 
 NAMESPACE = ("pyharness", "workspaces")
+# How the picker's process runs. Windows: its output is UTF-8, and it opens no console window of its own.
+PICKER_PROCESS: dict[str, Any] = (
+    {"encoding": "utf-8", "errors": "replace", "creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0)}
+    if sys.platform == "win32"
+    else {}
+)
 
 
 class Workspaces:
@@ -164,14 +170,24 @@ class Workspaces:
         if sys.platform == "darwin" and shutil.which("osascript"):
             return ["osascript", "-e", f'POSIX path of (choose folder with prompt "{prompt}")']
         if sys.platform == "win32":
+            shell = shutil.which("powershell") or shutil.which("pwsh")
+            if shell is None:
+                return None
+            # The owner is a topmost form: the dialog opens in front of the browser instead of behind it.
+            # The path is written as UTF-8 without a byte-order mark.
             ps = dedent(
                 f"""
+                [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false;
                 Add-Type -AssemblyName System.Windows.Forms;
+                [System.Windows.Forms.Application]::EnableVisualStyles();
+                $owner = New-Object System.Windows.Forms.Form -Property @{{ TopMost = $true; ShowInTaskbar = $false }};
                 $d = New-Object System.Windows.Forms.FolderBrowserDialog;
-                $d.Description = '{prompt}'; if ($d.ShowDialog() -eq 'OK') {{ Write-Output $d.SelectedPath }}
+                $d.Description = '{prompt}'; $d.ShowNewFolderButton = $true;
+                if ($d.ShowDialog($owner) -eq 'OK') {{ Write-Output $d.SelectedPath }};
+                $owner.Dispose()
                 """
             ).strip()
-            return ["powershell", "-NoProfile", "-Command", ps]
+            return [shell, "-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-Command", ps]
         if os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
             if shutil.which("zenity"):
                 return ["zenity", "--file-selection", "--directory", f"--title={prompt}"]
@@ -199,9 +215,14 @@ class Workspaces:
 
         def run() -> str | None:
             proc = subprocess.run(
-                command, capture_output=True, text=True, timeout=self.config.picker_timeout, check=False
+                command,
+                capture_output=True,
+                text=True,
+                timeout=self.config.picker_timeout,
+                check=False,
+                **PICKER_PROCESS,
             )
-            output = proc.stdout.strip()
+            output = proc.stdout.strip().lstrip("\ufeff")
             if proc.returncode != 0 or not output:
                 return None  # cancelled
             return output.rstrip("/") or "/"

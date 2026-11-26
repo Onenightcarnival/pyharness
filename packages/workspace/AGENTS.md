@@ -61,7 +61,7 @@
 | 平台 | 原生对话框 |
 |---|---|
 | macOS | `osascript` `choose folder` |
-| Windows | PowerShell `FolderBrowserDialog` |
+| Windows | PowerShell（`powershell`，否则 `pwsh`）的 `FolderBrowserDialog`：`-STA`；以置顶窗体为 owner，对话框出现在浏览器之前；路径以无 BOM 的 UTF-8 输出；不另开控制台窗口；两者都不存在时为 `browse` |
 | Linux | `zenity` 或 `kdialog`；有显示环境时 |
 
 ## `Workspace`（`workspace.py`）

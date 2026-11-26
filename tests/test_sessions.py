@@ -11,7 +11,7 @@ import pytest
 import yaml
 
 from pyxis_harness import Harness, Profile
-from pyxis_harness_workspace import WorkspaceError
+from pyxis_harness_workspace import WorkspaceError, registry
 from testkit import scripted
 
 
@@ -252,3 +252,19 @@ async def test_workspace_and_session_rename(profile, tmp_path):
         assert (await c.put(f"/api/sessions/{s['id']}", json={"title": "  Renamed  "})).json()["title"] == "Renamed"
         assert (await c.get(f"/api/sessions/{s['id']}")).json()["title"] == "Renamed"
         assert (await c.put("/api/sessions/nope", json={"title": "x"})).status_code == 404
+
+
+def test_windows_picker_opens_in_front_and_reports_utf8(monkeypatch):
+    monkeypatch.setattr(registry.sys, "platform", "win32")
+    monkeypatch.setattr(registry.shutil, "which", lambda name: f"C:/bin/{name}.exe" if name == "powershell" else None)
+    picker = registry.Workspaces.__new__(registry.Workspaces)
+    picker.config = registry.Config()
+    command = picker._native_command("Choose")
+    assert command[:6] == ["C:/bin/powershell.exe", "-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-Command"]
+    script = command[6]
+    assert "TopMost = $true" in script and "$d.ShowDialog($owner)" in script
+    assert "UTF8Encoding $false" in script and "$d.Description = 'Choose'" in script
+    assert picker.picker() == "native"
+    monkeypatch.setattr(registry.shutil, "which", lambda name: None)
+    assert picker._native_command("Choose") is None and picker.picker() == "browse"
+    assert ({} if sys.platform != "win32" else registry.PICKER_PROCESS) == registry.PICKER_PROCESS
