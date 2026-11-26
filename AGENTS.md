@@ -17,6 +17,7 @@ uv run python scripts/set_version.py X  # 发布前：全部发行包改为版�
 |---|---|
 | `tests/test_postgres.py` | `PYH_TEST_POSTGRES_DSN` 指向可写的 UTF8 数据库；未设置时跳过 |
 | `tests/test_live.py`、`tests/test_supervisor.py` | 真实子进程；本机空闲端口 |
+| `tests/test_terminal.py` | 本机的 shell：bash；Windows 上为 PowerShell |
 
 ```bash
 PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q tests/test_postgres.py
@@ -41,7 +42,7 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 | `tests/testkit` | 测试用插件 |
 | `docs/` | 设计文档 |
 | `manual/` | 用户手册；`images/`：界面的整页截图，1280×800，8 位调色板 PNG |
-| `.github/workflows/ci.yml` | CI，Python 3.12：全量测试；Postgres 测试 |
+| `.github/workflows/ci.yml` | CI，Python 3.12：全量测试；Windows 上的终端测试；Postgres 测试 |
 | `.github/workflows/release.yml` | 发布：构建全部发行包，上传 PyPI 或 TestPyPI；标签触发时创建 GitHub Release |
 
 ## 代码、文档、注释统一风格要求

@@ -18,6 +18,16 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run pytest -q
 
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --locked
+      - run: uv run pytest -q tests/test_terminal.py
+
   postgres:
     runs-on: ubuntu-latest
     services:
