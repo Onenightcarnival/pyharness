@@ -1,7 +1,7 @@
 [project]
 name = "pyxis-harness-terminal"
 version = "0.1.1.dev2"
-description = "PyxisHarness plugin: persistent bash tool, background jobs, PTY terminals for the Web UI"
+description = "PyxisHarness plugin: the shell tool (bash; PowerShell on Windows), background jobs, PTY terminals for the Web UI"
 license = "MIT"
 requires-python = ">=3.12"
 readme = "AGENTS.md"

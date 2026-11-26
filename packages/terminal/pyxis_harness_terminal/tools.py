@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import json
 import time
-from pathlib import Path
 from string import Template
 from typing import Any, Protocol
 
 from langchain_core.tools import tool
 from langgraph.config import get_config
+from pydantic import Field, create_model
 
 from pyxis_harness import package_prompts
 
 from .config import Config
 from .jobs import Job, JobRegistry
-from .shell import clip
+from .shell import Shell, tail
 
 
 class Host(Protocol):
@@ -21,16 +21,20 @@ class Host(Protocol):
 
     config: Config
     jobs: JobRegistry
+    shell: Shell
 
+    @property
+    def background(self) -> bool: ...
     async def run(
-        self, command: str, *, session_id: str | None = None, timeout: int | None = None, cwd: Path | None = None
+        self, command: str, *, session_id: str | None = None, timeout: int | None = None, workdir: str | None = None
     ) -> dict[str, Any]: ...
     async def start_job(
-        self, command: str, *, session_id: str | None = None, cwd: str | None = None, name: str | None = None
+        self, command: str, *, session_id: str | None = None, workdir: str | None = None, name: str | None = None
     ) -> Job: ...
 
 
 PROMPTS = package_prompts(__file__)
+MARKERS = {name: Template(text) for name, text in PROMPTS["markers"].items()}
 
 
 def _thread_id() -> str | None:
@@ -40,38 +44,67 @@ def _thread_id() -> str | None:
         return None
 
 
-def bash_tool(service: Host) -> Any:
-    @tool("bash", description=PROMPTS["tools"]["bash"])
-    async def bash(command: str, timeout: int | None = None) -> str:
+def render(result: dict[str, Any]) -> str:
+    """A foreground result as the model reads it: the output, then one marker line per fact."""
+    marks = [
+        ("truncated", result["truncated"], {"log": result["log"]}),
+        ("promoted", result["job_id"] is not None, {"seconds": result["timeout"], "job": result["job_id"]}),
+        ("timed_out", result["timed_out"], {"seconds": result["timeout"]}),
+        ("stopped", result["stopped"], {}),
+        ("signal", result["signal"] is not None, {"signal": result["signal"]}),
+        ("exit_code", result["signal"] is None and result["exit_code"] not in (0, None), {"code": result["exit_code"]}),
+    ]
+    lines = [MARKERS[name].substitute(values) for name, shown, values in marks if shown]
+    body = result["output"].rstrip("\n") or MARKERS["empty"].substitute()
+    return "\n".join([body, *lines])
+
+
+def shell_args(config: Config, background: bool) -> Any:
+    """Arguments of the shell tool; ``run_in_background`` and ``name`` exist only with background jobs."""
+    texts = PROMPTS["args"]
+    timeout = texts["timeout_promote" if background and config.promote_on_timeout else "timeout_kill"]
+    fields: dict[str, Any] = {
+        "command": (str, Field(description=texts["command"])),
+        "timeout": (
+            int | None,
+            Field(None, description=Template(timeout).substitute(default=config.timeout, max=config.max_timeout)),
+        ),
+        "workdir": (str | None, Field(None, description=texts["workdir"])),
+    }
+    if background:
+        fields["run_in_background"] = (bool, Field(False, description=texts["run_in_background"]))
+        fields["name"] = (str | None, Field(None, description=texts["name"]))
+    return create_model("ShellArgs", **fields)
+
+
+def shell_tool(service: Host) -> Any:
+    """The ``bash`` or ``pwsh`` tool: one command, one fresh shell."""
+
+    @tool(
+        service.shell.dialect,
+        description=PROMPTS["tools"][service.shell.dialect],
+        args_schema=shell_args(service.config, service.background),
+    )
+    async def shell(
+        command: str,
+        timeout: int | None = None,
+        workdir: str | None = None,
+        run_in_background: bool = False,
+        name: str | None = None,
+    ) -> str:
         if not command.strip():
             return "Error: command must be a non-empty string."
-        r = await service.run(command, session_id=_thread_id(), timeout=timeout)
-        body = clip(r["output"], service.config.max_output_chars)
-        if r["timed_out"]:
-            seconds = min(timeout or service.config.timeout, service.config.max_timeout)
-            return f"{body}\n\n" + Template(PROMPTS["tools"]["timed_out"]).substitute(seconds=seconds, cwd=r["cwd"])
-        if r["exit_code"] is None:
-            return f"{body}\n\n[the shell exited; a new one starts in {r['cwd']} on the next call]"
-        return (
-            f"{body}\n\n[exit code {r['exit_code']}; cwd {r['cwd']}]"
-            if body
-            else f"[exit code {r['exit_code']}; cwd {r['cwd']}; no output]"
-        )
+        try:
+            if run_in_background:
+                job = await service.start_job(command, session_id=_thread_id(), workdir=workdir, name=name)
+                return json.dumps(
+                    {"job_id": job.id, "name": job.name, "cwd": job.cwd, "status": job.status, "log": str(job.log)}
+                )
+            return render(await service.run(command, session_id=_thread_id(), timeout=timeout, workdir=workdir))
+        except (ValueError, OSError) as exc:  # no such workdir, no such shell
+            return f"Error: {exc}"
 
-    return bash
-
-
-def background_tool(service: Host) -> Any:
-    @tool("run_in_background", description=PROMPTS["tools"]["run_in_background"])
-    async def run_in_background(command: str, name: str | None = None) -> str:
-        if not command.strip():
-            return "Error: command must be a non-empty string."
-        job = await service.start_job(command, session_id=_thread_id(), name=name)
-        return json.dumps(
-            {"job_id": job.id, "name": job.name, "cwd": job.cwd, "status": job.status, "log": str(job.log)}
-        )
-
-    return run_in_background
+    return shell
 
 
 def job_tools(service: Host) -> list[Any]:
@@ -82,7 +115,10 @@ def job_tools(service: Host) -> list[Any]:
             return f"Error: no job {job_id}. job_list shows the known jobs."
         if wait and job.ended_at is None:
             await service.jobs.wait(job, min(timeout, service.config.max_timeout))
-        text = clip(job.read(tail_lines=tail_lines or service.config.job_tail_lines), service.config.max_output_chars)
+        lines = job.read(tail_lines=tail_lines or service.config.job_tail_lines)
+        text, cut = tail(lines, service.config.max_output_chars)
+        if cut:
+            text = f"{text.rstrip(chr(10))}\n{MARKERS['truncated'].substitute(log=job.log)}"
         info = job.describe()
         status = info["status"] + (f" (exit code {info['exit_code']})" if info["exit_code"] is not None else "")
         return (

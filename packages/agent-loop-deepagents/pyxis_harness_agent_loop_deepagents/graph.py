@@ -161,7 +161,7 @@ async def build(
     keep = set(preset_cfg.tools) if preset_cfg.tools is not None else None
     drop = set(preset_cfg.exclude_tools)
     tools = [t for t in ctx.tools.list() if (keep is None or t.name in keep) and t.name not in drop]
-    if mode.base == "read-only":  # tools tagged `shell` (the persistent bash, background commands) stay out
+    if mode.base == "read-only":  # tools tagged `shell` (the shell tool of the platform) stay out
         shell_tools = {r.tool.name for r in ctx.tools.records() if "shell" in r.tags}
         tools = [t for t in tools if t.name not in shell_tools]
     registry = {t.name: t for t in tools}

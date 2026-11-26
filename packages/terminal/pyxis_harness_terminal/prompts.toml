@@ -1,14 +1,23 @@
 [tools]
 bash = '''
-Run a bash command in this session's persistent shell. The working directory and environment variables
-persist between calls (the shell starts in the workspace root); stdin is /dev/null. Returns stdout and
-stderr with the exit code; long output is clipped. `timeout` is in seconds (default 120). For commands
-that run longer than a few minutes or servers, use run_in_background instead.
+Run a bash command (`bash -c`) and return its output, stdout and stderr together. Every call starts a
+fresh shell in the session's workspace root: nothing carries over between calls, so pass `workdir`
+instead of using `cd`, and set variables in the command that needs them. stdin is empty. Long output is
+cut to its tail; the full output is saved to a file whose path is reported. A non-zero exit is reported
+as `[exit code: N]`. Before a delete or a move, check that the resolved absolute target is the intended
+one; an unset variable expands to an empty string, so guard variables in such paths with `${VAR:?}`.
 '''
-run_in_background = '''
-Start a long-running bash command (a build, a test suite, a dev server) as a background job in the
-shell's current directory and return its job id at once. Read its output later with job_output, list
-jobs with job_list, stop it with job_kill. Output goes to a log file, not to the chat.
+pwsh = '''
+Run a PowerShell command (`-Command`) and return its output, stdout and stderr together. Every call
+starts a fresh process in the session's workspace root: nothing carries over between calls, so pass
+`workdir` instead of using `cd`, and set variables in the command that needs them. stdin is empty. This
+is PowerShell, not bash: paths use the native Windows form (`C:\...`), environment variables are read
+as `$env:NAME`, and the host may be Windows PowerShell 5.1, which has no `&&` or `||`: chain with `;`
+and test `$?` or `$LASTEXITCODE`. Long output is cut to its tail; the full output is saved to a file
+whose path is reported. A non-zero exit is reported as `[exit code: N]`; a command that was stopped by
+force ends as `[exit code: 1]` with no signal marker, which is an interruption and not a failure of the
+command. Before a delete or a move, check that the resolved absolute target is the intended one. Do not
+assign to automatic variables such as `$HOME`; names are case-insensitive, so `$home` is the same one.
 '''
 job_output = '''
 Read a background job's output (the last `tail_lines` lines, default 200) and its status. With `wait`
@@ -16,5 +25,23 @@ the call blocks until the job finishes or `timeout` seconds pass; a timed-out wa
 '''
 job_list = "List background jobs (running and finished) with their ids, names and statuses."
 job_kill = "Stop a running background job."
-# bash result trailer when the command hit its timeout; ${seconds} is the effective timeout, ${cwd} the shell's directory
-timed_out = "[timed out after ${seconds}s; the shell was killed and restarts in ${cwd}. Use run_in_background for long commands.]"
+
+# Parameters of the bash / pwsh tool. ${default} and ${max} are the configured timeouts in seconds.
+[args]
+command = "The command line."
+timeout_promote = "Seconds to wait for the command (default ${default}, at most ${max}). A command still running then goes on as a background job instead of being stopped."
+timeout_kill = "Seconds to wait for the command (default ${default}, at most ${max}). A command still running then is stopped."
+workdir = "Directory the command starts in. Default: the session's workspace root; a relative path is resolved against it."
+run_in_background = "Start the command as a background job and return its job id at once: for builds, test suites and servers. Read it with job_output, list jobs with job_list, stop it with job_kill. No timeout applies."
+name = "Label of the background job; default: the first line of the command."
+
+# Lines after the output of a command. ${seconds}: the effective timeout; ${job}: a job id; ${log}: the log file;
+# ${signal}: a signal name; ${code}: an exit code.
+[markers]
+empty = "(no output)"
+truncated = "[output truncated; full output: ${log}]"
+promoted = "[still running after ${seconds}s; moved to background job ${job}]"
+timed_out = "[timed out after ${seconds}s; the command was stopped]"
+stopped = "[stopped: the command was stopped from outside this call]"
+signal = "[killed by signal: ${signal}]"
+exit_code = "[exit code: ${code}]"

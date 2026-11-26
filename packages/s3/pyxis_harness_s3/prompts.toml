@@ -7,7 +7,7 @@ s3_put writes a text object; s3_upload / s3_download move files between this mac
 copies or moves server-side; s3_presign makes a time-limited share link; s3_mkdir creates a folder marker;
 s3_delete deletes (irreversible: list first, confirm each item with the user, then call with confirm=true). All
 keys are relative to the profile's prefix; credentials are configured in the UI and tools never return or need
-them. Local files use the local read / write / edit / bash tools; s3_* only touch objects in the bucket. When the
+them. Local files use the local read / write / edit / shell tools; s3_* only touch objects in the bucket. When the
 user mentions S3, buckets, object storage, MinIO, OSS, COS, R2 or cloud storage files they mean this browser.
 '''
 

@@ -21,7 +21,7 @@
 | `pyxis-harness-http` | `http` | `http` | FastAPI 根应用 + uvicorn；`include_router`、`mount` |
 | `pyxis-harness-api` | `api` | — | `/api`：REST + SSE |
 | `pyxis-harness-web-ui` | `web-ui` | `webui` | `/`：Web 界面；`register_client(path, calls=)` 登记插件的浏览器模块，`/plugins/{entry}/client.js` 与 `/plugins/{entry}/call/{method}` |
-| `pyxis-harness-terminal` | `terminal` | `terminal` | `bash` 工具：每个会话一个常驻 bash（工作目录与环境变量跨调用保留，从工作区根目录开始，stdin 为 /dev/null，超时则杀掉并重启）；`run_in_background` / `job_output` / `job_list` / `job_kill` 后台任务（输出写日志文件）；右侧栏「终端」tab 的 PTY（WebSocket `/api/terminals/{id}/ws`）与「后台任务」tab；`shell` 标签的工具在只读模式下不给 agent，`bash` 与 `run_in_background` 在工作区写入模式下需审批 |
+| `pyxis-harness-terminal` | `terminal` | `terminal` | shell 工具（`bash`；Windows 上为 `pwsh`）：每次调用一个新进程，从工作区根目录或 `workdir` 开始，stdin 为空，超时则转为后台任务；`run_in_background` 参数与 `job_output` / `job_list` / `job_kill` 后台任务（输出写日志文件）；右侧栏「终端」tab 的 PTY（WebSocket `/api/terminals/{id}/ws`）与「后台任务」tab；`shell` 标签的工具在只读模式下不给 agent，shell 工具在工作区写入模式下需审批 |
 | `pyxis-harness-inspect` | `inspect` | — | `harness_inspect` 工具 |
 | `pyxis-harness-plugin-manager` | `plugin-manager` | — | `plugin_manager` 工具；插件编写 skills（`skills: true`）；三行提示词片段（`guidance`） |
 | `pyxis-harness-plugin-manager` | `dev-context` | — | `pyxis-harness-dev-context`：harness 位置提示词段 |

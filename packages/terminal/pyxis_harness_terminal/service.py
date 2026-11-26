@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import os
 import uuid
@@ -12,8 +13,8 @@ from .config import Config
 from .jobs import Job, JobRegistry
 from .pty import Terminal, pty_available
 from .routes import make_router
-from .shell import ShellSession
-from .tools import background_tool, bash_tool, job_tools
+from .shell import Shell, shell_of
+from .tools import job_tools, shell_tool
 
 
 class TerminalService(Service):
@@ -24,7 +25,7 @@ class TerminalService(Service):
 
     def __init__(self, ctx: Any, config: Config) -> None:
         super().__init__(ctx, config)
-        self.shells: dict[str, ShellSession] = {}
+        self.shell: Shell = shell_of(config.dialect, config.shell, config.pwsh)
         self.terminals: dict[str, Terminal] = {}
         profile = ctx.get("profile", None)
         base = (
@@ -32,13 +33,12 @@ class TerminalService(Service):
             if profile is not None and hasattr(profile, "runtime")
             else Path.home() / ".pyharness" / "runtime"
         )
-        self.jobs = JobRegistry(base / "jobs", config.shell)
+        self.jobs = JobRegistry(base / "jobs", self.shell, config.grace)
 
     async def start(self) -> None:
         if self.config.shell_tool:
-            self.ctx.tools.register(bash_tool(self), approval=self.config.approval, tags=("shell",))
+            self.ctx.tools.register(shell_tool(self), approval=self.config.approval, tags=("shell",))
         if self.config.jobs_tool:
-            self.ctx.tools.register(background_tool(self), approval=self.config.approval, tags=("shell", "jobs"))
             for tool in job_tools(self):
                 self.ctx.tools.register(tool, tags=("jobs",))
         self.ctx.http.include_router(make_router(self), prefix="/api", tags=["pyxis-harness-terminal"])
@@ -48,9 +48,6 @@ class TerminalService(Service):
         self.ctx.on("app/stopping", self.stop)
 
     async def stop(self) -> None:
-        for shell in list(self.shells.values()):
-            await shell.close()
-        self.shells.clear()
         for term in list(self.terminals.values()):
             await term.close()
         self.terminals.clear()
@@ -78,32 +75,67 @@ class TerminalService(Service):
                 return self.default_root()
         return Path.cwd()
 
-    async def shell_for(self, session_id: str | None, cwd: Path | None = None) -> ShellSession:
-        key = session_id or "-"
-        shell = self.shells.get(key)
-        if shell is None:
-            if len(self.shells) >= self.config.max_shells:
-                oldest = min(self.shells, key=lambda k: self.shells[k].last_used)
-                await self.shells.pop(oldest).close()
-            shell = ShellSession(self.config.shell, cwd or await self.workspace_root(session_id))
-            self.shells[key] = shell
-        return shell
+    async def workdir(self, session_id: str | None, workdir: str | None = None) -> Path:
+        """Directory a command starts in: the session's workspace root, or ``workdir`` resolved against it."""
+        root = await self.workspace_root(session_id)
+        path = root / Path(workdir).expanduser() if workdir else root
+        if not path.is_dir():
+            raise ValueError(f"workdir {path} is not a directory")
+        return path
+
+    @property
+    def background(self) -> bool:
+        """Whether a command can go on as a background job: the job tools are there to read and stop it."""
+        return self.config.jobs_tool
 
     async def run(
-        self, command: str, *, session_id: str | None = None, timeout: int | None = None, cwd: Path | None = None
+        self, command: str, *, session_id: str | None = None, timeout: int | None = None, workdir: str | None = None
     ) -> dict[str, Any]:
-        shell = await self.shell_for(session_id, cwd)
+        """
+        Run ``command`` in a fresh shell and wait for it, at most ``timeout`` seconds.
+
+        ``{"cwd", "output", "truncated", "log", "exit_code", "signal", "timed_out", "stopped", "job_id", "timeout"}``.
+        At the timeout the command goes on as the background job ``job_id`` (``promote_on_timeout``) or is stopped
+        (``timed_out``). ``stopped``: ended from outside this call. A cancelled call stops the command.
+        """
+        cwd = await self.workdir(session_id, workdir)
         limit = min(timeout or self.config.timeout, self.config.max_timeout)
-        return await shell.run(command, limit)
+        job = await self.jobs.start(command, str(cwd), session_id=session_id, foreground=True)
+        try:
+            finished = await self.jobs.wait(job, limit)
+        except asyncio.CancelledError:
+            await self.jobs.kill(job.id)
+            self.jobs.discard(job)
+            raise
+        promoted = not finished and self.background and self.config.promote_on_timeout
+        stopped = finished and job.killed
+        if not finished and not promoted:
+            await self.jobs.kill(job.id)
+        output, truncated = job.tail(self.config.max_output_chars)
+        result = {
+            "cwd": str(cwd),
+            "output": output,
+            "truncated": truncated,
+            "log": str(job.log) if truncated else None,
+            "exit_code": job.exit_code,
+            "signal": job.signal,
+            "timed_out": not finished and not promoted,
+            "stopped": stopped,
+            "job_id": job.id if promoted else None,
+            "timeout": limit,
+        }
+        if promoted:
+            job.foreground = False
+        else:
+            self.jobs.discard(job, keep_log=truncated)
+        return result
 
     # ------------------------------------------------------------------ jobs
     async def start_job(
-        self, command: str, *, session_id: str | None = None, cwd: str | None = None, name: str | None = None
+        self, command: str, *, session_id: str | None = None, workdir: str | None = None, name: str | None = None
     ) -> Job:
-        if cwd is None:
-            shell = self.shells.get(session_id or "-")
-            cwd = str(shell.cwd) if shell is not None else str(await self.workspace_root(session_id))
-        return await self.jobs.start(command, cwd, session_id=session_id, name=name)
+        cwd = await self.workdir(session_id, workdir)
+        return await self.jobs.start(command, str(cwd), session_id=session_id, name=name)
 
     # ------------------------------------------------------------------ terminals
     def terminal_shell(self) -> str:
@@ -129,7 +161,7 @@ class TerminalService(Service):
 
     def status(self) -> dict[str, Any]:
         return {
-            "shells": len(self.shells),
+            "shell": {"dialect": self.shell.dialect, "executable": self.shell.executable},
             "jobs": len(self.jobs.jobs),
             "terminals": len(self.terminals),
             "pty": pty_available() and self.config.terminal_tab,

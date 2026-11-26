@@ -1,100 +1,87 @@
 from __future__ import annotations
 
-import asyncio
-import contextlib
 import os
-import signal
-import time
-from pathlib import Path
-from typing import Any
+import sys
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from pathlib import PureWindowsPath
 
-END_MARK = "__PYH_SHELL_END__"
-
-
-class ShellSession:
-    """One long-lived shell; commands run one at a time with their exit code and working directory read back."""
-
-    def __init__(self, shell: str, cwd: Path, env: dict[str, str] | None = None) -> None:
-        self.shell = shell
-        self.cwd = cwd
-        self.env = {**os.environ, "TERM": "dumb", "PS1": "", "PAGER": "cat", "GIT_PAGER": "cat", **(env or {})}
-        self.proc: asyncio.subprocess.Process | None = None
-        self.lock = asyncio.Lock()
-        self.last_used = time.time()
-        self.restarts = 0
-
-    async def _ensure(self) -> asyncio.subprocess.Process:
-        if self.proc is None or self.proc.returncode is not None:
-            self.proc = await asyncio.create_subprocess_exec(
-                self.shell,
-                "--noprofile",
-                "--norc",
-                cwd=str(self.cwd),
-                env=self.env,
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.STDOUT,
-                start_new_session=True,
-            )
-        return self.proc
-
-    async def run(self, command: str, timeout: float) -> dict[str, Any]:
-        """
-        ``{"output", "exit_code", "cwd", "timed_out"}``; a timeout kills the shell and the next call starts a new
-        one.
-        """
-        async with self.lock:
-            self.last_used = time.time()
-            proc = await self._ensure()
-            assert proc.stdin is not None and proc.stdout is not None
-            script = f'{{\n{command}\n}} </dev/null\nprintf \'\\n{END_MARK} %s %s\\n\' "$?" "$PWD"\n'
-            proc.stdin.write(script.encode())
-            with contextlib.suppress(Exception):
-                await proc.stdin.drain()
-            chunks: list[bytes] = []
-            timed_out = False
-            start = time.monotonic()
-            try:
-                while True:
-                    remaining = timeout - (time.monotonic() - start)
-                    if remaining <= 0:
-                        raise TimeoutError
-                    line = await asyncio.wait_for(proc.stdout.readline(), remaining)
-                    if not line:
-                        break  # the shell exited (exit, exec failure)
-                    text = line.decode(errors="replace")
-                    if text.startswith(END_MARK):
-                        parts = text.strip().split(" ", 2)
-                        code = int(parts[1]) if len(parts) > 1 and parts[1].lstrip("-").isdigit() else -1
-                        if len(parts) > 2:
-                            self.cwd = Path(parts[2])
-                        output = b"".join(chunks).decode(errors="replace")
-                        return {
-                            "output": output.rstrip("\n"),
-                            "exit_code": code,
-                            "cwd": str(self.cwd),
-                            "timed_out": False,
-                        }
-                    chunks.append(line)
-            except TimeoutError:
-                timed_out = True
-            await self.close()
-            self.restarts += 1
-            output = b"".join(chunks).decode(errors="replace")
-            return {"output": output.rstrip("\n"), "exit_code": None, "cwd": str(self.cwd), "timed_out": timed_out}
-
-    async def close(self) -> None:
-        proc, self.proc = self.proc, None
-        if proc is None or proc.returncode is not None:
-            return
-        with contextlib.suppress(ProcessLookupError, PermissionError):
-            os.killpg(proc.pid, signal.SIGKILL)
-        with contextlib.suppress(Exception):
-            await asyncio.wait_for(proc.wait(), 5)
+# Per dialect: what keeps colours and pagers out of the output.
+ENVIRONMENT: dict[str, dict[str, str]] = {
+    "bash": {"NO_COLOR": "1", "TERM": "dumb", "PAGER": "cat", "GIT_PAGER": "cat"},
+    "pwsh": {"NO_COLOR": "1", "PAGER": "cat", "GIT_PAGER": "cat"},
+}
+# Windows PowerShell 5.1 writes the console code page; the output is read as UTF-8.
+PWSH_UTF8 = (
+    "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); "
+    "$OutputEncoding = [System.Text.UTF8Encoding]::new($false); "
+)
+PWSH_FLAGS = ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command"]
 
 
-def clip(text: str, limit: int) -> str:
+@dataclass(frozen=True)
+class Shell:
+    """The shell a command runs in: a fresh process per command."""
+
+    dialect: str  # "bash" | "pwsh"; also the name of the tool
+    executable: str
+
+    def argv(self, command: str) -> list[str]:
+        if self.dialect == "pwsh":
+            return [self.executable, *PWSH_FLAGS, PWSH_UTF8 + command]
+        return [self.executable, "-c", command]
+
+    def environment(self, base: Mapping[str, str] | None = None) -> dict[str, str]:
+        return {**(os.environ if base is None else base), **ENVIRONMENT[self.dialect]}
+
+
+def pwsh_candidates(env: Mapping[str, str]) -> list[str]:
+    """PowerShell executables on Windows, best first: PowerShell 7, ``pwsh.exe`` on PATH, Windows PowerShell 5.1."""
+    program_files = env.get("ProgramFiles") or "C:\\Program Files"
+    system_root = env.get("SystemRoot") or "C:\\Windows"
+    on_path = [entry.strip().strip('"') for entry in (env.get("PATH") or "").split(";")]
+    return [
+        str(PureWindowsPath(program_files, "PowerShell", "7", "pwsh.exe")),
+        *(str(PureWindowsPath(entry, "pwsh.exe")) for entry in on_path if entry),
+        str(PureWindowsPath(system_root, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")),
+    ]
+
+
+def resolve_pwsh(
+    configured: str | None = None,
+    env: Mapping[str, str] | None = None,
+    platform: str = sys.platform,
+    exists: Callable[[str], bool] = os.path.isfile,
+) -> str:
+    """The PowerShell executable: the configured one, else the first candidate that exists, else ``pwsh`` on PATH."""
+    if configured:
+        return configured
+    if platform == "win32":
+        for candidate in pwsh_candidates(os.environ if env is None else env):
+            if exists(candidate):
+                return candidate
+    return "pwsh"
+
+
+def shell_of(dialect: str | None, bash: str, pwsh: str | None, platform: str = sys.platform) -> Shell:
+    """The shell of this host: PowerShell on Windows, bash elsewhere; ``dialect`` overrides the choice."""
+    chosen = dialect or ("pwsh" if platform == "win32" else "bash")
+    return Shell(chosen, resolve_pwsh(pwsh, platform=platform) if chosen == "pwsh" else bash)
+
+
+def decode(data: bytes) -> str:
+    """Output bytes as text with ``\\n`` line ends: UTF-8; on Windows, other bytes are read in the OEM code page."""
+    try:
+        text = data.decode()
+    except UnicodeDecodeError:
+        text = data.decode("oem" if sys.platform == "win32" else "utf-8", errors="replace")
+    return text.replace("\r\n", "\n")
+
+
+def tail(text: str, limit: int) -> tuple[str, bool]:
+    """The last ``limit`` characters of ``text``, from a line start where one is near; and whether text was cut."""
     if len(text) <= limit:
-        return text
-    head, tail = text[: limit // 2], text[-(limit // 2) :]
-    return f"{head}\n…[{len(text) - limit} characters omitted]…\n{tail}"
+        return text, False
+    kept = text[-limit:]
+    newline = kept.find("\n")
+    return (kept[newline + 1 :] if 0 <= newline < limit // 4 else kept), True

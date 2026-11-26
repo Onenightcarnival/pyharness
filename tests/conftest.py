@@ -22,7 +22,8 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     home = tmp_path / "home"
     monkeypatch.setenv("PYH_HOME", str(home))
     monkeypatch.setenv("PYH_CWD", str(tmp_path / "cwd"))
-    monkeypatch.setenv("HOME", str(tmp_path / "user"))  # the default workspace lies under the user's Documents
+    for variable in ("HOME", "USERPROFILE"):  # the default workspace lies under the user's Documents
+        monkeypatch.setenv(variable, str(tmp_path / "user"))
     for variable, cache in (("PIP_CACHE_DIR", PIP_CACHE), ("UV_CACHE_DIR", UV_CACHE)):  # installers keep their caches
         if cache:
             monkeypatch.setenv(variable, cache)

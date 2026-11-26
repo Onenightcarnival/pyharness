@@ -142,7 +142,7 @@ window.__PyhModules__.load({
             clearTimeout(timer); if (j.status === "running") timer = setTimeout(renderJob, 2000);
           }
           renderList();
-          const offRun = ctx.on("run", (ev) => { if (!selected && ev.type === "tool_result" && /^(run_in_background|job_kill)$/.test(ev.name || "")) renderList(); });
+          const offRun = ctx.on("run", (ev) => { if (!selected && ev.type === "tool_result" && /^(bash|pwsh|job_kill)$/.test(ev.name || "")) renderList(); });
           return () => { alive = false; clearTimeout(timer); offRun(); };
         }
 
