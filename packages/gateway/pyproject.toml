@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-gateway"
-version = "0.1.1.dev4"
+version = "0.1.1.dev5"
 description = "PyxisHarness plugin: local LLM API gateway over the configured model routes (OpenAI Chat Completions, OpenAI Responses, Anthropic Messages) with API keys and usage accounting"
 license = "MIT"
 requires-python = ">=3.12"
@@ -16,10 +16,10 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "pyxis-harness-core==0.1.1.dev4",
-    "pyxis-harness-llm==0.1.1.dev4",
-    "pyxis-harness-http==0.1.1.dev4",
-    "pyxis-harness-web-ui==0.1.1.dev4",
+    "pyxis-harness-core==0.1.1.dev5",
+    "pyxis-harness-llm==0.1.1.dev5",
+    "pyxis-harness-http==0.1.1.dev5",
+    "pyxis-harness-web-ui==0.1.1.dev5",
     "fastapi==0.162.0",
     "uvicorn==0.54.0",
     "pydantic==2.14.1",

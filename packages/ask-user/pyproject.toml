@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-ask-user"
-version = "0.1.1.dev4"
+version = "0.1.1.dev5"
 description = "PyxisHarness plugin: ask_user_question tool — the agent pauses for the user's answer"
 license = "MIT"
 requires-python = ">=3.12"
@@ -15,7 +15,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-dependencies = ["pyxis-harness-core==0.1.1.dev4", "pyxis-harness-tools==0.1.1.dev4", "langchain-core==1.7.1", "langgraph==1.2.18"]
+dependencies = ["pyxis-harness-core==0.1.1.dev5", "pyxis-harness-tools==0.1.1.dev5", "langchain-core==1.7.1", "langgraph==1.2.18"]
 
 [project.entry-points."pyxis_harness.plugins"]
 pyxis-harness-ask-user = "pyxis_harness_ask_user:AskUserService"
