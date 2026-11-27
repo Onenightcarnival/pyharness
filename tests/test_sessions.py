@@ -82,7 +82,7 @@ async def test_presets_select_tools_skills_and_prompt_sections(profile):
             standard = (await c.post("/api/sessions", json={})).json()
             assert (standard["preset"], standard["mode"], standard["workspace"]) == (
                 "standard",
-                "workspace-write",
+                "auto-review",
                 None,
             )
             creator = (await c.post("/api/sessions", json={"preset": "creator"})).json()
@@ -95,8 +95,7 @@ async def test_presets_select_tools_skills_and_prompt_sections(profile):
                 ("full-access", True),
                 ("auto-review", False),
             ]
-            refused = await c.put("/api/settings/agent", json={"default_mode": "auto-review"})
-            assert refused.status_code == 422 and "per session" in refused.json()["detail"]
+            assert [m["id"] for m in options["modes"] if m["default"]] == ["auto-review"]
         await agents.start_run(standard["id"], "x").wait()
         await agents.start_run(creator["id"], "y").wait()
         prompts = [c["messages"][0][1] for c in scripted.CALLS if "messages" in c]

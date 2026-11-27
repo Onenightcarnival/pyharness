@@ -90,7 +90,7 @@ async def test_approval_gate(profile):
     async with Harness(profile, patch=scripted_patch(replies)) as h:
         http = h.get("http")
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=http.app), base_url="http://t") as client:
-            sid = (await client.post("/api/sessions", json={})).json()["id"]
+            sid = (await client.post("/api/sessions", json={"mode": "workspace-write"})).json()["id"]
             events = sse_events((await client.post(f"/api/sessions/{sid}/messages", json={"content": "go"})).text)
             assert events[-2]["type"] == "interrupt"
             assert events[-1]["outcome"] == "interrupted"
@@ -423,7 +423,7 @@ async def test_a_turn_pauses_at_the_step_limit_and_continues(profile):
                 "presets": 0,
                 "modes": 0,
                 "default_preset": "standard",
-                "default_mode": "workspace-write",
+                "default_mode": "auto-review",
                 "approval_timeout": None,
                 "max_steps": 2,
                 "max_parallel_tool_calls": 10,

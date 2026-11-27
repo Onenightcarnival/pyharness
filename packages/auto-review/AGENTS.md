@@ -88,7 +88,7 @@
 | 项 | 契约 |
 |---|---|
 | 没有审查记录的调用 | 照常中断 |
-| 新会话的默认模式 | 不提供；按会话选择 |
+| 新会话的默认模式 | base bundle 的 `agent-loop.default_mode`；本插件不在时回到 `workspace-write` |
 | 无人值守 | `pyh exec --mode auto-review --approvals reject`：未放行的调用被拒绝，运行继续 |
 | 审批时限 | `agents` 的 `approval_timeout`：未放行的调用到期被拒绝 |
 | 轮次统计 | 不含审查的模型请求 |

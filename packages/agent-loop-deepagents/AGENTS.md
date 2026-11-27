@@ -43,8 +43,9 @@
 | `add_preset()` | agent 预设，归调用方插件所有；返回 disposer |
 | `add_mode()` | 权限模式，归调用方插件所有；`base`：沿用其规则的内置模式；`build`：编辑该模式下 `create_deep_agent` 的关键字参数；返回 disposer |
 | `preset()` | 给定预设 id 或默认预设的 `(id, config)`；未知 id 抛出 `ValueError` |
+| `default_mode()` | `config.default_mode`；该模式不存在时 `workspace-write` |
 | `mode()` | 给定的权限模式 id 或默认模式；未知 id 抛出 `ValueError` |
-| `set_defaults()` | 新会话的默认值（即时生效）；默认模式只能是内置模式；持久化由 settings API 完成 |
+| `set_defaults()` | 新会话的默认值（即时生效）；默认模式是任一已有模式；持久化由 settings API 完成 |
 | `presets()` | 供选择器的名单：`id`、`title`、`description`、`order`、`default`、`owner` |
 | `modes()` | 供选择器的名单：`id`、`title`、`description`、`default`、`builtin`、`owner` |
 | `skills()` | 已挂载的技能目录：`label`、`path`、`mount`、`owner`、`presets` |
@@ -74,7 +75,7 @@
 | `read-only` | 拒绝文件写入；无 `execute` 工具；去掉带 `shell` 标签的工具；审批按配置 |
 | `workspace-write` | 可写 workspace 内；审批按配置 |
 | `full-access` | 可写 workspace 内；无审批门 |
-| 插件添加的模式 | `base` 的效果，再经它的 `build`；按会话选择 |
+| 插件添加的模式 | `base` 的效果，再经它的 `build` |
 
 | 构建顺序 | 内容 |
 |---|---|

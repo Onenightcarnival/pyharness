@@ -38,3 +38,9 @@
 | `api` | `pyxis-harness-api` |
 | `web-ui` | `pyxis-harness-web-ui` |
 | `terminal` | `pyxis-harness-terminal` |
+
+## 条目配置
+
+| 条目 | 配置 | 效果 |
+|---|---|---|
+| `agent-loop` | `default_mode: auto-review` | 新会话的权限模式：自动审查 |

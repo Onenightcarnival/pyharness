@@ -75,9 +75,7 @@ async def test_allowed_call_runs_without_approval(profile, workspace):
     async with Harness(profile, patch=patch(replies)) as h:
         loop, http = h.get("agentLoop"), h.get("http")
         mode = next(m for m in loop.modes() if m["id"] == "auto-review")
-        assert mode["builtin"] is False and mode["owner"] == "auto-review" and mode["default"] is False
-        with pytest.raises(ValueError, match="per session"):
-            loop.set_defaults(mode="auto-review")
+        assert mode["builtin"] is False and mode["owner"] == "auto-review" and mode["default"] is True
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=http.app), base_url="http://t") as client:
             sid = (await client.post("/api/sessions", json={"mode": "auto-review"})).json()["id"]
             events = sse_events((await client.post(f"/api/sessions/{sid}/messages", json={"content": "go"})).text)
@@ -110,6 +108,14 @@ async def test_allowed_call_runs_without_approval(profile, workspace):
         assert document["history"] == [{"role": "user-instruction", "text": "go"}]
         assert document["pending"] == {"name": "danger", "args": {"target": "prod"}}
         assert document["tool"]["name"] == "danger" and document["environment"] == {"workspace": str(workspace)}
+
+
+async def test_the_default_mode_is_workspace_write_without_the_plugin(profile):
+    async with Harness(profile, patch=patch([], extra=[{"id": "auto-review", "remove": True}])) as h:
+        loop = h.get("agentLoop")
+        assert loop.config.default_mode == "auto-review" and loop.default_mode() == "workspace-write"
+        assert [m["id"] for m in loop.modes() if m["default"]] == ["workspace-write"]
+        assert (await h.get("agents").create_session())["mode"] == "workspace-write"
 
 
 async def test_denied_call_asks_the_user(profile):

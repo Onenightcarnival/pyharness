@@ -70,7 +70,7 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
             "presets": loop.presets(),
             "modes": loop.modes(),
             "default_preset": loop.config.default_preset,
-            "default_mode": loop.config.default_mode,
+            "default_mode": loop.default_mode(),
             **limits(),
         }
 

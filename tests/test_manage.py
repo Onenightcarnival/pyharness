@@ -111,7 +111,7 @@ async def test_agent_installs_a_bundle_through_the_tool(profile, example_bundle)
     ]
     async with Harness(profile, patch=patch_for(replies), supervised=True) as h:
         agents = h.get("agents")
-        session = await agents.create_session(preset="creator")
+        session = await agents.create_session(preset="creator", mode="workspace-write")
         events = await agents.start_run(session["id"], "install the audit plugin").wait()
         interrupt = next(e for e in events if e["type"] == "interrupt")
         assert interrupt["interrupts"][0]["value"]["action_requests"][0]["name"] == "plugin_manager"
@@ -132,7 +132,7 @@ async def test_install_target_resolves_in_the_session_workspace(profile, example
     replies = [{"content": "", "tool_calls": [install]}, {"content": "installed"}]
     async with Harness(profile, patch=patch_for(replies), supervised=True) as h:
         agents = h.get("agents")
-        session = await agents.create_session(preset="creator", workspace=str(other))
+        session = await agents.create_session(preset="creator", workspace=str(other), mode="workspace-write")
         await agents.start_run(session["id"], "install the audit plugin").wait()
         events = await agents.start_run(session["id"], decisions=[{"type": "approve"}]).wait()
         result = json.loads(next(e for e in events if e["type"] == "tool_result")["content"])

@@ -72,7 +72,7 @@ pyh run
 
 shell 在 macOS 与 Linux 上是 bash，在 Windows 上是 PowerShell。
 
-再把输入框左下角的权限从「工作区内修改」换成「自动审查」，在确认框里点「切换」：
+新会话的权限是「自动审查」；输入框左下角的权限菜单可以换：
 
 ![权限菜单](images/04-mode.png)
 

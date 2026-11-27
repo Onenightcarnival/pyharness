@@ -35,6 +35,8 @@ patch:
   # Agent loop: ctx.agentLoop. Sessions and runs: ctx.agents.
   - id: agent-loop
     name: pyxis-harness-agent-loop-deepagents
+    config:
+      default_mode: auto-review
   - id: agents
     name: pyxis-harness-agent
 

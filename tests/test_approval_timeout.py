@@ -21,6 +21,7 @@ def patch(replies, *, timeout=None, by_generation=None):
         {"id": "testtools", "name": "testkit.tools", "after": "tools"},
         {"id": "http", "config": {"serve": False}},
         {"id": "agents", "merge": True, "config": {"approval_timeout": timeout}},
+        {"id": "agent-loop", "merge": True, "config": {"default_mode": "workspace-write"}},
     ]
 
 

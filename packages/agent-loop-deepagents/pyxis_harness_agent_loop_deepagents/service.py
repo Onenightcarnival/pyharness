@@ -10,7 +10,7 @@ from langchain.agents.middleware import AgentMiddleware
 
 from pyxis_harness import Service
 
-from .config import MODES, SKILLS_MOUNT, LoopConfig, Mode, PresetConfig
+from .config import FALLBACK_MODE, MODES, SKILLS_MOUNT, LoopConfig, Mode, PresetConfig
 from .graph import build as build_graph
 
 
@@ -31,8 +31,6 @@ class DeepAgentsLoop(Service):
         self._mounts: list[tuple[str, Path, str, tuple[str, ...] | None, bool]] = []
         self._presets: dict[str, tuple[PresetConfig, str]] = {}  # plugin-added presets: id -> (config, owner)
         self._modes: dict[str, tuple[Mode, str]] = {}  # plugin-added modes: id -> (mode, owner)
-        if self.config.default_mode not in MODES:
-            raise ValueError(f"unknown default_mode {self.config.default_mode!r}; one of {', '.join(MODES)}")
 
     async def start(self) -> None:
         self.ctx.define_event(
@@ -208,7 +206,7 @@ class DeepAgentsLoop(Service):
         | ``base``  | built-in mode whose file, shell and approval rules the mode keeps                    |
         | ``build`` | edits the ``create_deep_agent`` kwargs of the mode's graphs, before ``agent-loop/build`` |
 
-        A session selects the mode; the default for new sessions stays a built-in mode.
+        A session selects the mode; ``config.default_mode`` may name it.
         """
         if id in MODES or id in self._modes:
             raise ValueError(f"permission mode {id!r} already exists")
@@ -222,8 +220,9 @@ class DeepAgentsLoop(Service):
 
     def modes(self) -> list[dict[str, Any]]:
         """Roster for selectors: ``id``, ``title``, ``description``, ``default``, ``builtin``, ``owner``."""
+        default = self.default_mode()
         builtin = [
-            {"id": id, **info, "default": id == self.config.default_mode, "builtin": True, "owner": self.ctx.entry_id}
+            {"id": id, **info, "default": id == default, "builtin": True, "owner": self.ctx.entry_id}
             for id, info in MODES.items()
         ]
         added = [
@@ -231,7 +230,7 @@ class DeepAgentsLoop(Service):
                 "id": id,
                 "title": mode.title,
                 "description": mode.description,
-                "default": False,
+                "default": id == default,
                 "builtin": False,
                 "owner": owner,
             }
@@ -239,9 +238,14 @@ class DeepAgentsLoop(Service):
         ]
         return [*builtin, *added]
 
+    def default_mode(self) -> str:
+        """``config.default_mode`` while that mode exists; ``workspace-write`` otherwise."""
+        id = self.config.default_mode
+        return id if id in MODES or id in self._modes else FALLBACK_MODE
+
     def mode(self, id: str | None) -> str:
         """``id`` or the default mode; unknown ids raise ``ValueError``."""
-        id = id or self.config.default_mode
+        id = id or self.default_mode()
         if id not in MODES and id not in self._modes:
             raise ValueError(f"unknown permission mode {id!r}; one of {', '.join(self.mode_ids())}")
         return id
@@ -256,10 +260,8 @@ class DeepAgentsLoop(Service):
         if preset is not None:
             self.config.default_preset = self.preset(preset)[0]
         if mode is not None:
-            if self.mode(mode) not in MODES:
-                raise ValueError(f"the default permission mode is one of {', '.join(MODES)}; {mode!r} is per session")
-            self.config.default_mode = mode
-        return {"default_preset": self.config.default_preset, "default_mode": self.config.default_mode}
+            self.config.default_mode = self.mode(mode)
+        return {"default_preset": self.config.default_preset, "default_mode": self.default_mode()}
 
     def set_parallel_tool_calls(self, limit: int) -> int:
         """Change how many tool calls of one agent run at a time (live); the settings API persists it."""

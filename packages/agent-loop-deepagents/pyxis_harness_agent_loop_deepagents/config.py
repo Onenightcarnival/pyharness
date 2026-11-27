@@ -16,6 +16,7 @@ SKILLS_MOUNT = "/skills"
 MODES: dict[str, dict[str, str]] = {
     id: {"title": m["title"], "description": m["description"]} for id, m in _CFG["MODES"].items()
 }
+FALLBACK_MODE = "workspace-write"  # the default mode while `default_mode` names no registered one
 
 
 @dataclass(frozen=True)
@@ -47,8 +48,8 @@ class LoopConfig(BaseModel):
     model: str | None = Field(None, description="Model spec; None selects ctx.llm's default.")
     default_preset: str = Field("standard", description="Agent preset for new sessions.")
     default_mode: str = Field(
-        "workspace-write",
-        description="Built-in permission mode for new sessions: read-only, workspace-write, full-access.",
+        FALLBACK_MODE,
+        description="Permission mode for new sessions, built-in or added by a plugin; workspace-write while absent.",
     )
     presets: dict[str, PresetConfig] = Field(
         default_factory=lambda: dict(DEFAULT_PRESETS), description="Agent presets by id."
