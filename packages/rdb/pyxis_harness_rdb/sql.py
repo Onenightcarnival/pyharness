@@ -116,8 +116,10 @@ def to_js(value: Any) -> Any:
         return value.isoformat()
     if isinstance(value, dt.timedelta):
         return str(value)
-    if isinstance(value, (list, dict)):
-        return value
+    if isinstance(value, (list, tuple)):
+        return [to_js(v) for v in value]
+    if isinstance(value, dict):
+        return {str(k): to_js(v) for k, v in value.items()}
     return str(value)
 
 

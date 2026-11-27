@@ -5,15 +5,22 @@ routes.
 
 from __future__ import annotations
 
+import datetime as dt
+import decimal
 import json
 import sqlite3
 from textwrap import dedent
 
 import httpx
+import psycopg
 import pytest
+from psycopg.adapt import AdaptersMap, Transformer
+from psycopg.pq import Format
 
 from pyxis_harness import Harness, Profile
 from pyxis_harness_rdb import RdbService, engine as eng
+from pyxis_harness_rdb.postgres import PG_TYPES, read_as_server_text
+from pyxis_harness_rdb.sql import to_js
 from pyxis_harness_rdb.store import ProfileStore, StoreError
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
@@ -180,6 +187,9 @@ def test_sqlite_driver_paging_and_changes(tmp_path):
     assert failed["applied"] is False and "NOT NULL" in failed["error"]
     with pytest.raises(eng.EngineError, match="no primary key"):
         eng.grid_changes(d, "main", "nopk", [{"kind": "delete", "key": {"a": "x"}}], False)
+    for key in ({"id": None}, {"id": {"$bytes": 4}}, {}):  # no value that addresses one row
+        with pytest.raises(eng.EngineError, match="NULL or binary"):
+            eng.grid_changes(d, "main", "users", [{"kind": "delete", "key": key}], False)
     assert (
         eng.to_csv(eng.run_query(d, "select name, age from users where id = 2", allow_write=False))
         == "name,age\r\nbo'b,13\r\n"
@@ -195,6 +205,33 @@ def test_sqlite_driver_paging_and_changes(tmp_path):
             timeout_ms=100,
         )
     d.close()
+
+
+def test_values_reach_the_page_as_json():
+    day = dt.date(2026, 11, 22)
+    assert to_js([day, None, [decimal.Decimal("1.50"), b"ab"]]) == ["2026-11-22", None, ["1.50", {"$bytes": 2}]]
+    at = dt.datetime(2026, 11, 22, 0, 30, tzinfo=dt.UTC)
+    assert to_js({"at": at, "n": (1, 2)}) == {"at": "2026-11-22T00:30:00+00:00", "n": [1, 2]}
+    json.dumps(to_js([[day], {"k": dt.timedelta(days=1)}]))
+
+
+def test_postgres_temporal_values_stay_server_text():
+    class Context:
+        adapters = AdaptersMap(psycopg.adapters)
+        connection = None
+
+    read_as_server_text(Context.adapters)
+    load = lambda oid, text: Transformer(Context).get_loader(oid, Format.TEXT).load(text)  # noqa: E731
+    by_name = {name: oid for oid, name in PG_TYPES.items()}
+    assert (
+        load(by_name["date"], b"infinity") == "infinity" and load(by_name["date"], b"0044-03-15 BC") == "0044-03-15 BC"
+    )
+    assert load(by_name["timestamptz"], b"2026-11-22 00:30:00+08") == "2026-11-22 00:30:00+08"
+    assert load(by_name["interval"], b"1 mon") == "1 mon"
+    assert load(by_name["date[]"], b"{2026-11-22,infinity,NULL}") == ["2026-11-22", "infinity", None]
+    assert load(by_name["interval[]"], b'{"1 mon","2 days"}') == ["1 mon", "2 days"]
+    assert load(by_name["timestamp[]"], b'{"2026-11-22 00:30:00"}') == ["2026-11-22 00:30:00"]
+    assert load(by_name["timestamptz[]"], b'{"2026-11-22 00:30:00+08"}') == ["2026-11-22 00:30:00+08"]
 
 
 def test_profile_store(tmp_path):

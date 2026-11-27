@@ -6,6 +6,7 @@ from textwrap import dedent
 from typing import Any
 
 import psycopg
+from psycopg.types.string import TextLoader
 
 from pyxis_harness import package_toml
 
@@ -13,6 +14,17 @@ from .driver import CONNECT_TIMEOUT_S, Driver, EngineError, QueryResult, Session
 
 # pg_type oid -> type name of result columns
 PG_TYPES: dict[int, str] = {int(oid): name for oid, name in package_toml(__file__)["postgres"]["PG_TYPES"].items()}
+
+
+# Types read as the text the server sends: no calendar or month arithmetic on the way (`infinity`, BC dates,
+# `1 mon`); their arrays follow.
+SERVER_TEXT = ("date", "timestamp", "timestamptz", "interval")
+
+
+def read_as_server_text(adapters: Any) -> None:
+    """Register on ``adapters`` the loaders that keep ``SERVER_TEXT`` values as sent."""
+    for name in SERVER_TEXT:
+        adapters.register_loader(name, TextLoader)
 
 
 class PgDriver(Driver):
@@ -25,6 +37,7 @@ class PgDriver(Driver):
             host=host, port=port, dbname=database, user=user, password=password, connect_timeout=CONNECT_TIMEOUT_S,
             application_name="pyxis-harness-rdb", sslmode="require" if ssl else "prefer", autocommit=True,
         )  # fmt: skip
+        read_as_server_text(self.conn.adapters)
         self.node = f"{host}:{port}"
         self._database = database
 

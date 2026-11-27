@@ -35,6 +35,10 @@ mysql = 3306
 1007 = "int4[]"
 1009 = "text[]"
 1015 = "varchar[]"
+1115 = "timestamp[]"
+1182 = "date[]"
+1185 = "timestamptz[]"
+1187 = "interval[]"
 
 # mysql.MYSQL_TYPES: field type code -> type name of result columns
 [mysql.MYSQL_TYPES]

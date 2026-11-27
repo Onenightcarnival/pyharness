@@ -153,9 +153,9 @@ def grid_changes(driver: Driver, schema: str, table: str, changes: list[dict[str
     def key_clause(key: dict[str, Any]) -> str:
         if not pk:
             raise EngineError("table has no primary key; edit it with SQL instead")
-        return " AND ".join(
-            f"{q(k)} IS NULL" if key.get(k) is None else f"{q(k)} = {driver.literal(key.get(k))}" for k in pk
-        )
+        if any(key.get(k) is None or isinstance(key.get(k), (dict, list)) for k in pk):
+            raise EngineError("the row's primary key is NULL or binary; edit it with SQL instead")
+        return " AND ".join(f"{q(k)} = {driver.literal(key.get(k))}" for k in pk)
 
     statements: list[str] = []
     for ch in changes:
