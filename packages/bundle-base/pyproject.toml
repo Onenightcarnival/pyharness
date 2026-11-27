@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-bundle-base"
-version = "0.1.1.dev5"
+version = "0.1.1.dev6"
 description = "PyxisHarness bundle: base plugin set"
 license = "MIT"
 requires-python = ">=3.12"
@@ -16,27 +16,27 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "pyxis-harness-core==0.1.1.dev5",
-    "pyxis-harness-llm==0.1.1.dev5",
-    "pyxis-harness-tools==0.1.1.dev5",
-    "pyxis-harness-mcp==0.1.1.dev5",
-    "pyxis-harness-ask-user==0.1.1.dev5",
-    "pyxis-harness-auto-review==0.1.1.dev5",
-    "pyxis-harness-prompt==0.1.1.dev5",
-    "pyxis-harness-agent==0.1.1.dev5",
-    "pyxis-harness-agent-loop-deepagents==0.1.1.dev5",
-    "pyxis-harness-compaction==0.1.1.dev5",
-    "pyxis-harness-checkpoint-sqlite==0.1.1.dev5",
-    "pyxis-harness-checkpoint-memory==0.1.1.dev5",
-    "pyxis-harness-checkpoint-postgres==0.1.1.dev5",
-    "pyxis-harness-workspace==0.1.1.dev5",
-    "pyxis-harness-workspace-changes==0.1.1.dev5",
-    "pyxis-harness-http==0.1.1.dev5",
-    "pyxis-harness-api==0.1.1.dev5",
-    "pyxis-harness-web-ui==0.1.1.dev5",
-    "pyxis-harness-terminal==0.1.1.dev5",
-    "pyxis-harness-inspect==0.1.1.dev5",
-    "pyxis-harness-plugin-manager==0.1.1.dev5",
+    "pyxis-harness-core==0.1.1.dev6",
+    "pyxis-harness-llm==0.1.1.dev6",
+    "pyxis-harness-tools==0.1.1.dev6",
+    "pyxis-harness-mcp==0.1.1.dev6",
+    "pyxis-harness-ask-user==0.1.1.dev6",
+    "pyxis-harness-auto-review==0.1.1.dev6",
+    "pyxis-harness-prompt==0.1.1.dev6",
+    "pyxis-harness-agent==0.1.1.dev6",
+    "pyxis-harness-agent-loop-deepagents==0.1.1.dev6",
+    "pyxis-harness-compaction==0.1.1.dev6",
+    "pyxis-harness-checkpoint-sqlite==0.1.1.dev6",
+    "pyxis-harness-checkpoint-memory==0.1.1.dev6",
+    "pyxis-harness-checkpoint-postgres==0.1.1.dev6",
+    "pyxis-harness-workspace==0.1.1.dev6",
+    "pyxis-harness-workspace-changes==0.1.1.dev6",
+    "pyxis-harness-http==0.1.1.dev6",
+    "pyxis-harness-api==0.1.1.dev6",
+    "pyxis-harness-web-ui==0.1.1.dev6",
+    "pyxis-harness-terminal==0.1.1.dev6",
+    "pyxis-harness-inspect==0.1.1.dev6",
+    "pyxis-harness-plugin-manager==0.1.1.dev6",
 ]
 
 [project.entry-points."pyxis_harness.bundles"]
