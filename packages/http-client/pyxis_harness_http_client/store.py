@@ -14,15 +14,23 @@ import httpx
 
 from pyxis_harness import package_toml
 
+from .capture import MAX_CAPTURED_LENGTH, MAX_PATH_LENGTH
 from .protocol import (
     DEFAULT_HISTORY_LIMIT,
     DEFAULT_TIMEOUT_MS,
+    HEADER_NAME,
     HTTP_AUTH_TYPES,
     HTTP_BODY_MODES,
+    HTTP_CAPTURE_REFRESH,
+    HTTP_CAPTURE_SOURCES,
+    MAX_CAPTURE_RULES,
+    MAX_CAPTURE_TTL_SECONDS,
     MAX_HISTORY_LIMIT,
     MAX_TIMEOUT_MS,
     MIN_HISTORY_LIMIT,
     MIN_TIMEOUT_MS,
+    VARIABLE,
+    VARIABLE_NAME,
     is_method,
 )
 
@@ -35,6 +43,7 @@ MAX_REQUEST_ROWS: int = _CFG["MAX_REQUEST_ROWS"]
 MAX_REQUEST_BODY_BYTES: int = _CFG["MAX_REQUEST_BODY_BYTES"]
 MAX_REQUEST_NAME: int = _CFG["MAX_REQUEST_NAME"]
 MAX_REQUEST_PATH: int = _CFG["MAX_REQUEST_PATH"]
+MAX_CAPTURE_NAME: int = _CFG["MAX_CAPTURE_NAME"]
 FORBIDDEN_HEADERS: frozenset[str] = frozenset(_CFG["FORBIDDEN_HEADERS"])
 
 FORMAT_VERSION = 1
@@ -42,9 +51,6 @@ DEFAULT_SETTINGS = {"agentTools": False, "historyLimit": DEFAULT_HISTORY_LIMIT}
 NAME_MAX = 64
 NAME_PUNCTUATION = " ._-"
 NAME_RULE = "name may contain letters, digits, spaces, dots, hyphens and underscores (max 64)"
-# RFC 7230 token.
-HEADER_NAME = re.compile(r"^[!#$%&'*+.^_`|~0-9A-Za-z-]+$")
-VARIABLE_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]{0,63}$")
 # Hostname or ``*.`` wildcard prefix: labels of letters, digits and hyphens, or a bracketed IPv6 literal.
 HOST_PATTERN = re.compile(
     r"^(\*\.)?([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$|^\[[0-9a-f:.]+\]$",
@@ -65,6 +71,10 @@ def now_ms() -> int:
 
 def _text(value: Any) -> str:
     return value if isinstance(value, str) else ""
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, int | float) and not isinstance(value, bool)
 
 
 def write_private(path: Path, text: str) -> None:
@@ -151,6 +161,28 @@ def normalize_headers(value: Any) -> dict[str, str]:
 
 def normalize_variables(value: Any) -> dict[str, str]:
     return _map(value, "variables", VARIABLE_NAME)
+
+
+def normalize_secrets(value: Any, previous: dict[str, str] | None = None) -> dict[str, str]:
+    """Secret variables of a payload; an empty value takes the value ``previous`` stores under that name."""
+    out: dict[str, str] = {}
+    for name, given in _map(value, "secrets", VARIABLE_NAME).items():
+        kept = given or (previous or {}).get(name) or ""
+        if not kept:
+            raise StoreError(f'secrets: value of "{name}" is required')
+        out[name] = kept
+    return out
+
+
+def missing_secrets(target: dict[str, Any]) -> list[str]:
+    """Names of the secret variables whose value is not stored."""
+    return [name for name, value in target["secrets"].items() if not value]
+
+
+def _distinct(variables: dict[str, str], secrets: dict[str, str]) -> None:
+    shared = next((name for name in secrets if name in variables), None)
+    if shared is not None:
+        raise StoreError(f'"{shared}" is both a variable and a secret variable')
 
 
 def normalize_allowed_hosts(value: Any) -> list[str]:
@@ -264,28 +296,38 @@ def usable_request_auth(auth: dict[str, Any] | None) -> dict[str, Any] | None:
 
 
 def _hint(secret: str) -> str:
+    """Masked hint of a secret; empty for a secret that is not stored."""
+    if not secret:
+        return ""
     return "••••" if len(secret) <= 6 else f"{secret[:3]}…{secret[-2:]}"
+
+
+def _auth_hint(secret: str) -> str:
+    """Hint of an auth secret; a value that is exactly one ``{{name}}`` reference is given as written."""
+    return secret.strip() if VARIABLE.fullmatch(secret.strip()) else _hint(secret)
 
 
 def summarize_auth(auth: dict[str, Any]) -> dict[str, Any]:
     """Secret-free view: the type, non-secret names and a hint of the secret."""
     kind = auth["type"]
     if kind == "bearer":
-        return {"type": "bearer", "hint": _hint(auth["token"])}
+        return {"type": "bearer", "hint": _auth_hint(auth["token"])}
     if kind == "basic":
         return {"type": "basic", "username": auth["username"]}
     if kind in ("header", "query"):
-        return {"type": kind, "name": auth["name"], "hint": _hint(auth["value"])}
+        return {"type": kind, "name": auth["name"], "hint": _auth_hint(auth["value"])}
     return {"type": "none"}
 
 
 def secrets_of(auth: dict[str, Any]) -> list[str]:
     """Secret values of an auth setting, for masking."""
     kind = auth["type"]
+    secret = auth[SECRET_FIELDS[kind]] if kind in SECRET_FIELDS else ""
+    if not secret:
+        return []
     if kind == "basic":
-        pair = f"{auth['username']}:{auth['password']}".encode()
-        return [auth["password"], base64.b64encode(pair).decode()]
-    return [auth[SECRET_FIELDS[kind]]] if kind in SECRET_FIELDS else []
+        return [secret, base64.b64encode(f"{auth['username']}:{secret}".encode()).decode()]
+    return [secret]
 
 
 def summarize(target: dict[str, Any]) -> dict[str, Any]:
@@ -295,6 +337,7 @@ def summarize(target: dict[str, Any]) -> dict[str, Any]:
         "auth": summarize_auth(target["auth"]),
         "headers": dict(target["headers"]),
         "variables": dict(target["variables"]),
+        "secrets": {name: _hint(value) for name, value in target["secrets"].items()},
         "allowedHosts": list(target["allowedHosts"]),
         **{k: target[k] for k in ("allowMutations", "allowPrivate", "timeoutMs", "createdAt", "updatedAt")},
     }
@@ -353,6 +396,9 @@ class TargetStore:
     def create(self, payload: dict[str, Any]) -> dict[str, Any]:
         file = self._load()
         base_url = normalize_base_url(payload.get("baseUrl"))
+        variables = normalize_variables(payload.get("variables"))
+        secret_variables = normalize_secrets(payload.get("secrets"))
+        _distinct(variables, secret_variables)
         now = now_ms()
         target = {
             "id": secrets.token_hex(6),
@@ -360,7 +406,8 @@ class TargetStore:
             "baseUrl": base_url,
             "auth": normalize_auth(payload.get("auth")),
             "headers": normalize_headers(payload.get("headers")),
-            "variables": normalize_variables(payload.get("variables")),
+            "variables": variables,
+            "secrets": secret_variables,
             "allowedHosts": normalize_allowed_hosts(payload.get("allowedHosts")),
             "allowMutations": payload.get("allowMutations") is True,
             "allowPrivate": payload.get("allowPrivate") is True,
@@ -395,6 +442,9 @@ class TargetStore:
         ):
             if field in patch:
                 changes[field] = normalize(patch[field])
+        if "secrets" in patch:
+            changes["secrets"] = normalize_secrets(patch["secrets"], target["secrets"])
+        _distinct(changes.get("variables", target["variables"]), changes.get("secrets", target["secrets"]))
         for field in ("allowMutations", "allowPrivate"):
             if isinstance(patch.get(field), bool):
                 changes[field] = patch[field]
@@ -438,6 +488,7 @@ class TargetStore:
             target["auth"] = target.get("auth") or {"type": "none"}
             target["headers"] = target.get("headers") or {}
             target["variables"] = target.get("variables") or {}
+            target["secrets"] = target["secrets"] if isinstance(target.get("secrets"), dict) else {}
             hosts = target.get("allowedHosts")
             target["allowedHosts"] = hosts if isinstance(hosts, list) else []
             target["allowMutations"] = target.get("allowMutations") is True
@@ -544,6 +595,39 @@ def _rows(value: Any, what: str) -> list[dict[str, Any]]:
     return rows
 
 
+def _stored_capture(rule: dict[str, Any]) -> dict[str, Any]:
+    """A capture rule with every field present; absent or invalid fields take their defaults."""
+    ttl, ttl_path = rule.get("ttlSeconds"), rule.get("ttlPath")
+    if isinstance(ttl, float) and ttl.is_integer():
+        ttl = int(ttl)
+    timed = isinstance(ttl, int) and not isinstance(ttl, bool) and ttl > 0
+    pathed = isinstance(ttl_path, str) and len(ttl_path) <= MAX_PATH_LENGTH and not LINE_BREAK.search(ttl_path)
+    return {
+        "name": _text(rule.get("name")),
+        "source": rule["source"] if rule.get("source") in HTTP_CAPTURE_SOURCES else "body",
+        "path": _text(rule.get("path")),
+        "enabled": rule.get("enabled") is not False,
+        "ttlSeconds": min(ttl, MAX_CAPTURE_TTL_SECONDS) if timed else 0,
+        "ttlPath": ttl_path if pathed else "",
+        "refresh": rule["refresh"] if rule.get("refresh") in HTTP_CAPTURE_REFRESH else "off",
+    }
+
+
+def _captures(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        raise StoreError("captures must be an array of rules")
+    if len(value) > MAX_CAPTURE_RULES:
+        raise StoreError(f"captures: at most {MAX_CAPTURE_RULES} rules")
+    rules = []
+    for raw in value:
+        rule = _stored_capture(raw if isinstance(raw, dict) else {})
+        name, path = rule["name"], rule["path"]
+        if len(name) > MAX_CAPTURE_NAME or len(path) > MAX_PATH_LENGTH or LINE_BREAK.search(name + path):
+            raise StoreError("captures: a rule is too long or contains line breaks")
+        rules.append(rule)
+    return rules
+
+
 def _request_fields(payload: dict[str, Any]) -> dict[str, Any]:
     """Validated fields of a saved request payload; absent fields stay absent."""
     out: dict[str, Any] = {}
@@ -565,6 +649,8 @@ def _request_fields(payload: dict[str, Any]) -> dict[str, Any]:
     for field in ("query", "headers", "form"):
         if payload.get(field) is not None:
             out[field] = _rows(payload[field], field)
+    if payload.get("captures") is not None:
+        out["captures"] = _captures(payload["captures"])
     if payload.get("auth") is not None:
         out["auth"] = normalize_request_auth(payload["auth"])
     if payload.get("bodyMode") is not None:
@@ -614,6 +700,7 @@ class RequestStore:
             "bodyMode": "none",
             "body": "",
             "form": [],
+            "captures": [],
             **_request_fields(payload),
             "createdAt": now,
             "updatedAt": now,
@@ -664,6 +751,7 @@ class RequestStore:
                 or not isinstance(raw.get("targetId"), str)
             ):
                 continue
+            captures = raw["captures"] if isinstance(raw.get("captures"), list) else []
             entries.append(
                 {
                     **raw,
@@ -676,6 +764,7 @@ class RequestStore:
                     "bodyMode": raw["bodyMode"] if raw.get("bodyMode") in HTTP_BODY_MODES else "none",
                     "body": _text(raw.get("body")),
                     "form": raw["form"] if isinstance(raw.get("form"), list) else [],
+                    "captures": [_stored_capture(rule if isinstance(rule, dict) else {}) for rule in captures],
                 }
             )
         self._entries = entries
@@ -685,3 +774,102 @@ class RequestStore:
         text = json.dumps({"version": FORMAT_VERSION, "requests": entries}, ensure_ascii=False, indent=2) + "\n"
         write_private(self.path, text)
         self._entries = entries
+
+
+# ---------------------------------------------------------------------- captured values
+def _stored_value(entry: dict[str, Any]) -> dict[str, Any]:
+    """A stored captured value with every field typed; ``expiresAt`` only when it is a number."""
+    request_id, at, expires = entry.get("requestId"), entry.get("at"), entry.get("expiresAt")
+    value = {
+        "value": entry["value"],
+        "requestId": request_id if isinstance(request_id, str) else "",
+        "at": at if _is_number(at) else 0,
+    }
+    return {**value, "expiresAt": expires} if _is_number(expires) else value
+
+
+class ValueStore:
+    """
+    Captured variable values by scope: a target id, or the direct scope. The values are secrets: they stay in the
+    store; :meth:`list` gives names and hints.
+    """
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self._scopes: dict[str, dict[str, dict[str, Any]]] | None = None
+
+    def map(self, scope_id: str) -> dict[str, str]:
+        """Values of a scope by variable name."""
+        return {name: entry["value"] for name, entry in self._load().get(scope_id, {}).items()}
+
+    def entry(self, scope_id: str, name: str) -> dict[str, Any] | None:
+        """One value of a scope with its origin and expiry: ``value``, ``requestId``, ``at``, ``expiresAt``."""
+        stored = self._load().get(scope_id, {}).get(name)
+        return None if stored is None else dict(stored)
+
+    def list(self, scope_id: str) -> list[dict[str, Any]]:
+        """Secret-free view of a scope's values, by name."""
+        scope = self._load().get(scope_id, {})
+        return [
+            {"name": name, "hint": _hint(entry["value"]), **{k: v for k, v in entry.items() if k != "value"}}
+            for name, entry in sorted(scope.items(), key=lambda item: (item[0].casefold(), item[0]))
+        ]
+
+    def set(
+        self, scope_id: str, values: dict[str, str], request_id: str, lifetimes: dict[str, int] | None = None
+    ) -> None:
+        """
+        Write values captured from one saved request. ``lifetimes``: lifetime in ms by variable name; a value
+        without one does not expire.
+        """
+        kept = {k: v for k, v in values.items() if VARIABLE_NAME.match(k) and len(v) <= MAX_CAPTURED_LENGTH}
+        if not kept:
+            return
+        scopes = self._load()
+        scope = scopes.setdefault(scope_id, {})
+        at = now_ms()
+        for name, value in kept.items():
+            lifetime = (lifetimes or {}).get(name, 0)
+            scope[name] = {"value": value, "requestId": request_id, "at": at}
+            if lifetime > 0:
+                scope[name]["expiresAt"] = at + lifetime
+        self._save(scopes)
+
+    def delete(self, scope_id: str, name: str | None = None) -> int:
+        """Remove one value of a scope, or the whole scope; returns the count."""
+        scopes = self._load()
+        scope = scopes.get(scope_id, {})
+        removed = len(scope) if name is None else int(name in scope)
+        if not removed:
+            return 0
+        if name is not None:
+            del scope[name]
+        if name is None or not scope:
+            del scopes[scope_id]
+        self._save(scopes)
+        return removed
+
+    def _load(self) -> dict[str, dict[str, dict[str, Any]]]:
+        if self._scopes is not None:
+            return self._scopes
+        try:
+            parsed = json.loads(self.path.read_text(encoding="utf-8"))
+            stored = parsed.get("scopes") if isinstance(parsed, dict) else None
+        except (OSError, ValueError):
+            stored = None
+        scopes: dict[str, dict[str, dict[str, Any]]] = {}
+        for scope_id, raw in (stored if isinstance(stored, dict) else {}).items():
+            scope = {
+                name: _stored_value(entry)
+                for name, entry in (raw if isinstance(raw, dict) else {}).items()
+                if VARIABLE_NAME.match(name) and isinstance(entry, dict) and isinstance(entry.get("value"), str)
+            }
+            if scope:
+                scopes[scope_id] = scope
+        self._scopes = scopes
+        return scopes
+
+    def _save(self, scopes: dict[str, dict[str, dict[str, Any]]]) -> None:
+        text = json.dumps({"version": FORMAT_VERSION, "scopes": scopes}, ensure_ascii=False, indent=2) + "\n"
+        write_private(self.path, text)
+        self._scopes = scopes

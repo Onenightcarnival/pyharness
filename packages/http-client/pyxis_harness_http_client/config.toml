@@ -6,6 +6,12 @@ HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
 SAFE_METHODS = ["GET", "HEAD", "OPTIONS"]
 HTTP_AUTH_TYPES = ["none", "bearer", "basic", "header", "query"]
 HTTP_BODY_MODES = ["none", "json", "text", "form"]
+HTTP_CAPTURE_SOURCES = ["body", "header"]
+# When the host sends a saved request by itself to renew a variable it captures.
+HTTP_CAPTURE_REFRESH = ["off", "expired", "rejected"]
+MAX_CAPTURE_RULES = 20
+# Longest fixed lifetime of a captured value, in seconds.
+MAX_CAPTURE_TTL_SECONDS = 31622400
 DEFAULT_TIMEOUT_MS = 30000
 MIN_TIMEOUT_MS = 1000
 MAX_TIMEOUT_MS = 120000
@@ -17,6 +23,10 @@ PANEL_BODY_BYTES = 1048576
 # Body cap kept per exchange in the history file.
 HISTORY_BODY_BYTES = 32768
 
+[capture]
+MAX_CAPTURED_LENGTH = 16384
+MAX_PATH_LENGTH = 512
+
 [store]
 MAX_ENTRIES = 50
 MAX_HOSTS = 20
@@ -26,6 +36,7 @@ MAX_REQUEST_ROWS = 100
 MAX_REQUEST_BODY_BYTES = 262144
 MAX_REQUEST_NAME = 120
 MAX_REQUEST_PATH = 8192
+MAX_CAPTURE_NAME = 128
 # Request headers the transport owns. Lower-case.
 FORBIDDEN_HEADERS = [
     "host",
@@ -41,6 +52,10 @@ FORBIDDEN_HEADERS = [
 
 [engine]
 MAX_REDIRECTS = 5
+# Longest chain of refreshes: a refreshed request may itself need a refresh, this many levels deep.
+MAX_REFRESH_DEPTH = 3
+# A captured value counts as expired this long before its expiry, or a tenth of its lifetime when that is shorter.
+REFRESH_SKEW_MS = 30000
 # Request body cap stored in an exchange.
 REQUEST_BODY_BYTES = 65536
 MASK = "••••••"

@@ -17,23 +17,31 @@ import httpx
 
 from pyxis_harness import package_toml
 
+from .capture import run_captures
 from .protocol import (
     DEFAULT_TIMEOUT_MS,
     DIRECT_TARGET_ID,
     HISTORY_BODY_BYTES,
     PANEL_BODY_BYTES,
+    VARIABLE_NAME,
     Pairs,
     SseParser,
     is_event_stream,
     is_method,
     join_url,
+    referenced_variables,
+    request_input_of,
+    saved_request_title,
     substitute,
 )
 from .store import (
     FORBIDDEN_HEADERS,
     HistoryStore,
+    RequestStore,
     StoreError,
     TargetStore,
+    ValueStore,
+    missing_secrets,
     normalize_request_auth,
     secrets_of,
     usable_request_auth,
@@ -41,6 +49,8 @@ from .store import (
 
 _CFG = package_toml(__file__)["engine"]
 MAX_REDIRECTS: int = _CFG["MAX_REDIRECTS"]
+MAX_REFRESH_DEPTH: int = _CFG["MAX_REFRESH_DEPTH"]
+REFRESH_SKEW_MS: int = _CFG["REFRESH_SKEW_MS"]
 REQUEST_BODY_BYTES: int = _CFG["REQUEST_BODY_BYTES"]
 MASK: str = _CFG["MASK"]
 USER_AGENT: str = _CFG["USER_AGENT"]
@@ -68,6 +78,7 @@ DIRECT_TARGET: dict[str, Any] = {
     "auth": {"type": "none"},
     "headers": {},
     "variables": {},
+    "secrets": {},
     "allowedHosts": [],
     "allowMutations": True,
     "allowPrivate": True,
@@ -76,6 +87,11 @@ DIRECT_TARGET: dict[str, Any] = {
     "updatedAt": 0,
 }
 PRIVATE_HINT = 'enable "allow private network" on the target'
+# Fields of an auth setting in which ``{{variables}}`` are substituted, by type.
+AUTH_TEXTS = {"bearer": ("token",), "basic": ("username", "password"), "header": ("value",), "query": ("value",)}
+NO_AUTH: dict[str, Any] = {"type": "none"}
+# Reads the response as received: status, headers, decoded body, whether the body was cut. Returns the values to mask.
+CaptureHook = Callable[[int, httpx.Headers, str, bool], list[str]]
 
 
 class PolicyError(ValueError):
@@ -105,6 +121,26 @@ class SendOptions:
     keep_binary: bool = False
     on_stream_start: Callable[[dict[str, Any]], None] | None = None
     on_stream_event: Callable[[dict[str, Any], int], None] | None = None
+
+
+@dataclass
+class _Refreshing:
+    """
+    A send the host makes by itself to renew variables. ``chain``: saved requests being refreshed, outermost first;
+    the last one is the request being sent. ``variables``: the variables the refresh is sent for.
+    """
+
+    chain: list[str]
+    variables: list[str]
+
+
+@dataclass
+class _RefreshGroup:
+    """One saved request to send as a refresh, the variables wanted from it, and why."""
+
+    request: dict[str, Any]
+    variables: list[str]
+    reason: str  # "missing", "expired" or "rejected"
 
 
 class _Deadline:
@@ -141,6 +177,47 @@ class _Deadline:
 
 def now_ms() -> int:
     return int(time.time() * 1000)
+
+
+async def _settled(flight: asyncio.Future[Any], cancel: asyncio.Event | None) -> Any:
+    """The flight's result; :class:`_Cancelled` once ``cancel`` is set or the flight is stopped. The flight runs on."""
+    stop = asyncio.ensure_future(cancel.wait()) if cancel is not None else None
+    try:
+        await asyncio.wait({flight, stop} if stop else {flight}, return_when=asyncio.FIRST_COMPLETED)
+    finally:
+        if stop is not None:
+            stop.cancel()
+    if not flight.done() or flight.cancelled():
+        raise _Cancelled
+    return flight.result()
+
+
+# ---------------------------------------------------------------------- variables
+def auth_texts(auth: Mapping[str, Any]) -> list[str]:
+    """Texts of an auth setting in which ``{{variables}}`` are substituted."""
+    return [auth[field] for field in AUTH_TEXTS.get(auth["type"], ())]
+
+
+def substitute_auth(auth: Mapping[str, Any], variables: Mapping[str, str]) -> dict[str, Any]:
+    return {**auth, **{field: substitute(auth[field], variables) for field in AUTH_TEXTS.get(auth["type"], ())}}
+
+
+def is_expired(entry: Mapping[str, Any], now: int | None = None) -> bool:
+    """
+    Whether a captured value has reached its expiry: :data:`REFRESH_SKEW_MS` early, or a tenth of its lifetime
+    early when that is shorter.
+    """
+    expires = entry.get("expiresAt")
+    if expires is None:
+        return False
+    skew = min(REFRESH_SKEW_MS, max(0, expires - entry["at"]) / 10)
+    return (now_ms() if now is None else now) >= expires - skew
+
+
+def refresh_failure(refresh: Mapping[str, Any]) -> str:
+    """Error of a request that is not sent because a refresh it needs failed."""
+    names = ", ".join(f"{{{{{name}}}}}" for name in refresh["variables"])
+    return f"refresh of {names} by request '{refresh['requestName']}' failed: {refresh.get('error') or 'unknown error'}"
 
 
 # ---------------------------------------------------------------------- policy
@@ -262,6 +339,16 @@ def _masked(headers: httpx.Headers, secrets: list[str]) -> dict[str, str]:
     return {name: mask_secrets(value, secrets) for name, value in headers.items()}
 
 
+def _head(response: httpx.Response, content_type: str, secrets: list[str]) -> dict[str, Any]:
+    """Status line and headers of a response, masked."""
+    return {
+        "status": response.status_code,
+        "statusText": response.reason_phrase,
+        "headers": _masked(response.headers, secrets),
+        "contentType": content_type,
+    }
+
+
 def human_bytes(size: int) -> str:
     if size < 1024:
         return f"{size} B"
@@ -361,11 +448,24 @@ def _origin(url: httpx.URL) -> tuple[str, str, int | None]:
 
 # ---------------------------------------------------------------------- engine
 class HttpEngine:
-    """``transport`` replaces the HTTP transport (tests)."""
+    """
+    ``transport`` replaces the HTTP transport (tests). ``requests``: saved requests, the source of capture rules and
+    of refreshes. ``values``: captured variable values. Without both, nothing is captured, refreshed or substituted
+    from captured values.
+    """
 
-    def __init__(self, store: TargetStore, history: HistoryStore, transport: Any = None) -> None:
+    def __init__(
+        self,
+        store: TargetStore,
+        history: HistoryStore,
+        transport: Any = None,
+        requests: RequestStore | None = None,
+        values: ValueStore | None = None,
+    ) -> None:
         self.store = store
         self.history = history
+        self.requests = requests
+        self.values = values
         self.client = httpx.AsyncClient(
             follow_redirects=False,
             timeout=None,
@@ -373,8 +473,15 @@ class HttpEngine:
             headers={"user-agent": USER_AGENT},
             trust_env=False,
         )
+        # Refreshes in flight by scope and saved request; concurrent requests wait for the same one.
+        self._refreshing: dict[tuple[str, str], asyncio.Task[dict[str, Any]]] = {}
+        self._flights: set[asyncio.Task[dict[str, Any]]] = set()
 
     async def aclose(self) -> None:
+        flights = list(self._flights)
+        for flight in flights:
+            flight.cancel()
+        await asyncio.gather(*flights, return_exceptions=True)
         await self.client.aclose()
 
     def target(self, ref: str) -> dict[str, Any]:
@@ -385,17 +492,219 @@ class HttpEngine:
         return target
 
     async def send(self, ref: str, raw: Any, options: SendOptions) -> dict[str, Any]:
-        """Send a request and record it; returns the exchange."""
+        """
+        Send a request and record it, after refreshing the variables it references whose value is missing or
+        expired; returns the exchange. Policy and transport failures, a failed refresh included, are its ``error``.
+        """
+        return await self._run(ref, raw, options, None)
+
+    async def _run(self, ref: str, raw: Any, options: SendOptions, context: _Refreshing | None) -> dict[str, Any]:
         direct = ref == DIRECT_TARGET_ID and options.source == "panel"
         target = DIRECT_TARGET if direct else self.target(ref)
         request = validate_input(raw)
-        own = usable_request_auth(request["auth"]) if options.source == "panel" else None
-        auth = own if own is not None and target["auth"]["type"] == "none" else target["auth"]
-        variables = target["variables"]
+        # A form the user wrote: the page's send, or a saved request the host sends as a refresh.
+        authored = options.source == "panel" or context is not None
+        chain = context.chain if context is not None else []
+        refreshed: list[dict[str, Any]] = []
+        blocked: str | None = None
+        for group in self._refresh_groups(target, request, authored, rejected=False):
+            outcome = await self._refresh(target, group, options, chain)
+            refreshed.append(outcome)
+            if not outcome["ok"]:
+                blocked = refresh_failure(outcome)
+                break
+        exchange = await self._exchange(target, request, options, context, refreshed, blocked)
+        # A 401 renews the variables whose rule asks for it, then the request is sent once more.
+        response = exchange.get("response")
+        stopped = options.cancel is not None and options.cancel.is_set()
+        if blocked is not None or response is None or response["status"] != 401 or "stream" in response or stopped:
+            return exchange
+        done = {outcome["requestId"] for outcome in refreshed}
+        again = [
+            group
+            for group in self._refresh_groups(target, request, authored, rejected=True)
+            if group.request["id"] not in done
+        ]
+        if not again:
+            return exchange
+        for group in again:
+            outcome = await self._refresh(target, group, options, chain)
+            refreshed.append(outcome)
+            if not outcome["ok"]:
+                return {**exchange, "refreshed": list(refreshed)}
+        return await self._exchange(target, request, options, context, refreshed, None)
+
+    # ------------------------------------------------------------------ what a request carries
+    def _saved_of(self, target: Mapping[str, Any], request: Mapping[str, Any], authored: bool) -> dict[str, Any] | None:
+        """The saved request behind a send, when the send is the user's form and the request belongs to the scope."""
+        if not authored or request["requestId"] is None or self.requests is None or self.values is None:
+            return None
+        saved = self.requests.get(request["requestId"])
+        return saved if saved is not None and saved["targetId"] == target["id"] else None
+
+    def _applied(
+        self, target: Mapping[str, Any], request: Mapping[str, Any], authored: bool
+    ) -> tuple[dict[str, Any], dict[str, str]]:
+        """
+        The auth and the fixed headers the target adds to a request, before substitution. A request that captures
+        a variable is sent without the target auth and the fixed headers that reference that variable. The form's
+        own auth applies when the user wrote the form and no target auth does.
+        """
+        saved = self._saved_of(target, request, authored)
+        produced = {rule["name"].strip() for rule in (saved or {}).get("captures", []) if rule["enabled"]}
+
+        def own(texts: list[str]) -> bool:
+            return not produced.isdisjoint(referenced_variables(texts))
+
+        auth = NO_AUTH if own(auth_texts(target["auth"])) else target["auth"]
+        if authored and auth["type"] == "none":
+            auth = usable_request_auth(request["auth"]) or auth
+        return auth, {name: value for name, value in target["headers"].items() if not own([value])}
+
+    def _references(self, target: Mapping[str, Any], request: Mapping[str, Any], authored: bool) -> set[str]:
+        """
+        Variable names a request references: in its path, query, headers and body, and in the target's fixed
+        headers and auth sent with it.
+        """
+        auth, fixed = self._applied(target, request, authored)
+        sends_body = request["body"] is not None and request["method"] not in ("GET", "HEAD")
+        return referenced_variables(
+            [
+                request["path"],
+                *(text for pair in request["query"] for text in pair),
+                *request["headers"].values(),
+                request["body"] if sends_body else "",
+                *fixed.values(),
+                *auth_texts(auth),
+            ]
+        )
+
+    # ------------------------------------------------------------------ refresh
+    def _refresh_groups(
+        self, target: Mapping[str, Any], request: Mapping[str, Any], authored: bool, rejected: bool
+    ) -> list[_RefreshGroup]:
+        """
+        Saved requests to send for a request, grouped by request in creation order. Before the request: the
+        referenced variables with a refresh rule whose value is missing or expired. ``rejected``, after a 401:
+        those whose rule renews on a 401. The request being sent never refreshes itself.
+        """
+        if self.requests is None or self.values is None:
+            return []
+        names = self._references(target, request, authored)
+        scope = target["id"]
+        entries = {name: self.values.entry(scope, name) for name in names}
+        sources: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
+        for saved in self.requests.list(scope) if names else []:
+            for rule in saved["captures"]:
+                name = rule["name"].strip()
+                renews = rule["enabled"] and rule["refresh"] != "off" and VARIABLE_NAME.match(name)
+                if not renews or name not in names:
+                    continue
+                # Of several requests that renew a variable, the one its value came from is sent.
+                if name not in sources or (entries[name] or {}).get("requestId") == saved["id"]:
+                    sources[name] = (saved, rule)
+        groups: dict[str, _RefreshGroup] = {}
+        for name, (saved, rule) in sources.items():
+            if authored and request["requestId"] == saved["id"]:
+                continue
+            entry = entries[name]
+            if rejected:
+                reason = "rejected" if rule["refresh"] == "rejected" else None
+            elif entry is None:
+                reason = "missing"
+            else:
+                reason = "expired" if is_expired(entry) else None
+            if reason is None:
+                continue
+            if saved["id"] in groups:
+                groups[saved["id"]].variables.append(name)
+            else:
+                groups[saved["id"]] = _RefreshGroup(saved, [name], reason)
+        return list(groups.values())
+
+    def _fly(self, scope: str, saved: Mapping[str, Any], source: str, context: _Refreshing) -> asyncio.Task[Any]:
+        """Send a saved request as stored, on its own task: it completes whoever waits for it."""
+        raw = {**request_input_of(saved), "requestId": saved["id"]}
+        flight = asyncio.ensure_future(self._run(scope, raw, SendOptions(source=source), context))
+        self._flights.add(flight)
+        flight.add_done_callback(self._landed)
+        return flight
+
+    def _landed(self, flight: asyncio.Task[Any]) -> None:
+        self._flights.discard(flight)
+        if not flight.cancelled():
+            flight.exception()  # read here: a waiter that left never reads it
+
+    async def _refresh(
+        self, target: Mapping[str, Any], group: _RefreshGroup, options: SendOptions, chain: list[str]
+    ) -> dict[str, Any]:
+        """Send a saved request as a refresh; the outcome tells whether it renewed the wanted variables."""
+        saved, variables = group.request, group.variables
+        outcome: dict[str, Any] = {
+            "requestId": saved["id"],
+            "requestName": saved_request_title(saved),
+            "variables": variables,
+            "reason": group.reason,
+        }
+        if saved["id"] in chain:
+            return {**outcome, "ok": False, "error": "the request depends on a variable it refreshes"}
+        if len(chain) >= MAX_REFRESH_DEPTH:
+            return {**outcome, "ok": False, "error": f"more than {MAX_REFRESH_DEPTH} refreshes in a chain"}
+        context = _Refreshing([*chain, saved["id"]], variables)
+        # Requests that need the same refresh wait for one send; a refresh within a refresh is its own send.
+        key = (target["id"], saved["id"])
+        if chain:
+            flight = self._fly(target["id"], saved, options.source, context)
+        elif key in self._refreshing:
+            flight = self._refreshing[key]
+        else:
+            flight = self._refreshing[key] = self._fly(target["id"], saved, options.source, context)
+            flight.add_done_callback(lambda _: self._refreshing.pop(key, None))
+        try:
+            exchange = await _settled(flight, options.cancel)
+        except _Cancelled:
+            return {**outcome, "ok": False, "error": "cancelled"}
+        except PolicyError as exc:
+            return {**outcome, "ok": False, "error": str(exc)}
+        outcome["exchangeId"] = exchange["id"]
+        if "error" in exchange:
+            return {**outcome, "ok": False, "error": exchange["error"]}
+        for name in variables:
+            result = next((item for item in exchange.get("captures", []) if item["name"] == name), None)
+            if result is None or not result["ok"]:
+                why = (result or {}).get("error") or "no capture rule ran"
+                return {**outcome, "ok": False, "error": f"{{{{{name}}}}} was not captured: {why}"}
+        return {**outcome, "ok": True}
+
+    # ------------------------------------------------------------------ one request
+    async def _exchange(
+        self,
+        target: Mapping[str, Any],
+        request: Mapping[str, Any],
+        options: SendOptions,
+        context: _Refreshing | None,
+        refreshed: list[dict[str, Any]],
+        blocked: str | None,
+    ) -> dict[str, Any]:
+        """Send one request and record it. ``blocked`` records the exchange with that error instead of sending."""
+        authored = options.source == "panel" or context is not None
+        # Captured values are variables of the scope; one named like a target variable takes its place.
+        captured = self.values.map(target["id"]) if self.values is not None else {}
+        filled = {name: value for name, value in target["secrets"].items() if value}
+        variables = {**target["variables"], **filled, **captured}
+        # The target as this request is sent to it: auth and fixed headers with their variables in place.
+        applied_auth, applied_headers = self._applied(target, request, authored)
+        auth = substitute_auth(applied_auth, variables)
+        fixed = {name: substitute(value, variables) for name, value in applied_headers.items()}
+        # The user's saved request brings the capture rules; they run on a response of its own scope.
+        saved = self._saved_of(target, request, authored)
+        rules = [rule for rule in (saved or {}).get("captures", []) if rule["enabled"] and rule["name"].strip()]
         path = substitute(request["path"], variables)
         query = [(substitute(k, variables), substitute(v, variables)) for k, v in request["query"]]
         headers = {name: substitute(value, variables) for name, value in request["headers"].items()}
-        secrets = [*secrets_of(auth), *typed_credentials(headers)]
+        # An auth value whose variable has no value is the reference as written, not a secret.
+        configured = [secret for secret in (*secrets_of(auth), *filled.values()) if not referenced_variables([secret])]
+        secrets = [*configured, *typed_credentials(headers), *captured.values()]
         raw_body = request["body"] or ""
         body = substitute(raw_body, variables) if raw_body and request["method"] not in ("GET", "HEAD") else None
         stored_body, cut = truncate(mask_secrets(raw_body, secrets), REQUEST_BODY_BYTES)
@@ -415,16 +724,35 @@ class HttpEngine:
                 "body": stored_body,
                 "bodyTruncated": cut,
             },
+            **({"refreshed": list(refreshed)} if refreshed else {}),
+            **({"refreshOf": list(context.variables)} if context is not None else {}),
         }
+
+        def capture(status: int, received: httpx.Headers, text: str, truncated: bool) -> list[str]:
+            values, lifetimes, exchange["captures"] = run_captures(rules, status, received, text, truncated)
+            if self.values is not None and saved is not None:
+                self.values.set(target["id"], values, saved["id"], lifetimes)
+            return list(values.values())
+
         started = time.monotonic()
         try:
+            if blocked is not None:
+                raise PolicyError(blocked)
+            referenced = self._references(target, request, authored)
+            unfilled = [name for name in missing_secrets(target) if name in referenced]
+            if unfilled:
+                names = ", ".join(f"{{{{{name}}}}}" for name in unfilled)
+                raise PolicyError(
+                    f"secret variable {names} of target '{target['name']}' is not filled in (edit the target on the "
+                    "HTTP page)"
+                )
             url = build_url(target, path, query)
             if not _allowed(url, target):
                 raise PolicyError(
                     f"host '{url.host}' is not allowed for target '{target['name']}' (add it to allowed hosts)"
                 )
             sent = httpx.Headers()
-            for source in (target["headers"], headers):
+            for source in (fixed, headers):
                 for name, value in source.items():
                     if name.lower() not in FORBIDDEN_HEADERS:
                         sent[name] = value
@@ -436,14 +764,18 @@ class HttpEngine:
             exchange["request"]["url"] = mask_secrets(str(url), secrets)
             exchange["request"]["sentHeaders"] = _masked(sent, secrets)
             exchange["response"] = await self._perform(
-                target, auth, url, request["method"], sent, body, secrets, started, options
+                target, auth, url, request["method"], sent, body, secrets, started, options, capture if rules else None
             )
+            if rules and "captures" not in exchange:
+                missed = "event streams are not captured"
+                exchange["captures"] = [{"name": rule["name"].strip(), "ok": False, "error": missed} for rule in rules]
         except _Cancelled:
             exchange["error"] = "cancelled"
         except _Expired:
             exchange["error"] = f"timed out after {target['timeoutMs']} ms"
         except (PolicyError, httpx.HTTPError) as exc:
-            exchange["error"] = mask_secrets(str(exc) or type(exc).__name__, secrets)
+            stopped = options.cancel is not None and options.cancel.is_set()
+            exchange["error"] = "cancelled" if stopped else mask_secrets(str(exc) or type(exc).__name__, secrets)
         if options.record:
             self.history.add(for_history(exchange))
         return exchange
@@ -470,6 +802,7 @@ class HttpEngine:
         secrets: list[str],
         started: float,
         options: SendOptions,
+        capture: CaptureHook | None = None,
     ) -> dict[str, Any]:
         deadline = _Deadline(target["timeoutMs"] / 1000, options.cancel)
         if options.cancel is not None and options.cancel.is_set():
@@ -485,7 +818,7 @@ class HttpEngine:
             try:
                 location = response.headers.get("location")
                 if location is None or response.status_code not in REDIRECT_STATUSES or hop >= MAX_REDIRECTS:
-                    return await self._read(response, target, secrets, started, redirects, deadline, options)
+                    return await self._read(response, secrets, started, redirects, deadline, options, capture)
                 try:
                     following = url.join(location)
                 except (httpx.InvalidURL, ValueError) as exc:
@@ -516,24 +849,19 @@ class HttpEngine:
     async def _read(
         self,
         response: httpx.Response,
-        target: Mapping[str, Any],
         secrets: list[str],
         started: float,
         redirects: list[str],
         deadline: _Deadline,
         options: SendOptions,
+        capture: CaptureHook | None,
     ) -> dict[str, Any]:
         """The exchange response of the final HTTP response."""
         content_type = response.headers.get("content-type", "")
-        head = {
-            "status": response.status_code,
-            "statusText": response.reason_phrase,
-            "headers": _masked(response.headers, secrets),
-            "contentType": content_type,
-        }
         chunks = response.aiter_bytes()
         limit = options.max_body_bytes
         if is_event_stream(content_type):
+            head = _head(response, content_type, secrets)
             return await self._read_stream(chunks, head, secrets, started, redirects, deadline, options)
         data, truncated = bytearray(), False
         while limit > 0:
@@ -546,10 +874,14 @@ class HttpEngine:
                 truncated = True
                 break
         textual = is_textual(content_type, bytes(data))
+        text = _decode(bytes(data), content_type) if textual else ""
+        # Values captured from this response are masked in it like every other secret.
+        if capture is not None:
+            secrets = [*secrets, *capture(response.status_code, response.headers, text, truncated)]
         out = {
-            **head,
+            **_head(response, content_type, secrets),
             "bodyBytes": len(data),
-            "body": mask_secrets(_decode(bytes(data), content_type), secrets) if textual else "",
+            "body": mask_secrets(text, secrets),
             "bodyTruncated": truncated,
             "binary": not textual,
             "durationMs": int((time.monotonic() - started) * 1000),

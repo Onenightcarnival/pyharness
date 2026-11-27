@@ -1,6 +1,6 @@
 """
-HTTP client: the wire helpers, the three stores, the request engine over a mocked transport, the agent tools and
-the management routes.
+HTTP client: the wire helpers, the stores, the request engine over a mocked transport (secret variables, captured
+variables and their refresh included), the agent tools and the management routes.
 """
 
 from __future__ import annotations
@@ -16,22 +16,33 @@ import httpx
 import pytest
 
 from pyxis_harness import Harness, Profile
+from pyxis_harness_http_client.capture import parse_json_path, read_path, run_captures
 from pyxis_harness_http_client.engine import (
     HttpEngine,
     PolicyError,
     SendOptions,
     build_url,
     host_matches,
+    is_expired,
     is_private_address,
     is_textual,
     mask_secrets,
 )
-from pyxis_harness_http_client.protocol import SseParser, join_url, parse_sse, substitute
+from pyxis_harness_http_client.protocol import (
+    SseParser,
+    blank_capture,
+    join_url,
+    parse_sse,
+    referenced_variables,
+    request_input_of,
+    substitute,
+)
 from pyxis_harness_http_client.store import (
     HistoryStore,
     RequestStore,
     StoreError,
     TargetStore,
+    ValueStore,
     normalize_auth,
     normalize_base_url,
     secrets_of,
@@ -607,8 +618,15 @@ async def test_engine_event_streams(rig):
 
 # ---------------------------------------------------------------------- tools
 class Rig:
-    def __init__(self, store: TargetStore, history: HistoryStore, engine: HttpEngine) -> None:
-        self.store, self.history, self.engine = store, history, engine
+    def __init__(
+        self,
+        store: TargetStore,
+        history: HistoryStore,
+        engine: HttpEngine,
+        requests: RequestStore | None = None,
+        values: ValueStore | None = None,
+    ) -> None:
+        self.store, self.history, self.engine, self.requests, self.values = store, history, engine, requests, values
 
 
 async def test_tools(rig):
@@ -692,6 +710,861 @@ async def test_tools(rig):
     empty = Rig(TargetStore(store.path.with_name("none.json")), history, engine)
     assert "no HTTP targets configured" in await build_tools(empty)[0].ainvoke({})
     await engine.aclose()
+
+
+# ---------------------------------------------------------------------- secret, captured and refreshed variables
+class Api:
+    """Stub token API: what it saw and how it answers."""
+
+    def __init__(self) -> None:
+        self.token_calls = self.api_calls = self.pair_calls = self.issued = self.logins = 0
+        self.token_bodies: list[str] = []
+        self.valid: set[str] = set()
+        self.token_status = 200
+        self.token_delay = 0.0
+        self.seen: list[tuple[str, dict[str, str]]] = []
+
+    def seen_at(self, path: str) -> dict[str, str]:
+        """Headers of the latest request to a path."""
+        return next((headers for url, headers in reversed(self.seen) if url.split("?")[0] == path), {})
+
+    async def __call__(self, request: httpx.Request) -> httpx.Response:
+        path, url = request.url.path, request.url.raw_path.decode()
+        self.seen.append((url, dict(request.headers)))
+        if path == "/token":
+            self.token_calls += 1
+            self.token_bodies.append(request.content.decode())
+            await asyncio.sleep(self.token_delay)
+            if self.token_status != 200:
+                return httpx.Response(self.token_status, json={"error": "nope"})
+            self.issued += 1
+            self.valid.add(f"access-token-{self.issued}")
+            return httpx.Response(200, json={"access_token": f"access-token-{self.issued}", "expires_in": 7200})
+        if path == "/login":
+            self.logins += 1
+            body = {"data": {"access_token": f"secret-token-{self.logins}"}}
+            return httpx.Response(200, headers={"x-session": f"sess-{self.logins}"}, json=body)
+        if path == "/denied":
+            return httpx.Response(403, json={"data": {"access_token": "never"}})
+        if path == "/plain":
+            return httpx.Response(200, headers={"content-type": "text/plain"}, content=b"plain text")
+        if path in ("/stream", "/sse-401"):
+            status = 200 if path == "/stream" else 401
+            return httpx.Response(status, headers={"content-type": "text/event-stream"}, content=b"data: denied\n\n")
+        if path == "/echo":
+            return httpx.Response(200, json={"headers": dict(request.headers), "url": url})
+        if path == "/pair":
+            self.pair_calls += 1
+            return httpx.Response(200, json={"first": "pair-first-value", "second": "pair-second-value"})
+        if path in ("/a", "/b"):
+            return httpx.Response(200, json={"value": f"{path[1:]}-value-1"})
+        self.api_calls += 1
+        bearer = request.headers.get("authorization", "").removeprefix("Bearer ")
+        got = bearer or request.url.params.get("access_token", "")
+        if path == "/always-401" or got not in self.valid:
+            return httpx.Response(401, json={"error": "invalid token", "got": got})
+        return httpx.Response(200, json={"ok": True, "path": path, "got": got})
+
+
+class Lab:
+    """The four stores and an engine over the stub API; also the host of the agent tools."""
+
+    def __init__(self, base: Path) -> None:
+        self.api = Api()
+        self.store = TargetStore(base / "targets.json")
+        self.requests = RequestStore(base / "requests.json")
+        self.history = HistoryStore(base / "history.jsonl", lambda: 500)
+        self.values = ValueStore(base / "values.json")
+        self.engine = HttpEngine(self.store, self.history, httpx.MockTransport(self.api), self.requests, self.values)
+
+    def target(self, **fields: Any) -> dict[str, Any]:
+        return self.store.create({"baseUrl": ORIGIN, "allowPrivate": True, **fields})
+
+    def saved(self, target_id: str, **fields: Any) -> dict[str, Any]:
+        return self.requests.create({"targetId": target_id, **fields})
+
+    def token_target(self, name: str, refresh: str) -> tuple[str, str]:
+        """A target whose bearer token is a captured variable, and the saved request that renews it: their ids."""
+        bearer = {"type": "bearer", "token": "{{access_token}}"}
+        target = self.target(name=name, auth=bearer, secrets={"client_secret": "app-secret-value"})
+        saved = self.saved(
+            target["id"],
+            name="get token",
+            method="POST",
+            path="/token",
+            bodyMode="json",
+            body='{"secret":"{{client_secret}}"}',
+            # The token request authenticates with the secret, not with the token it obtains.
+            headers=[{"key": "Authorization", "value": "Basic x", "enabled": True}],
+            captures=[rule("access_token", "access_token", refresh, ttlPath="expires_in")],
+        )
+        return target["id"], saved["id"]
+
+    async def send(self, ref: str, method: str, path: str, source: str = "agent", **fields: Any) -> dict[str, Any]:
+        return await self.engine.send(ref, {"method": method, "path": path, **fields}, SendOptions(source=source))
+
+
+@pytest.fixture
+async def lab(tmp_path: Path) -> Any:
+    lab = Lab(tmp_path)
+    yield lab
+    await lab.engine.aclose()
+
+
+def rule(name: str, path: str, refresh: str = "off", **fields: Any) -> dict[str, Any]:
+    return {**blank_capture(), "name": name, "path": path, "refresh": refresh, **fields}
+
+
+def outcomes(exchange: dict[str, Any], *fields: str) -> list[tuple[Any, ...]]:
+    """The named fields of each refresh an exchange lists."""
+    return [tuple(item.get(field) for field in fields) for item in exchange.get("refreshed", [])]
+
+
+def test_variable_helpers():
+    assert referenced_variables(["/x/{{ a }}?b={{b}}", "Bearer {{a}}", "{{ not valid }}"]) == {"a", "b"}
+    form = {
+        "method": "POST",
+        "path": "/p",
+        "query": [
+            {"key": "q", "value": "1"},
+            {"key": "off", "value": "2", "enabled": False},
+            {"key": " ", "value": "x"},
+        ],
+        "headers": [{"key": "X-A", "value": "a"}],
+        "auth": {"type": "none"},
+        "bodyMode": "form",
+        "body": "ignored",
+        "form": [{"key": "f", "value": "v w"}, {"key": "g", "value": "~*é"}],
+    }
+    assert request_input_of(form) == {
+        "method": "POST",
+        "path": "/p",
+        "query": [["q", "1"]],
+        "headers": {"X-A": "a", "content-type": "application/x-www-form-urlencoded; charset=utf-8"},
+        "body": "f=v+w&g=%7E*%C3%A9",
+    }
+    bearer = {"type": "bearer", "token": "t"}
+    sent = request_input_of({**form, "method": "GET", "auth": bearer, "bodyMode": "json", "body": "{}"})
+    assert sent["body"] is None and sent["auth"] == bearer and "content-type" not in sent["headers"]
+    typed = request_input_of({**form, "bodyMode": "json", "body": "{}"})
+    assert typed["body"] == "{}" and typed["headers"]["content-type"] == "application/json; charset=utf-8"
+    # A value counts as expired 30 s before its expiry, or a tenth of its lifetime early when that is shorter.
+    now = 1_000_000
+    assert not is_expired({"at": now}, now)
+    assert not is_expired({"at": now - 7_200_000 + 31_000, "expiresAt": now + 31_000}, now)
+    assert is_expired({"at": now - 7_200_000 + 29_000, "expiresAt": now + 29_000}, now)
+    assert not is_expired({"at": now - 800, "expiresAt": now + 200}, now)
+    assert is_expired({"at": now - 950, "expiresAt": now + 50}, now)
+
+
+def test_capture_rules():
+    assert parse_json_path("data.token") == ["data", "token"]
+    assert parse_json_path("$.items[0].id") == ["items", 0, "id"]
+    assert parse_json_path("$[\"a.b\"]['c d']") == ["a.b", "c d"] and parse_json_path("[2]") == [2]
+    for bad in ("", "$", "a..b", "a[", "a[x]", "$a", "a" * 513):
+        rejects(lambda bad=bad: parse_json_path(bad), ".", ValueError)
+    root = {"data": {"token": "t", "list": [{"id": 7}]}}
+    assert read_path(root, ["data", "token"]) == "t" and read_path(root, ["data", "list", 0, "id"]) == 7
+    assert read_path(root, ["data", "list", "0", "id"]) == 7 and read_path(root, ["data", "list", 3, "id"]) is None
+    assert read_path(root, ["data", "token", "length"]) is None and read_path(root, ["data", "items"]) is None
+    headers = httpx.Headers({"x-session": "sess-1", "content-type": "application/json"})
+    data = {"access_token": "tok-123", "expires": 3600, "ratio": 1.5, "whole": 2.0, "on": True, "nested": {"a": 1}}
+    body = json.dumps({"data": {**data, "empty": "", "none": None, "lines": "a\nb", "long": "x" * 16385}})
+    rules = [
+        rule("token", "data.access_token"),
+        rule("ttl", "$.data.expires"),
+        rule("ratio", "data.ratio"),
+        rule("whole", "data.whole"),
+        rule("on", "data.on"),
+        rule("session", "X-Session", source="header"),
+        rule("off", "data.access_token", enabled=False),
+        rule("", "data.access_token"),
+        rule("missing", "data.nope"),
+        rule("null", "data.none"),
+        rule("object", "data.nested"),
+        rule("blank", "data.empty"),
+        rule("lines", "data.lines"),
+        rule("long", "data.long"),
+        rule("bad name", "data.access_token"),
+        rule("badpath", "data..x"),
+        rule("nohdr", "x-none", source="header"),
+        rule("badhdr", "x none", source="header"),
+        rule("emptyhdr", " ", source="header"),
+    ]
+    values, lifetimes, results = run_captures(rules, 200, headers, body, False)
+    assert values == {
+        "token": "tok-123",
+        "ttl": "3600",
+        "ratio": "1.5",
+        "whole": "2",
+        "on": "true",
+        "session": "sess-1",
+    }
+    assert lifetimes == {} and [r["name"] for r in results if r["ok"]] == list(values)
+    assert {r["name"]: r["error"] for r in results if not r["ok"]} == {
+        "missing": 'path "data.nope" not found',
+        "null": 'path "data.none" not found',
+        "object": "value is not a string, number or boolean",
+        "blank": "value is empty",
+        "lines": "value contains line breaks",
+        "long": "value is too long",
+        "bad name": "invalid variable name",
+        "badpath": "name expected at 5",
+        "nohdr": 'header "x-none" not found',
+        "badhdr": 'invalid header name "x none"',
+        "emptyhdr": "header name is empty",
+    }
+    # Each reason a response gives nothing: its status, a body that is not JSON, a body cut short.
+    one = [rule("token", "data.access_token")]
+    for status, text, cut, reason in (
+        (401, body, False, "response status 401"),
+        (200, "plain", False, "response body is not JSON"),
+        (200, "NaN", False, "response body is not JSON"),
+        (200, body, True, "response body is truncated"),
+    ):
+        assert run_captures(one, status, headers, text, cut) == (
+            {},
+            {},
+            [{"name": "token", "ok": False, "error": reason}],
+        )
+    # A header rule needs no JSON body.
+    assert run_captures([rule("session", "x-session", source="header")], 204, headers, "", False)[0] == {
+        "session": "sess-1"
+    }
+    # A lifetime comes from the response path, else from the fixed seconds; an unreadable path warns.
+    body = json.dumps(
+        {"access_token": "tok-123", "expires_in": 7200, "text": " 90 ", "bad": "soon", "zero": 0, "on": True}
+    )
+    timed = [
+        rule("fixed", "access_token", ttlSeconds=600),
+        rule("fromPath", "access_token", ttlSeconds=600, ttlPath="expires_in"),
+        rule("numericText", "access_token", ttlPath="$.text"),
+        rule("unreadable", "access_token", ttlPath="bad"),
+        rule("absent", "access_token", ttlPath="nope"),
+        rule("zero", "access_token", ttlPath="zero"),
+        rule("flag", "access_token", ttlPath="on"),
+        rule("malformed", "access_token", ttlPath="a..b"),
+        rule("forever", "access_token"),
+        rule("sid", "x-session", source="header", ttlPath="expires_in"),
+    ]
+    values, lifetimes, results = run_captures(timed, 200, headers, body, False)
+    assert lifetimes == {"fixed": 600_000, "fromPath": 7_200_000, "numericText": 90_000, "sid": 7_200_000}
+    assert list(values) == [r["name"] for r in results] and all(r["ok"] for r in results)
+    assert [r["name"] for r in results if "warning" in r] == ["unreadable", "absent", "zero", "flag", "malformed"]
+    assert results[3]["warning"] == 'lifetime "bad" is not a positive number of seconds'
+
+
+def test_capture_rules_and_values_in_the_stores(tmp_path):
+    requests = RequestStore(tmp_path / "requests.json")
+    saved = requests.create(
+        {
+            "targetId": "x",
+            "path": "/",
+            "captures": [
+                {"name": "a", "source": "body", "path": "p", "enabled": True},
+                rule("b", "p", "sometimes", ttlSeconds=10**12, source="cookie"),
+                rule("c", "p", "rejected", ttlSeconds=-5, ttlPath="data.expires_in", source="header", enabled=False),
+                "junk",
+            ],
+        }
+    )
+    assert saved["captures"] == [
+        rule("a", "p"),
+        rule("b", "p", ttlSeconds=366 * 86400),
+        rule("c", "p", "rejected", ttlPath="data.expires_in", source="header", enabled=False),
+        blank_capture(),
+    ]
+    assert RequestStore(requests.path).get(saved["id"])["captures"] == saved["captures"]
+    for captures, message in (
+        ({}, "array of rules"),
+        ([rule("a", "p")] * 21, "at most 20 rules"),
+        ([rule("a" * 129, "p")], "too long"),
+        ([rule("a", "p" * 513)], "too long"),
+        ([rule("a", "p\nq")], "line breaks"),
+    ):
+        rejects(lambda captures=captures: requests.update(saved["id"], {"captures": captures}), message)
+    assert requests.update(saved["id"], {"name": "kept"})["captures"] == saved["captures"]
+    assert requests.update(saved["id"], {"captures": []})["captures"] == []
+    # Values: per scope, secret-free when listed, expiry kept across a reload, mode 0600.
+    values = ValueStore(tmp_path / "values.json")
+    values.set(
+        "t1",
+        {"token": "value-number-1", "Forever": "v2", "bad name": "x", "long": "x" * 16385},
+        saved["id"],
+        {"token": 5000},
+    )
+    values.set("direct", {"token": "other-scope"}, "")
+    assert values.map("t1") == {"token": "value-number-1", "Forever": "v2"} and values.map("none") == {}
+    again = ValueStore(values.path)
+    entry = again.entry("t1", "token")
+    assert entry["expiresAt"] - entry["at"] == 5000 and entry["requestId"] == saved["id"]
+    assert "expiresAt" not in again.entry("t1", "Forever") and again.entry("t1", "none") is None
+    listed = again.list("t1")
+    assert [(v["name"], v["hint"], v.get("expiresAt")) for v in listed] == [
+        ("Forever", "••••", None),
+        ("token", "val…-1", entry["expiresAt"]),
+    ]
+    assert "value-number-1" not in json.dumps(listed) and set(listed[1]) == {
+        "name",
+        "hint",
+        "requestId",
+        "at",
+        "expiresAt",
+    }
+    assert stat.S_IMODE(values.path.stat().st_mode) == 0o600
+    assert (again.delete("t1", "none"), again.delete("t1", "token"), again.delete("none")) == (0, 1, 0)
+    assert (
+        again.delete("t1") == 1
+        and again.list("t1") == []
+        and ValueStore(values.path).map("direct") == {"token": "other-scope"}
+    )
+    values.path.write_text("{oops")
+    assert ValueStore(values.path).map("direct") == {}
+
+
+async def test_secret_variables(lab):
+    store, api = lab.store, lab.api
+    target = lab.target(name="secrets", variables={"org": "acme"}, secrets={"client_secret": "app-secret-value"})
+    assert summarize(target)["secrets"] == {"client_secret": "app…ue"}
+    assert "app-secret-value" not in json.dumps(summarize(target)) and "app-secret-value" in store.path.read_text()
+    tid = target["id"]
+    rejects(lambda: store.update(tid, {"variables": {"client_secret": "x"}}), "both a variable and a secret variable")
+    rejects(
+        lambda: store.create({"baseUrl": ORIGIN, "variables": {"k": "v"}, "secrets": {"k": "s"}}), "both a variable"
+    )
+    rejects(lambda: store.update(tid, {"secrets": {"client_secret": "", "other": ""}}), '"other" is required')
+    rejects(lambda: store.create({"baseUrl": ORIGIN, "secrets": {"1bad": "x"}}), "invalid name")
+    rejects(lambda: store.create({"baseUrl": ORIGIN, "secrets": {"k": "a\nb"}}), "line breaks")
+    # An empty value keeps the stored one; a name left out is removed; other fields leave the secrets alone.
+    kept = {"client_secret": "app-secret-value"}
+    assert store.update(tid, {"secrets": {"client_secret": "", "extra": "second-secret"}})["secrets"] == {
+        **kept,
+        "extra": "second-secret",
+    }
+    assert store.update(tid, {"secrets": {"client_secret": ""}})["secrets"] == kept
+    assert store.update(tid, {"name": "secrets"})["secrets"] == kept
+    # Substituted like a variable; masked in the URL, the headers, the echoed response, the errors and the history.
+    typed = {
+        "method": "POST",
+        "path": "/echo",
+        "query": {"k": "{{client_secret}}"},
+        "headers": {"X-Secret": "{{client_secret}}"},
+    }
+    sent = await lab.send("secrets", **typed, body='{"secret":"{{client_secret}}","org":"{{org}}"}')
+    assert api.seen[-1][0] == "/echo?k=app-secret-value" and api.seen_at("/echo")["x-secret"] == "app-secret-value"
+    assert "app-secret-value" not in json.dumps(sent) and '"x-secret":"••••••"' in sent["response"]["body"]
+    assert (
+        sent["request"]["url"] == f"{ORIGIN}/echo?k=••••••" and sent["request"]["sentHeaders"]["x-secret"] == "••••••"
+    )
+    assert sent["request"]["body"] == '{"secret":"{{client_secret}}","org":"{{org}}"}'
+    assert sent["request"]["headers"] == {"X-Secret": "{{client_secret}}"}
+    await lab.send("secrets", "POST", "/token", body='{"secret":"{{client_secret}}","org":"{{org}}"}')
+    assert api.token_bodies == ['{"secret":"app-secret-value","org":"acme"}']
+    refused = await lab.send("secrets", "GET", "https://{{client_secret}}.test/")
+    assert refused["error"].startswith("host '••••••.test' is not allowed") and "app-secret-value" not in json.dumps(
+        refused
+    )
+    assert "app-secret-value" not in lab.history.path.read_text()
+    listed = await build_tools(lab)[0].ainvoke({})
+    assert "| {{org}} {{client_secret}} |" in listed and "app-secret-value" not in listed
+    # A secret variable without a stored value stops the requests that reference it, and only those.
+    file = json.loads(store.path.read_text())
+    file["targets"][0]["secrets"] = {"client_secret": "", "unused": ""}
+    store.path.write_text(json.dumps(file))
+    assert summarize(store.find("secrets"))["secrets"] == {"client_secret": "", "unused": ""}
+    calls = api.token_calls
+    refused = await lab.send("secrets", "POST", "/token", "panel", body="{{client_secret}}")
+    assert "response" not in refused and api.token_calls == calls and refused["request"]["url"] == ""
+    assert refused["error"] == (
+        "secret variable {{client_secret}} of target 'secrets' is not filled in (edit the target on the HTTP page)"
+    )
+    assert "error" not in await lab.send("secrets", "POST", "/token", "panel", body="{}")
+    rejects(lambda: store.update(tid, {"secrets": {"client_secret": ""}}), '"client_secret" is required')
+    assert store.update(tid, {"secrets": {"client_secret": "filled-in-again"}})["secrets"] == {
+        "client_secret": "filled-in-again"
+    }
+    assert "error" not in await lab.send("secrets", "POST", "/token", "panel", body="{{client_secret}}")
+
+
+async def test_variables_in_fixed_headers_and_auth(lab):
+    api = lab.api
+    target = lab.target(
+        name="fixed",
+        variables={"region": "eu"},
+        secrets={"api_key": "key-secret-123"},
+        headers={"X-Region": "{{region}}", "X-Key": "{{api_key}}", "X-Sid": "sid {{sid}}", "X-Unknown": "{{nope}}"},
+        auth={"type": "query", "name": "k", "value": "{{api_key}}"},
+    )
+    # An auth value that is exactly one reference is shown as written; any other value as a hint.
+    assert summarize(target)["auth"] == {"type": "query", "name": "k", "hint": "{{api_key}}"}
+    mixed = {"type": "header", "name": "X-Token", "value": "T-{{region}}-{{api_key}}"}
+    assert summarize({**target, "auth": mixed})["auth"]["hint"] == "T-{…}}"
+    assert (
+        summarize({**target, "auth": {"type": "bearer", "token": " {{ api_key }} "}})["auth"]["hint"] == "{{ api_key }}"
+    )
+    lab.saved(target["id"], name="get sid", path="/a", captures=[rule("sid", "value", "expired")])
+    sent = await lab.send("fixed", "GET", "/echo")
+    assert sent["response"]["status"] == 200
+    assert outcomes(sent, "requestName", "variables", "ok") == [("get sid", ["sid"], True)]
+    # The server received the values; an undefined name stays as written.
+    got = api.seen_at("/echo")
+    assert (got["x-region"], got["x-key"], got["x-sid"], got["x-unknown"]) == (
+        "eu",
+        "key-secret-123",
+        "sid a-value-1",
+        "{{nope}}",
+    )
+    assert api.seen[-1][0] == "/echo?k=key-secret-123"
+    # The exchange shows the secret and the captured value masked, the plain variable as it is.
+    wire = sent["request"]["sentHeaders"]
+    assert "key-secret-123" not in json.dumps(sent) and "a-value-1" not in json.dumps(sent)
+    assert (wire["x-region"], wire["x-sid"], sent["request"]["url"]) == ("eu", "sid ••••••", f"{ORIGIN}/echo?k=••••••")
+    # The request that obtains {{sid}} is sent without the fixed header that carries it, and with the others.
+    refresh = api.seen_at("/a")
+    assert "x-sid" not in refresh and (refresh["x-region"], refresh["x-key"]) == ("eu", "key-secret-123")
+    # Header and basic auth take variables too.
+    lab.store.update(target["id"], {"auth": mixed})
+    header = await lab.send("fixed", "GET", "/echo")
+    assert api.seen_at("/echo")["x-token"] == "T-eu-key-secret-123" and "key-secret-123" not in json.dumps(header)
+    lab.store.update(target["id"], {"auth": {"type": "basic", "username": "svc-{{region}}", "password": "{{api_key}}"}})
+    basic = await lab.send("fixed", "GET", "/echo")
+    pair = base64.b64encode(b"svc-eu:key-secret-123").decode()
+    assert api.seen_at("/echo")["authorization"] == f"Basic {pair}"
+    assert "key-secret-123" not in json.dumps(basic) and pair not in json.dumps(basic)
+    # A request's own auth takes variables as well, when the page sends it to a target without auth.
+    bare = lab.target(name="bare", secrets={"api_key": "key-secret-456"})
+    own = await lab.send(bare["id"], "GET", "/echo", "panel", auth={"type": "bearer", "token": "{{api_key}}"})
+    assert api.seen_at("/echo")["authorization"] == "Bearer key-secret-456" and "key-secret-456" not in json.dumps(own)
+
+
+async def test_captured_variables(lab):
+    api, values = lab.api, lab.values
+    target = lab.target(name="chain", variables={"token": "static-value"}, secrets={"session": "secret-session"})
+    tid = target["id"]
+    captures = [
+        rule("token", "data.access_token"),
+        rule("session", "x-session", source="header"),
+        rule("gone", "data.nope"),
+    ]
+    login = lab.saved(tid, method="POST", path="/login", captures=captures)
+    first = await lab.send(tid, "POST", "/login", "panel", requestId=login["id"])
+    assert first["captures"] == [
+        {"name": "token", "ok": True},
+        {"name": "session", "ok": True},
+        {"name": "gone", "ok": False, "error": 'path "data.nope" not found'},
+    ]
+    # The captured values are masked in the response they came from, and kept in the fourth store.
+    assert (
+        first["response"]["body"] == '{"data":{"access_token":"••••••"}}'
+        and first["response"]["headers"]["x-session"] == "••••••"
+    )
+    assert "secret-token-1" not in json.dumps(first) and "sess-1" not in json.dumps(first)
+    assert values.map(tid) == {"token": "secret-token-1", "session": "sess-1"}
+    assert [(v["name"], v["hint"], v["requestId"]) for v in values.list(tid)] == [
+        ("session", "••••", login["id"]),
+        ("token", "sec…-1", login["id"]),
+    ]
+    assert first["at"] <= values.entry(tid, "token")["at"] and "expiresAt" not in values.entry(tid, "token")
+    assert stat.S_IMODE(values.path.stat().st_mode) == 0o600
+    # A captured value wins over the target variable and the secret variable of its name; the agent's requests use it.
+    typed = {"Authorization": "Bearer {{token}}", "X-Session": "{{session}}"}
+    me = await lab.send("chain", "GET", "/echo", query={"s": "{{session}}"}, headers=typed)
+    got = api.seen_at("/echo")
+    assert (got["authorization"], got["x-session"], api.seen[-1][0]) == (
+        "Bearer secret-token-1",
+        "sess-1",
+        "/echo?s=sess-1",
+    )
+    assert "captures" not in me and '"authorization":"Bearer ••••••"' in me["response"]["body"]
+    assert "secret-token-1" not in json.dumps(me) and "sess-1" not in json.dumps(me)
+    assert me["request"]["headers"] == typed and me["request"]["url"] == f"{ORIGIN}/echo?s=••••••"
+    assert "secret-token-1" not in lab.history.path.read_text() and "sess-1" not in lab.history.path.read_text()
+    assert "| {{token}} {{session}} |" in await build_tools(lab)[0].ainvoke({})
+    # Sending the source request again renews the value.
+    await lab.send(tid, "POST", "/login", "panel", requestId=login["id"])
+    assert values.map(tid) == {"token": "secret-token-2", "session": "sess-2"}
+    # Not captured: each reason is reported and the stored values stay.
+    one = [rule("token", "data.access_token")]
+    cut = SendOptions(source="panel", max_body_bytes=10)
+    for path, options, reason in (
+        ("/denied", PANEL, "response status 403"),
+        ("/plain", PANEL, "response body is not JSON"),
+        ("/login", cut, "response body is truncated"),
+        ("/stream", PANEL, "event streams are not captured"),
+    ):
+        saved = lab.saved(tid, path=path, captures=[*one, rule("off", "data.access_token", enabled=False)])
+        missed = await lab.engine.send(tid, {"method": "GET", "path": path, "requestId": saved["id"]}, options)
+        assert "error" not in missed and missed["captures"] == [{"name": "token", "ok": False, "error": reason}]
+        assert lab.history.list(tid)[0]["captures"] == missed["captures"]
+    assert values.map(tid) == {"token": "secret-token-2", "session": "sess-2"}
+    # No rules run for the agent's own send, a request of another scope, or a send without its saved request.
+    other = lab.target(name="other")
+    await lab.send("chain", "POST", "/login", requestId=login["id"])
+    assert "captures" not in await lab.send(other["id"], "POST", "/login", "panel", requestId=login["id"])
+    assert "captures" not in await lab.send(tid, "POST", "/login", "panel")
+    assert values.map(tid)["token"] == "secret-token-2" and values.map(other["id"]) == {}
+    # Requests without a target capture and substitute within their own scope.
+    loose = lab.saved("direct", path=f"{ORIGIN}/login", captures=[rule("direct_token", "data.access_token")])
+    assert (await lab.send("direct", "GET", f"{ORIGIN}/login", "panel", requestId=loose["id"]))["captures"] == [
+        {"name": "direct_token", "ok": True}
+    ]
+    typed = {"X-Session": "{{direct_token}}"}
+    assert (
+        '"x-session":"••••••"'
+        in (await lab.send("direct", "GET", f"{ORIGIN}/echo", "panel", headers=typed))["response"]["body"]
+    )
+    assert values.delete("direct", "direct_token") == 1
+    assert (
+        "{{direct_token}}"
+        in (await lab.send("direct", "GET", f"{ORIGIN}/echo", "panel", headers=typed))["response"]["body"]
+    )
+
+
+async def test_refresh_before_a_request(lab):
+    api, values, history = lab.api, lab.values, lab.history
+    tid, token_request = lab.token_target("auto", "expired")
+    first = await lab.send("auto", "GET", "/orders")
+    assert first["response"]["status"] == 200 and api.token_calls == 1
+    assert api.token_bodies == ['{"secret":"app-secret-value"}']
+    assert outcomes(first, "requestId", "requestName", "variables", "reason", "ok") == [
+        (token_request, "get token", ["access_token"], "missing", True)
+    ]
+    # Neither the token nor the secret reaches the agent or the history.
+    assert "access-token-1" not in json.dumps(first) and "app-secret-value" not in json.dumps(first)
+    assert "access-token-" not in history.path.read_text() and "app-secret-value" not in history.path.read_text()
+    assert first["request"]["sentHeaders"]["authorization"] == "Bearer ••••••"
+    # The refresh is its own history entry, attributed to the sender that caused it.
+    recorded = history.list(tid)
+    assert [(e["request"]["path"], e["source"], e.get("refreshOf")) for e in recorded] == [
+        ("/orders", "agent", None),
+        ("/token", "agent", ["access_token"]),
+    ]
+    assert recorded[1]["id"] == first["refreshed"][0]["exchangeId"] and recorded[1]["requestId"] == token_request
+    assert recorded[1]["captures"] == [{"name": "access_token", "ok": True}] and "refreshed" not in recorded[1]
+    # The token request is sent as stored, with its own header, without the target auth that carries the token.
+    assert recorded[1]["request"]["sentHeaders"]["authorization"] == "Basic x"
+    assert recorded[1]["request"]["sentHeaders"]["content-type"] == "application/json; charset=utf-8"
+    # The value carries the lifetime the response states, and is used as it is while it lasts.
+    entry = values.entry(tid, "access_token")
+    assert entry["value"] == "access-token-1" and entry["expiresAt"] - entry["at"] == 7_200_000
+    assert values.list(tid)[0]["expiresAt"] == entry["expiresAt"]
+    second = await lab.send("auto", "GET", "/orders")
+    assert second["response"]["status"] == 200 and "refreshed" not in second and api.token_calls == 1
+    # An expired value is renewed.
+    api.valid.add("old-token")
+    values.set(tid, {"access_token": "old-token"}, token_request, {"access_token": 20})
+    await asyncio.sleep(0.03)
+    renewed = await lab.send(tid, "GET", "/orders", "panel")
+    assert outcomes(renewed, "reason", "ok") == [("expired", True)] and '"ok":true' in renewed["response"]["body"]
+    assert values.entry(tid, "access_token")["value"] == "access-token-2"
+    # With the rule off an expired value is sent as it is, and a missing one is not obtained.
+    off, off_request = lab.token_target("expiry-off", "off")
+    values.set(off, {"access_token": "old-token"}, off_request, {"access_token": 1})
+    await asyncio.sleep(0.005)
+    calls = api.token_calls
+    stale = await lab.send(off, "GET", "/orders", "panel")
+    assert stale["response"]["status"] == 200 and "refreshed" not in stale
+    values.delete(off)
+    assert (await lab.send(off, "GET", "/orders", "panel"))["response"]["status"] == 401 and api.token_calls == calls
+    # A rule switched off refreshes nothing either.
+    lab.requests.update(token_request, {"captures": [rule("access_token", "access_token", "expired", enabled=False)]})
+    values.delete(tid)
+    assert "refreshed" not in await lab.send(tid, "GET", "/orders", "panel") and api.token_calls == calls
+    lab.requests.update(token_request, {"captures": [rule("access_token", "access_token", "expired")]})
+    # Sending the token request itself runs no refresh first.
+    form = {**request_input_of(lab.requests.get(token_request)), "requestId": token_request}
+    own = await lab.engine.send(tid, form, PANEL)
+    assert (
+        "refreshed" not in own and "refreshOf" not in own and own["captures"] == [{"name": "access_token", "ok": True}]
+    )
+    assert "expiresAt" not in values.entry(tid, "access_token")
+    # The connection test of a target whose token is a variable obtains the token first.
+    values.delete(tid)
+    calls = api.token_calls
+    tested = await lab.engine.test(tid)
+    assert (tested["ok"], tested["status"], api.token_calls) == (True, 200, calls + 1)
+
+
+async def test_refresh_shared_failed_and_cancelled(lab):
+    api, values, history = lab.api, lab.values, lab.history
+    # Concurrent requests share one refresh.
+    api.token_delay = 0.06
+    tid, _token_request = lab.token_target("shared", "expired")
+    results = await asyncio.gather(
+        *(lab.send(tid, "GET", f"/orders/{n}", "agent" if n % 2 == 0 else "panel") for n in range(1, 6))
+    )
+    assert [r["response"]["status"] for r in results] == [200] * 5 and api.token_calls == 1
+    assert len({r["refreshed"][0]["exchangeId"] for r in results}) == 1
+    assert sum("refreshOf" in e for e in history.list(tid)) == 1
+    # A failed refresh stops the request; the error names the source request and the reason.
+    api.token_delay, api.token_status = 0.0, 500
+    failing, _token_request = lab.token_target("failing", "expired")
+    calls, sent = api.token_calls, api.api_calls
+    failed = await lab.send(failing, "DELETE", "/orders/1")
+    assert "response" not in failed and failed["error"] == (
+        "refresh of {{access_token}} by request 'get token' failed: {{access_token}} was not captured: response "
+        "status 500"
+    )
+    assert outcomes(failed, "ok", "reason") == [(False, "missing")]
+    assert (api.api_calls, api.token_calls) == (sent, calls + 1) and history.list(failing)[0]["error"] == failed[
+        "error"
+    ]
+    output = to_output(failed)
+    assert output["ok"] is False and output["refreshed"][0]["ok"] is False
+    assert render_exchange("DELETE", output).startswith("request failed: refresh of {{access_token}} by request")
+    # Nothing is retried within one request; the next request tries again.
+    await lab.send(failing, "GET", "/orders")
+    assert api.token_calls == calls + 2
+    # A refresh whose saved request cannot be sent is a failed refresh.
+    broken = lab.target(name="broken")
+    lab.saved(
+        broken["id"],
+        name="bad",
+        path="/a",
+        headers=[{"key": "X-A", "value": "a\nb"}],
+        captures=[rule("v", "value", "expired")],
+    )
+    assert (
+        "by request 'bad' failed: header X-A must not contain line breaks"
+        in (await lab.send(broken["id"], "GET", "/echo", headers={"X-V": "{{v}}"}))["error"]
+    )
+    # Cancelling stops the wait; the refresh under way completes and its value is kept.
+    api.token_status, api.token_delay = 200, 0.3
+    cancel = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    loop.call_later(0.03, cancel.set)
+    started = loop.time()
+    options = SendOptions(source="panel", cancel=cancel)
+    cancelled = await lab.engine.send(failing, {"method": "GET", "path": "/orders"}, options)
+    assert cancelled["error"] == "cancelled" and loop.time() - started < 0.25 and api.api_calls == sent
+    assert outcomes(cancelled, "ok", "error") == [(False, "cancelled")]
+    await asyncio.sleep(0.35)
+    assert values.entry(failing, "access_token")["value"].startswith("access-token-")
+
+
+async def test_refresh_on_401(lab):
+    api, values, history = lab.api, lab.values, lab.history
+    tid, token_request = lab.token_target("rejected", "rejected")
+    values.set(tid, {"access_token": "revoked-token"}, token_request, {"access_token": 7_200_000})
+    retried = await lab.send(tid, "GET", "/orders")
+    assert retried["response"]["status"] == 200 and outcomes(retried, "reason", "ok") == [("rejected", True)]
+    assert (api.api_calls, api.token_calls) == (2, 1)
+    # The rejected attempt, the refresh and the second attempt are three entries.
+    assert [(e["request"]["path"], e["response"]["status"]) for e in history.list(tid)] == [
+        ("/orders", 200),
+        ("/token", 200),
+        ("/orders", 401),
+    ]
+    assert "refreshed" not in history.list(tid)[2] and "revoked-token" not in history.path.read_text()
+    # A 401 that follows a refresh made for this request is returned as it is.
+    values.delete(tid)
+    denied = await lab.send(tid, "GET", "/always-401")
+    assert denied["response"]["status"] == 401 and outcomes(denied, "reason") == [("missing",)]
+    assert (api.api_calls, api.token_calls) == (3, 2)
+    # A refresh that fails after a 401 leaves the 401 as the result, with the failure listed.
+    api.token_status = 500
+    kept = await lab.send(tid, "GET", "/always-401")
+    assert kept["response"]["status"] == 401 and outcomes(kept, "reason", "ok") == [("rejected", False)]
+    assert api.api_calls == 4
+    api.token_status = 200
+    # A 401 that is an event stream is returned as it is.
+    calls = api.token_calls
+    stream = await lab.send(tid, "GET", "/sse-401", "panel")
+    assert stream["response"]["status"] == 401 and "refreshed" not in stream and api.token_calls == calls
+    # A rule that renews on expiry only returns the 401 as it is.
+    plain, plain_request = lab.token_target("rejected-plain", "expired")
+    values.set(plain, {"access_token": "revoked-token"}, plain_request, {"access_token": 7_200_000})
+    unauthorized = await lab.send(plain, "GET", "/orders")
+    assert unauthorized["response"]["status"] == 401 and "refreshed" not in unauthorized and api.token_calls == calls
+
+
+async def test_refresh_chains_and_sources(lab):
+    api, values = lab.api, lab.values
+    expired = lambda name, path="value": [rule(name, path, "expired")]  # noqa: E731
+    # b is obtained with a; a is obtained with nothing.
+    chain = lab.target(name="chain")["id"]
+    lab.saved(chain, name="get a", path="/a", captures=expired("a"))
+    lab.saved(chain, name="get b", path="/b", query=[{"key": "with", "value": "{{a}}"}], captures=expired("b"))
+    api.valid.add("b-value-1")
+    ok = await lab.send(chain, "GET", "/orders", query={"access_token": "{{b}}"})
+    assert ok["response"]["status"] == 200 and values.map(chain) == {"a": "a-value-1", "b": "b-value-1"}
+    nested = next(e for e in lab.history.list(chain) if e["request"]["path"] == "/b")
+    assert outcomes(nested, "requestName", "ok") == [("get a", True)] and nested["refreshOf"] == ["b"]
+    assert nested["request"]["url"] == f"{ORIGIN}/b?with=••••••"
+    # a needs b and b needs a.
+    cycle = lab.target(name="cycle")["id"]
+    lab.saved(cycle, name="get a", path="/a", headers=[{"key": "X-B", "value": "{{b}}"}], captures=expired("a"))
+    lab.saved(cycle, name="get b", path="/b", headers=[{"key": "X-A", "value": "{{a}}"}], captures=expired("b"))
+    looped = await lab.send(cycle, "GET", "/orders", headers={"X-A": "{{a}}"})
+    assert "response" not in looped and looped["error"].endswith("the request depends on a variable it refreshes")
+    assert values.map(cycle) == {}
+    # v0 ← v1 ← v2 ← v3 ← v4: a chain holds three refreshes.
+    deep = lab.target(name="deep")["id"]
+    for i in range(4):
+        needs = [{"key": "with", "value": f"{{{{v{i + 1}}}}}"}]
+        lab.saved(deep, name=f"get v{i}", path="/a", query=needs, captures=expired(f"v{i}"))
+    lab.saved(deep, name="get v4", path="/a", captures=expired("v4"))
+    too_deep = await lab.send(deep, "GET", "/orders", headers={"X-V": "{{v1}}"})
+    assert too_deep["error"].endswith("more than 3 refreshes in a chain") and values.map(deep) == {}
+    fits = await lab.send(deep, "GET", "/orders", headers={"X-V": "{{v2}}"})
+    assert "error" not in fits and sorted(values.map(deep)) == ["v2", "v3", "v4"]
+    # One request provides several variables in one send.
+    sources = lab.target(name="sources")["id"]
+    pair = [rule("first", "first", "expired"), rule("second", "second", "expired"), rule("unused", "first", "expired")]
+    lab.saved(sources, name="pair", path="/pair", captures=pair)
+    both = await lab.send(sources, "GET", "/echo", headers={"X-One": "{{first}}", "X-Two": "{{second}}"})
+    assert api.pair_calls == 1 and outcomes(both, "variables", "ok") == [(["first", "second"], True)]
+    assert (api.seen_at("/echo")["x-one"], api.seen_at("/echo")["x-two"]) == ("pair-first-value", "pair-second-value")
+    # Of several sources of a variable: the request its value came from; without a value, the one created first.
+    from_a = lab.saved(sources, name="from a", path="/a", captures=expired("shared"))
+    from_b = lab.saved(sources, name="from b", path="/b", captures=expired("shared"))
+    typed = {"X-S": "{{shared}}"}
+    assert outcomes(await lab.send(sources, "GET", "/echo", headers=typed), "requestId") == [(from_a["id"],)]
+    assert values.entry(sources, "shared")["value"] == "a-value-1"
+    values.set(sources, {"shared": "stale"}, from_b["id"], {"shared": 1})
+    await asyncio.sleep(0.005)
+    second = await lab.send(sources, "GET", "/echo", headers=typed)
+    assert outcomes(second, "requestId", "reason") == [(from_b["id"], "expired")]
+    assert values.entry(sources, "shared")["value"] == "b-value-1"
+    # A rule switched off, and a rule whose request is gone, refresh nothing.
+    lab.requests.update(from_a["id"], {"captures": [rule("shared", "value", "expired", enabled=False)]})
+    lab.requests.delete(from_b["id"])
+    values.delete(sources, "shared")
+    assert "refreshed" not in await lab.send(sources, "GET", "/echo", headers=typed)
+    assert api.seen_at("/echo")["x-s"] == "{{shared}}"
+    # Requests without a target refresh within their own scope; a rule of another scope does not refresh here.
+    token = [rule("direct_token", "access_token", "expired", ttlSeconds=600)]
+    loose = lab.saved(
+        "direct", name="direct token", method="POST", path=f"{ORIGIN}/token", bodyMode="json", body="{}", captures=token
+    )
+    typed = {"Authorization": "Bearer {{direct_token}}"}
+    sent = await lab.send("direct", "GET", f"{ORIGIN}/orders", "panel", headers=typed)
+    assert sent["response"]["status"] == 200 and outcomes(sent, "requestId", "reason", "ok") == [
+        (loose["id"], "missing", True)
+    ]
+    entry = values.entry("direct", "direct_token")
+    assert entry["expiresAt"] - entry["at"] == 600_000 and "access-token-1" not in json.dumps(sent)
+    calls = api.token_calls
+    elsewhere = await lab.send(lab.target(name="elsewhere")["id"], "GET", "/orders", "panel", headers=typed)
+    assert elsewhere["response"]["status"] == 401 and "refreshed" not in elsewhere and api.token_calls == calls
+
+
+async def test_refresh_from_the_agent_tools(lab):
+    api, values = lab.api, lab.values
+    tid, _token_request = lab.token_target("via-tool", "rejected")
+    assert lab.store.find("via-tool")["allowMutations"] is False
+    tools = {t.name: t for t in build_tools(lab)}
+    # A variable the harness refreshes is listed before it has a value.
+    listed = await tools["http_targets"].ainvoke({})
+    assert (
+        f"via-tool | {ORIGIN} | bearer | GET/HEAD/OPTIONS only | {{{{client_secret}}}} {{{{access_token}}}} | -"
+        in listed
+    )
+    assert values.entry(tid, "access_token") is None
+    # The refresh is a POST of the user's saved form: the agent's GET needs neither the mutation switch nor confirm.
+    got = await tools["http_request"].ainvoke({"target": "via-tool", "method": "GET", "path": "/orders"})
+    lines = got.splitlines()
+    assert lines[0].startswith(f"GET {ORIGIN}/orders → 200 OK") and api.token_calls == 1
+    assert lines[1] == 'harness refreshed {{access_token}} with the saved request "get token" first'
+    assert '"got":"••••••"' in got and "access-token-1" not in got and "app-secret-value" not in got
+    # The agent's own POST is still refused, and it cannot send the token request itself.
+    refused = await tools["http_request"].ainvoke(
+        {"target": "via-tool", "method": "POST", "path": "/token", "body": "{}"}
+    )
+    assert "GET/HEAD/OPTIONS only" in refused and api.token_calls == 1
+    # A 401 renews the token for the agent as well.
+    values.set(tid, {"access_token": "revoked-token"}, "", {"access_token": 7_200_000})
+    again = await tools["http_request"].ainvoke({"target": "via-tool", "method": "GET", "path": "/orders"})
+    assert "→ 200 OK" in again and "harness refreshed {{access_token}}" in again and api.token_calls == 2
+    # A failed refresh is the failure of the tool call.
+    values.delete(tid)
+    api.token_status = 500
+    failed = await tools["http_request"].ainvoke({"target": "via-tool", "method": "GET", "path": "/orders"})
+    assert failed.startswith("request failed: refresh of {{access_token}} by request 'get token' failed: ")
+    # A refresh that fails after a 401 is listed with the 401.
+    values.set(tid, {"access_token": "revoked-token"}, "", {"access_token": 7_200_000})
+    kept = await tools["http_request"].ainvoke({"target": "via-tool", "method": "GET", "path": "/orders"})
+    assert (
+        "→ 401 Unauthorized" in kept
+        and (
+            'harness could not refresh {{access_token}} with the saved request "get token": {{access_token}} was not '
+            "captured: response status 500"
+        )
+        in kept
+    )
+    assert "[agent] via-tool: POST" in await tools["http_history"].ainvoke({"target": "via-tool"})
+
+
+async def test_stored_data_from_before_these_fields(tmp_path):
+    api = Api()
+    target_id, request_id = "aaaaaaaaaaaa", "bbbbbbbbbbbb"
+    target = {
+        "id": target_id,
+        "name": "legacy",
+        "baseUrl": ORIGIN,
+        "auth": {"type": "bearer", "token": "legacy-token-1"},
+        "headers": {"X-Fixed": "yes"},
+        "variables": {"org": "acme"},
+        "allowedHosts": [],
+        "allowMutations": False,
+        "allowPrivate": True,
+        "timeoutMs": 30000,
+        "createdAt": 1,
+        "updatedAt": 1,
+    }
+    form = {"query": [], "headers": [], "auth": {"type": "none"}, "bodyMode": "json", "body": "{}", "form": []}
+    login = {"id": request_id, "targetId": target_id, "name": "login", "method": "POST", "path": "/token", **form}
+    plain = {**login, "id": "cccccccccccc", "name": "plain", "path": "/echo"}
+    partial = {**login, "id": "dddddddddddd", "captures": [{"name": "token", "source": "body", "path": "access_token"}]}
+    settings = {"agentTools": True, "historyLimit": 200}
+    (tmp_path / "targets.json").write_text(json.dumps({"version": 1, "settings": settings, "targets": [target]}))
+    (tmp_path / "requests.json").write_text(json.dumps({"version": 1, "requests": [login, plain, partial]}))
+    store, requests = TargetStore(tmp_path / "targets.json"), RequestStore(tmp_path / "requests.json")
+    values = ValueStore(tmp_path / "values.json")
+    history = HistoryStore(tmp_path / "history.jsonl", lambda: 100)
+    engine = HttpEngine(store, history, httpx.MockTransport(api), requests, values)
+    # A target without secrets and saved requests without capture rules load with the defaults.
+    assert store.find("legacy")["secrets"] == {} and summarize(store.find("legacy"))["secrets"] == {}
+    assert summarize(store.find("legacy"))["auth"] == {"type": "bearer", "hint": "leg…-1"}
+    assert requests.get(request_id)["captures"] == [] and requests.get("cccccccccccc")["captures"] == []
+    assert requests.get("dddddddddddd")["captures"] == [rule("token", "access_token")]
+    assert values.list(target_id) == [] and not values.path.exists()
+    # They behave as before: variables, fixed headers and auth are sent, nothing is captured or refreshed.
+    sent = await engine.send(target_id, {"method": "POST", "path": "/echo", "requestId": "cccccccccccc"}, PANEL)
+    got = api.seen_at("/echo")
+    assert (got["x-fixed"], got["authorization"]) == ("yes", "Bearer legacy-token-1")
+    assert not {"captures", "refreshed", "refreshOf"} & set(sent) and "legacy-token-1" not in json.dumps(sent)
+    assert "error" not in await engine.send(
+        "legacy", {"method": "GET", "path": "/echo/{{org}}"}, SendOptions(source="agent")
+    )
+    assert api.seen[-1][0] == "/echo/acme" and not values.path.exists()
+    # An engine without the request and value stores sends as before.
+    bare = HttpEngine(store, history, httpx.MockTransport(api))
+    alone = await bare.send(
+        target_id, {"method": "GET", "path": "/echo", "headers": {"X-T": "{{token}}"}, "requestId": request_id}, PANEL
+    )
+    assert alone["response"]["status"] == 200 and "captures" not in alone and api.seen_at("/echo")["x-t"] == "{{token}}"
+    # The target takes secret variables and the request a refreshing rule from here on.
+    assert store.update(target_id, {"secrets": {"key": "new-secret-value"}})["secrets"] == {"key": "new-secret-value"}
+    assert store.find("legacy")["variables"] == {"org": "acme"}
+    assert TargetStore(store.path).find("legacy")["auth"] == {"type": "bearer", "token": "legacy-token-1"}
+    requests.update(request_id, {"captures": [rule("token", "access_token", "expired")]})
+    renewed = await engine.send(
+        "legacy", {"method": "GET", "path": "/echo", "headers": {"X-T": "{{token}}"}}, SendOptions(source="agent")
+    )
+    assert outcomes(renewed, "ok") == [(True,)] and api.seen_at("/echo")["x-t"] == "access-token-1"
+    # Values written before lifetimes carry no expiry.
+    values.path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "scopes": {target_id: {"token": {"value": "kept-token-value"}, "1bad": {"value": "x"}, "odd": 5}},
+            }
+        )
+    )
+    assert ValueStore(values.path).list(target_id) == [{"name": "token", "hint": "kep…ue", "requestId": "", "at": 0}]
+    await engine.aclose()
+    await bare.aclose()
 
 
 # ---------------------------------------------------------------------- harness
@@ -813,3 +1686,124 @@ async def test_http_client_in_the_harness(home, tmp_path):
             assert len((await c.get(f"{api}/history")).json()["entries"]) == 1
             assert (await c.delete(f"{api}/history")).json() == {"removed": 1}
     assert stat.S_IMODE((tmp_path / "hc" / "targets.json").stat().st_mode) == 0o600
+
+
+async def test_variable_routes_in_the_harness(home, tmp_path):
+    profile = Profile.init("web", home=str(home))
+    patch = [HTTP_OFF, {"id": "http-client", "config": {"data_dir": str(tmp_path / "hc")}, "merge": True}]
+    async with Harness(profile, patch=patch) as h:
+        service = h.get("httpClient")
+        await service.engine.aclose()
+        service.engine.client = httpx.AsyncClient(
+            transport=httpx.MockTransport(Api()), follow_redirects=False, timeout=None
+        )
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t") as c:
+            api = "/api/http-client"
+            # Targets: secret variables go in as values and come back as hints; an empty value keeps the stored one.
+            payload = {
+                "baseUrl": ORIGIN,
+                "allowPrivate": True,
+                "auth": {"type": "bearer", "token": "{{access_token}}"},
+                "variables": {"org": "acme"},
+                "secrets": {"client_secret": "app-secret-value"},
+            }
+            created = (await c.post(f"{api}/targets", json=payload)).json()["target"]
+            tid = created["id"]
+            assert created["secrets"] == {"client_secret": "app…ue"} and created["variables"] == {"org": "acme"}
+            assert created["auth"] == {"type": "bearer", "hint": "{{access_token}}"}
+            patched = await c.patch(
+                f"{api}/targets", params={"id": tid}, json={"secrets": {"client_secret": "", "extra": "second-secret"}}
+            )
+            assert patched.json()["target"]["secrets"] == {"client_secret": "app…ue", "extra": "sec…et"}
+            assert service.store.find(tid)["secrets"]["client_secret"] == "app-secret-value"
+            for wrong in ({"secrets": {"org": "x"}}, {"secrets": {"new": ""}}, {"variables": {"extra": "x"}}):
+                assert (await c.patch(f"{api}/targets", params={"id": tid}, json=wrong)).status_code == 400
+            assert "app-secret-value" not in (await c.get(f"{api}/targets")).text
+            # Saved requests: capture rules are stored with every field; a malformed list is refused.
+            captures = [{"name": "access_token", "path": "access_token", "ttlPath": "expires_in", "refresh": "expired"}]
+            form = {"targetId": tid, "name": "get token", "method": "POST", "path": "/token", "captures": captures}
+            saved = (await c.post(f"{api}/requests", json=form)).json()["request"]
+            stored = rule("access_token", "access_token", "expired", ttlPath="expires_in")
+            assert saved["captures"] == [stored]
+            assert (await c.get(f"{api}/requests", params={"target": tid})).json()["requests"][0]["captures"] == [
+                stored
+            ]
+            assert (
+                await c.patch(f"{api}/requests", params={"id": saved["id"]}, json={"captures": [stored] * 21})
+            ).status_code == 400
+            # Values: empty before a capture; an unknown scope is refused.
+            assert (await c.get(f"{api}/values", params={"target": tid})).json() == {"values": []}
+            assert (await c.get(f"{api}/values", params={"target": "direct"})).json() == {"values": []}
+            assert (await c.get(f"{api}/values", params={"target": "ghost"})).status_code == 400
+            assert (await c.get(f"{api}/values")).status_code == 400
+            assert (await c.delete(f"{api}/values", params={"target": "ghost"})).status_code == 400
+            # Send: the refresh runs first; the exchange lists it, the refresh entry is marked.
+            sent = (
+                await c.post(f"{api}/send", json={"id": tid, "request": {"method": "GET", "path": "/orders/{{org}}"}})
+            ).json()["exchange"]
+            assert sent["response"]["status"] == 200 and '"path":"/orders/acme"' in sent["response"]["body"]
+            assert sent["refreshed"] == [
+                {
+                    "requestId": saved["id"],
+                    "requestName": "get token",
+                    "variables": ["access_token"],
+                    "reason": "missing",
+                    "exchangeId": sent["refreshed"][0]["exchangeId"],
+                    "ok": True,
+                }
+            ]
+            entries = (await c.get(f"{api}/history", params={"target": tid})).json()["entries"]
+            assert [(e["id"], e.get("refreshOf")) for e in entries] == [
+                (sent["id"], None),
+                (sent["refreshed"][0]["exchangeId"], ["access_token"]),
+            ]
+            assert entries[1]["source"] == "panel" and entries[1]["captures"] == [{"name": "access_token", "ok": True}]
+            # The page's send of the saved request captures; the value is listed as a hint with its origin.
+            own = {"id": tid, "request": {"method": "POST", "path": "/token", "requestId": saved["id"]}}
+            captured = (await c.post(f"{api}/send", json=own)).json()["exchange"]
+            assert captured["captures"] == [{"name": "access_token", "ok": True}] and "refreshed" not in captured
+            assert captured["response"]["body"] == '{"access_token":"••••••","expires_in":7200}'
+            listed = (await c.get(f"{api}/values", params={"target": tid})).json()["values"]
+            assert len(listed) == 1 and listed[0]["expiresAt"] - listed[0]["at"] == 7_200_000
+            assert {k: listed[0][k] for k in ("name", "hint", "requestId")} == {
+                "name": "access_token",
+                "hint": "acc…-2",
+                "requestId": saved["id"],
+            }
+            # A streamed send carries the same exchange fields.
+            ndjson = {"accept": "application/x-ndjson"}
+            body = {"id": tid, "request": {"method": "GET", "path": "/stream", "requestId": saved["id"]}}
+            lines = [json.loads(x) for x in (await c.post(f"{api}/send", json=body, headers=ndjson)).text.splitlines()]
+            assert [line["type"] for line in lines] == ["head", "event", "done"]
+            assert lines[-1]["exchange"]["captures"] == [
+                {"name": "access_token", "ok": False, "error": "event streams are not captured"}
+            ]
+            # Clearing one value, then a scope.
+            direct = {"targetId": "direct", "path": f"{ORIGIN}/pair", "captures": [{"name": "first", "path": "first"}]}
+            loose = (await c.post(f"{api}/requests", json=direct)).json()["request"]
+            request = {"method": "GET", "path": f"{ORIGIN}/pair", "requestId": loose["id"]}
+            await c.post(f"{api}/send", json={"id": "direct", "request": request})
+            assert [
+                v["name"] for v in (await c.get(f"{api}/values", params={"target": "direct"})).json()["values"]
+            ] == ["first"]
+            gone = {"target": tid, "name": "nope"}
+            assert (await c.delete(f"{api}/values", params=gone)).json() == {"removed": 0}
+            assert (await c.delete(f"{api}/values", params={"target": tid, "name": "access_token"})).json() == {
+                "removed": 1
+            }
+            assert (await c.get(f"{api}/values", params={"target": tid})).json() == {"values": []}
+            assert (await c.delete(f"{api}/values", params={"target": "direct"})).json() == {"removed": 1}
+            # The tools list the names; deleting a target deletes its captured values.
+            await c.post(f"{api}/send", json=own)
+            await c.post(f"{api}/settings", json={"agentTools": True})
+            tools = {t.name: t for t in h.get("tools").list()}
+            assert "| {{org}} {{client_secret}} {{extra}} {{access_token}} |" in await tools["http_targets"].ainvoke({})
+            assert "never call a login or token endpoint yourself" in h.get("prompt").render()
+            assert service.values.map(tid) != {}
+            assert (await c.delete(f"{api}/targets", params={"id": tid})).json() == {"ok": True}
+            assert (
+                service.values.map(tid) == {}
+                and (await c.get(f"{api}/values", params={"target": tid})).status_code == 400
+            )
+    files = {path.name: stat.S_IMODE(path.stat().st_mode) for path in (tmp_path / "hc").iterdir()}
+    assert files == {"targets.json": 0o600, "requests.json": 0o600, "values.json": 0o600, "history.jsonl": 0o600}

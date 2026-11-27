@@ -13,7 +13,7 @@ from pyxis_harness import package_toml
 
 from .engine import HttpEngine, PolicyError, SendOptions
 from .protocol import DIRECT_TARGET_ID, PANEL_BODY_BYTES
-from .store import HistoryStore, RequestStore, StoreError, TargetStore, summarize
+from .store import HistoryStore, RequestStore, StoreError, TargetStore, ValueStore, summarize
 
 _CFG = package_toml(__file__)["routes"]
 MAX_SEND_BYTES: int = _CFG["MAX_SEND_BYTES"]
@@ -28,6 +28,7 @@ class Host(Protocol):
     store: TargetStore
     requests: RequestStore
     history: HistoryStore
+    values: ValueStore
     engine: HttpEngine
 
     def sync(self) -> bool: ...
@@ -57,9 +58,10 @@ async def _gone(request: Request) -> None:
 def build_router(service: Host) -> APIRouter:
     router = APIRouter()
     store, requests, history, engine = service.store, service.requests, service.history, service.engine
+    values = service.values
 
     def known_scope(target_id: Any) -> bool:
-        """A saved request belongs to an existing target or to the direct scope."""
+        """Saved requests and captured values belong to an existing target or to the direct scope."""
         return target_id == DIRECT_TARGET_ID or any(t["id"] == target_id for t in store.list())
 
     def checked(action: Any, *args: Any) -> Any:
@@ -86,6 +88,7 @@ def build_router(service: Host) -> APIRouter:
         checked(store.delete, id)
         requests.delete_by_target(id)
         history.clear(target_id=id)
+        values.delete(id)
         return {"ok": True}
 
     # ------------------------------------------------------------------ saved requests
@@ -171,6 +174,19 @@ def build_router(service: Host) -> APIRouter:
                     await asyncio.shield(work)
 
         return StreamingResponse(stream(), media_type="application/x-ndjson; charset=utf-8", headers=NDJSON_HEADERS)
+
+    # ------------------------------------------------------------------ captured values
+    @router.get("/values")
+    async def list_values(target: str = "") -> dict[str, Any]:
+        if not known_scope(target):
+            raise HTTPException(400, f"target '{target}' not found")
+        return {"values": values.list(target)}
+
+    @router.delete("/values")
+    async def clear_values(target: str = "", name: str | None = None) -> dict[str, Any]:
+        if not known_scope(target):
+            raise HTTPException(400, f"target '{target}' not found")
+        return {"removed": values.delete(target, name or None)}
 
     # ------------------------------------------------------------------ history and test
     @router.get("/history")

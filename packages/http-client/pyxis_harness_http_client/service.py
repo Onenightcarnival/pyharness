@@ -9,7 +9,7 @@ from pyxis_harness import Service, package_prompts
 from .config import Config
 from .engine import HttpEngine
 from .routes import build_router
-from .store import HistoryStore, RequestStore, TargetStore
+from .store import HistoryStore, RequestStore, TargetStore, ValueStore
 from .tools import build_tools
 
 GUIDANCE: str = package_prompts(__file__)["service"]["GUIDANCE"]
@@ -29,8 +29,9 @@ class HttpClientService(Service):
         base = self._data()
         self.store = TargetStore(base / "targets.json")
         self.requests = RequestStore(base / "requests.json")
+        self.values = ValueStore(base / "values.json")
         self.history = HistoryStore(base / "history.jsonl", lambda: self.store.settings()["historyLimit"])
-        self.engine = HttpEngine(self.store, self.history)
+        self.engine = HttpEngine(self.store, self.history, requests=self.requests, values=self.values)
         self._tool_disposers: list[Any] = []
         self._prompt_disposer: Any = None
 

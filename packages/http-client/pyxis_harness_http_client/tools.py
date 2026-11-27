@@ -11,7 +11,7 @@ from pyxis_harness import package_prompts, package_toml
 
 from .engine import HttpEngine, PolicyError, SendOptions, human_bytes, truncate
 from .protocol import DIRECT_TARGET_ID, SAFE_METHODS, is_method
-from .store import HistoryStore, TargetStore, summarize
+from .store import HistoryStore, RequestStore, TargetStore, ValueStore, summarize
 
 _CFG = package_toml(__file__)["tools"]
 PROMPTS = package_prompts(__file__)["tools"]
@@ -27,15 +27,23 @@ class Host(Protocol):
     """The service, as the tools use it."""
 
     store: TargetStore
+    requests: RequestStore | None
     history: HistoryStore
+    values: ValueStore | None
     engine: HttpEngine
 
 
 def to_output(exchange: dict[str, Any]) -> dict[str, Any]:
-    """Model-facing projection of an exchange."""
+    """Model-facing projection of an exchange; ``refreshed``: the saved requests the harness sent first."""
+    refreshed = [
+        {"request": item["requestName"], **{k: item[k] for k in ("variables", "ok", "error") if k in item}}
+        for item in exchange.get("refreshed", [])
+    ]
+    listed = {"refreshed": refreshed} if refreshed else {}
     response = exchange.get("response")
     if "error" in exchange or response is None:
-        return {"ok": False, "error": exchange.get("error") or "no response", "url": exchange["request"]["url"] or None}
+        error = exchange.get("error") or "no response"
+        return {"ok": False, "error": error, "url": exchange["request"]["url"] or None, **listed}
     body, cut = truncate(response["body"], TOOL_BODY_BYTES)
     fields = ("status", "statusText", "headers", "contentType", "bodyBytes", "binary", "durationMs", "redirects")
     return {
@@ -44,6 +52,7 @@ def to_output(exchange: dict[str, Any]) -> dict[str, Any]:
         **{field: response[field] for field in fields},
         "body": body,
         "bodyTruncated": response["bodyTruncated"] or cut,
+        **listed,
     }
 
 
@@ -53,6 +62,10 @@ def render_exchange(method: str, value: dict[str, Any]) -> str:
         where = f" ({method} {value['url']})" if value.get("url") else ""
         return f"request failed{where}: {value.get('error') or 'unknown error'}"
     lines = [f"{method} {value['url']} → {value['status']} {value['statusText']} ({value['durationMs']} ms)"]
+    for item in value.get("refreshed", []):
+        names = " ".join(f"{{{{{name}}}}}" for name in item["variables"])
+        told = {"names": names, "request": item["request"], "error": item.get("error") or "unknown error"}
+        lines.append(Template(PROMPTS["refreshed" if item["ok"] else "refresh_failed"]).substitute(told))
     if value["redirects"]:
         lines.append(f"redirected via: {' → '.join(value['redirects'])}")
     cut = " (truncated)" if value["bodyTruncated"] else ""
@@ -64,9 +77,24 @@ def render_exchange(method: str, value: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _target_row(target: dict[str, Any]) -> str:
+def variable_names(service: Host, target: dict[str, Any]) -> list[str]:
+    """
+    Names a request to the target may reference: its variables, its secret variables, the values captured in its
+    scope, and the variables a saved request renews by itself, with or without a value.
+    """
+    captured = [value["name"] for value in service.values.list(target["id"])] if service.values is not None else []
+    renewed = [
+        rule["name"].strip()
+        for request in (service.requests.list(target["id"]) if service.requests is not None else [])
+        for rule in request["captures"]
+        if rule["enabled"] and rule["refresh"] != "off" and rule["name"].strip()
+    ]
+    return list(dict.fromkeys([*target["variables"], *target["secrets"], *captured, *renewed]))
+
+
+def _target_row(target: dict[str, Any], names: list[str]) -> str:
     mutations = "allowed (confirm required)" if target["allowMutations"] else "GET/HEAD/OPTIONS only"
-    variables = " ".join(f"{{{{{name}}}}}" for name in target["variables"]) or "-"
+    variables = " ".join(f"{{{{{name}}}}}" for name in names) or "-"
     hosts = ", ".join(target["allowedHosts"]) or "-"
     return f"{target['name']} | {target['baseUrl']} | {target['auth']['type']} | {mutations} | {variables} | {hosts}"
 
@@ -93,7 +121,7 @@ def build_tools(service: Host) -> list[Any]:
         targets = [summarize(target) for target in service.store.list()]
         if not targets:
             return PROMPTS["no_targets"]
-        return "\n".join([TABLE_HEAD, *(_target_row(target) for target in targets)])
+        return "\n".join([TABLE_HEAD, *(_target_row(target, variable_names(service, target)) for target in targets)])
 
     request_description = Template(PROMPTS["http_request"]).substitute(body_kib=TOOL_BODY_BYTES // 1024)
 

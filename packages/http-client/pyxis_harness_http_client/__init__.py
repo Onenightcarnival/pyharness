@@ -3,7 +3,7 @@ from __future__ import annotations
 from .config import Config
 from .engine import HttpEngine, PolicyError, SendOptions
 from .service import GUIDANCE, HttpClientService
-from .store import HistoryStore, RequestStore, StoreError, TargetStore
+from .store import HistoryStore, RequestStore, StoreError, TargetStore, ValueStore
 
 __all__ = [
     "GUIDANCE",
@@ -16,4 +16,5 @@ __all__ = [
     "SendOptions",
     "StoreError",
     "TargetStore",
+    "ValueStore",
 ]

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from typing import Any
+from urllib.parse import quote_plus
 
 import httpx
 
@@ -14,6 +15,10 @@ HTTP_METHODS: tuple[str, ...] = tuple(_CFG["HTTP_METHODS"])
 SAFE_METHODS: tuple[str, ...] = tuple(_CFG["SAFE_METHODS"])
 HTTP_AUTH_TYPES: tuple[str, ...] = tuple(_CFG["HTTP_AUTH_TYPES"])
 HTTP_BODY_MODES: tuple[str, ...] = tuple(_CFG["HTTP_BODY_MODES"])
+HTTP_CAPTURE_SOURCES: tuple[str, ...] = tuple(_CFG["HTTP_CAPTURE_SOURCES"])
+HTTP_CAPTURE_REFRESH: tuple[str, ...] = tuple(_CFG["HTTP_CAPTURE_REFRESH"])
+MAX_CAPTURE_RULES: int = _CFG["MAX_CAPTURE_RULES"]
+MAX_CAPTURE_TTL_SECONDS: int = _CFG["MAX_CAPTURE_TTL_SECONDS"]
 DEFAULT_TIMEOUT_MS: int = _CFG["DEFAULT_TIMEOUT_MS"]
 MIN_TIMEOUT_MS: int = _CFG["MIN_TIMEOUT_MS"]
 MAX_TIMEOUT_MS: int = _CFG["MAX_TIMEOUT_MS"]
@@ -24,6 +29,9 @@ PANEL_BODY_BYTES: int = _CFG["PANEL_BODY_BYTES"]
 HISTORY_BODY_BYTES: int = _CFG["HISTORY_BODY_BYTES"]
 
 VARIABLE = re.compile(r"\{\{\s*([A-Za-z_][A-Za-z0-9_.-]*)\s*\}\}")
+VARIABLE_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]{0,63}$")
+# RFC 7230 token.
+HEADER_NAME = re.compile(r"^[!#$%&'*+.^_`|~0-9A-Za-z-]+$")
 SCHEME = re.compile(r"^[a-z][a-z0-9+.-]*://", re.IGNORECASE)
 LOCAL_LITERAL = re.compile(r"^(localhost|127\.|10\.|192\.168\.|0\.0\.0\.0|\[)", re.IGNORECASE)
 LINE_END = re.compile(r"\r\n|\n|\r")
@@ -48,6 +56,70 @@ def to_pairs(value: Any) -> Pairs:
 
 def substitute(text: str, variables: Mapping[str, str]) -> str:
     return VARIABLE.sub(lambda m: variables[m.group(1)] if m.group(1) in variables else m.group(0), text)
+
+
+def referenced_variables(texts: Iterable[str]) -> set[str]:
+    """Names referenced as ``{{name}}`` in any of the texts."""
+    return {match.group(1) for text in texts for match in VARIABLE.finditer(text)}
+
+
+def blank_capture() -> dict[str, Any]:
+    """A capture rule with every field at its default."""
+    return {"name": "", "source": "body", "path": "", "enabled": True, "ttlSeconds": 0, "ttlPath": "", "refresh": "off"}
+
+
+def saved_request_title(request: Mapping[str, Any]) -> str:
+    """Its name, else its path, else its method."""
+    return request["name"].strip() or request["path"].strip() or request["method"]
+
+
+def _active_rows(rows: Iterable[Any]) -> Pairs:
+    """Enabled rows with a name, as ``(name, value)`` pairs."""
+    out: Pairs = []
+    for row in rows:
+        if not isinstance(row, Mapping) or row.get("enabled") is False:
+            continue
+        key, value = row.get("key"), row.get("value")
+        if isinstance(key, str) and key.strip():
+            out.append((key.strip(), value if isinstance(value, str) else ""))
+    return out
+
+
+def _form_encoded(pairs: Pairs) -> str:
+    """``application/x-www-form-urlencoded`` as a browser's ``URLSearchParams`` serializes it."""
+    return "&".join(
+        f"{quote_plus(name, safe='*').replace('~', '%7E')}={quote_plus(value, safe='*').replace('~', '%7E')}"
+        for name, value in pairs
+    )
+
+
+def request_input_of(form: Mapping[str, Any]) -> dict[str, Any]:
+    """
+    The request input a saved request form sends: enabled rows with a name, the body of the selected mode and its
+    default content type.
+    """
+    method = form["method"]
+    headers = dict(_active_rows(form["headers"]))
+    body: str | None = None
+    kind: str | None = None
+    if method not in ("GET", "HEAD"):
+        if form["bodyMode"] in ("json", "text") and form["body"]:
+            body = form["body"]
+            kind = "application/json" if form["bodyMode"] == "json" else "text/plain"
+        elif form["bodyMode"] == "form":
+            body, kind = _form_encoded(_active_rows(form["form"])), "application/x-www-form-urlencoded"
+    if kind is not None and not any(name.lower() == "content-type" for name in headers):
+        headers["content-type"] = f"{kind}; charset=utf-8"
+    out: dict[str, Any] = {
+        "method": method,
+        "path": form["path"],
+        "query": [list(pair) for pair in _active_rows(form["query"])],
+        "headers": headers,
+        "body": body,
+    }
+    if form["auth"].get("type") != "none":
+        out["auth"] = form["auth"]
+    return out
 
 
 def _parse(text: str, shown: str) -> httpx.URL:

@@ -1,24 +1,28 @@
 [service]
 GUIDANCE = '''
 The HTTP API request tool is installed and the user allowed its tools. http_targets lists the API targets the user
-configured on the HTTP page (refer to them by name: base URL, auth type, fixed headers, {{variables}}, extra allowed
-hosts, whether state-changing methods are allowed); http_request sends a request to a target (the path joins below
-the base URL, the harness injects the auth, the response body comes back truncated); http_history shows the recent
-requests the user or the agent sent to the targets (requests the user sent without a target are not listed and
-cannot be called). GET / HEAD / OPTIONS run directly. POST / PUT / PATCH / DELETE change server state: they work
-only on a target with "allow mutations" on, and only with confirm=true after the complete request (method, URL,
-headers, body) was shown to the user and the user agreed. Credentials are configured in the UI; the tools never
-return or need a token or password, and none belongs in a header or the query. A URL outside the targets goes
-through web_fetch; a configured API goes through these tools. When the user mentions an API, an endpoint, calling
-an interface, a request, Postman or curl they mean this tool.
+configured on the HTTP page (refer to them by name: base URL, auth type, fixed headers, {{variables}}, extra
+allowed hosts, whether state-changing methods are allowed); http_request sends a request to a target (the path
+joins below the base URL, the harness injects the auth, the response body comes back truncated); http_history shows
+the recent requests the user or the agent sent to the targets (requests the user sent without a target are not
+listed and cannot be called). GET / HEAD / OPTIONS run directly. POST / PUT / PATCH / DELETE change server state:
+they work only on a target with "allow mutations" on, and only with confirm=true after the complete request
+(method, URL, headers, body) was shown to the user and the user agreed. Credentials are configured in the UI; the
+tools never return or need a token or password, and none belongs in a header or the query. The harness manages
+dynamic tokens: for a variable the user set to refresh, it sends the user's saved request for a new value while the
+value is missing or expired, then sends your request, and the result names that refresh; reference the variable as
+{{name}} and never call a login or token endpoint yourself. A URL outside the targets goes through web_fetch; a
+configured API goes through these tools. When the user mentions an API, an endpoint, calling an interface, a
+request, Postman or curl they mean this tool.
 '''
 
 [tools]
 http_targets = '''
-List the HTTP API targets the user configured on the HTTP page: name, base URL, auth type (credentials are
-injected by the harness and never shown), fixed headers, {{variables}}, extra allowed hosts and whether non-GET
-methods are allowed. Every other http_* tool takes one of these names. Triggers: API, HTTP request, REST,
-endpoint, webhook, curl, Postman.
+List the HTTP API targets the user configured on the HTTP page: name, base URL, auth type (credentials are injected
+by the harness and never shown), fixed headers, {{variables}} by name (plain, secret and captured ones; a variable
+the harness refreshes is listed before it has a value), extra allowed hosts and whether non-GET methods are
+allowed. Every other http_* tool takes one of these names. Triggers: API, HTTP request, REST, endpoint, webhook,
+curl, Postman.
 '''
 http_request = '''
 Send an HTTP request to a configured target. The harness joins `path` below the target base URL, applies the
@@ -26,7 +30,9 @@ target's {{variables}}, fixed headers and auth, and returns status, headers and 
 ${body_kib} KiB). GET / HEAD / OPTIONS run directly. POST / PUT / PATCH / DELETE change server state: they only
 work on targets where the user enabled mutations, and only with confirm=true after you showed the user the exact
 request and they agreed. A server-sent event stream is read until it ends, the body cap or the target timeout, and
-returned as its text. Never put credentials in headers or query: the target auth does that.
+returned as its text. Never put credentials in headers or query: the target auth does that. A {{variable}} the user
+set up for refresh (an access token) is renewed by the harness with the user's saved request before your request is
+sent; the result names that refresh. Do not call a login or token endpoint yourself to obtain one.
 '''
 http_history = '''
 Recent requests sent to a configured target, by the user from the HTTP page or by the agent: method, URL, status,
@@ -34,6 +40,8 @@ duration and a body preview. Use it to see how the user called an endpoint befor
 '''
 no_targets = "no HTTP targets configured (the user adds them on the HTTP page)"
 no_history = "no requests recorded yet"
+refreshed = 'harness refreshed ${names} with the saved request "${request}" first'
+refresh_failed = 'harness could not refresh ${names} with the saved request "${request}": ${error}'
 mutations_off = '''
 refused: target '${name}' allows GET/HEAD/OPTIONS only for the agent (the user can enable mutations on the HTTP
 page)
