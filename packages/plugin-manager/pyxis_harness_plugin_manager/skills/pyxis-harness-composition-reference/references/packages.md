@@ -17,6 +17,7 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 | `pyxis-harness-api` | function |  | http, agents, llm | yes | REST and SSE API over ``ctx.agents``, under ``/api`` on ``ctx.http``. |
 | `pyxis-harness-ask-user` | service | askUser | tools | yes | Plugin that provides one service under ``key``. |
 | `pyxis-harness-auto-review` | function |  | agentLoop, llm | yes | Auto review permission mode: a model reviews each gated tool call before it runs; a denied call asks the user. |
+| `pyxis-harness-checkpoint-memory` | function |  |  | yes | Persistence provider in process memory, for temporary sessions: ``ctx.temporary``. |
 | `pyxis-harness-checkpoint-postgres` | function |  |  | yes | Persistence provider on PostgreSQL: ``ctx.checkpointer`` and ``ctx.store``. |
 | `pyxis-harness-checkpoint-sqlite` | function |  |  | yes | Persistence provider on SQLite: ``ctx.checkpointer`` and ``ctx.store``. |
 | `pyxis-harness-compaction` | service | compaction | agentLoop, llm | yes | Plugin that provides one service under ``key``. |
@@ -46,7 +47,7 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 
 | bundle | title | description | entries (patch op ids) |
 |---|---|---|---|
-| `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `mcp`, `ask-user`, `checkpoint`, `workspace`, `agent-loop`, `agents`, `auto-review`, `compaction`, `workspace-changes`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui`, `terminal` |
+| `base` | Base | Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI. | `llm`, `tools`, `prompt`, `mcp`, `ask-user`, `checkpoint`, `checkpoint-temporary`, `workspace`, `agent-loop`, `agents`, `auto-review`, `compaction`, `workspace-changes`, `inspect`, `plugin-manager`, `dev-context`, `http`, `api`, `web-ui`, `terminal` |
 | `creator` | Creator | New sessions start in the Creator preset (plugin-authoring skills, plugin manager and inspection tools). | `agent-loop` |
 | `toolkit` | Toolkit | Built-in toolkit; sidebar entries can be unpinned to the More menu. | `memory`, `rdb`, `s3`, `config-center`, `otel`, `subscriptions`, `gateway`, `http-client` |
 | `web` | Web | web_search (DeepSeek native search; needs DEEPSEEK_API_KEY) and web_fetch tools for the agent. Preset; switch it off on the Plugins page. | `web-tools` |

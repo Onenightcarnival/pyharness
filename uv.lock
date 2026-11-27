@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -18,6 +18,7 @@ members = [
     "pyxis-harness-bundle-creator",
     "pyxis-harness-bundle-toolkit",
     "pyxis-harness-bundle-web",
+    "pyxis-harness-checkpoint-memory",
     "pyxis-harness-checkpoint-postgres",
     "pyxis-harness-checkpoint-sqlite",
     "pyxis-harness-compaction",
@@ -1877,6 +1878,7 @@ dependencies = [
     { name = "pyxis-harness-api" },
     { name = "pyxis-harness-ask-user" },
     { name = "pyxis-harness-auto-review" },
+    { name = "pyxis-harness-checkpoint-memory" },
     { name = "pyxis-harness-checkpoint-postgres" },
     { name = "pyxis-harness-checkpoint-sqlite" },
     { name = "pyxis-harness-compaction" },
@@ -1901,6 +1903,7 @@ requires-dist = [
     { name = "pyxis-harness-api", editable = "packages/api" },
     { name = "pyxis-harness-ask-user", editable = "packages/ask-user" },
     { name = "pyxis-harness-auto-review", editable = "packages/auto-review" },
+    { name = "pyxis-harness-checkpoint-memory", editable = "packages/checkpoint-memory" },
     { name = "pyxis-harness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
     { name = "pyxis-harness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
     { name = "pyxis-harness-compaction", editable = "packages/compaction" },
@@ -1975,6 +1978,21 @@ dependencies = [
 requires-dist = [
     { name = "pyxis-harness-core", editable = "packages/core" },
     { name = "pyxis-harness-web-tools", editable = "packages/web-tools" },
+]
+
+[[package]]
+name = "pyxis-harness-checkpoint-memory"
+version = "0.1.1.dev5"
+source = { editable = "packages/checkpoint-memory" }
+dependencies = [
+    { name = "langgraph-checkpoint" },
+    { name = "pyxis-harness-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "langgraph-checkpoint", specifier = "==4.3.1" },
+    { name = "pyxis-harness-core", editable = "packages/core" },
 ]
 
 [[package]]
@@ -2266,6 +2284,7 @@ dependencies = [
     { name = "pyxis-harness-bundle-creator" },
     { name = "pyxis-harness-bundle-toolkit" },
     { name = "pyxis-harness-bundle-web" },
+    { name = "pyxis-harness-checkpoint-memory" },
     { name = "pyxis-harness-checkpoint-postgres" },
     { name = "pyxis-harness-checkpoint-sqlite" },
     { name = "pyxis-harness-compaction" },
@@ -2313,6 +2332,7 @@ requires-dist = [
     { name = "pyxis-harness-bundle-creator", editable = "packages/bundle-creator" },
     { name = "pyxis-harness-bundle-toolkit", editable = "packages/bundle-toolkit" },
     { name = "pyxis-harness-bundle-web", editable = "packages/bundle-web" },
+    { name = "pyxis-harness-checkpoint-memory", editable = "packages/checkpoint-memory" },
     { name = "pyxis-harness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
     { name = "pyxis-harness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
     { name = "pyxis-harness-compaction", editable = "packages/compaction" },

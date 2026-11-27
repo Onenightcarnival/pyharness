@@ -26,6 +26,10 @@ patch:
       path: ${data_dir}/checkpoints.sqlite
       store_path: ${data_dir}/store.sqlite
 
+  # Temporary sessions: ctx.temporary (checkpointer and store in process memory).
+  - id: checkpoint-temporary
+    name: pyxis-harness-checkpoint-memory
+
   # Workspace: ctx.workspace, ctx.backend. `execute` tool: shell: true.
   - id: workspace
     name: pyxis-harness-workspace

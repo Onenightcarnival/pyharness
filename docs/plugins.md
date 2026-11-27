@@ -12,6 +12,7 @@
 | `pyxis-harness-ask-user` | `ask-user` | `askUser` | `ask_user_question` 工具：agent 提问（可带选项、多选、标题），运行以 LangGraph interrupt 暂停，Web UI 显示问题卡片；`POST /sessions/{id}/answers` 回答后续跑，工具返回 `{"answers": [{"id", "selected", "custom"?}]}`，问答结构与 dsh 一致 |
 | `pyxis-harness-checkpoint-sqlite` | `checkpoint` | `checkpointer`、`store` | SQLite 持久化 |
 | `pyxis-harness-checkpoint-postgres` | `checkpoint` | `checkpointer`、`store` | Postgres 持久化；共享连接池 |
+| `pyxis-harness-checkpoint-memory` | `checkpoint-temporary` | `temporary` | 临时会话的持久化：进程内存中的 checkpointer 与 store |
 | `pyxis-harness-workspace` | `workspace` | `workspace`、`backend` | 工作区注册表：默认工作区、每会话工作区、最近列表、目录浏览；deepagents `FilesystemBackend` / `LocalShellBackend` |
 | `pyxis-harness-agent-loop-deepagents` | `agent-loop` | `agentLoop` | deepagents 图，按工作区 × 权限模式 × 预设构建；`add_subagent`、`add_middleware`、`add_skills`、`add_preset`、`add_mode` |
 | `pyxis-harness-agent` | `agents` | `agents` | 会话、后台运行、审批、重启续跑；每轮记录（stats + 轨迹）写入 store，`turns(session_id)`；失败轮次记下失败代码，`failure(session_id)` 与 `retry_run(session_id)`（从失败的那一步继续，不加消息） |

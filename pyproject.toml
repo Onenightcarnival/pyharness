@@ -4,7 +4,7 @@ version = "0.1.1.dev5"
 description = "PyxisHarness workspace: kernel and kernel plugins"
 license = "MIT"
 requires-python = ">=3.12"
-dependencies = ["pyxis-harness", "pyxis-harness-agent", "pyxis-harness-agent-loop-deepagents", "pyxis-harness-api", "pyxis-harness-ask-user", "pyxis-harness-auto-review", "pyxis-harness-bundle-base", "pyxis-harness-bundle-creator", "pyxis-harness-bundle-toolkit", "pyxis-harness-bundle-web", "pyxis-harness-checkpoint-postgres", "pyxis-harness-checkpoint-sqlite", "pyxis-harness-compaction", "pyxis-harness-config-center", "pyxis-harness-core", "pyxis-harness-gateway", "pyxis-harness-http", "pyxis-harness-http-client", "pyxis-harness-inspect", "pyxis-harness-llm", "pyxis-harness-mcp", "pyxis-harness-memory", "pyxis-harness-otel", "pyxis-harness-plugin-manager", "pyxis-harness-terminal", "pyxis-harness-prompt", "pyxis-harness-rdb", "pyxis-harness-s3", "pyxis-harness-subscriptions", "pyxis-harness-tools", "pyxis-harness-web-tools", "pyxis-harness-web-ui", "pyxis-harness-workspace", "pyxis-harness-workspace-changes"]
+dependencies = ["pyxis-harness", "pyxis-harness-agent", "pyxis-harness-agent-loop-deepagents", "pyxis-harness-api", "pyxis-harness-ask-user", "pyxis-harness-auto-review", "pyxis-harness-bundle-base", "pyxis-harness-bundle-creator", "pyxis-harness-bundle-toolkit", "pyxis-harness-bundle-web", "pyxis-harness-checkpoint-memory", "pyxis-harness-checkpoint-postgres", "pyxis-harness-checkpoint-sqlite", "pyxis-harness-compaction", "pyxis-harness-config-center", "pyxis-harness-core", "pyxis-harness-gateway", "pyxis-harness-http", "pyxis-harness-http-client", "pyxis-harness-inspect", "pyxis-harness-llm", "pyxis-harness-mcp", "pyxis-harness-memory", "pyxis-harness-otel", "pyxis-harness-plugin-manager", "pyxis-harness-terminal", "pyxis-harness-prompt", "pyxis-harness-rdb", "pyxis-harness-s3", "pyxis-harness-subscriptions", "pyxis-harness-tools", "pyxis-harness-web-tools", "pyxis-harness-web-ui", "pyxis-harness-workspace", "pyxis-harness-workspace-changes"]
 
 [dependency-groups]
 dev = ["pytest==9.2.0", "pytest-asyncio==1.4.1", "httpx==0.28.1", "pip==26.2.2", "ruff==0.17.3"]
@@ -22,6 +22,7 @@ pyxis-harness-agent-loop-deepagents = { workspace = true }
 pyxis-harness-api = { workspace = true }
 pyxis-harness-bundle-base = { workspace = true }
 pyxis-harness-bundle-creator = { workspace = true }
+pyxis-harness-checkpoint-memory = { workspace = true }
 pyxis-harness-checkpoint-postgres = { workspace = true }
 pyxis-harness-checkpoint-sqlite = { workspace = true }
 pyxis-harness-core = { workspace = true }

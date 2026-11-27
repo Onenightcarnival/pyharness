@@ -27,6 +27,7 @@ dependencies = [
     "pyxis-harness-agent-loop-deepagents==0.1.1.dev5",
     "pyxis-harness-compaction==0.1.1.dev5",
     "pyxis-harness-checkpoint-sqlite==0.1.1.dev5",
+    "pyxis-harness-checkpoint-memory==0.1.1.dev5",
     "pyxis-harness-checkpoint-postgres==0.1.1.dev5",
     "pyxis-harness-workspace==0.1.1.dev5",
     "pyxis-harness-workspace-changes==0.1.1.dev5",

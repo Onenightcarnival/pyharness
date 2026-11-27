@@ -25,6 +25,7 @@
 | `mcp` | `pyxis-harness-mcp` |
 | `ask-user` | `pyxis-harness-ask-user` |
 | `checkpoint` | `pyxis-harness-checkpoint-sqlite` |
+| `checkpoint-temporary` | `pyxis-harness-checkpoint-memory` |
 | `workspace` | `pyxis-harness-workspace` |
 | `agent-loop` | `pyxis-harness-agent-loop-deepagents` |
 | `agents` | `pyxis-harness-agent` |
