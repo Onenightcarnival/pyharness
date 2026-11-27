@@ -404,6 +404,8 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 .sessionRow { position: relative; height: 32px; padding-inline-start: 31px; cursor: pointer; border: none; background: transparent; width: calc(100% - 6px); text-align: left; }
 .sessionRow.selected { background: var(--nav-active); }
 .sessionRow .title { flex: 1; min-width: 0; margin-right: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 20px; }
+.sessionRow .tempMark { flex: none; display: inline-flex; margin-right: 6px; color: var(--warn); }
+.sessionRow .tempMark .ico { width: 12px; height: 12px; }
 .sessionRow .time { flex: none; font-size: 10px; line-height: 16px; color: var(--label-tertiary); }
 .sessionRow .busyDot { position: absolute; left: 15px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; corner-shape: round; background: var(--info); animation: pulse 1.6s var(--ease) infinite; }
 .sessionRow .rowAction { display: none; }
@@ -441,6 +443,7 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 .crumbTags { display: inline-flex; align-items: center; gap: 6px; min-width: 0; margin-left: 8px; }
 .crumbTags .tag { max-width: 200px; overflow: hidden; text-overflow: ellipsis; display: inline-flex; gap: 4px; align-items: center; }
 .crumbTags .tag .ico { width: 12px; height: 12px; }
+.crumbTags .tag[data-tone='warning'] { flex: none; max-width: none; }
 
 /* ---------- conversation ---------- */
 .conversation { flex: 1; min-height: 0; display: flex; flex-direction: column; --chat-width: clamp(min(680px, 100% - 32px), 64%, 920px); }
@@ -457,6 +460,7 @@ html[data-work='compact'] .processBody .reasoning { display: none; }
 .chip { display: inline-flex; align-items: center; gap: 4px; max-width: min(100%, 360px); min-height: 28px; padding: 0 8px; border: none; border-radius: var(--r-sm); background: transparent; color: var(--label-primary); font-size: 13px; line-height: 20px; font-weight: 500; }
 .chip .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip .chev { color: var(--label-caption); }
+.chip[aria-pressed='true'] { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); }
 .chip[role='button'], .selectChip[role='button'] { cursor: pointer; }
 .workspaceRow { gap: 4px; flex-wrap: wrap; }
 .menuRow .desc { display: block; font-size: 11px; line-height: 15px; color: var(--label-tertiary); white-space: normal; }
@@ -1036,7 +1040,7 @@ textarea.input { height: auto; padding: 8px 12px; line-height: 20px; resize: ver
       <div class="scrollBody" id="scroll">
         <div class="hero" id="hero">
           <div class="headline"><svg class="heroMark"><use href="#i-mark"/></svg><span data-i18n="headline"></span></div>
-          <div class="workspaceRow"><span class="chip" id="heroWorkspace" role="button" tabindex="0"><svg class="ico"><use href="#i-folder"/></svg><span class="label">workspace</span><svg class="ico chev"><use href="#i-chev-down"/></svg></span><span class="chip" id="heroPreset" role="button" tabindex="0"><svg class="ico"><use href="#i-mode"/></svg><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span></div>
+          <div class="workspaceRow"><span class="chip" id="heroWorkspace" role="button" tabindex="0"><svg class="ico"><use href="#i-folder"/></svg><span class="label">workspace</span><svg class="ico chev"><use href="#i-chev-down"/></svg></span><span class="chip" id="heroPreset" role="button" tabindex="0"><svg class="ico"><use href="#i-mode"/></svg><span class="label"></span><svg class="ico chev"><use href="#i-chev-down"/></svg></span><span class="chip" id="heroTemporary" role="button" tabindex="0" aria-pressed="false"><svg class="ico"><use href="#i-eye-off"/></svg><span class="label" data-i18n="temporaryChat"></span></span></div>
           <div class="composerSlot" id="heroComposer"></div>
         </div>
         <div class="column" id="log"></div>
@@ -1100,6 +1104,7 @@ const T = zh ? {
   failureCodes: { RATE_LIMIT: '限流（429）', SERVER: '服务端错误（5xx）', TIMEOUT: '超时', TRANSPORT: '网络连接', EMPTY_RESPONSE: '空响应', STREAM_CLOSED: '流中断' },
   recRetry: '重试', retryAttempt: (n) => `第 ${n} 次重试`, retryWait: '等待', failureCode: '失败类型',
   placeholderBusy: 'agent 工作中…', collapse: '收起侧边栏', expand: '展开侧边栏', attach: '添加图片（也可粘贴或拖入）', send: '发送', stop: '停止',
+  temporaryChat: '临时对话', temporaryHint: '只保存在内存里，不进会话库：删除、长时间闲置或 harness 重启后清空；agent 写进工作区的文件不受影响', temporaryGone: '临时对话已随重启清空', restartEndsTemporary: (n) => `这项操作会重启 harness，${n} 个临时对话将被清空。`, continueLabel: '继续',
   thought: '思考过程', toolRunning: '运行中', copy: '复制', copied: '已复制', del: '删除会话', deleted: '会话已删除',
   approvalStrip: '待批准', approvalCountdown: (t) => `${t} 后自动拒绝`, approvalExpired: '已超时，正在拒绝…', maxSteps: '每轮步数上限', maxStepsHint: '一轮里主 agent 调用模型的次数；到达后本轮暂停，可以继续', noLimit: '不限', maxParallel: '并行工具调用数', maxParallelHint: '模型一次返回多个工具调用时，同时执行的上限', reviewModel: '审查模型', reviewModelHint: '自动审查权限下，审查工具调用的模型', sameAsSession: '与会话相同', summaryModel: '摘要模型', summaryModelHint: '压缩时写检查点摘要的模型', pausedTurn: '已暂停', stepLimitHint: '已达到每轮步数上限：点右侧按钮继续运行，或输入新消息', stepLimitReached: '已达到每轮步数上限，本轮已暂停；点发送按钮继续，或输入新消息。', approvalTimeout: '审批时限', approvalTimeoutHint: '工具审批等待决定的最长时间；到期后自动拒绝，agent 继续。', noTimeout: '不超时', minutes: (n) => `${n} 分钟`, hours: (n) => `${n} 小时`, seconds: (n) => `${n} 秒`, approve: '批准', reject: '拒绝', cmdCompact: '压缩较早的对话历史', cmdHelp: '列出可用命令', cmdNew: '新建会话', cmdModel: '切换模型', cmdMode: '切换权限模式', cmdSettings: '打开设置', cmdFiles: '在右侧栏打开工作区文件', cmdTerminal: '在右侧栏打开终端', cmdJobs: '在右侧栏查看后台任务', cmdClear: '收起已完成的工作步骤', commandsTitle: '命令', referencesTitle: '文件', noCommands: '没有匹配的命令', noFiles: '没有匹配的文件', helpIntro: '可用命令：', refHint: '输入 @ 引用工作区文件，/ 使用命令', questionStrip: 'agent 有问题要问你', questionPending: '先回答上面的问题', questionTurn: '等待回答', submitAnswers: '提交回答', skipAll: '全部跳过', customAnswer: '其他…', customPlaceholder: '输入你的回答', chooseOne: '选一项', chooseMany: '可多选', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
   restarting: '重启中：应用插件变更…', restarted: (g) => `第 ${g} 代已启动`, rolledBack: (g) => `变更启动失败；第 ${g} 代运行上一份配置`, offline: '离线', online: '在线', gen: (g) => `第 ${g} 代`,
@@ -1118,6 +1123,7 @@ const T = zh ? {
   failureCodes: { RATE_LIMIT: 'Rate limit (429)', SERVER: 'Server error (5xx)', TIMEOUT: 'Timeout', TRANSPORT: 'Connection', EMPTY_RESPONSE: 'Empty response', STREAM_CLOSED: 'Stream closed' },
   recRetry: 'Retry', retryAttempt: (n) => `retry ${n}`, retryWait: 'Wait', failureCode: 'Failure',
   placeholderBusy: 'The agent is working…', collapse: 'Collapse sidebar', expand: 'Expand sidebar', attach: 'Add images (paste or drop works too)', send: 'Send', stop: 'Stop',
+  temporaryChat: 'Temporary chat', temporaryHint: 'Kept in memory only, never in the session store: gone when deleted, after long inactivity, or when the harness restarts; files the agent writes to the workspace stay', temporaryGone: 'The temporary chat ended with the restart', restartEndsTemporary: (n) => `This restarts the harness and ends ${n} temporary chat${n === 1 ? '' : 's'}.`, continueLabel: 'Continue',
   thought: 'Thoughts', toolRunning: 'Running', copy: 'Copy', copied: 'Copied', del: 'Delete session', deleted: 'Session deleted',
   approvalStrip: 'Awaiting approval', approvalCountdown: (t) => `rejected in ${t}`, approvalExpired: 'Timed out; rejecting…', maxSteps: 'Steps per turn', maxStepsHint: 'Model calls of the main agent in one turn; the turn pauses there and can be continued', noLimit: 'No limit', maxParallel: 'Parallel tool calls', maxParallelHint: 'Upper bound on tool calls running at once when the model returns several', reviewModel: 'Reviewer model', reviewModelHint: 'The model that reviews tool calls under the Auto review permission', sameAsSession: 'Same as the session', summaryModel: 'Summary model', summaryModelHint: 'The model that writes the checkpoint summary of a compaction', pausedTurn: 'Paused', stepLimitHint: 'The turn reached its step limit: use the button to continue, or type a new message', stepLimitReached: 'The turn reached its step limit and paused; press send to continue, or type a new message.', approvalTimeout: 'Approval time limit', approvalTimeoutHint: 'How long a tool approval waits for a decision; after that it is rejected and the agent goes on.', noTimeout: 'No limit', minutes: (n) => `${n} min`, hours: (n) => `${n} h`, seconds: (n) => `${n} s`, approve: 'Approve', reject: 'Reject', cmdCompact: 'Compact older conversation history', cmdHelp: 'List available commands', cmdNew: 'Start a new session', cmdModel: 'Choose the model', cmdMode: 'Choose the permission mode', cmdSettings: 'Open settings', cmdFiles: 'Open workspace files in the sidebar', cmdTerminal: 'Open a terminal in the sidebar', cmdJobs: 'Show background jobs in the sidebar', cmdClear: 'Collapse finished work details', commandsTitle: 'Commands', referencesTitle: 'Files', noCommands: 'No matching commands', noFiles: 'No matching files', helpIntro: 'Available commands:', refHint: 'Type @ to reference a workspace file, / for commands', questionStrip: 'The agent has a question for you', questionPending: 'Answer the question above first', questionTurn: 'Waiting for your answer', submitAnswers: 'Submit answers', skipAll: 'Skip all', customAnswer: 'Other…', customPlaceholder: 'Type your answer', chooseOne: 'Choose one', chooseMany: 'Choose any', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
   restarting: 'Restarting: applying plugin changes…', restarted: (g) => `Generation ${g} started`, rolledBack: (g) => `Change failed to boot; generation ${g} runs the previous configuration`, offline: 'Offline', online: 'Online', gen: (g) => `generation ${g}`,
@@ -1184,7 +1190,7 @@ document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = T[el
 document.querySelectorAll('[data-i18n-title]').forEach((el) => { el.title = T[el.dataset.i18nTitle]; el.setAttribute('aria-label', T[el.dataset.i18nTitle]); });
 document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => { el.placeholder = T[el.dataset.i18nPlaceholder]; });
 
-const state = { sessions: [], current: null, view: 'chat', streaming: false, generation: null, health: null, run: null, pending: false, directory: null, sessionModel: null, agent: null, workspaces: null, session: null, sessionWorkspace: null, sessionMode: null, sessionPreset: null };
+const state = { sessions: [], current: null, view: 'chat', streaming: false, generation: null, health: null, run: null, pending: false, directory: null, sessionModel: null, agent: null, workspaces: null, session: null, sessionWorkspace: null, sessionMode: null, sessionPreset: null, sessionTemporary: false };
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const icon = (name, cls = 'ico') => `<svg class="${cls}"><use href="#i-${name}"/></svg>`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1261,7 +1267,7 @@ function h(tag, attrs, ...children) {
 const moduleFactories = {}; const moduleStatus = {}; let pendingModules = [];
 window.__PyhModules__ = { load({ id, factory }) { if (typeof factory !== 'function') throw new Error('load({ id, factory }) requires a factory function'); pendingModules.push({ id: String(id || ''), factory }); } };
 function pluginRequire(name) {
-  if (name === 'pyxis-harness') return { h, icon, esc, toast, json, api, markdown, copyText, confirmDialog, promptDialog, waitForRestart, T, locale: zh ? 'zh' : 'en' };
+  if (name === 'pyxis-harness') return { h, icon, esc, toast, json, api, markdown, copyText, confirmDialog, confirmRestart, promptDialog, waitForRestart, T, locale: zh ? 'zh' : 'en' };
   throw new Error(`module ${name} is not available; only "pyxis-harness" can be required`);
 }
 async function hostCall(entry, method, args) {
@@ -1544,7 +1550,7 @@ function sessionRowHtml(s) {
     <div class="sessionRow${s.id === state.current ? ' selected' : ''}" data-id="${esc(s.id)}" role="button" tabindex="0" title="${esc(s.title || T.untitled)}">
       ${s.busy ? '<span class="busyDot"></span>' : ''}
       <span class="title">${esc(s.title || T.untitled)}</span>
-      <span class="time">${esc(ago(s.updated_at))}</span>
+      ${s.temporary ? `<span class="tempMark" title="${esc(T.temporaryChat)}">${icon('eye-off')}</span>` : ''}<span class="time">${esc(ago(s.updated_at))}</span>
       <span class="rowActions"><button class="iconButton" data-session-menu="${esc(s.id)}" title="${esc(T.sessionActions)}" aria-label="${esc(T.sessionActions)}">${icon('dots')}</button></span>
     </div>`;
 }
@@ -1790,7 +1796,7 @@ function renderDock() {
 }
 onSlot('conversation.composer.dock', renderDock);
 function newSession() {
-  state.current = null; state.run = null; state.session = null; state.failure = null; state.sessionModel = null; state.sessionMode = null; state.sessionPreset = null; closeModelMenu(); renderModelChip(); renderSessionChips();
+  state.current = null; state.run = null; state.session = null; state.failure = null; state.sessionModel = null; state.sessionMode = null; state.sessionPreset = null; state.sessionTemporary = false; closeModelMenu(); renderModelChip(); renderSessionChips();
   setView('chat'); $('log').innerHTML = ''; $('approval').innerHTML = ''; curTurn = null; renderDock(); renderRightbar(); emitPlugin('session', null); setConvView('chat'); renderStats();
   $('crumb').textContent = '';
   setPhase('hero'); refreshSessions(); updateComposer(); $('input').focus();
@@ -1799,7 +1805,7 @@ function setSession(s) { const prev = state.session; state.session = prev && s &
 async function openSession(id) {
   state.current = id; setView('chat');
   let s;
-  try { s = await json('/sessions/' + id); } catch (err) { toast(err.message); return; }
+  try { s = await json('/sessions/' + id); } catch (err) { toast(err.message); if (err.status === 404 && state.current === id) newSession(); return; }
   if (state.current !== id) return;
   $('crumb').textContent = s.title || T.untitled;
   state.session = s; state.sessionModel = s.model || null; renderModelChip(); renderSessionChips(); renderDock(); renderRightbar(); emitPlugin('session', s);
@@ -2171,6 +2177,7 @@ async function waitForRestart() {
       notice.innerHTML = `${icon('check')}<span>${esc(T.restarted(h.generation))}</span>`;
       setTimeout(() => { notice.hidden = true; }, 4000);
       loadPluginCount();
+      if (state.current && state.session?.temporary) { const [view, panel] = [state.view, state.panel]; toast(T.temporaryGone); newSession(); if (view !== 'chat') setView(view, panel); return h; }  // it lived in the last process
       if (state.current) {
         for (let j = 0; j < 20; j++) {
           const s = await json('/sessions/' + state.current);
@@ -2265,7 +2272,7 @@ $('composer').addEventListener('submit', async (e) => {
   if (state.pending) { toast(state.pendingKind === 'ask_user' ? T.questionPending : T.approvalPending); return; }
   if (!state.current) {
     let s;
-    try { s = await json('/sessions', { method: 'POST', body: JSON.stringify({ title: (text || attachments[0].name).slice(0, 60), model: state.sessionModel, workspace: state.sessionWorkspace, mode: state.sessionMode, preset: state.sessionPreset }) }); } catch (err) { toast(err.message); return; }
+    try { s = await json('/sessions', { method: 'POST', body: JSON.stringify({ title: (text || attachments[0].name).slice(0, 60), model: state.sessionModel, workspace: state.sessionWorkspace, mode: state.sessionMode, preset: state.sessionPreset, temporary: !!state.sessionTemporary }) }); } catch (err) { toast(err.message); return; }
     state.current = s.id; setSession(s); log().innerHTML = ''; curTurn = null; renderSessionChips();
     $('crumb').textContent = s.title || T.untitled;
     setPhase('active'); setConvView('chat'); renderDock(); renderRightbar(); renderStats(); emitPlugin('session', s); refreshSessions();
@@ -2424,6 +2431,7 @@ function installDialog(el) {
   m.querySelector('[data-pick]').onclick = async () => { try { const r = await json('/workspaces/pick', { method: 'POST', body: JSON.stringify({}) }); if (r.path) input.value = r.path; } catch (err) { toast(err.message); } };
   yes.onclick = async () => {
     const path = input.value.trim(); if (!path) { input.focus(); return; }
+    if (!(await confirmRestart())) return;
     yes.disabled = true; yes.innerHTML = `${icon('spinner', 'ico spin')}<span>${esc(T.installing)}</span>`;
     const r = await applyPluginResult(json('/plugins/install', { method: 'POST', body: JSON.stringify(source === 'path' ? { path } : { package: path }) }), el);
     if (r) close(); else { yes.disabled = false; yes.textContent = T.install; }
@@ -2457,9 +2465,9 @@ async function renderPluginsPanel(el) {
   $('pluginsAdd').onclick = () => installDialog(el);
   el.onclick = async (e) => {
     const t = e.target.closest('[data-toggle]');
-    if (t) { const [kind, id] = t.dataset.toggle.split(/:(.*)/); const on = t.getAttribute('aria-checked') !== 'true'; t.disabled = true; await applyPluginResult(json(`/plugins/${kind === 'bundle' ? 'bundles' : 'entries'}/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify({ enabled: on }) }), el); return; }
+    if (t) { const [kind, id] = t.dataset.toggle.split(/:(.*)/); const on = t.getAttribute('aria-checked') !== 'true'; if (!(await confirmRestart())) return; t.disabled = true; await applyPluginResult(json(`/plugins/${kind === 'bundle' ? 'bundles' : 'entries'}/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify({ enabled: on }) }), el); return; }
     const u = e.target.closest('[data-uninstall]');
-    if (u) { if (!(await confirmDialog(T.uninstallConfirm(u.dataset.uninstall), T.uninstall, T.installTitle))) return; await applyPluginResult(json(`/plugins/bundles/${encodeURIComponent(u.dataset.uninstall)}`, { method: 'DELETE' }), el); }
+    if (u) { if (!(await confirmDialog(T.uninstallConfirm(u.dataset.uninstall), T.uninstall, T.installTitle)) || !(await confirmRestart())) return; await applyPluginResult(json(`/plugins/bundles/${encodeURIComponent(u.dataset.uninstall)}`, { method: 'DELETE' }), el); }
   };
 }
 slotRegister('web-ui', { slot: 'main', key: 'plugins', label: T.pluginsTitle }, (el) => { renderPluginsPanel(el); return () => {}; });
@@ -2543,8 +2551,11 @@ function renderSessionChips() {
   const hp = $('heroPreset'); hp.querySelector('.label').textContent = presetLabel(preset); hp.title = `${T.preset_}: ${T.presetDesc[preset] || ''}`; hp.hidden = !preset;
   const mc = $('modeChip'); mc.querySelector('.label').textContent = modeLabel(mode); mc.title = `${T.mode_}: ${T.modeDesc[mode] || ''}`; mc.hidden = !mode;
   mc.querySelector('.lead').innerHTML = `<use href="#i-${MODE_ICON[mode] || 'shield'}"/>`;
-  $('crumbTags').innerHTML = state.session ? `<span class="tag" data-tone="outline" title="${esc(ws)}">${icon('folder')}${esc(name)}</span><span class="tag" data-tone="outline">${icon('mode')}${esc(presetLabel(preset))}</span>` : '';
+  const ht = $('heroTemporary'); ht.setAttribute('aria-pressed', String(!!state.sessionTemporary)); ht.title = T.temporaryHint;
+  const temporary = state.session?.temporary ? `<span class="tag" data-tone="warning" title="${esc(T.temporaryHint)}">${icon('eye-off')}${esc(T.temporaryChat)}</span>` : '';
+  $('crumbTags').innerHTML = state.session ? `${temporary}<span class="tag" data-tone="outline" title="${esc(ws)}">${icon('folder')}${esc(name)}</span><span class="tag" data-tone="outline">${icon('mode')}${esc(presetLabel(preset))}</span>` : '';
 }
+function toggleTemporary() { state.sessionTemporary = !state.sessionTemporary; renderSessionChips(); $('input').focus(); }
 let chipMenu = null;
 function closeChipMenu() { if (chipMenu) { chipMenu.remove(); chipMenu = null; document.removeEventListener('mousedown', onChipOutside, true); document.removeEventListener('keydown', onChipKey, true); } }
 function onChipOutside(e) { if (chipMenu && !chipMenu.contains(e.target) && !chipMenu._anchor.contains(e.target)) closeChipMenu(); }
@@ -2633,7 +2644,7 @@ function browseDirectory(start) {
     load(start || null);
   });
 }
-for (const [id, fn] of [['heroWorkspace', openWorkspaceMenu], ['modeChip', openModeMenu], ['heroPreset', openPresetMenu]]) {
+for (const [id, fn] of [['heroWorkspace', openWorkspaceMenu], ['modeChip', openModeMenu], ['heroPreset', openPresetMenu], ['heroTemporary', toggleTemporary]]) {
   $(id).onclick = () => fn($(id));
   $(id).onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn($(id)); } };
 }
@@ -3658,6 +3669,10 @@ async function removeRoute(r) {
 function modal(inner) {
   const el = document.createElement('div'); el.className = 'modal'; el.innerHTML = `<div class="modalCard" role="dialog" aria-modal="true">${inner}</div>`;
   document.body.appendChild(el); return el;
+}
+async function confirmRestart() { // before an action that restarts the harness: the temporary sessions end with it
+  const n = (state.sessions || []).filter((x) => x.temporary).length;
+  return !n || confirmDialog(T.restartEndsTemporary(n), T.continueLabel, T.temporaryChat);
 }
 function confirmDialog(text, label, title) {
   return new Promise((resolve) => {

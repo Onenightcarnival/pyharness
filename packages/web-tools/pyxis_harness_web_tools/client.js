@@ -1,7 +1,7 @@
 window.__PyhModules__.load({
   id: "web-tools",
   factory(require) {
-    const { icon, esc, toast, json, T } = require("pyxis-harness");
+    const { icon, esc, toast, json, confirmRestart, T } = require("pyxis-harness");
     const L = {
       zh: { title: "网页搜索", intro: "agent 的 web_search 与 web_fetch 工具。", search: "网页搜索", searchHint: "web_search 工具；更改后重启生效", fetch: "网页获取", fetchHint: "web_fetch 工具：读取一个网址的正文；更改后重启生效", on: "开启", off: "关闭", provider: "搜索提供方", providerHint: "DeepSeek Search API：每次搜索一个直接请求；服务端搜索：一次带搜索工具的 Messages 调用，返回回答与引用", providerApi: "DeepSeek Search API", providerLegacy: "DeepSeek 服务端搜索", key: "API Key", keySet: (ref, source) => `已配置（${source === "env" ? "环境变量" : "凭据文件"} ${ref}）；留空保持不变`, keyUnset: (ref) => `未配置；在此填写，或设置环境变量 ${ref}`, keySaved: "密钥已保存", keyCleared: "密钥已清除", clear: "清除", baseUrl: "Base URL", baseUrlHint: "当前提供方的接口地址", count: "每次搜索结果数", countHint: "一次搜索返回的来源数，1 到 50", uses: "单次请求最多搜索次数", usesHint: "服务端搜索在一次请求里可以搜索的次数，1 到 20", restart: "已保存；重启后生效，没有运行中的轮次时自动重启。" },
       en: { title: "Web search", intro: "The agent's web_search and web_fetch tools.", search: "Web search", searchHint: "The web_search tool; a change takes effect after a restart", fetch: "Web fetch", fetchHint: "The web_fetch tool: reads the text of a URL; a change takes effect after a restart", on: "On", off: "Off", provider: "Search provider", providerHint: "DeepSeek Search API: one direct request per search; server-side search: a Messages call with the search tool, returning an answer with citations", providerApi: "DeepSeek Search API", providerLegacy: "DeepSeek server-side search", key: "API Key", keySet: (ref, source) => `Configured (${source === "env" ? "environment variable" : "credential file"} ${ref}); leave empty to keep it`, keyUnset: (ref) => `Not configured; enter one here, or set the environment variable ${ref}`, keySaved: "Key saved", keyCleared: "Key removed", clear: "Remove", baseUrl: "Base URL", baseUrlHint: "Endpoint of the selected provider", count: "Results per search", countHint: "Sources one search returns, 1 to 50", uses: "Searches per request", usesHint: "Searches the server-side search may run in one request, 1 to 20", restart: "Saved; in effect after a restart, which happens once no turn is running." },
@@ -33,8 +33,9 @@ window.__PyhModules__.load({
               } catch (err) { toast(err.message); if (alive) render(s); }
             };
             el.querySelectorAll("[data-web]").forEach((control) => {
-              control.onchange = () => {
+              control.onchange = async () => {
                 const key = control.dataset.web;
+                if ((key === "search" || key === "fetch") && !(await confirmRestart())) { if (alive) render(s); return; }  // the tool set changes: a restart
                 if (key === "api_key") { if (control.value.trim()) save({ api_key: control.value.trim() }, t.keySaved); return; }
                 const value = key === "search" || key === "fetch" ? control.value === "1" : control.type === "number" ? Math.round(+control.value) : control.value.trim();
                 save({ [key]: value });

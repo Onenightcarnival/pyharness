@@ -1,7 +1,7 @@
 window.__PyhModules__.load({
   id: "config-center",
   factory(require) {
-    const { h, icon, esc, toast, json, waitForRestart } = require("pyxis-harness");
+    const { h, icon, esc, toast, json, confirmRestart, waitForRestart } = require("pyxis-harness");
     const ico = (name, cls) => { const tpl = document.createElement("template"); tpl.innerHTML = icon(name, cls); return tpl.content.firstChild; };
     const L = {
       zh: {
@@ -147,6 +147,7 @@ window.__PyhModules__.load({
             return null;
           }
           async function saveAll(servers, okText) {
+            if (!(await confirmRestart())) return false;
             st.busy = true; render();
             try {
               const r = await json("/settings/mcp", { method: "PUT", body: JSON.stringify({ servers }) });
