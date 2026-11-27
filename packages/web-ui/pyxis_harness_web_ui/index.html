@@ -268,7 +268,7 @@ table.diff tr.hunk td { padding: 3px 12px; background: color-mix(in srgb, var(--
 .processHead .chev { opacity: 0; transition: transform 0.15s var(--ease); }
 .process:hover .processHead .chev, .process[data-open] .processHead .chev { opacity: 1; }
 .process[data-open] .processHead .chev { transform: rotate(90deg); }
-.processHead[data-state='running'] { color: var(--deep-diving); }
+.processHead[data-state='running'] { display: none; }  /* a running turn's indicator is .running, after its content */
 .processHead[data-state='error'] .lead { color: var(--error); }
 .processHead[data-state='interrupted'] .lead { color: var(--warn); }
 .processBody { display: none; flex-direction: column; gap: 6px; }
@@ -1100,7 +1100,7 @@ const T = zh ? {
   failureCodes: { RATE_LIMIT: '限流（429）', SERVER: '服务端错误（5xx）', TIMEOUT: '超时', TRANSPORT: '网络连接', EMPTY_RESPONSE: '空响应', STREAM_CLOSED: '流中断' },
   recRetry: '重试', retryAttempt: (n) => `第 ${n} 次重试`, retryWait: '等待', failureCode: '失败类型',
   placeholderBusy: 'agent 工作中…', collapse: '收起侧边栏', expand: '展开侧边栏', attach: '添加图片（也可粘贴或拖入）', send: '发送', stop: '停止',
-  thinking: '思考中', thought: '思考过程', toolRunning: '运行中', copy: '复制', copied: '已复制', del: '删除会话', deleted: '会话已删除',
+  thought: '思考过程', toolRunning: '运行中', copy: '复制', copied: '已复制', del: '删除会话', deleted: '会话已删除',
   approvalStrip: '待批准', approvalCountdown: (t) => `${t} 后自动拒绝`, approvalExpired: '已超时，正在拒绝…', maxSteps: '每轮步数上限', maxStepsHint: '一轮里主 agent 调用模型的次数；到达后本轮暂停，可以继续', noLimit: '不限', maxParallel: '并行工具调用数', maxParallelHint: '模型一次返回多个工具调用时，同时执行的上限', reviewModel: '审查模型', reviewModelHint: '自动审查权限下，审查工具调用的模型', sameAsSession: '与会话相同', summaryModel: '摘要模型', summaryModelHint: '压缩时写检查点摘要的模型', pausedTurn: '已暂停', stepLimitHint: '已达到每轮步数上限：点右侧按钮继续运行，或输入新消息', stepLimitReached: '已达到每轮步数上限，本轮已暂停；点发送按钮继续，或输入新消息。', approvalTimeout: '审批时限', approvalTimeoutHint: '工具审批等待决定的最长时间；到期后自动拒绝，agent 继续。', noTimeout: '不超时', minutes: (n) => `${n} 分钟`, hours: (n) => `${n} 小时`, seconds: (n) => `${n} 秒`, approve: '批准', reject: '拒绝', cmdCompact: '压缩较早的对话历史', cmdHelp: '列出可用命令', cmdNew: '新建会话', cmdModel: '切换模型', cmdMode: '切换权限模式', cmdSettings: '打开设置', cmdFiles: '在右侧栏打开工作区文件', cmdTerminal: '在右侧栏打开终端', cmdJobs: '在右侧栏查看后台任务', cmdClear: '收起已完成的工作步骤', commandsTitle: '命令', referencesTitle: '文件', noCommands: '没有匹配的命令', noFiles: '没有匹配的文件', helpIntro: '可用命令：', refHint: '输入 @ 引用工作区文件，/ 使用命令', questionStrip: 'agent 有问题要问你', questionPending: '先回答上面的问题', questionTurn: '等待回答', submitAnswers: '提交回答', skipAll: '全部跳过', customAnswer: '其他…', customPlaceholder: '输入你的回答', chooseOne: '选一项', chooseMany: '可多选', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
   restarting: '重启中：应用插件变更…', restarted: (g) => `第 ${g} 代已启动`, rolledBack: (g) => `变更启动失败；第 ${g} 代运行上一份配置`, offline: '离线', online: '在线', gen: (g) => `第 ${g} 代`,
   unsupervised: '未托管', noSessions: '无会话', input: '输入', output: '输出', error: '错误', cancelled: '已停止', untitled: '未命名会话',
@@ -1118,7 +1118,7 @@ const T = zh ? {
   failureCodes: { RATE_LIMIT: 'Rate limit (429)', SERVER: 'Server error (5xx)', TIMEOUT: 'Timeout', TRANSPORT: 'Connection', EMPTY_RESPONSE: 'Empty response', STREAM_CLOSED: 'Stream closed' },
   recRetry: 'Retry', retryAttempt: (n) => `retry ${n}`, retryWait: 'Wait', failureCode: 'Failure',
   placeholderBusy: 'The agent is working…', collapse: 'Collapse sidebar', expand: 'Expand sidebar', attach: 'Add images (paste or drop works too)', send: 'Send', stop: 'Stop',
-  thinking: 'Thinking', thought: 'Thoughts', toolRunning: 'Running', copy: 'Copy', copied: 'Copied', del: 'Delete session', deleted: 'Session deleted',
+  thought: 'Thoughts', toolRunning: 'Running', copy: 'Copy', copied: 'Copied', del: 'Delete session', deleted: 'Session deleted',
   approvalStrip: 'Awaiting approval', approvalCountdown: (t) => `rejected in ${t}`, approvalExpired: 'Timed out; rejecting…', maxSteps: 'Steps per turn', maxStepsHint: 'Model calls of the main agent in one turn; the turn pauses there and can be continued', noLimit: 'No limit', maxParallel: 'Parallel tool calls', maxParallelHint: 'Upper bound on tool calls running at once when the model returns several', reviewModel: 'Reviewer model', reviewModelHint: 'The model that reviews tool calls under the Auto review permission', sameAsSession: 'Same as the session', summaryModel: 'Summary model', summaryModelHint: 'The model that writes the checkpoint summary of a compaction', pausedTurn: 'Paused', stepLimitHint: 'The turn reached its step limit: use the button to continue, or type a new message', stepLimitReached: 'The turn reached its step limit and paused; press send to continue, or type a new message.', approvalTimeout: 'Approval time limit', approvalTimeoutHint: 'How long a tool approval waits for a decision; after that it is rejected and the agent goes on.', noTimeout: 'No limit', minutes: (n) => `${n} min`, hours: (n) => `${n} h`, seconds: (n) => `${n} s`, approve: 'Approve', reject: 'Reject', cmdCompact: 'Compact older conversation history', cmdHelp: 'List available commands', cmdNew: 'Start a new session', cmdModel: 'Choose the model', cmdMode: 'Choose the permission mode', cmdSettings: 'Open settings', cmdFiles: 'Open workspace files in the sidebar', cmdTerminal: 'Open a terminal in the sidebar', cmdJobs: 'Show background jobs in the sidebar', cmdClear: 'Collapse finished work details', commandsTitle: 'Commands', referencesTitle: 'Files', noCommands: 'No matching commands', noFiles: 'No matching files', helpIntro: 'Available commands:', refHint: 'Type @ to reference a workspace file, / for commands', questionStrip: 'The agent has a question for you', questionPending: 'Answer the question above first', questionTurn: 'Waiting for your answer', submitAnswers: 'Submit answers', skipAll: 'Skip all', customAnswer: 'Other…', customPlaceholder: 'Type your answer', chooseOne: 'Choose one', chooseMany: 'Choose any', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
   restarting: 'Restarting: applying plugin changes…', restarted: (g) => `Generation ${g} started`, rolledBack: (g) => `Change failed to boot; generation ${g} runs the previous configuration`, offline: 'Offline', online: 'Online', gen: (g) => `generation ${g}`,
   unsupervised: 'unsupervised', noSessions: 'No sessions', input: 'Input', output: 'Output', error: 'Error', cancelled: 'Stopped', untitled: 'Untitled session',
@@ -1989,14 +1989,17 @@ function renderHistory(messages, changes, turns) {
 function closeTurnFor(after, byAfter) { if (curTurn) { const rec = byAfter[after]; endTurn(rec ? rec.outcome : 'completed', rec, { collapseNow: true }); } }
 
 /* ---------- running indicator ---------- */
-let runningEl = null;
+let runningEl = null;  // the one indicator of a running turn: after its content, with the elapsed time
 function showRunning(on) {
-  if (on && !runningEl) {
+  if (!on) { runningEl?.remove(); return; }
+  if (!runningEl) {
     runningEl = document.createElement('div'); runningEl.className = 'running';
-    runningEl.innerHTML = `${icon('spinner', 'ico spin')}<span class="shimmer">${esc(T.thinking)}</span>`;
+    runningEl.innerHTML = `${icon('spinner', 'ico spin')}<span class="shimmer"></span>`;
   }
-  if (on) log().appendChild(runningEl); else if (runningEl) runningEl.remove();
+  tickRunning();
+  if (log().lastElementChild !== runningEl) log().appendChild(runningEl);
 }
+function tickRunning() { if (runningEl) runningEl.querySelector('.shimmer').textContent = T.working(fmtDur(Date.now() - (curTurn?.startedAt || Date.now()))); }
 
 /* ---------- streaming ---------- */
 async function consume(res) {
@@ -2690,7 +2693,7 @@ function fmtAmount(n) { // the shortest spelling that reads back as n: 128000 �
 const amountAttrs = () => `data-amount title="${esc(T.amountHint)}" spellcheck="false" autocomplete="off"`;
 function fmtDur(ms) { if (ms == null || !isFinite(ms)) return '—'; if (ms < 1000) return `${Math.round(ms)}ms`; if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`; const m = Math.floor(ms / 60000); const sec = Math.round((ms % 60000) / 1000); return `${m}m ${sec}s`; }
 let curTurn = null;
-function mountRow(el) { (curTurn ? curTurn.body : log()).appendChild(el); }
+function mountRow(el) { if (!curTurn) { log().appendChild(el); return; } curTurn.body.appendChild(el); curTurn.process.removeAttribute('data-empty'); }
 function beginTurn(opts = {}) {
   endTurn('completed', null, { collapseNow: true });
   const el = document.createElement('div'); el.className = 'turn';
@@ -2698,7 +2701,7 @@ function beginTurn(opts = {}) {
   log().appendChild(el);
   const t = { el, process: el.querySelector('.process'), body: el.querySelector('.processBody'), head: el.querySelector('.processHead'), startedAt: opts.startedAt || Date.now(), timer: null };
   t.head.onclick = () => t.process.toggleAttribute('data-open');
-  if (opts.live) t.timer = setInterval(() => { if (t.head.dataset.state === 'running') setProcessHead(t, 'running'); }, 1000);
+  if (opts.live) t.timer = setInterval(tickRunning, 1000);
   curTurn = t; setProcessHead(t, 'running');
   return t;
 }
@@ -2706,7 +2709,7 @@ function pendingKind() { return state.pendingKind || null; }
 function setProcessHead(t, state, record) {
   t.head.dataset.state = state;
   const lead = t.head.querySelector('.lead'); const label = t.head.querySelector('.label');
-  if (state === 'running') { lead.innerHTML = icon('spinner', 'ico spin'); label.innerHTML = `<span class="shimmer">${esc(T.working(fmtDur(Date.now() - t.startedAt)))}</span>`; }
+  if (state === 'running') { lead.innerHTML = ''; label.textContent = ''; }
   else {
     const dur = record?.stats?.duration_ms; const steps = record?.stats?.steps;
     const paused = state === 'error' && record?.error?.code === 'STEP_LIMIT';  // a pause at the step limit, not a failure
