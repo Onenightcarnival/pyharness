@@ -1,6 +1,6 @@
 # pyxis-harness-subscriptions
 
-AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Google Antigravity、Grok（xAI），经各自的 OAuth 流程登录。
+AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Grok（xAI），经各自的 OAuth 流程登录。
 
 | 项 | 值 |
 |---|---|
@@ -21,10 +21,6 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Google Anti
 | `codex.py` | Codex（OpenAI，ChatGPT 订阅的 Codex 后端）：OAuth 登录、模型目录、用量、聊天、网页搜索、图像生成 |
 | `codex_tools.py` | Codex 的工具 |
 | `chatgpt.py` | ChatGPT（「Sign in with ChatGPT」，计套餐用量的公共 OpenAI API）：动态客户端注册、按 issuer 的 JWKS 校验 `id_token`、经 `/v1/responses` 聊天，工具命名空间为 `dsh` 风格 |
-| `antigravity.py` | Google Antigravity（Cloud Code Assist `v1internal`）：Google OAuth、项目发现、两个 origin 的目录、配额汇总、流式聊天、网页搜索、图像生成 |
-| `antigravity_client.py` | Antigravity 客户端签名 |
-| `antigravity_tools.py` | Antigravity 的工具 |
-| `antigravity_wire.py` | Antigravity 线路格式：LangChain 消息 → contents / parts、Gemini 与 Claude / gpt-oss 模型的工具 schema、按模型的 thinking 配置、SSE 转换 |
 | `grok.py` | Grok（xAI）：OIDC 发现的 OAuth、`api.x.ai` 与 CLI 代理的目录、账单用量、Responses 聊天、X 搜索、图像与视频生成 |
 | `grok_tools.py` | Grok 的工具 |
 | `responses.py` | Codex、ChatGPT、Grok 共用的 OpenAI Responses 线路格式：LangChain 消息 → `input` 条目、工具定义、Responses SSE 事件 → `AIMessageChunk`（文本、推理、工具调用、用量）的流式转换 |
@@ -42,7 +38,7 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Google Anti
 | 成员 | 契约 |
 |---|---|
 | `providers` | `{id: Provider}`：登录、账号、目录、用量、聊天模型、工具；启动时由数据根下的存储（`AuthStore`、`CatalogCache`）构建 |
-| `sync_routes()` | `catalog.rebuild_routes`：把发现的模型发布为 `ctx.llm` 路由 `codex` / `chatgpt` / `antigravity` / `grok` |
+| `sync_routes()` | `catalog.rebuild_routes`：把发现的模型发布为 `ctx.llm` 路由 `codex` / `chatgpt` / `grok` |
 | `sync_tools()` | 注册每个已登录且有工具的 provider 的工具；登出时撤销 |
 | `catalog()` | `catalog.provider_catalog` |
 | `status()` | `{"providers": {id: status}}`；Codex 项带 `clientVersion` |
@@ -53,10 +49,8 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Google Anti
 | 配置 | 含义 |
 |---|---|
 | `codexClientVersion` | 固定随目录请求发送的 Codex 客户端版本 |
-| `antigravity` | `clientId`、`clientSecret`、`baseURL`、`userAgent`、`projectId`、`onboard`、`maxTokens` |
-| `antigravity.userAgent` | 替换 Antigravity CLI 签名 |
 | `models`、`chatgpt.models`、`grok.models` | 静态目录；非空 → 该 provider 不做发现 |
-| `stream_idle_timeout` | 四个提供方的聊天模型：流无数据多少秒后以 `TIMEOUT` 失败；大于 0；默认 `300.0` |
+| `stream_idle_timeout` | 三个提供方的聊天模型：流无数据多少秒后以 `TIMEOUT` 失败；大于 0；默认 `300.0` |
 
 ## 工具
 
@@ -64,8 +58,6 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Google Anti
 |---|---|---|
 | `codex_web_search` | `codex` | Codex 搜索后端及其命令集 |
 | `codex_image_generate` | `codex` | 图像生成 |
-| `antigravity_web_search` | `antigravity` | Gemini，Google Search grounding |
-| `antigravity_image_generate` | `antigravity` | Gemini 3.1 Flash Image |
 | `grok_x_search` | `grok` | 托管的 X 搜索 |
 | `grok_image_generate` | `grok` | 图像生成 |
 | `grok_video_generate` | `grok` | 视频生成 |
@@ -76,7 +68,7 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Google Anti
 |---|---|
 | `provider_catalog()` | 每个账号发现的模型，合并，带已存的上下文窗口与推理强度 |
 | `cached_catalog()` | 同样的行，只取最近一次已知的目录；不访问网络 |
-| `rebuild_routes()` | 以 `ctx.llm.publish` 发布 `codex` / `chatgpt` / `antigravity` / `grok` 路由：已登录的 provider 各一条；配置里类型为 `subscription` 的路由从运行中的配置移除 |
+| `rebuild_routes()` | 以 `ctx.llm.publish` 发布 `codex` / `chatgpt` / `grok` 路由：已登录的 provider 各一条；配置里类型为 `subscription` 的路由从运行中的配置移除 |
 
 | 项 | 规则 |
 |---|---|
@@ -105,34 +97,13 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Google Anti
 
 | 数据根下 | 内容 |
 |---|---|
-| `auth.json` | 账号会话 |
+| `auth.json` | 账号会话；`PROVIDERS` 之外的提供方的分区在打开时删除 |
 | `provider-settings.json` | provider 偏好 |
 | `models.json` | 最近一次已知的模型目录 |
 | `model-defaults.json` | 各模型的默认推理强度 |
 | 媒体 | 生成的图像、视频 |
 
 JSON 文件的写入：原子，权限 `0600`。
-
-## Antigravity 客户端签名（`antigravity_client.py`）
-
-Cloud Code 后端只服务 Antigravity CLI User-Agent 家族的内容请求。
-
-| 名称 | 契约 |
-|---|---|
-| `build_user_agent()` | `antigravity/cli/<version> (aidev_client; os_type=…; arch=…; cl=…; …)` |
-| `parse_cli_version()` | auto-updater 文本中的第一个 `x.y.z`，否则 `None` |
-| `CliVersion` | 使用中的版本；`prime()` 每次启动从 CLI auto-updater 读取一次 stable 版本；读取失败 → 保留固定版本 |
-
-## Antigravity 的 thought signature（`antigravity_wire.py`）
-
-Gemini 3 及以后的模型：带工具调用的历史里，每个模型回合的函数调用要带 `thoughtSignature`，否则请求被 400 拒绝。
-
-| 项 | 契约 |
-|---|---|
-| 适用模型 | `gemini_major(model) >= 3`；Gemini 2.x、Claude、gpt-oss 不带 |
-| 收到 | 应答里函数调用 part 的 `thoughtSignature` 记入 `AIMessage.additional_kwargs["thought_signatures"]`：`{model: {tool call id: signature}}` |
-| 发回 | 该消息有本模型的签名：按调用 id 原样带回 |
-| 没有本模型的签名 | 回合的第一个函数调用带 `skip_thought_signature_validator`（换过模型的历史、压缩后的历史） |
 
 ## `config.toml`
 

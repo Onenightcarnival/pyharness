@@ -11,7 +11,6 @@ from pydantic import BaseModel, Field
 
 from pyxis_harness import Service
 
-from .antigravity import AntigravityProvider
 from .catalog import ROUTE_TYPE, provider_catalog, rebuild_routes
 from .chatgpt import ChatGPTProvider
 from .codex import CLIENT_VERSION_FLOOR, CodexProvider
@@ -24,7 +23,6 @@ from .store import PROVIDER_TOOLS, AuthStore, CatalogCache, MediaStore, ModelDef
 
 class Config(BaseModel):
     codexClientVersion: str | None = None
-    antigravity: dict[str, Any] = Field(default_factory=dict)
     models: list[dict[str, Any]] = Field(
         default_factory=list, description="Static Codex catalog; non-empty disables discovery."
     )
@@ -88,9 +86,6 @@ class SubscriptionsService(Service):
                 {"codexClientVersion": cfg.get("codexClientVersion"), "models": cfg.get("models")},
             ),
             "chatgpt": ChatGPTProvider(auth, catalogs, self.http, cfg.get("chatgpt") or {}),
-            "antigravity": AntigravityProvider(
-                auth, catalogs, self.http, {"antigravity": cfg.get("antigravity") or {}}
-            ),
             "grok": GrokProvider(auth, catalogs, self.http, cfg.get("grok") or {}),
         }
         for provider in self.providers.values():
@@ -160,7 +155,7 @@ class SubscriptionsService(Service):
         return await provider_catalog(self, provider_id, force)
 
     async def sync_routes(self, discover: bool = True) -> None:
-        """Rebuild the ``codex`` / ``chatgpt`` / ``antigravity`` / ``grok`` routes of ``ctx.llm`` from the catalogs."""
+        """Rebuild the ``codex`` / ``chatgpt`` / ``grok`` routes of ``ctx.llm`` from the catalogs."""
         await rebuild_routes(self, discover)
 
     # ------------------------------------------------------------------ tools

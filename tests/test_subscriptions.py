@@ -1,5 +1,5 @@
 """
-AI subscriptions: the loopback OAuth flow, stores, Responses and Antigravity translation, provider parsing with
+AI subscriptions: the loopback OAuth flow, stores, Responses translation, provider parsing with
 mocked HTTP, token refresh, model routes and the page routes.
 """
 
@@ -18,17 +18,6 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, Tool
 
 from pyxis_harness import Harness, Profile
 from pyxis_harness_subscriptions import SubscriptionsService
-from pyxis_harness_subscriptions.antigravity import AntigravityProvider
-from pyxis_harness_subscriptions.antigravity_client import CLI_VERSION_FALLBACK, build_user_agent, parse_cli_version
-from pyxis_harness_subscriptions.antigravity_wire import (
-    AntigravityTranslator,
-    build_request,
-    efforts_for,
-    gemini_major,
-    simple_schema,
-    thinking_config,
-    to_contents,
-)
 from pyxis_harness_subscriptions.codex import CodexProvider
 from pyxis_harness_subscriptions.codex_tools import SearchArgs, validate_commands
 from pyxis_harness_subscriptions.common import LlmError, http_error, jwt_claims, reset_delay_ms, session_uuid
@@ -133,6 +122,9 @@ def test_stores(tmp_path):
         and not auth.set_default("codex", "zzz")
     )
     assert auth.delete("codex", "b") and auth.default_key("codex") == "a" and not auth.delete("codex", "b")
+    # A section of a provider outside PROVIDERS is dropped when the store opens.
+    auth.file.update(lambda data: data.update(gone={"default": "x", "accounts": {"x": {"refreshToken": "r"}}}))
+    assert set(AuthStore(tmp_path).file.read()) == {"codex"}
     prefs = ProviderSettings(tmp_path)
     assert prefs.get("codex") == {"accounts": {}, "contextWindows": {}, "tools": {}}
     prefs.set(
@@ -244,179 +236,6 @@ def test_responses_input_and_translation():
     assert info.value.code == "CONTEXT_WINDOW_EXCEEDED"
     with pytest.raises(LlmError, match="no content"):
         list(ResponsesTranslator("t").feed(None, json.dumps({"type": "response.completed", "response": {}})))
-
-
-def test_antigravity_wire():
-    assert (
-        efforts_for("gemini-3.1-pro-preview") == ["low", "high"]
-        and efforts_for("claude-sonnet-4") == ["high"]
-        and efforts_for("gemini-2.5-flash") == ["low", "medium", "high"]
-    )
-    assert thinking_config("gemini-2.5-flash", "medium", 10000) == {
-        "includeThoughts": True,
-        "thinkingBudget": 4000,
-    } and thinking_config("gemini-2.5-flash", "off", None) == {"includeThoughts": False, "thinkingBudget": 0}
-    assert thinking_config("gemini-3.1-flash-image", "high", None) == {"thinkingLevel": "HIGH", "includeThoughts": True}
-    with pytest.raises(LlmError, match=r"UNSUPPORTED|does not support"):
-        thinking_config("claude-sonnet-4", "low", None)
-    schema = {
-        "type": "object",
-        "properties": {
-            "n": {"type": ["integer", "null"]},
-            "k": {"anyOf": [{"type": "string", "enum": ["a", "b"]}, {"type": "null"}]},
-        },
-        "required": ["n"],
-        "$schema": "x",
-    }
-    assert simple_schema(schema) == {
-        "type": "object",
-        "required": ["n"],
-        "properties": {"n": {"type": "number"}, "k": {"type": "string", "enum": ["a", "b"]}},
-    }
-    messages = [
-        SystemMessage(content="sys"),
-        HumanMessage(content="hi"),
-        AIMessage(content="", tool_calls=[{"name": "f", "args": {"a": 1}, "id": "c1"}]),
-        ToolMessage(content='{"ok": true}', tool_call_id="c1"),
-        HumanMessage(content="next"),
-    ]
-    system, contents = to_contents(messages, "gemini-3-flash")
-    assert system == "sys" and [c["role"] for c in contents] == ["user", "model", "user"]
-    assert contents[1]["parts"][0] == {
-        "functionCall": {"id": "c1", "name": "f", "args": {"a": 1}},
-        "thoughtSignature": "skip_thought_signature_validator",
-    }
-    assert contents[2]["parts"][0]["functionResponse"] == {
-        "id": "c1",
-        "name": "f",
-        "response": {"ok": True},
-    } and contents[2]["parts"][1] == {"text": "next"}
-    # Every Gemini model from 3 on wants a signature on the first call of a turn; other models none.
-    placeholder = {"thoughtSignature": "skip_thought_signature_validator"}
-    for model, wanted in (("gemini-4-hydrogen-high", True), ("gemini-2.5-flash", False), ("claude-sonnet-4", False)):
-        first = to_contents(messages, model)[1][1]["parts"][0]
-        assert ("thoughtSignature" in first) is wanted, model
-    assert gemini_major("gemini-4-argon-high") == 4 and gemini_major("gemini-3.1-pro") == 3
-    assert gemini_major("claude-sonnet-4") == 0 and efforts_for("gemini-4-argon") == ["low", "medium", "high"]
-    # A signature the model returned goes back with its call, to that model only.
-    translator = AntigravityTranslator("antigravity", "gemini-4-argon-high")
-    part = {"functionCall": {"id": "c1", "name": "f", "args": {"a": 1}}, "thoughtSignature": "SIG"}
-    second = {"functionCall": {"id": "c2", "name": "f", "args": {"a": 2}}}
-    payload = {"response": {"candidates": [{"content": {"parts": [part, second]}, "finishReason": "STOP"}]}}
-    chunks = list(translator.feed(json.dumps(payload)))
-    merged = chunks[0]
-    for chunk in chunks[1:]:
-        merged = merged + chunk
-    assert merged.additional_kwargs["thought_signatures"] == {"gemini-4-argon-high": {"c1": "SIG"}}
-    reply = AIMessage(content="", tool_calls=merged.tool_calls, additional_kwargs=merged.additional_kwargs)
-    parts = to_contents([HumanMessage(content="hi"), reply], "gemini-4-argon-high")[1][1]["parts"]
-    assert parts[0]["thoughtSignature"] == "SIG" and "thoughtSignature" not in parts[1]
-    other = to_contents([HumanMessage(content="hi"), reply], "gemini-4-hydrogen-high")[1][1]["parts"]
-    assert other[0]["thoughtSignature"] == placeholder["thoughtSignature"] and "thoughtSignature" not in other[1]
-    req = build_request(
-        project="p", model="claude-sonnet-4", session_id="s", messages=messages, tools=[], max_tokens=70000, effort=None
-    )
-    assert (
-        req["request"]["generationConfig"]["maxOutputTokens"] == 64000
-        and req["project"] == "p"
-        and "tools" not in req["request"]
-    )
-    tr = AntigravityTranslator("ag")
-    chunks = list(
-        tr.feed(
-            json.dumps(
-                {
-                    "response": {
-                        "candidates": [
-                            {
-                                "content": {
-                                    "parts": [
-                                        {"thought": True, "text": "hmm"},
-                                        {"text": "hello"},
-                                        {"functionCall": {"id": "x", "name": "f", "args": {"q": 1}}},
-                                    ]
-                                },
-                                "finishReason": "STOP",
-                            }
-                        ],
-                        "usageMetadata": {
-                            "promptTokenCount": 9,
-                            "cachedContentTokenCount": 2,
-                            "candidatesTokenCount": 4,
-                            "thoughtsTokenCount": 1,
-                        },
-                    }
-                }
-            )
-        )
-    )
-    merged = chunks[0]
-    for c in chunks[1:]:
-        merged = merged + c
-    assert (
-        merged.content == "hello"
-        and merged.additional_kwargs["reasoning_content"] == "hmm"
-        and merged.tool_calls[0]["args"] == {"q": 1}
-    )
-    assert merged.usage_metadata == {
-        "input_tokens": 9,
-        "output_tokens": 4,
-        "total_tokens": 13,
-        "input_token_details": {"cache_read": 2},
-        "output_token_details": {"reasoning": 1},
-    }
-    with pytest.raises(LlmError, match="blocked"):
-        list(
-            AntigravityTranslator("ag").feed(
-                json.dumps({"candidates": [{"content": {"parts": [{"text": "x"}]}, "finishReason": "SAFETY"}]})
-            )
-        )
-
-
-async def test_antigravity_cli_signature(tmp_path):
-    assert (
-        build_user_agent("1.5.3", "win32", "AMD64")
-        == "antigravity/cli/1.5.3 (aidev_client; os_type=windows; arch=amd64; cl=962369648; auth_method=consumer)"
-    )
-    assert parse_cli_version("Antigravity CLI auto updater is running! Stable Version: 1.6.0. Rolled out") == "1.6.0"
-    assert parse_cli_version("maintenance") is None
-    calls: list[str] = []
-    answer = {"status": 200, "text": "Stable Version: 1.6.0."}
-
-    def handler(request: httpx.Request) -> httpx.Response:
-        calls.append(str(request.url))
-        if request.url.host.startswith("antigravity-cli-auto-updater"):
-            return httpx.Response(answer["status"], text=answer["text"])
-        return httpx.Response(200, json={"ua": request.headers["user-agent"]})
-
-    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http:
-        provider = AntigravityProvider(AuthStore(tmp_path), CatalogCache(tmp_path), http)
-        assert provider.user_agent().startswith(f"antigravity/cli/{CLI_VERSION_FALLBACK} (aidev_client; os_type=")
-        # The first signed request reads the stable version once; later requests reuse it.
-        reply = await provider.call({"accessToken": "t"}, "loadCodeAssist", {}, single_origin=True)
-        assert reply["ua"].startswith("antigravity/cli/1.6.0 (aidev_client; ")
-        await provider.call({"accessToken": "t"}, "loadCodeAssist", {}, single_origin=True)
-        assert sum("auto-updater" in url for url in calls) == 1
-        # A failed read keeps the pinned version; a configured User-Agent replaces the signature and reads nothing.
-        answer["status"] = 503
-        down = AntigravityProvider(AuthStore(tmp_path), CatalogCache(tmp_path), http)
-        assert (await down.call({"accessToken": "t"}, "x", {}, single_origin=True))["ua"].startswith(
-            f"antigravity/cli/{CLI_VERSION_FALLBACK} "
-        )
-        before = len(calls)
-        custom = AntigravityProvider(
-            AuthStore(tmp_path), CatalogCache(tmp_path), http, {"antigravity": {"userAgent": "my-agent/1"}}
-        )
-        assert (await custom.call({"accessToken": "t"}, "x", {}, single_origin=True))["ua"] == "my-agent/1"
-        assert len(calls) == before + 1
-    # A rejected signature is answered with HTTP 200 and a notice as the only content.
-    notice = "This version of Antigravity is no longer supported. Please download and install the latest version"
-    part = {"response": {"candidates": [{"content": {"parts": [{"text": notice}]}, "finishReason": "STOP"}]}}
-    with pytest.raises(LlmError, match="rejected the client signature") as info:
-        list(AntigravityTranslator("ag").feed(json.dumps(part)))
-    assert info.value.code == "UNSUPPORTED_CLIENT"
-    fine = {"response": {"candidates": [{"content": {"parts": [{"text": "This version of the plan is fine."}]}}]}}
-    assert next(AntigravityTranslator("ag").feed(json.dumps(fine))).content == "This version of the plan is fine."
 
 
 def test_codex_search_commands():
@@ -615,7 +434,7 @@ async def test_stream_idle_timeout_reaches_the_chat_models(home):
     configured = [HTTP_OFF, {"id": "subscriptions", "config": {"stream_idle_timeout": 45}}]
     async with Harness(profile, patch=configured) as h:
         factory = h.get("llm")._providers["subscription"][0]
-        for provider in ("codex", "chatgpt", "antigravity", "grok"):
+        for provider in ("codex", "chatgpt", "grok"):
             model = factory("m", provider=provider)
             assert model.stream_idle_timeout == 45.0, provider
             assert model.bind_tools([]).stream_idle_timeout == 45.0  # a bound copy keeps it
@@ -628,7 +447,7 @@ async def test_service_routes_and_model_routes(home, tmp_path, monkeypatch):
     profile = Profile.init("web", home=str(home))
     async with Harness(profile, patch=[HTTP_OFF]) as h:
         service: SubscriptionsService = h.get("subscriptions")
-        assert set(service.providers) == {"codex", "chatgpt", "antigravity", "grok"}
+        assert set(service.providers) == {"codex", "chatgpt", "grok"}
         llm = h.get("llm")
         assert "subscription" in llm.providers() and not any(r in llm.routes() for r in service.providers)
         # A subscription route saved in the configuration by an earlier version is dropped from it.

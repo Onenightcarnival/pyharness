@@ -38,14 +38,6 @@ Preview URL: ${preview_url}
 Temporary provider URL (expires soon): ${url}
 '''
 
-[antigravity_tools]
-antigravity_web_search = "Google web search through the Antigravity subscription: a grounded answer with its sources."
-antigravity_image_generate = '''
-Generate or edit an image with Gemini 3.1 Flash Image through the Antigravity subscription.
-Saves the images and returns their paths and preview URLs.
-'''
-no_sources = "Error: Antigravity returned no grounded web sources; search may be unavailable for this account or model"
-
 [media]
 saved_images = "Saved ${count} image(s):"
 image_references = "Image references (for referenced_image_paths): ${refs}"

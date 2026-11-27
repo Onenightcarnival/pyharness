@@ -99,7 +99,7 @@ async def cached_catalog(service: Host, provider_id: str) -> dict[str, Any]:
 
 async def rebuild_routes(service: Host, discover: bool = True) -> None:
     """
-    Publish the ``codex`` / ``chatgpt`` / ``antigravity`` / ``grok`` routes to ``ctx.llm`` from the catalogs: one
+    Publish the ``codex`` / ``chatgpt`` / ``grok`` routes to ``ctx.llm`` from the catalogs: one
     per signed-in provider. A configured route of type ``subscription`` is removed from the live configuration.
     """
     assert service.settings is not None

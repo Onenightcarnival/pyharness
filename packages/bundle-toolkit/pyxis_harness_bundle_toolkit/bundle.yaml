@@ -22,7 +22,7 @@ patch:
   - id: otel
     name: pyxis-harness-otel
     after: config-center
-  # AI subscriptions (Codex, ChatGPT, Antigravity, Grok) as model routes and tools: ctx.subscriptions.
+  # AI subscriptions (Codex, ChatGPT, Grok) as model routes and tools: ctx.subscriptions.
   - id: subscriptions
     name: pyxis-harness-subscriptions
     after: otel

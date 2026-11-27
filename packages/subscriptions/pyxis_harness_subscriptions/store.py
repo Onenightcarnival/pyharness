@@ -46,10 +46,12 @@ class JsonFile:
 
 
 class AuthStore:
-    """``{"<provider>": {"default": key, "accounts": {key: session}}}``."""
+    """``{"<provider>": {"default": key, "accounts": {key: session}}}``; sections outside ``PROVIDERS`` are dropped."""
 
     def __init__(self, base: Path) -> None:
         self.file = JsonFile(base / "auth.json", {})
+        if set(self.file.read()) - set(PROVIDERS):
+            self.file.update(lambda data: [data.pop(key) for key in set(data) - set(PROVIDERS)])
 
     def _section(self, data: dict[str, Any], provider: str) -> dict[str, Any]:
         section = data.setdefault(provider, {})
