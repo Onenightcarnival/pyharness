@@ -284,10 +284,21 @@ window.__PyhModules__.load({
           }
 
           // ---------------------------------------------------------- data grid
-          const gridState = { key: null, offset: 0, sort: null, filter: null, page: null, loading: false, edits: {}, inserts: [], deletes: new Set(), selected: new Set() };
+          // edits: row id → { key, values }; deletes, selected: row id → key; inserts: [{ values, nulls }].
+          // Entries keyed by row id stay with their row across paging, sorting, filtering and refresh.
+          const gridState = { key: null, offset: 0, sort: null, filter: null, page: null, loading: false, edits: new Map(), inserts: [], deletes: new Map(), selected: new Map() };
+          const clearPending = () => { gridState.edits.clear(); gridState.inserts = []; gridState.deletes.clear(); gridState.selected.clear(); };
+          const cellText = (v) => (v === null || v === undefined ? "" : typeof v === "object" ? JSON.stringify(v) : String(v));
+          // { id, key } of a row: key is primary-key column → value, id the key values in primary-key order as JSON (a number and its digits as text stay distinct).
+          // null for a row no key addresses: no primary key, a key column outside the result, or a NULL or binary key value.
+          function rowRef(pk, keyAt, row) {
+            const vals = keyAt.map((i) => row[i]);
+            if (!pk.length || !vals.every((v) => typeof v === "string" || typeof v === "number" || typeof v === "boolean")) return null;
+            return { id: JSON.stringify(vals), key: Object.fromEntries(pk.map((k, i) => [k, vals[i]])) };
+          }
           function dataGrid(p) {
             const key = `${p.id}/${st.table.schema}.${st.table.name}`;
-            if (gridState.key !== key) { Object.assign(gridState, { key, offset: 0, sort: null, filter: null, page: null, loading: false, edits: {}, inserts: [], deletes: new Set(), selected: new Set() }); loadPage(); }
+            if (gridState.key !== key) { clearPending(); Object.assign(gridState, { key, offset: 0, sort: null, filter: null, page: null, loading: false }); loadPage(); }
             const info = st.info; const editable = info.primaryKey.length > 0 && info.table.kind === "table";
             const cols = info.columns.map((c) => c.name);
             const pane = h("div", { class: "rdbPane" });
@@ -304,7 +315,7 @@ window.__PyhModules__.load({
               h("button", { type: "button", class: "btn outline sm", disabled: gridState.loading, onClick: () => loadPage() }, t.refresh),
               h("a", { class: "btn outline sm", href: `/api/rdb/export.csv?id=${encodeURIComponent(p.id)}&sql=${encodeURIComponent(`SELECT * FROM ${q(p.kind, st.table.schema)}.${q(p.kind, st.table.name)}`)}&name=${encodeURIComponent(`${st.table.schema}.${st.table.name}`)}`, download: "" }, t.exportCsv),
               editable ? h("button", { type: "button", class: "btn outline sm", onClick: () => { gridState.inserts.push({ values: {}, nulls: new Set() }); render(); } }, t.addRow) : null,
-              editable ? h("button", { type: "button", class: "btn outline sm", disabled: !gridState.selected.size, onClick: () => { for (const i of gridState.selected) gridState.deletes.add(i); gridState.selected.clear(); render(); } }, t.deleteRows) : null);
+              editable ? h("button", { type: "button", class: "btn outline sm", disabled: !gridState.selected.size, onClick: () => { for (const [id, key] of gridState.selected) gridState.deletes.set(id, key); gridState.selected.clear(); render(); } }, t.deleteRows) : null);
             pane.append(toolbar);
             // table
             const wrap = h("div", { class: "rdbTableWrap" });
@@ -315,19 +326,20 @@ window.__PyhModules__.load({
               const thead = h("tr", null, editable ? h("th", null, "") : null, pg.columns.map((c) => h("th", { "data-sortable": "", title: c.type, onClick: () => { const s = gridState.sort; gridState.sort = !s || s.column !== c.name ? { column: c.name, desc: false } : s.desc ? null : { column: c.name, desc: true }; gridState.offset = 0; loadPage(); } }, c.name, pkSet.has(c.name) ? h("span", { class: "pk" }, "PK") : null, gridState.sort && gridState.sort.column === c.name ? (gridState.sort.desc ? " ▼" : " ▲") : "")));
               const tbody = h("tbody");
               const keyAt = pg.primaryKey.map((k) => pg.columns.findIndex((c) => c.name === k));
-              pg.rows.forEach((row, ri) => {
-                const keyed = keyAt.every((i) => row[i] !== null && typeof row[i] !== "object");  // a NULL or binary key addresses no single row
-                const deleted = gridState.deletes.has(ri); const tr = h("tr", { "data-deleted": deleted ? "" : null, title: editable && !keyed ? t.noKeyRow : null });
-                if (editable) tr.append(h("td", { class: "sel" }, h("input", { type: "checkbox", disabled: !keyed, checked: gridState.selected.has(ri), onChange: (e) => { if (e.target.checked) gridState.selected.add(ri); else gridState.selected.delete(ri); render(); } })));
+              for (const row of pg.rows) {
+                const ref = rowRef(pg.primaryKey, keyAt, row);  // null: the row is shown, takes no edit and no selection
+                const deleted = !!ref && gridState.deletes.has(ref.id); const patch = ref ? gridState.edits.get(ref.id) : undefined;
+                const tr = h("tr", { "data-deleted": deleted ? "" : null, title: editable && !ref ? t.noKeyRow : null });
+                if (editable) tr.append(h("td", { class: "sel" }, h("input", { type: "checkbox", disabled: !ref, checked: !!ref && gridState.selected.has(ref.id), onChange: (e) => { if (e.target.checked) gridState.selected.set(ref.id, ref.key); else gridState.selected.delete(ref.id); render(); } })));
                 row.forEach((v, ci) => {
-                  const name = pg.columns[ci].name; const patch = gridState.edits[ri] && name in gridState.edits[ri] ? gridState.edits[ri][name] : undefined;
-                  const val = patch === undefined ? v : patch;
-                  const td = h("td", { "data-null": val === null ? "" : null, "data-dirty": patch !== undefined ? "" : null, title: typeof val === "string" ? val : null }, val === null ? "NULL" : typeof val === "object" ? JSON.stringify(val) : String(val));
-                  if (editable && keyed && !deleted) td.ondblclick = () => editCell(td, ri, name, v, val);
+                  const name = pg.columns[ci].name; const dirty = !!patch && name in patch.values;
+                  const val = dirty ? patch.values[name] : v;
+                  const td = h("td", { "data-null": val === null ? "" : null, "data-dirty": dirty ? "" : null, title: typeof val === "string" ? val : null }, val === null ? "NULL" : cellText(val));
+                  if (editable && ref && !deleted) td.ondblclick = () => editCell(td, ref, name, v, val);
                   tr.append(td);
                 });
                 tbody.append(tr);
-              });
+              }
               gridState.inserts.forEach((ins, ii) => {
                 const tr = h("tr", { "data-new": "" });
                 tr.append(h("td", { class: "sel" }, h("button", { type: "button", class: "rdbLink", "data-danger": "", onClick: () => { gridState.inserts.splice(ii, 1); render(); } }, "×")));
@@ -340,31 +352,33 @@ window.__PyhModules__.load({
             pane.append(wrap);
             // footer
             const total = pg && pg.total != null ? pg.total : null; const from = pg && pg.rows.length ? gridState.offset + 1 : 0; const to = pg ? gridState.offset + pg.rows.length : 0;
-            const pendingCount = Object.values(gridState.edits).filter((e) => Object.keys(e).length).length + gridState.inserts.length + gridState.deletes.size;
+            const pendingCount = gridState.edits.size + gridState.inserts.length + gridState.deletes.size;
             pane.append(h("div", { class: "rdbFoot" }, h("span", null, pg ? (total != null ? t.rows(from, to, total) : t.rowsNoTotal(from, to)) : ""),
               h("button", { type: "button", class: "rdbLink", disabled: gridState.offset === 0 || gridState.loading, onClick: () => { gridState.offset = Math.max(0, gridState.offset - PAGE); loadPage(); } }, t.prev),
               h("button", { type: "button", class: "rdbLink", disabled: gridState.loading || !pg || pg.rows.length < PAGE, onClick: () => { gridState.offset += PAGE; loadPage(); } }, t.next),
               h("span", { class: "spacer" }),
               pendingCount ? h("span", null, t.pending(pendingCount)) : null,
-              pendingCount ? h("button", { type: "button", class: "rdbLink", onClick: () => { gridState.edits = {}; gridState.inserts = []; gridState.deletes.clear(); gridState.selected.clear(); render(); } }, t.discard) : null,
+              pendingCount ? h("button", { type: "button", class: "rdbLink", onClick: () => { clearPending(); render(); } }, t.discard) : null,
               pendingCount ? h("button", { type: "button", class: "btn primary sm", onClick: () => saveChanges(p) }, t.saveChanges) : null));
             return pane;
           }
           async function loadPage() {
             gridState.loading = true; render();
-            try { const d = await call("/rows", { method: "POST", body: JSON.stringify({ id: st.active, schema: st.table.schema, table: st.table.name, offset: gridState.offset, limit: PAGE, sort: gridState.sort || undefined, filters: gridState.filter ? [gridState.filter] : [] }) }); gridState.page = d.page; gridState.edits = {}; gridState.deletes.clear(); gridState.selected.clear(); }
+            try { const d = await call("/rows", { method: "POST", body: JSON.stringify({ id: st.active, schema: st.table.schema, table: st.table.name, offset: gridState.offset, limit: PAGE, sort: gridState.sort || undefined, filters: gridState.filter ? [gridState.filter] : [] }) }); gridState.page = d.page; }
             catch (err) { fail(err); }
             gridState.loading = false; render();
           }
-          function editCell(td, ri, name, original, current) {
-            const input = h("input", { class: "cellInput", value: current === null ? "" : typeof current === "object" ? JSON.stringify(current) : String(current) });
+          // ref: the row's { id, key }; original: the cell as loaded; current: the cell as shown.
+          function editCell(td, ref, name, original, current) {
+            const input = h("input", { class: "cellInput", value: cellText(current) });
             let isNull = current === null;
+            // A value equal to the loaded one leaves the row's pending cells; a row without pending cells leaves the edits.
             const commit = (cancel) => {
               if (cancel) { render(); return; }
               const value = isNull ? null : input.value;
-              const same = (value === null && original === null) || (value !== null && original !== null && String(original) === value);
-              const row = (gridState.edits[ri] ||= {});
-              if (same) delete row[name]; else row[name] = value;
+              const values = { ...(gridState.edits.get(ref.id) || {}).values };
+              if ((value === null) === (original === null) && cellText(value) === cellText(original)) delete values[name]; else values[name] = value;
+              if (Object.keys(values).length) gridState.edits.set(ref.id, { key: ref.key, values }); else gridState.edits.delete(ref.id);
               render();
             };
             const nullBtn = h("button", { type: "button", class: "nullBtn", title: t.setNull, onMousedown: (e) => { e.preventDefault(); isNull = true; input.value = ""; commit(false); } }, "∅");
@@ -374,18 +388,17 @@ window.__PyhModules__.load({
             td.replaceChildren(input, nullBtn); td.removeAttribute("data-null"); input.focus(); input.select();
           }
           async function saveChanges(p) {
-            const pg = gridState.page; const pk = pg.primaryKey; const names = pg.columns.map((c) => c.name);
-            const keyOf = (row) => Object.fromEntries(pk.map((k) => [k, row[names.indexOf(k)]]));
+            // Every pending change, whatever page is shown: updates of rows not marked for deletion, inserts, deletes.
             const changes = [];
-            for (const [ri, values] of Object.entries(gridState.edits)) if (Object.keys(values).length && !gridState.deletes.has(+ri)) changes.push({ kind: "update", key: keyOf(pg.rows[+ri]), values });
+            for (const [id, edit] of gridState.edits) if (!gridState.deletes.has(id)) changes.push({ kind: "update", key: edit.key, values: edit.values });
             for (const ins of gridState.inserts) changes.push({ kind: "insert", values: Object.fromEntries(Object.entries(ins.values).filter(([, v]) => v !== "")), nulls: [...ins.nulls] });
-            for (const ri of gridState.deletes) changes.push({ kind: "delete", key: keyOf(pg.rows[ri]) });
+            for (const key of gridState.deletes.values()) changes.push({ kind: "delete", key });
             const base = { id: p.id, schema: st.table.schema, table: st.table.name, changes };
             try {
               const preview = (await call("/changes", { method: "POST", body: JSON.stringify({ ...base, apply: false }) })).result;
               if (!(await confirmSql(t.confirmTitle, t.confirmBody(preview.statements.length), preview.statements.join(";\n") + ";", t.confirmOk))) return;
               const r = (await call("/changes", { method: "POST", body: JSON.stringify({ ...base, apply: true }) })).result;
-              if (r.applied) { setBanner("ok", t.applied(r.statements.length, r.affected)); gridState.edits = {}; gridState.inserts = []; gridState.deletes.clear(); loadPage(); }
+              if (r.applied) { setBanner("ok", t.applied(r.statements.length, r.affected)); clearPending(); loadPage(); }
               else setBanner("error", t.failed(r.error || "?"));
             } catch (err) { fail(err); }
           }
