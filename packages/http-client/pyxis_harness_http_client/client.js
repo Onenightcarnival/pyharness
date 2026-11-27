@@ -20,6 +20,7 @@ window.__PyhModules__.load({
         authToken: "Token", authUsername: "用户名", authPassword: "密码", authHeaderName: "Header 名", authQueryName: "参数名",
         authValue: "值", authKeep: "留空保留已保存的值",
         formHeaders: "固定 header", formVariables: "变量", formVariablesHint: "在路径、query、header 和 body 中以 {{名称}} 引用。",
+        formSecrets: "密钥变量", formSecretsHint: "用法同变量。值仅存 harness，遮罩显示；留空保留已保存的值。",
         formAllowedHosts: "允许的额外 host", formAllowedHostsHint: "每行一个；Base URL 的 host 始终允许，*.example.com 匹配子域。",
         formAllowMutations: "允许 Agent 使用 POST / PUT / PATCH / DELETE（每次仍需确认）", formAllowPrivate: "允许访问回环与内网地址",
         formTimeout: "超时（毫秒）", formAdvanced: "高级", cancel: "取消", save: "保存", saving: "保存中…",
@@ -31,12 +32,22 @@ window.__PyhModules__.load({
         requestShowSecret: "显示", requestHideSecret: "隐藏", requestImportQuery: "从 URL 导入参数",
         requestCurlImported: "已从 cURL 命令导入请求。",
         requestCurlMultipart: "已从 cURL 命令导入；multipart 表单按 URL 编码表单处理，不支持文件字段。",
-        requestSend: "发送", requestTabs: { params: "Params", body: "Body", headers: "Headers", auth: "Auth" },
+        requestSend: "发送", requestTabs: { params: "Params", body: "Body", headers: "Headers", auth: "Auth", captures: "提取" },
         requestUrlPreview: "URL 预览", requestCopy: "复制", bodyModes: { none: "无", json: "JSON", text: "文本", form: "表单" },
         requestBodyPlaceholder: '{"name": "..."}', requestBodyNone: "未设置 body。",
         requestNoBody: (method) => `${method} 请求不发送 body。`, requestFormatJson: "格式化",
         requestInvalidJson: (error) => `JSON 无效：${error}`, requestFixedHeaders: "目标的固定 header",
         requestAuthNote: "认证在目标上配置，由 harness 在发送时注入。",
+        captureName: "变量", captureValue: "取值", captureSource: "来源", captureSources: { body: "响应 JSON", header: "响应头" },
+        capturePaths: { body: "JSON 路径，如 data.token", header: "Header 名，如 X-Token" }, captureAdd: "添加规则",
+        captureLifetime: "有效期", captureLifetimeHint: "秒数，或响应 JSON 中秒数所在的路径；留空不过期。",
+        captureLifetimePlaceholder: "7200 或 expires_in", captureRefresh: "自动刷新",
+        captureRefreshModes: { off: "关闭", expired: "无值或过期时", rejected: "无值、过期或 401 时" },
+        captureNote: "2xx 响应时提取；同范围的请求以 {{变量}} 引用。值仅存 harness，遮罩显示。",
+        captureRefreshNote: "自动刷新：引用该变量的请求发送前，harness 先发送本请求。Agent 的请求同样触发，不经变更确认。",
+        captureValues: "已提取的变量", captureValuesNone: "本范围暂无已提取的变量。", captureExpiresAt: (time) => `${time} 过期`,
+        captureExpired: "已过期", captureFrom: (request) => `来自「${request}」`, captureFromDeleted: "来源请求已删除",
+        captureClear: "清除", captureClearAll: "全部清除",
         responseEmpty: "发送请求后在这里查看响应。", responseSending: (seconds) => `发送中… ${seconds} s`, responseCancel: "取消请求",
         streamModes: { events: "事件", text: "文本", raw: "原始" }, streamCount: (count) => `${count} 个事件`,
         streamReceiving: (seconds) => `接收中… ${seconds} s`, streamStop: "停止", streamWaiting: "等待第一个事件…",
@@ -49,6 +60,15 @@ window.__PyhModules__.load({
         responseTruncated: (size) => `正文已截断，显示前 ${size}。`, responsePretty: "格式化", responseRaw: "原始",
         responseCopy: "复制正文", responseCopied: "已复制", responseCopyUrl: "复制 URL", responseTime: (ms) => `${ms} ms`,
         responseSentHeaders: "已发送的 header", responseSentBody: "已发送的 body", responseRequestTruncated: "body 已截断保存。",
+        responseCaptured: (names) => `已提取：${names}`, responseCaptureFailed: (name, error) => `未提取 ${name}：${error}`,
+        responseCaptureWarning: (name, error) => `${name} 的有效期未读取：${error}`,
+        responseRefreshOf: (names) => `由 harness 自动发送，用于刷新 ${names}。`,
+        responseRefreshed: {
+          missing: (request, names) => `已先用「${request}」取得 ${names}。`,
+          expired: (request, names) => `${names} 已过期，已先用「${request}」刷新。`,
+          rejected: (request, names) => `收到 401，已用「${request}」刷新 ${names} 并重发。`,
+        },
+        responseRefreshFailed: (request, names, error) => `「${request}」未能刷新 ${names}：${error}`,
         responseVersions: "该请求的历次响应", sideRequests: "请求", sideHistory: "历史",
         requestsNew: "新建请求", requestsUntitled: "新请求", requestsFilter: "过滤请求…", requestsEmpty: "还没有保存的请求。",
         requestsNoMatch: "没有匹配的请求。", requestsNone: "新建一个请求开始编辑。", requestsActions: "请求操作",
@@ -60,7 +80,7 @@ window.__PyhModules__.load({
         historyCount: (count) => `${count} 条`, historyDelete: "删除记录", historyClear: "清空历史",
         historyClearConfirm: (name) => `确定清空「${name}」的全部请求历史？`, historyLimit: "上限",
         historyLimitHint: (min, max) => `保留的历史条数（${min}–${max}），超出时先丢弃最旧的。`,
-        sourcePanel: "面板", sourceAgent: "Agent", historyFailed: "ERR",
+        sourcePanel: "面板", sourceAgent: "Agent", historyRefresh: "刷新", historyFailed: "ERR",
         errorDisabled: "HTTP 插件未启用或 API 不可用。", errorIncomplete: "连接在响应完成前关闭。",
       },
       en: {
@@ -80,7 +100,9 @@ window.__PyhModules__.load({
         authToken: "Token", authUsername: "Username", authPassword: "Password", authHeaderName: "Header name",
         authQueryName: "Parameter name", authValue: "Value", authKeep: "Leave empty to keep the saved value",
         formHeaders: "Fixed headers", formVariables: "Variables",
-        formVariablesHint: "Reference them as {{name}} in path, query, headers and body.", formAllowedHosts: "Extra allowed hosts",
+        formVariablesHint: "Reference them as {{name}} in path, query, headers and body.", formSecrets: "Secret variables",
+        formSecretsHint: "Used like variables. Values stay on the harness and are masked; an empty value keeps the saved one.",
+        formAllowedHosts: "Extra allowed hosts",
         formAllowedHostsHint: "One per line; the base URL host is always allowed, *.example.com matches subdomains.",
         formAllowMutations: "Allow the agent to use POST / PUT / PATCH / DELETE (each call still asks for confirmation)",
         formAllowPrivate: "Allow loopback and private-network addresses", formTimeout: "Timeout (ms)", formAdvanced: "Advanced",
@@ -94,12 +116,22 @@ window.__PyhModules__.load({
         requestShowSecret: "Show", requestHideSecret: "Hide", requestImportQuery: "Import parameters from URL",
         requestCurlImported: "Request imported from the cURL command.",
         requestCurlMultipart: "Imported from the cURL command; multipart form fields became URL-encoded fields, and file fields are not supported.",
-        requestSend: "Send", requestTabs: { params: "Params", body: "Body", headers: "Headers", auth: "Auth" },
+        requestSend: "Send", requestTabs: { params: "Params", body: "Body", headers: "Headers", auth: "Auth", captures: "Capture" },
         requestUrlPreview: "URL preview", requestCopy: "Copy", bodyModes: { none: "None", json: "JSON", text: "Text", form: "Form" },
         requestBodyPlaceholder: '{"name": "..."}', requestBodyNone: "No body set.",
         requestNoBody: (method) => `${method} requests send no body.`, requestFormatJson: "Format",
         requestInvalidJson: (error) => `Invalid JSON: ${error}`, requestFixedHeaders: "Fixed headers of the target",
         requestAuthNote: "Authentication is configured on the target and injected by the harness when sending.",
+        captureName: "Variable", captureValue: "Value from", captureSource: "Source", captureSources: { body: "JSON body", header: "Header" },
+        capturePaths: { body: "JSON path, e.g. data.token", header: "Header name, e.g. X-Token" }, captureAdd: "Add rule",
+        captureLifetime: "Lifetime", captureLifetimeHint: "Seconds, or the path of the seconds in the response JSON; empty means no expiry.",
+        captureLifetimePlaceholder: "7200 or expires_in", captureRefresh: "Auto refresh",
+        captureRefreshModes: { off: "Off", expired: "Missing or expired", rejected: "Missing, expired or 401" },
+        captureNote: "Captured on a 2xx response; requests of the scope reference it as {{variable}}. Values stay on the harness and are masked.",
+        captureRefreshNote: "Auto refresh: the harness sends this request before a request that references the variable. Agent requests trigger it too, without mutation confirmation.",
+        captureValues: "Captured variables", captureValuesNone: "None in this scope yet.", captureExpiresAt: (time) => `expires ${time}`,
+        captureExpired: "expired", captureFrom: (request) => `from "${request}"`, captureFromDeleted: "source request deleted",
+        captureClear: "Clear", captureClearAll: "Clear all",
         responseEmpty: "Send a request to see the response here.", responseSending: (seconds) => `Sending… ${seconds} s`,
         responseCancel: "Cancel request",
         streamModes: { events: "Events", text: "Text", raw: "Raw" }, streamCount: (count) => `${count} events`,
@@ -114,6 +146,15 @@ window.__PyhModules__.load({
         responseTruncated: (size) => `Body truncated; showing the first ${size}.`, responsePretty: "Pretty", responseRaw: "Raw",
         responseCopy: "Copy body", responseCopied: "Copied", responseCopyUrl: "Copy URL", responseTime: (ms) => `${ms} ms`,
         responseSentHeaders: "Headers sent", responseSentBody: "Body sent", responseRequestTruncated: "The body is stored truncated.",
+        responseCaptured: (names) => `Captured: ${names}`, responseCaptureFailed: (name, error) => `${name} not captured: ${error}`,
+        responseCaptureWarning: (name, error) => `No lifetime for ${name}: ${error}`,
+        responseRefreshOf: (names) => `Sent by the harness to refresh ${names}.`,
+        responseRefreshed: {
+          missing: (request, names) => `Obtained ${names} with "${request}" first.`,
+          expired: (request, names) => `${names} had expired; refreshed with "${request}" first.`,
+          rejected: (request, names) => `Got 401; refreshed ${names} with "${request}" and sent again.`,
+        },
+        responseRefreshFailed: (request, names, error) => `"${request}" could not refresh ${names}: ${error}`,
         responseVersions: "Responses of this request", sideRequests: "Requests", sideHistory: "History",
         requestsNew: "New request", requestsUntitled: "New request", requestsFilter: "Filter requests…",
         requestsEmpty: "No saved requests yet.", requestsNoMatch: "No matching requests.",
@@ -126,7 +167,7 @@ window.__PyhModules__.load({
         historyNoMatch: "No matching entries.", historyCount: (count) => `${count} entries`, historyDelete: "Delete entry",
         historyClear: "Clear history", historyClearConfirm: (name) => `Clear the whole request history of "${name}"?`,
         historyLimit: "Limit", historyLimitHint: (min, max) => `Exchanges kept (${min}–${max}); the oldest are dropped first.`,
-        sourcePanel: "Panel", sourceAgent: "Agent", historyFailed: "ERR",
+        sourcePanel: "Panel", sourceAgent: "Agent", historyRefresh: "refresh", historyFailed: "ERR",
         errorDisabled: "The HTTP plugin is disabled or its API is unavailable.",
         errorIncomplete: "The connection closed before the response was complete.",
       },
@@ -137,7 +178,13 @@ window.__PyhModules__.load({
     const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
     const AUTH_TYPES = ["none", "bearer", "basic", "header", "query"];
     const BODY_MODES = ["none", "json", "text", "form"];
-    const REQUEST_TABS = ["params", "body", "headers", "auth"];
+    const REQUEST_TABS = ["params", "body", "headers", "auth", "captures"];
+    const CAPTURE_SOURCES = ["body", "header"];
+    const CAPTURE_REFRESH = ["off", "expired", "rejected"];
+    const MAX_CAPTURE_RULES = 20;
+    const MAX_CAPTURE_TTL_SECONDS = 31622400;
+    // A captured value counts as expired this long before its expiry, or a tenth of its lifetime when that is shorter.
+    const REFRESH_SKEW_MS = 30000;
     const RESPONSE_TABS = ["preview", "headers", "request"];
     const STREAM_MODES = ["events", "text", "raw"];
     const DEFAULT_TIMEOUT_MS = 30000;
@@ -544,9 +591,9 @@ window.__PyhModules__.load({
 
     // ------------------------------------------------------------ request forms
     // A form is the fields of a saved request edited in the panel: method, path, query, headers, auth, bodyMode, body,
-    // form.
+    // form, captures.
     const storedForm = (state) => ({ method: state.method, path: state.path, query: storedRows(state.query), headers: storedRows(state.headers),
-      auth: state.auth, bodyMode: state.bodyMode, body: state.body, form: storedRows(state.form) });
+      auth: state.auth, bodyMode: state.bodyMode, body: state.body, form: storedRows(state.form), captures: state.captures });
     const blankAuth = (type) => ({ none: NO_AUTH, bearer: { type, token: "" }, basic: { type, username: "", password: "" },
       header: { type, name: "", value: "" }, query: { type, name: "", value: "" } }[type]);
     const contentTypeOf = (pairs) => (pairs.find(([name]) => name.toLowerCase() === "content-type") || ["", ""])[1];
@@ -641,10 +688,29 @@ window.__PyhModules__.load({
       try { const parsed = new URL(url); return parsed.pathname + parsed.search; } catch { return url; }
     }
 
+    // ------------------------------------------------------------ captures
+    // A capture rule with every field at its default.
+    const blankCapture = () => ({ name: "", source: "body", path: "", enabled: true, ttlSeconds: 0, ttlPath: "", refresh: "off" });
+    // Rules the harness runs: enabled, with a variable name.
+    const activeCaptures = (rules) => rules.filter((rule) => rule.enabled && rule.name.trim() !== "");
+    // The lifetime of a rule as one text: the path when set, else the seconds, else empty.
+    const lifetimeText = (rule) => (rule.ttlPath !== "" ? rule.ttlPath : rule.ttlSeconds > 0 ? String(rule.ttlSeconds) : "");
+    // A lifetime text as rule fields: digits are seconds, capped at the maximum; any other text is a JSON path.
+    function parseLifetime(text) {
+      const value = text.trim();
+      return /^\d+$/.test(value) ? { ttlSeconds: Math.min(Number(value), MAX_CAPTURE_TTL_SECONDS), ttlPath: "" } : { ttlSeconds: 0, ttlPath: value };
+    }
+    // Whether a captured value counts as expired at `now`; a value without `expiresAt` never does.
+    const valueExpired = (value, now) => value.expiresAt !== undefined
+      && now >= value.expiresAt - Math.min(REFRESH_SKEW_MS, (value.expiresAt - value.at) / 10);
+    // Variable names as `{{name}}` references.
+    const references = (names) => names.map((name) => `{{${name}}}`).join(" ");
+
     return {
       // The pure functions of the module; the page reads nothing from here.
       lib: { SseParser, parseSse, isEventStream, sseRows, deltaText, tokenize, parseCurl, splitQuery, toCurl, joinUrl, substitute,
-        rowsToBulk, bulkToRows, toRequestInput, previewUrl, curlOf, formFromCurl, formFromExchange, pathBelow, saveName },
+        rowsToBulk, bulkToRows, toRequestInput, previewUrl, curlOf, formFromCurl, formFromExchange, pathBelow, saveName,
+        lifetimeText, parseLifetime, valueExpired },
       apply(ctx) {
         const t = L[ctx.locale] || L.en;
         const style = document.createElement("style");
@@ -726,6 +792,10 @@ window.__PyhModules__.load({
           }
           .hc-paneHead { display: flex; align-items: center; gap: 8px; flex: none; min-height: 46px; padding: 8px 10px; border-bottom: 0.5px solid var(--border-l2); min-width: 0; }
           .hc-tabs { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; flex: none; padding: 0 8px; border-bottom: 0.5px solid var(--border-l2); min-height: 34px; }
+          .hc-tabs[data-scroll] { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; container: hc-tabs / inline-size; }
+          .hc-tabs[data-scroll]::-webkit-scrollbar { display: none; }
+          .hc-tabs[data-scroll] > .hc-tab { flex: none; }
+          @container hc-tabs (max-width: 460px) { .hc-count[data-text] { display: none; } }
           .hc-tabs > .hc-link { margin-left: 6px; }
           .hc-tabs > .hc-segments { margin: 4px 0; }
           .hc-tab { display: inline-flex; align-items: center; gap: 6px; padding: 8px 9px 7px; border: none; border-bottom: 2px solid transparent; background: none; color: var(--label-secondary); font-size: 12.5px; white-space: nowrap; }
@@ -760,7 +830,11 @@ window.__PyhModules__.load({
           .hc-editor:disabled { opacity: .6; }
           .hc-block { display: flex; flex-direction: column; gap: 6px; flex: none; }
           .hc-note { margin: 0; font-size: 12px; line-height: 1.5; color: var(--label-tertiary); overflow-wrap: anywhere; }
+          .hc-note[data-kind="ok"] { color: var(--hc-ok); }
+          .hc-note[data-kind="warn"] { color: var(--hc-warn); }
+          .hc-note[data-kind="error"] { color: var(--error); }
           .hc-meta { font-size: 11.5px; color: var(--label-tertiary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+          .hc-meta[data-expired] { color: var(--error); }
           .hc-code { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--hover); font: 12px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
           .hc-headersTable { border-collapse: collapse; font: 12px var(--mono); width: 100%; }
           .hc-headersTable th, .hc-headersTable td { padding: 4px 0; border-bottom: 0.5px solid var(--border-l2); vertical-align: top; }
@@ -797,6 +871,27 @@ window.__PyhModules__.load({
           .hc-kv[data-toggle] .hc-kvRow { grid-template-columns: 16px minmax(70px, 2fr) minmax(90px, 3fr) 24px; }
           .hc-kvRow[data-off] .hc-input { opacity: .5; text-decoration: line-through; }
           .hc-kvRow[data-ghost] :is(.hc-check, .iconButton) { visibility: hidden; }
+          .hc-rules { display: flex; flex-direction: column; gap: 8px; flex: none; container: hc-rules / inline-size; }
+          .hc-rule { display: grid; grid-template-columns: 16px minmax(0, 1fr) 24px; align-items: start; gap: 8px; padding: 10px; border-radius: 8px; background: var(--hover); }
+          .hc-rule > .hc-check { margin-top: 27px; }
+          .hc-rule > .iconButton { margin-top: 23px; }
+          .hc-rule[data-off] .hc-ruleFields { opacity: .5; }
+          .hc-ruleFields { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 8px 10px; min-width: 0; }
+          .hc-ruleFields > .hc-field { min-width: 0; }
+          .hc-ruleFields .hc-fieldLabel { line-height: 16px; }
+          .hc-ruleFields .hc-select { height: 28px; }
+          .hc-ruleFields .selectWrap .chev { top: 6px; }
+          .hc-ruleSource { display: flex; gap: 6px; min-width: 0; }
+          .hc-ruleSource > .selectWrap { flex: none; width: 108px; }
+          .hc-ruleSource > .hc-input { flex: 1; min-width: 0; }
+          @container hc-rules (max-width: 380px) { .hc-ruleFields > .hc-field:nth-child(-n+2) { grid-column: 1 / -1; } }
+          .hc-values { display: flex; flex-direction: column; }
+          .hc-value { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: baseline; gap: 2px 10px; padding: 6px 0; border-bottom: 0.5px solid var(--border-l2); font-size: 12px; }
+          .hc-value:last-child { border-bottom: none; }
+          .hc-value > .hc-link { padding: 0; }
+          .hc-valueName { font-family: var(--mono); font-weight: 600; color: var(--label-secondary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .hc-valueHint { font-family: var(--mono); color: var(--label-tertiary); white-space: nowrap; }
+          .hc-valueMeta { grid-column: 1 / -1; overflow: hidden; text-overflow: ellipsis; }
           .hc-authEditor { display: flex; flex-direction: column; gap: 10px; flex: none; }
           .hc-link { padding: 2px 4px; border: none; border-radius: 4px; background: none; color: var(--info); font-size: 12px; white-space: nowrap; }
           .hc-link:hover:not(:disabled) { text-decoration: underline; }
@@ -910,7 +1005,7 @@ window.__PyhModules__.load({
           if (top) paneBody(box).scrollTop = top;
         }
         const spacer = () => h("span", { class: "hc-spacer" });
-        const note = (text) => h("div", { class: "hc-note" }, text);
+        const note = (text, kind) => h("div", { class: "hc-note", "data-kind": kind }, text);
         const empty = (text) => h("div", { class: "hc-empty" }, text);
         const tag = (text, tone) => h("span", { class: "tag", "data-tone": tone || "outline" }, text);
         const statusTag = (head) => tag(`${head.status} ${head.statusText}`, statusTone(head.status));
@@ -967,34 +1062,40 @@ window.__PyhModules__.load({
             field(t.authValue, secret("value"), { style: { flex: "2" } }))];
         }
         // Name/value rows. A blank row always follows the last one and typing in it adds the row; `view.text` holds the
-        // bulk text while bulk editing is on. Typing never replaces the input it happens in.
-        function kvEditor({ name, rows, onChange, view, toggle, tools, disabled }) {
+        // bulk text while bulk editing is on. Typing never replaces the input it happens in. `secret` hides the values
+        // typed; `hint(row)` is the placeholder of the row's value field.
+        function kvEditor({ name, rows, onChange, view, toggle, tools, disabled, secret, hint }) {
           let list = rows; let wipe = null;
           const root = h("div", { class: "hc-kv", "data-toggle": toggle });
           const emit = (next) => { list = next; if (wipe) wipe.disabled = disabled || !next.length; onChange(next); };
+          const valueHint = (row) => (hint && hint(row)) || t.kvValue;
           function rowNode(index) {
             const real = index < list.length;
             const row = real ? list[index] : { key: "", value: "" };
             const update = (patch) => {
-              if (index < list.length) { emit(list.map((item, i) => (i === index ? { ...item, ...patch } : item))); return; }
-              emit([...list, { key: "", value: "", ...patch }]);
-              node.removeAttribute("data-ghost");
-              for (const control of [check, remove]) if (control) control.disabled = disabled;
-              root.append(rowNode(list.length));
+              if (index < list.length) emit(list.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+              else {
+                emit([...list, { key: "", value: "", ...patch }]);
+                node.removeAttribute("data-ghost");
+                for (const control of [check, remove]) if (control) control.disabled = disabled;
+                root.append(rowNode(list.length));
+              }
+              value.placeholder = valueHint(list[index]);
             };
             const check = toggle ? h("input", { type: "checkbox", class: "hc-check", "data-k": `${name}:${index}:on`,
               checked: row.enabled !== false, disabled: disabled || !real, "aria-label": t.kvEnabled,
               onChange: () => { update({ enabled: check.checked }); node.toggleAttribute("data-off", !check.checked); } }) : null;
-            const input = (part, key, placeholder) => h("input",
+            const input = (part, key, attrs) => h("input",
               { class: "input hc-input mono", "data-k": `${name}:${index}:${part}`,
               "data-kv-name": part === "k", value: row[key],
-              placeholder, disabled, autocapitalize: "off", autocomplete: "off", spellcheck: "false",
+              disabled, autocapitalize: "off", autocomplete: "off", spellcheck: "false", ...attrs,
               onInput: (e) => update({ [key]: e.target.value }) });
+            const value = input("v", "value", { placeholder: valueHint(row), ...(secret ? { type: "password", autocomplete: "new-password" } : {}) });
             const remove = h("button", { type: "button", class: "iconButton sm hc-danger", title: t.kvRemove,
               "aria-label": t.kvRemove, disabled: disabled || !real,
               onClick: () => { emit(list.filter((_, i) => i !== index)); draw(); } }, ico("x"));
             const node = h("div", { class: "hc-kvRow", "data-off": row.enabled === false, "data-ghost": !real }, check,
-              input("k", "key", t.kvKey), input("v", "value", t.kvValue), remove);
+              input("k", "key", { placeholder: t.kvKey }), value, remove);
             return node;
           }
           function draw() {
@@ -1028,7 +1129,7 @@ window.__PyhModules__.load({
           // Pending autosave timers by request id.
           const saveTimers = new Map();
           const st = { targets: [], scopeId: DIRECT, agentTools: false, historyLimit: null, banner: null, testing: false, loaded: false,
-            requests: [], selected: {}, shown: {}, history: [], sideTab: "requests", requestFilter: "", historyFilter: "", requestTab: "params",
+            requests: [], selected: {}, shown: {}, history: [], values: [], sideTab: "requests", requestFilter: "", historyFilter: "", requestTab: "params",
             responseTab: "preview", sending: null, live: null, menuId: null, renaming: null };
           // View state that lasts while one request form and tab, or one exchange, is on display.
           const form = { key: "", reveal: false, bulk: {} };
@@ -1073,7 +1174,7 @@ window.__PyhModules__.load({
             return `${shown ? shown.id : ""}|${versions.map((entry) => entry.id)}`;
           };
           const requestTitle = (request) => request.name || request.path.trim() || t.requestsUntitled;
-          const adopt = (request) => { if (!request.auth) request.auth = NO_AUTH; return request; };
+          const adopt = (request) => { if (!request.auth) request.auth = NO_AUTH; if (!request.captures) request.captures = []; return request; };
           const setBanner = (kind, text) => { st.banner = kind ? { kind, text } : null; renderBanner(); };
           const fail = (err) => setBanner("error", message(err));
           const focusUrl = () => { const input = requestBox.querySelector("[data-http-url]"); if (input) input.focus(); };
@@ -1112,7 +1213,8 @@ window.__PyhModules__.load({
             if (!alive) return;
             // Edits of the scope being left are saved before its forms leave the state.
             flushAll();
-            st.scopeId = id; st.requestFilter = ""; st.historyFilter = ""; st.requests = []; st.history = []; st.menuId = null; st.renaming = null;
+            st.scopeId = id; st.requestFilter = ""; st.historyFilter = ""; st.requests = []; st.history = []; st.values = [];
+            st.menuId = null; st.renaming = null;
             try { localStorage.setItem(SCOPE_KEY, id); } catch { /* optional */ }
             const gen = ++scopeGen;
             renderAll();
@@ -1123,13 +1225,13 @@ window.__PyhModules__.load({
               // The caret goes to the URL bar once the requests of a scope just created are on screen.
               if (focusAfterLoad) { focusAfterLoad = false; focusUrl(); }
             }, (err) => { if (alive && gen === scopeGen) fail(err); });
-            loadHistory(id);
-            // Requests sent by the agent reach the list through a one-entry check.
+            loadHistory(id); loadValues(id);
+            // Requests sent by the agent, and the variables they refreshed, reach the page through a one-entry check.
             clearInterval(pollTimer);
             pollTimer = setInterval(() => {
               if (document.hidden) return;
               call(`${inScope("/history", id)}&limit=1`).then((data) => {
-                if (gen === scopeGen && (data.entries[0] || {}).id !== newest) loadHistory(id);
+                if (gen === scopeGen && (data.entries[0] || {}).id !== newest) { loadHistory(id); loadValues(id); }
               }, () => {});
             }, HISTORY_POLL_MS);
           }
@@ -1143,6 +1245,23 @@ window.__PyhModules__.load({
               renderSideTabs(); renderList();
               if (responseKey() !== before) renderResponse();
             } catch (err) { if (alive) fail(err); }
+          }
+          // Captured variables of the scope: names and hints. A failed load keeps the list on display.
+          async function loadValues(scope) {
+            try {
+              const data = await call(inScope("/values", scope));
+              if (!alive || scope !== st.scopeId) return;
+              st.values = data.values;
+              if (st.requestTab === "captures") syncForm();
+            } catch { /* the list is informational */ }
+          }
+          // Clears one captured variable of the current scope, or all of them.
+          async function clearValues(name) {
+            const scope = st.scopeId;
+            try {
+              await call(`${inScope("/values", scope)}${name === undefined ? "" : `&name=${encodeURIComponent(name)}`}`, { method: "DELETE" });
+              await loadValues(scope);
+            } catch (err) { fail(err); }
           }
 
           // -------------------------------------------------------- autosave
@@ -1298,6 +1417,7 @@ window.__PyhModules__.load({
                   response ? h("span", { class: "hc-statusText", "data-tone": statusTone(response.status) }, response.status)
                     : h("span", { class: "hc-statusText", "data-tone": "danger", title: entry.error }, t.historyFailed),
                   h("span", null, response ? t.responseTime(response.durationMs) : ""), spacer(),
+                  entry.refreshOf ? h("span", { class: "hc-sourceTag", title: references(entry.refreshOf) }, t.historyRefresh) : null,
                   entry.source === "agent" ? h("span", { class: "hc-sourceTag", "data-source": "agent" }, t.sourceAgent) : null,
                   h("span", null, shortTime(entry.at)))),
               h("div", { class: "hc-itemActions" },
@@ -1431,16 +1551,18 @@ window.__PyhModules__.load({
               if (value === "params") return count(request.query);
               if (value === "headers") return count(request.headers);
               if (value === "body") return bodyAllowed && request.bodyMode !== "none" ? t.bodyModes[request.bodyMode] : undefined;
+              if (value === "captures") return activeCaptures(request.captures).length || undefined;
               const type = ownAuth ? request.auth.type : target.auth.type;
               return type === "none" ? undefined : t.auth[type];
             };
-            const tabs = h("div", { class: "hc-tabs", role: "tablist" });
-            const drawTabs = () => tabs.replaceChildren(...REQUEST_TABS.map((value) => {
+            // One line: a narrow pane drops the text badges, then scrolls sideways.
+            const tabs = h("div", { class: "hc-tabs", role: "tablist", "data-scroll": true });
+            const drawTabs = () => redraw(tabs, () => tabs.replaceChildren(...REQUEST_TABS.map((value) => {
               const label = badge(value);
               return h("button", { type: "button", role: "tab", class: "hc-tab", "data-k": `tab:${value}`, "aria-selected": String(tab === value),
                 onClick: () => { st.requestTab = value; renderRequest(); } }, t.requestTabs[value],
-                label === undefined ? null : h("span", { class: "hc-count" }, label));
-            }));
+                label === undefined ? null : h("span", { class: "hc-count", "data-text": typeof label === "string" }, label));
+            })));
             const kv = (name) => kvEditor({ name, rows: request[name], onChange: (rows) => set({ [name]: rows }),
               view: form.bulk[name], toggle: true, tools: true, disabled: sending });
 
@@ -1544,7 +1666,73 @@ window.__PyhModules__.load({
                 direct ? h("div", null, h("button", { type: "button", class: "btn outline sm", "data-k": "promote",
                   onClick: () => openTargetForm({ mode: "create", fromRequest: request }) }, t.targetsFromRequest)) : null];
             }
-            const content = { params: paramsTab, body: bodyTab, headers: headersTab, auth: authTab }[tab]();
+            // One card per rule, then the captured variables of the scope.
+            function captureTab() {
+              const rules = request.captures;
+              const update = (index, patch, redo) => set({ captures: request.captures.map((rule, i) => (i === index ? { ...rule, ...patch } : rule)) }, redo);
+              const input = (index, part, attrs) => h("input", { class: "input hc-input mono", "data-k": `capture:${index}:${part}`,
+                disabled: sending, autocapitalize: "off", autocomplete: "off", spellcheck: "false", ...attrs });
+              const select = (index, part, values, labels, current, attrs) => selectBox(h("select",
+                { class: "select hc-select", "data-k": `capture:${index}:${part}`, disabled: sending, ...attrs },
+                values.map((value) => h("option", { value, selected: value === current }, labels[value]))));
+              function card(rule, index) {
+                const check = h("input", { type: "checkbox", class: "hc-check", "data-k": `capture:${index}:on`, checked: rule.enabled,
+                  disabled: sending, title: t.kvEnabled, "aria-label": t.kvEnabled,
+                  onChange: () => { update(index, { enabled: check.checked }); node.toggleAttribute("data-off", !check.checked); } });
+                const node = h("div", { class: "hc-rule", "data-off": !rule.enabled }, check,
+                  h("div", { class: "hc-ruleFields" },
+                    field(t.captureName, input(index, "name", { value: rule.name, placeholder: "access_token",
+                      onInput: (e) => update(index, { name: e.target.value }) })),
+                    h("div", { class: "hc-field" }, h("span", { class: "hc-fieldLabel" }, t.captureValue),
+                      h("div", { class: "hc-ruleSource" },
+                        select(index, "source", CAPTURE_SOURCES, t.captureSources, rule.source, { "aria-label": t.captureSource,
+                          onChange: (e) => update(index, { source: e.target.value }, true) }),
+                        input(index, "path", { value: rule.path, placeholder: t.capturePaths[rule.source], "aria-label": t.capturePaths[rule.source],
+                          onInput: (e) => update(index, { path: e.target.value }) }))),
+                    field(t.captureLifetime, input(index, "lifetime", { value: lifetimeText(rule), placeholder: t.captureLifetimePlaceholder,
+                      onInput: (e) => update(index, parseLifetime(e.target.value)) }), { title: t.captureLifetimeHint }),
+                    field(t.captureRefresh, select(index, "refresh", CAPTURE_REFRESH, t.captureRefreshModes, rule.refresh,
+                      { onChange: (e) => update(index, { refresh: e.target.value }) }))),
+                  h("button", { type: "button", class: "iconButton sm hc-danger", title: t.kvRemove, "aria-label": t.kvRemove, disabled: sending,
+                    onClick: () => set({ captures: request.captures.filter((_, i) => i !== index) }, true) }, ico("x")));
+                return node;
+              }
+              // The new rule takes the caret in its variable field.
+              const add = () => {
+                set({ captures: [...request.captures, blankCapture()] }, true);
+                requestBox.querySelector(`[data-k="capture:${rules.length}:name"]`).focus();
+              };
+              const valueRow = (value, now) => {
+                const source = st.requests.find((item) => item.id === value.requestId);
+                const expired = valueExpired(value, now);
+                return h("div", { class: "hc-value" },
+                  h("span", { class: "hc-valueName", title: value.name }, references([value.name])),
+                  h("span", { class: "hc-valueHint" }, value.hint),
+                  h("span", { class: "hc-meta", "data-expired": expired },
+                    value.expiresAt === undefined ? "" : expired ? t.captureExpired : t.captureExpiresAt(shortTime(value.expiresAt))),
+                  h("button", { type: "button", class: "hc-link", "data-danger": true, "data-k": `value:${value.name}`,
+                    onClick: () => clearValues(value.name) }, t.captureClear),
+                  h("span", { class: "hc-meta hc-valueMeta" },
+                    `${source ? t.captureFrom(requestTitle(source)) : t.captureFromDeleted} · ${shortTime(value.at)}`));
+              };
+              const refreshNote = note(t.captureRefreshNote);
+              const captured = h("div", { class: "hc-block" });
+              sync = () => {
+                refreshNote.hidden = !request.captures.some((rule) => rule.enabled && rule.refresh !== "off");
+                const now = Date.now();
+                redraw(captured, () => captured.replaceChildren(
+                  h("div", { class: "hc-toolRow" }, h("span", { class: "hc-label" }, t.captureValues), spacer(),
+                    h("button", { type: "button", class: "hc-link", "data-danger": true, "data-k": "values:clear", disabled: !st.values.length,
+                      onClick: () => clearValues() }, t.captureClearAll)),
+                  st.values.length ? h("div", { class: "hc-values" }, st.values.map((value) => valueRow(value, now))) : note(t.captureValuesNone)));
+              };
+              return [
+                h("div", { class: "hc-rules" }, rules.map(card),
+                  h("div", { class: "hc-kvTools" }, h("button", { type: "button", class: "hc-link", "data-k": "capture:add",
+                    disabled: sending || rules.length >= MAX_CAPTURE_RULES, onClick: add }, `+ ${t.captureAdd}`))),
+                note(t.captureNote), refreshNote, captured];
+            }
+            const content = { params: paramsTab, body: bodyTab, headers: headersTab, auth: authTab, captures: captureTab }[tab]();
             syncForm = () => { drawTabs(); sync(); };
             syncForm();
             return [bar, tabs, h("div", { class: "hc-paneBody", role: "tabpanel" }, content)];
@@ -1589,8 +1777,10 @@ window.__PyhModules__.load({
             cancelAnimationFrame(frame); clearInterval(ticker);
             st.live = null; st.sending = null;
             renderSideTop(); renderList(); renderRequest(); renderResponse();
-            // A cancelled request is recorded by the server once its connection closes.
-            if (controller.signal.aborted) setTimeout(() => loadHistory(targetId), 400); else loadHistory(targetId);
+            // The exchange, and the variables it captured or refreshed. A cancelled request is recorded by the server once
+            // its connection closes.
+            const reload = () => { loadHistory(targetId); loadValues(targetId); };
+            if (controller.signal.aborted) setTimeout(reload, 400); else reload();
           }
 
           // -------------------------------------------------------- history
@@ -1791,12 +1981,24 @@ window.__PyhModules__.load({
                 { class: "hc-frame", sandbox: "", referrerpolicy: "no-referrer", title: t.responseRender,
                 srcdoc: `<base href="${escapeAttribute(request.url)}">${response.body}` });
               else if (response) body = h("pre", { class: "hc-code" }, bodyText);
+              const results = exchange.captures || [];
+              const captured = results.filter((result) => result.ok).map((result) => result.name);
               content = [
+                exchange.refreshOf ? note(t.responseRefreshOf(references(exchange.refreshOf))) : null,
+                // A failed refresh that stopped the request is the error of the exchange.
+                (exchange.refreshed || []).filter((item) => item.ok || exchange.error === undefined).map((item) => (item.ok
+                  ? note(t.responseRefreshed[item.reason](item.requestName, references(item.variables)), "ok")
+                  : note(t.responseRefreshFailed(item.requestName, references(item.variables), item.error || ""), "error"))),
                 exchange.error === undefined ? null : h("div",
                   { class: "hc-banner", "data-kind": "error", role: "alert" },
                   h("span", null, t.responseError(exchange.error))),
                 response && response.redirects.length ? note(t.responseRedirects(response.redirects.join(" → "))) : null,
-                body, response && response.bodyTruncated ? note(t.responseTruncated(humanSize(response.bodyBytes))) : null];
+                body, response && response.bodyTruncated ? note(t.responseTruncated(humanSize(response.bodyBytes))) : null,
+                captured.length ? note(t.responseCaptured(references(captured)), "ok") : null,
+                results.filter((result) => result.ok && result.warning !== undefined)
+                  .map((result) => note(t.responseCaptureWarning(references([result.name]), result.warning), "warn")),
+                results.filter((result) => !result.ok)
+                  .map((result) => note(t.responseCaptureFailed(references([result.name]), result.error || ""), "error"))];
             }
             return [head, responseTabs(RESPONSE_TABS, tab, headers.length, tools),
               h("div", { class: "hc-paneBody", role: "tabpanel" }, content), overlay()];
@@ -1844,6 +2046,8 @@ window.__PyhModules__.load({
           function openTargetForm(spec) {
             const target = spec.mode === "edit" ? spec.target : null;
             const stored = target ? target.auth : NO_AUTH;
+            // Hints of the stored secret variables by name.
+            const hints = new Map(Object.entries(target ? target.secrets : {}));
             // A target created from a request starts with the origin of its URL and its authentication.
             const { type: seedType, ...seed } = spec.fromRequest ? spec.fromRequest.auth : NO_AUTH;
             const d = {
@@ -1851,11 +2055,13 @@ window.__PyhModules__.load({
               type: target ? stored.type : seedType,
               auth: { token: "", username: stored.username || "", password: "", name: stored.name || "", value: "", ...seed },
               headers: recordToRows(target ? target.headers : {}), variables: recordToRows(target ? target.variables : {}),
+              // Stored secret variables start with an empty value, which keeps what the harness holds.
+              secrets: [...hints.keys()].map((key) => ({ key, value: "" })),
               allowedHosts: target ? target.allowedHosts.join("\n") : "",
               allowMutations: !!target && target.allowMutations, allowPrivate: !!target && target.allowPrivate,
               timeoutMs: String(target ? target.timeoutMs : DEFAULT_TIMEOUT_MS),
               advanced: !!target && (target.allowedHosts.length > 0 || target.allowPrivate || target.timeoutMs !== DEFAULT_TIMEOUT_MS
-                || Object.keys(target.variables).length > 0),
+                || Object.keys(target.variables).length > 0 || hints.size > 0),
             };
             const { el: box, close } = openModal("", true);
             const text = (key, attrs) => h("input",
@@ -1879,6 +2085,9 @@ window.__PyhModules__.load({
                 h("div", { class: "hc-field" }, h("span", { class: "hc-fieldLabel" }, t.formVariables),
                   kvEditor({ name: "variables", rows: d.variables, onChange: (rows) => { d.variables = rows; },
                     view: {} }), h("span", { class: "hc-fieldHint" }, t.formVariablesHint)),
+                h("div", { class: "hc-field" }, h("span", { class: "hc-fieldLabel" }, t.formSecrets),
+                  kvEditor({ name: "secrets", rows: d.secrets, onChange: (rows) => { d.secrets = rows; },
+                    view: {}, secret: true, hint: (row) => hints.get(row.key.trim()) }), h("span", { class: "hc-fieldHint" }, t.formSecretsHint)),
                 field(t.formAllowedHosts, [h("textarea",
                   { class: "input mono", rows: 2, placeholder: "cdn.example.com\n*.example.net", spellcheck: "false",
                   onInput: (e) => { d.allowedHosts = e.target.value; } }, d.allowedHosts),
@@ -1903,7 +2112,7 @@ window.__PyhModules__.load({
               const allowedHosts = d.allowedHosts.split(/\r?\n/).map((host) => host.trim()).filter((host) => host !== "");
               try {
                 await saveTarget(spec, { name: d.name, baseUrl: d.baseUrl, auth: { type: d.type, ...auth },
-                  headers: rowsToRecord(d.headers), variables: rowsToRecord(d.variables), allowedHosts,
+                  headers: rowsToRecord(d.headers), variables: rowsToRecord(d.variables), secrets: rowsToRecord(d.secrets), allowedHosts,
                   allowMutations: d.allowMutations, allowPrivate: d.allowPrivate, timeoutMs: Number(d.timeoutMs) });
                 close();
               } catch (err) { problem.textContent = message(err); problem.hidden = false; busy(false); }
