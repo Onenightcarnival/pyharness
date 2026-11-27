@@ -42,6 +42,19 @@ class AgentConfig(BaseModel):
     approval_timeout: float | None = Field(
         None, gt=0, description="Seconds a tool approval waits for a decision before it is rejected; None: no limit."
     )
+    max_steps: int | None = Field(
+        100, gt=0, description="Model calls of the main agent in one turn; the turn pauses there. None: no limit."
+    )
+
+
+STEP_LIMIT = "STEP_LIMIT"
+CONTINUABLE = (*CONTINUABLE_CODES, STEP_LIMIT)  # failure codes a turn can be continued from
+
+
+class StepLimit(RuntimeError):
+    """The turn reached ``max_steps``: it stops before the next model call and can be continued."""
+
+    code = STEP_LIMIT
 
 
 def rejectable(interrupts: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
@@ -83,6 +96,7 @@ class AgentService(Service):
         )
         self.ctx.on("app/ready", self._build)
         self.ctx.on("agent/model-retry", self._on_model_retry)
+        self.ctx.on("agent/model-request", self._limit_steps)
         self.ctx.on("app/started", self._resume_after_restart)
         self.ctx.on("app/started", self._restore_deadlines)
         self.ctx.on("app/stopping", self.stop)
@@ -235,8 +249,8 @@ class AgentService(Service):
         The failure the session stopped on: ``{"run_id", "code", "message", "continuable"}`` when its last turn
         ended with outcome ``error``; ``None`` otherwise and while a turn runs.
 
-        ``continuable``: the failure code is one of ``CONTINUABLE_CODES`` and the graph stopped inside a step, so
-        ``retry_run`` resumes it.
+        ``continuable``: the failure code is one of ``CONTINUABLE`` (a continuable model failure, or the step
+        limit) and the graph stopped inside a step, so ``retry_run`` resumes it.
         """
         if self.busy(session_id):
             return None
@@ -247,7 +261,7 @@ class AgentService(Service):
         error = last.get("error") or {}
         code = error.get("code") or "UNKNOWN"
         continuable = False
-        if code in CONTINUABLE_CODES:
+        if code in CONTINUABLE:
             state = await self._require_graph().aget_state(self._config(session_id))
             continuable = bool(state.next) and not state.interrupts
         return {"run_id": last.get("run_id"), "code": code, "message": error.get("message"), "continuable": continuable}
@@ -273,6 +287,22 @@ class AgentService(Service):
             handle.recorder.observe_event(event)
         await handle.publish(event)
         return True
+
+    async def _limit_steps(self, call: Any, next: Any) -> Any:
+        """Before a model call of the main agent: stop the turn that has made ``max_steps`` of them."""
+        handle = self._runs.get(call.session_id) if call.session_id else None
+        limit = self.config.max_steps
+        counted = handle is not None and handle.recorder is not None and not call.meta.get("subagent")
+        if limit and counted and handle.recorder.stats["steps"] >= limit:
+            raise StepLimit(f"the turn reached its limit of {limit} steps")
+        return await next()
+
+    def set_max_steps(self, steps: int | None) -> int | None:
+        """Change the step limit of turns (live; a running turn follows it); the settings API persists it."""
+        if steps is not None and steps <= 0:
+            raise ValueError("max_steps is a positive number of model calls, or null for no limit")
+        self.config.max_steps = steps
+        return steps
 
     async def _on_model_retry(self, retry: Any) -> None:
         await self.publish(
@@ -414,7 +444,7 @@ class AgentService(Service):
                 outcome = "error"
                 self.ctx.logger.exception("run %s of session %s failed", handle.id, session_id)
                 error = {"code": failure_code(exc), "message": f"{type(exc).__name__}: {exc}"}
-                await handle.publish({"type": "error", **error, "continuable": error["code"] in CONTINUABLE_CODES})
+                await handle.publish({"type": "error", **error, "continuable": error["code"] in CONTINUABLE})
             finally:
                 turn.outcome = outcome
                 try:

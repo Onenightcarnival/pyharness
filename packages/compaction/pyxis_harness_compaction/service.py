@@ -98,10 +98,8 @@ class CompactionService(Service):
         return self.config.model_dump()
 
     def update(self, **fields: Any) -> dict[str, Any]:
-        """Replace configuration fields in place (validated); the next model call uses them."""
-        self.config = Config.model_validate(
-            {**self.config.model_dump(), **{k: v for k, v in fields.items() if v is not None}}
-        )
+        """Replace the given configuration fields in place (validated); the next model call uses them."""
+        self.config = Config.model_validate({**self.config.model_dump(), **fields})
         return self.settings()
 
     def window(self, spec: str | None) -> int:

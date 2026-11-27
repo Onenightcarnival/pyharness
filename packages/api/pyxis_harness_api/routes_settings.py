@@ -8,7 +8,7 @@ from pyxis_harness import manage
 from pyxis_harness.credentials import reference_for
 from pyxis_harness_llm import PROTOCOLS, LLMConfig, LLMConfigError, ProviderConfig, split_spec, type_info
 
-from .models import AgentDefaults, CompactionSettings, DefaultModel, ModelRetry, RouteSettings
+from .models import AgentDefaults, CompactionSettings, DefaultModel, ModelRetry, ReviewSettings, RouteSettings
 
 
 def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
@@ -48,26 +48,27 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
     async def model_directory() -> dict[str, Any]:
         return llm().directory()
 
-    def approval_timeout() -> float | None:
-        return getattr(getattr(ctx.get("agents", None), "config", None), "approval_timeout", None)
+    def limits() -> dict[str, Any]:
+        """Limits of a turn: the agents service's, then the agent loop's."""
+        agents = getattr(ctx.get("agents", None), "config", None)
+        loop = getattr(ctx.get("agentLoop", None), "config", None)
+        return {
+            "approval_timeout": getattr(agents, "approval_timeout", None),
+            "max_steps": getattr(agents, "max_steps", None),
+            "max_parallel_tool_calls": getattr(loop, "max_parallel_tool_calls", None),
+        }
 
     @router.get("/agent")
     async def agent_options() -> dict[str, Any]:
         loop = ctx.get("agentLoop", None)
         if loop is None or not hasattr(loop, "presets"):
-            return {
-                "presets": [],
-                "modes": [],
-                "default_preset": None,
-                "default_mode": None,
-                "approval_timeout": None,
-            }
+            return {"presets": [], "modes": [], "default_preset": None, "default_mode": None, **limits()}
         return {
             "presets": loop.presets(),
             "modes": loop.modes(),
             "default_preset": loop.config.default_preset,
             "default_mode": loop.config.default_mode,
-            "approval_timeout": approval_timeout(),
+            **limits(),
         }
 
     @router.put("/settings/agent")
@@ -81,11 +82,18 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
             raise HTTPException(422, str(exc)) from None
         if body.default_preset is not None or body.default_mode is not None:
             await manage.set_entry_config(profile(), "agent-loop", defaults, merge=True, preflight=False)
+        if body.max_parallel_tool_calls is not None:
+            parallel = {"max_parallel_tool_calls": loop.set_parallel_tool_calls(body.max_parallel_tool_calls)}
+            await manage.set_entry_config(profile(), "agent-loop", parallel, merge=True, preflight=False)
         agents = ctx.get("agents", None)
+        changed: dict[str, Any] = {}
         if "approval_timeout" in body.model_fields_set and hasattr(agents, "set_approval_timeout"):
-            limit = {"approval_timeout": agents.set_approval_timeout(body.approval_timeout)}
-            await manage.set_entry_config(profile(), "agents", limit, merge=True, preflight=False)
-        return {**defaults, "presets": loop.presets(), "modes": loop.modes(), "approval_timeout": approval_timeout()}
+            changed["approval_timeout"] = agents.set_approval_timeout(body.approval_timeout)
+        if "max_steps" in body.model_fields_set and hasattr(agents, "set_max_steps"):
+            changed["max_steps"] = agents.set_max_steps(body.max_steps)
+        if changed:
+            await manage.set_entry_config(profile(), "agents", changed, merge=True, preflight=False)
+        return {**defaults, "presets": loop.presets(), "modes": loop.modes(), **limits()}
 
     def compaction_service() -> Any:
         service = ctx.get("compaction", None)
@@ -103,13 +111,41 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
         service = compaction_service()
         fields = {k: v for k, v in body.model_dump().items() if v is not None}
         if "summary_model" in body.model_fields_set:
-            fields["summary_model"] = body.summary_model or None
+            fields["summary_model"] = known_model(body.summary_model)
         try:
             settings = service.update(**fields)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
         await manage.set_entry_config(profile(), "compaction", fields, merge=True, preflight=False)
         return {"application": "applied", **settings}
+
+    def known_model(spec: str | None) -> str | None:
+        """``spec`` when the registry resolves it; ``None`` for an empty one."""
+        if not spec:
+            return None
+        try:
+            llm().resolve(spec)
+        except (LLMConfigError, ValueError) as exc:
+            raise HTTPException(422, f"unknown model {spec!r}: {exc}") from None
+        return spec
+
+    def review_config() -> Any:
+        config = ctx.get("autoReview", None)
+        if config is None:
+            raise HTTPException(503, "auto-review plugin unavailable")
+        return config
+
+    @router.get("/settings/review")
+    async def get_review_settings() -> dict[str, Any]:
+        return {"model": review_config().model}
+
+    @router.put("/settings/review")
+    async def put_review_settings(body: ReviewSettings) -> dict[str, Any]:
+        """Apply in place (the next review uses the model) and persist in the profile patch."""
+        config = review_config()
+        config.model = known_model(body.model)
+        await manage.set_entry_config(profile(), "auto-review", {"model": config.model}, merge=True, preflight=False)
+        return {"application": "applied", "model": config.model}
 
     @router.get("/settings/models")
     async def get_model_settings() -> dict[str, Any]:

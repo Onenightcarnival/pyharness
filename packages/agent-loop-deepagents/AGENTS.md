@@ -52,7 +52,8 @@
 | `mounted(path)` | 磁盘路径在挂载内对应的虚拟路径；不在任何挂载内：`None` |
 | `mount_target(path)` | 虚拟路径在挂载内对应的磁盘路径；不在任何挂载内：`None` |
 | `subagents()` | 每个已添加子 agent 的 `name` 与 `owner` |
-| `recursion_limit` | `config.recursion_limit` |
+| `recursion_limit` | `config.recursion_limit`：一次运行的 LangGraph 步数，默认 10000；`ctx.agents` 的 `max_steps` 之后的兜底 |
+| `set_parallel_tool_calls(limit)` | `config.max_parallel_tool_calls`（默认 10）；即时生效 |
 
 系统提示词的身份 section（order 0）：`config.system_prompt`。
 
@@ -141,9 +142,11 @@
 | 钩子 | 路由 |
 |---|---|
 | 模型调用 | 模型取自 `configurable.model_spec` 或 `ctx.llm.default`，与构建图所用的不同时替换；然后 `agent/model-request`（waterfall） |
-| 工具调用 | `ctx.tools.execute` |
+| 工具调用 | `ctx.tools.execute`；同一会话在该 agent 内同时执行的调用不超过 `max_parallel_tool_calls` |
 
-`ModelCall`：`agent/model-request` 监听者收到的载荷。
+`ModelCall`：`agent/model-request` 监听者收到的载荷；`meta`：`model_spec`、`subagent`（该调用来自子 agent）。
+
+并行上限按 agent 各自计数：子 agent 运行在父 agent 的一次工具调用之内。
 
 ## 上下文的估算（`middleware.py`）
 

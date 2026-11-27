@@ -37,6 +37,10 @@ class AgentDefaults(BaseModel):
     approval_timeout: float | None = Field(
         None, gt=0, description="Seconds a tool approval waits before it is rejected; null: no limit. Sent to change."
     )
+    max_steps: int | None = Field(
+        None, gt=0, description="Model calls of the main agent in one turn; null: no limit. Sent to change."
+    )
+    max_parallel_tool_calls: int | None = Field(None, ge=1, description="Tool calls of one agent running at a time.")
 
 
 IMAGE_DATA_URL = re.compile(r"^data:image/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$")
@@ -140,6 +144,12 @@ class QuestionAnswers(BaseModel):
 
     answers: list[dict[str, Any]]
     interrupt_id: str | None = Field(None, description="Which pending interrupt; the only ask_user one when omitted.")
+
+
+class ReviewSettings(BaseModel):
+    """Fields of the auto-review plugin's configuration."""
+
+    model: str | None = Field(None, description="Reviewer model, `route:model`; null: the model of the reviewed call.")
 
 
 class CompactionSettings(BaseModel):

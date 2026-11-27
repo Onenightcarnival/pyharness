@@ -116,7 +116,9 @@
 |---|---|---|---|---|
 | GET | `/models` | | 选择器目录：路由、模型、默认值 | `model_directory` |
 | GET | `/agent` | | 预设、模式、新会话的默认值、审批时限 `approval_timeout` | `agent_options` |
-| PUT | `/settings/agent` | `{"default_preset"?, "default_mode"?, "approval_timeout"?}` | 新会话的默认值；审批时限（秒，`null`：不超时）；持久化 | `put_agent_defaults` |
+| PUT | `/settings/agent` | `{"default_preset"?, "default_mode"?, "approval_timeout"?, "max_steps"?, "max_parallel_tool_calls"?}` | 新会话的默认值；审批时限（秒，`null`：不超时）；每轮步数上限（`null`：不限）；并行工具调用数；立即生效；持久化 | `put_agent_defaults` |
+| GET | `/settings/review` | | 自动审查的模型：`{"model"}` | `get_review_settings` |
+| PUT | `/settings/review` | `{"model"}` | 审查模型（`route:model`；`null`：与被审调用相同）；立即生效；持久化；未知模型 → 422 | `put_review_settings` |
 | GET | `/settings/compaction` | | 压缩设置 | `get_compaction_settings` |
 | PUT | `/settings/compaction` | `{"auto"?, "threshold_ratio"?, "retain_ratio"?, "default_context_window"?, "summary_model"?}` | 压缩设置；立即生效；持久化 | `put_compaction_settings` |
 | GET | `/settings/models` | | 已配置的路由及其凭据状态、目录、`groups`（全部可选模型，含插件发布的路由） | `get_model_settings` |

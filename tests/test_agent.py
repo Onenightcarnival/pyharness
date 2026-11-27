@@ -5,10 +5,12 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+import time
 import types
 
 import httpx
 import pytest
+import yaml
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
 from pyxis_harness import Harness, Profile
@@ -24,6 +26,11 @@ def scripted_patch(replies, *, extra=None):
         {"id": "http", "config": {"serve": False}},
         *(extra or []),
     ]
+
+
+def yaml_of(profile) -> dict[str, dict]:
+    """Entry id → the config saved in the profile patch."""
+    return {o["id"]: o.get("config", {}) for o in yaml.safe_load((profile.dir / "harness.patch.yaml").read_text())}
 
 
 def sse_events(text: str) -> list[dict]:
@@ -403,3 +410,76 @@ async def test_only_the_main_request_is_measured():
     }
     await meter.on_chat_model_start({}, sent, metadata={"thread_id": "s1"})  # the scope has ended
     assert len(published) == 1
+
+
+async def test_a_turn_pauses_at_the_step_limit_and_continues(profile):
+    step = lambda i: {"content": "", "tool_calls": [{"name": "shout", "args": {"text": f"n{i}"}, "id": f"c{i}"}]}  # noqa: E731
+    replies = [step(0), step(1), step(2), {"content": "done"}]
+    limited = scripted_patch(replies, extra=[{"id": "agents", "config": {"max_steps": 2}, "merge": True}])
+    async with Harness(profile, patch=limited) as h:
+        assert h.get("agentLoop").recursion_limit == 10_000  # the bound behind the step limit
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t") as c:
+            assert (await c.get("/api/agent")).json() | {"presets": 0, "modes": 0} == {
+                "presets": 0,
+                "modes": 0,
+                "default_preset": "standard",
+                "default_mode": "workspace-write",
+                "approval_timeout": None,
+                "max_steps": 2,
+                "max_parallel_tool_calls": 10,
+            }
+            sid = (await c.post("/api/sessions", json={"mode": "full-access"})).json()["id"]
+            events = sse_events((await c.post(f"/api/sessions/{sid}/messages", json={"content": "go"})).text)
+            kinds = [e["type"] for e in events]
+            # Two model calls and their tools; the third call is not made.
+            assert kinds == [
+                "context",
+                "tool_call",
+                "tool_result",
+                "context",
+                "tool_call",
+                "tool_result",
+                "error",
+                "done",
+            ]
+            error = events[-2]
+            assert (error["code"], error["continuable"]) == ("STEP_LIMIT", True) and "limit of 2 steps" in error[
+                "message"
+            ]
+            failure = (await c.get(f"/api/sessions/{sid}")).json()["failure"]
+            assert (failure["code"], failure["continuable"]) == ("STEP_LIMIT", True)
+            # Continuing is a new turn with its own two steps: the third tool call, then the answer.
+            resumed = sse_events((await c.post(f"/api/sessions/{sid}/retry")).text)
+            assert [e["type"] for e in resumed] == ["context", "tool_call", "tool_result", "context", "token", "done"]
+            assert (
+                resumed[-1]["outcome"] == "completed"
+                and (await c.get(f"/api/sessions/{sid}")).json()["failure"] is None
+            )
+            # The limit is a setting: null removes it; a value below 1 is refused.
+            assert (await c.put("/api/settings/agent", json={"max_steps": None})).json()["max_steps"] is None
+            assert h.get("agents").config.max_steps is None
+            assert (await c.put("/api/settings/agent", json={"max_steps": 0})).status_code == 422
+            saved = yaml_of(profile)
+            assert saved["agents"] == {"max_steps": None}
+
+
+async def test_tool_calls_of_a_step_run_within_the_parallel_limit(profile):
+    burst = {"content": "", "tool_calls": [{"name": "slow", "args": {"seconds": 0.3}, "id": f"s{i}"} for i in range(4)]}
+    replies = [burst, {"content": "one at a time"}, burst, {"content": "together"}]
+    async with (
+        Harness(profile, patch=scripted_patch(replies)) as h,
+        httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t") as c,
+    ):
+        sid = (await c.post("/api/sessions", json={"mode": "full-access"})).json()["id"]
+        limited = (await c.put("/api/settings/agent", json={"max_parallel_tool_calls": 1})).json()
+        assert limited["max_parallel_tool_calls"] == 1
+        started = time.monotonic()
+        await c.post(f"/api/sessions/{sid}/messages", json={"content": "four slow calls"})
+        serial = time.monotonic() - started
+        await c.put("/api/settings/agent", json={"max_parallel_tool_calls": 4})
+        started = time.monotonic()
+        await c.post(f"/api/sessions/{sid}/messages", json={"content": "again"})
+        together = time.monotonic() - started
+        assert serial >= 1.2 > together  # four calls of 0.3 s: in turn, then at once
+        assert (await c.put("/api/settings/agent", json={"max_parallel_tool_calls": 0})).status_code == 422
+        assert yaml_of(profile)["agent-loop"] == {"max_parallel_tool_calls": 4}

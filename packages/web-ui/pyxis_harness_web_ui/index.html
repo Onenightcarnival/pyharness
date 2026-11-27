@@ -1101,7 +1101,7 @@ const T = zh ? {
   recRetry: '重试', retryAttempt: (n) => `第 ${n} 次重试`, retryWait: '等待', failureCode: '失败类型',
   placeholderBusy: 'agent 工作中…', collapse: '收起侧边栏', expand: '展开侧边栏', attach: '添加图片（也可粘贴或拖入）', send: '发送', stop: '停止',
   thinking: '思考中', thought: '思考过程', toolRunning: '运行中', copy: '复制', copied: '已复制', del: '删除会话', deleted: '会话已删除',
-  approvalStrip: '待批准', approvalCountdown: (t) => `${t} 后自动拒绝`, approvalExpired: '已超时，正在拒绝…', approvalTimeout: '审批时限', approvalTimeoutHint: '工具审批等待决定的最长时间；到期后自动拒绝，agent 继续。', noTimeout: '不超时', minutes: (n) => `${n} 分钟`, hours: (n) => `${n} 小时`, seconds: (n) => `${n} 秒`, approve: '批准', reject: '拒绝', cmdCompact: '压缩较早的对话历史', cmdHelp: '列出可用命令', cmdNew: '新建会话', cmdModel: '切换模型', cmdMode: '切换权限模式', cmdSettings: '打开设置', cmdFiles: '在右侧栏打开工作区文件', cmdTerminal: '在右侧栏打开终端', cmdJobs: '在右侧栏查看后台任务', cmdClear: '收起已完成的工作步骤', commandsTitle: '命令', referencesTitle: '文件', noCommands: '没有匹配的命令', noFiles: '没有匹配的文件', helpIntro: '可用命令：', refHint: '输入 @ 引用工作区文件，/ 使用命令', questionStrip: 'agent 有问题要问你', questionPending: '先回答上面的问题', questionTurn: '等待回答', submitAnswers: '提交回答', skipAll: '全部跳过', customAnswer: '其他…', customPlaceholder: '输入你的回答', chooseOne: '选一项', chooseMany: '可多选', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
+  approvalStrip: '待批准', approvalCountdown: (t) => `${t} 后自动拒绝`, approvalExpired: '已超时，正在拒绝…', maxSteps: '每轮步数上限', maxStepsHint: '一轮里主 agent 调用模型的次数；到达后本轮暂停，可以继续', noLimit: '不限', maxParallel: '并行工具调用数', maxParallelHint: '模型一次返回多个工具调用时，同时执行的上限', reviewModel: '审查模型', reviewModelHint: '自动审查权限下，审查工具调用的模型', sameAsSession: '与会话相同', summaryModel: '摘要模型', summaryModelHint: '压缩时写检查点摘要的模型', pausedTurn: '已暂停', stepLimitHint: '已达到每轮步数上限：点右侧按钮继续运行，或输入新消息', stepLimitReached: '已达到每轮步数上限，本轮已暂停；点发送按钮继续，或输入新消息。', approvalTimeout: '审批时限', approvalTimeoutHint: '工具审批等待决定的最长时间；到期后自动拒绝，agent 继续。', noTimeout: '不超时', minutes: (n) => `${n} 分钟`, hours: (n) => `${n} 小时`, seconds: (n) => `${n} 秒`, approve: '批准', reject: '拒绝', cmdCompact: '压缩较早的对话历史', cmdHelp: '列出可用命令', cmdNew: '新建会话', cmdModel: '切换模型', cmdMode: '切换权限模式', cmdSettings: '打开设置', cmdFiles: '在右侧栏打开工作区文件', cmdTerminal: '在右侧栏打开终端', cmdJobs: '在右侧栏查看后台任务', cmdClear: '收起已完成的工作步骤', commandsTitle: '命令', referencesTitle: '文件', noCommands: '没有匹配的命令', noFiles: '没有匹配的文件', helpIntro: '可用命令：', refHint: '输入 @ 引用工作区文件，/ 使用命令', questionStrip: 'agent 有问题要问你', questionPending: '先回答上面的问题', questionTurn: '等待回答', submitAnswers: '提交回答', skipAll: '全部跳过', customAnswer: '其他…', customPlaceholder: '输入你的回答', chooseOne: '选一项', chooseMany: '可多选', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
   restarting: '重启中：应用插件变更…', restarted: (g) => `第 ${g} 代已启动`, rolledBack: (g) => `变更启动失败；第 ${g} 代运行上一份配置`, offline: '离线', online: '在线', gen: (g) => `第 ${g} 代`,
   unsupervised: '未托管', noSessions: '无会话', input: '输入', output: '输出', error: '错误', cancelled: '已停止', untitled: '未命名会话',
   searchPlugins: '搜索插件', installTitle: '添加插件', installHint: '从 PyPI 按包名安装（可带版本，如 pyh-example==0.1.0），或安装本机的 bundle 目录。安装会先预检，通过后在空闲时重启生效。', srcPackage: 'PyPI 包', srcPath: '本地目录', packagePlaceholder: '包名，如 pyh-example 或 pyh-example==0.1.0', chooseDir: '选择目录…', install: '安装', installing: '安装中…', restartScheduled: '已保存，正在等待空闲后重启…', savedRestartRequired: '已保存，下次启动生效（当前未由 supervisor 管理）', uninstall: '卸载', uninstallConfirm: (n) => `卸载 bundle ${n}？其条目会从 profile 中移除，重启后生效。`, enablePlugin: '启用', disablePlugin: '停用', restartNow: '立即重启', restartRequested: '已请求重启，等待运行中的轮次结束', entriesOf: (n) => `${n} 个条目`, noMatches: '没有匹配的条目', pluginsTitle: '插件', pluginsIntro: '当前 profile 的插件组合。变更路径：agent 编写或安装 → 预检 → 重启生效。', addPlugin: '添加插件', gotIt: '知道了', addPluginHow: '两种方式：\n1. 在「创造」预设的会话里描述想要的能力，agent 会编写并安装插件；\n2. 在终端运行 pyh plugin install <bundle 目录或包名>，然后 pyh restart。',
@@ -1119,7 +1119,7 @@ const T = zh ? {
   recRetry: 'Retry', retryAttempt: (n) => `retry ${n}`, retryWait: 'Wait', failureCode: 'Failure',
   placeholderBusy: 'The agent is working…', collapse: 'Collapse sidebar', expand: 'Expand sidebar', attach: 'Add images (paste or drop works too)', send: 'Send', stop: 'Stop',
   thinking: 'Thinking', thought: 'Thoughts', toolRunning: 'Running', copy: 'Copy', copied: 'Copied', del: 'Delete session', deleted: 'Session deleted',
-  approvalStrip: 'Awaiting approval', approvalCountdown: (t) => `rejected in ${t}`, approvalExpired: 'Timed out; rejecting…', approvalTimeout: 'Approval time limit', approvalTimeoutHint: 'How long a tool approval waits for a decision; after that it is rejected and the agent goes on.', noTimeout: 'No limit', minutes: (n) => `${n} min`, hours: (n) => `${n} h`, seconds: (n) => `${n} s`, approve: 'Approve', reject: 'Reject', cmdCompact: 'Compact older conversation history', cmdHelp: 'List available commands', cmdNew: 'Start a new session', cmdModel: 'Choose the model', cmdMode: 'Choose the permission mode', cmdSettings: 'Open settings', cmdFiles: 'Open workspace files in the sidebar', cmdTerminal: 'Open a terminal in the sidebar', cmdJobs: 'Show background jobs in the sidebar', cmdClear: 'Collapse finished work details', commandsTitle: 'Commands', referencesTitle: 'Files', noCommands: 'No matching commands', noFiles: 'No matching files', helpIntro: 'Available commands:', refHint: 'Type @ to reference a workspace file, / for commands', questionStrip: 'The agent has a question for you', questionPending: 'Answer the question above first', questionTurn: 'Waiting for your answer', submitAnswers: 'Submit answers', skipAll: 'Skip all', customAnswer: 'Other…', customPlaceholder: 'Type your answer', chooseOne: 'Choose one', chooseMany: 'Choose any', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
+  approvalStrip: 'Awaiting approval', approvalCountdown: (t) => `rejected in ${t}`, approvalExpired: 'Timed out; rejecting…', maxSteps: 'Steps per turn', maxStepsHint: 'Model calls of the main agent in one turn; the turn pauses there and can be continued', noLimit: 'No limit', maxParallel: 'Parallel tool calls', maxParallelHint: 'Upper bound on tool calls running at once when the model returns several', reviewModel: 'Reviewer model', reviewModelHint: 'The model that reviews tool calls under the Auto review permission', sameAsSession: 'Same as the session', summaryModel: 'Summary model', summaryModelHint: 'The model that writes the checkpoint summary of a compaction', pausedTurn: 'Paused', stepLimitHint: 'The turn reached its step limit: use the button to continue, or type a new message', stepLimitReached: 'The turn reached its step limit and paused; press send to continue, or type a new message.', approvalTimeout: 'Approval time limit', approvalTimeoutHint: 'How long a tool approval waits for a decision; after that it is rejected and the agent goes on.', noTimeout: 'No limit', minutes: (n) => `${n} min`, hours: (n) => `${n} h`, seconds: (n) => `${n} s`, approve: 'Approve', reject: 'Reject', cmdCompact: 'Compact older conversation history', cmdHelp: 'List available commands', cmdNew: 'Start a new session', cmdModel: 'Choose the model', cmdMode: 'Choose the permission mode', cmdSettings: 'Open settings', cmdFiles: 'Open workspace files in the sidebar', cmdTerminal: 'Open a terminal in the sidebar', cmdJobs: 'Show background jobs in the sidebar', cmdClear: 'Collapse finished work details', commandsTitle: 'Commands', referencesTitle: 'Files', noCommands: 'No matching commands', noFiles: 'No matching files', helpIntro: 'Available commands:', refHint: 'Type @ to reference a workspace file, / for commands', questionStrip: 'The agent has a question for you', questionPending: 'Answer the question above first', questionTurn: 'Waiting for your answer', submitAnswers: 'Submit answers', skipAll: 'Skip all', customAnswer: 'Other…', customPlaceholder: 'Type your answer', chooseOne: 'Choose one', chooseMany: 'Choose any', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
   restarting: 'Restarting: applying plugin changes…', restarted: (g) => `Generation ${g} started`, rolledBack: (g) => `Change failed to boot; generation ${g} runs the previous configuration`, offline: 'Offline', online: 'Online', gen: (g) => `generation ${g}`,
   unsupervised: 'unsupervised', noSessions: 'No sessions', input: 'Input', output: 'Output', error: 'Error', cancelled: 'Stopped', untitled: 'Untitled session',
   searchPlugins: 'Search plugins', installTitle: 'Add plugin', installHint: 'Install a package from PyPI by name (optionally with a version, e.g. pyh-example==0.1.0), or a bundle directory on this machine. The install is preflighted, then the harness restarts when idle.', srcPackage: 'PyPI package', srcPath: 'Local directory', packagePlaceholder: 'Package name, e.g. pyh-example or pyh-example==0.1.0', chooseDir: 'Choose folder…', install: 'Install', installing: 'Installing…', restartScheduled: 'Saved; restarting once idle…', savedRestartRequired: 'Saved; applies on the next start (no supervisor)', uninstall: 'Uninstall', uninstallConfirm: (n) => `Uninstall bundle ${n}? Its entries leave the profile after the restart.`, enablePlugin: 'Enable', disablePlugin: 'Disable', restartNow: 'Restart now', restartRequested: 'Restart requested; waiting for running turns to finish', entriesOf: (n) => `${n} entries`, noMatches: 'No matching entries', pluginsTitle: 'Plugins', pluginsIntro: 'Plugin composition of the current profile. Change path: agent writes or installs → preflight → restart.', addPlugin: 'Add plugin', gotIt: 'Got it', addPluginHow: 'Two ways:\n1. Describe the capability in a session with the Creator preset; the agent writes and installs the plugin.\n2. Run pyh plugin install <bundle directory or package> in a terminal, then pyh restart.',
@@ -1806,7 +1806,7 @@ async function openSession(id) {
   state.failure = s.failure || null;
   setPhase('active'); $('rbExpand').hidden = rightbar.open; setConvView('chat'); renderStats();
   renderHistory(s.messages, s.changes, s.turns);
-  if (s.failure && s.failure.message) addLine(s.failure.message, 'error');
+  if (s.failure) addFailure(s.failure);
   renderApproval(s.pending || [], s.approval_deadline);
   refreshSessions();
   scrollToEnd(true);
@@ -1935,6 +1935,9 @@ function markLast() {
   log().querySelectorAll('.aiBlock[data-last]').forEach((x) => x.removeAttribute('data-last'));
   const blocks = log().querySelectorAll('.aiBlock'); if (blocks.length) blocks[blocks.length - 1].setAttribute('data-last', '');
 }
+function addFailure(f) { // the line of a turn that stopped; the step limit is a pause, not an error
+  if (f.code === 'STEP_LIMIT') addLine(T.stepLimitReached); else if (f.message) addLine(f.message, 'error');
+}
 function addLine(text, kind) {
   const el = document.createElement('div'); el.className = 'notice-line' + (kind ? ' ' + kind : '');
   el.innerHTML = kind === 'error' ? `<span class="dot"></span><span><b>${esc(T.error)}</b> ${esc(text)}</span>` : esc(text);
@@ -2049,7 +2052,7 @@ async function consume(res) {
             if (ai) { ai.remove(); ai = null; }
             if (reasoning) { reasoning.remove(); reasoning = null; }
             addLine(T.retrying(ev.attempt, ev.max_retries, ev.code, (ev.delay_ms / 1000).toFixed(1))); showRunning(true); scrollToEnd(); break;
-          case 'error': addLine(ev.message, 'error'); state.failure = { code: ev.code, message: ev.message, continuable: !!ev.continuable }; break;
+          case 'error': state.failure = { code: ev.code, message: ev.message, continuable: !!ev.continuable }; addFailure(state.failure); break;
           case 'done':
             if (ev.outcome !== 'error') state.failure = null;
             restart = ev.restart_pending;
@@ -2242,7 +2245,7 @@ function updateComposer() {
     const cont = !!(state.current && state.failure && state.failure.continuable && empty && !state.pending);
     if (cont) { send.dataset.mode = 'continue'; send.innerHTML = icon('play'); send.title = T.continueGen; send.disabled = false; }
     else { delete send.dataset.mode; send.innerHTML = icon('arrow-up'); send.title = T.send; send.disabled = empty || state.pending; }
-    input.placeholder = cont ? T.continueHint : T.placeholder;
+    input.placeholder = cont ? (state.failure.code === 'STEP_LIMIT' ? T.stepLimitHint : T.continueHint) : T.placeholder;
   }
   send.setAttribute('aria-label', send.title);
 }
@@ -2706,8 +2709,10 @@ function setProcessHead(t, state, record) {
   if (state === 'running') { lead.innerHTML = icon('spinner', 'ico spin'); label.innerHTML = `<span class="shimmer">${esc(T.working(fmtDur(Date.now() - t.startedAt)))}</span>`; }
   else {
     const dur = record?.stats?.duration_ms; const steps = record?.stats?.steps;
-    lead.innerHTML = icon(state === 'completed' ? 'check' : state === 'error' ? 'x-circle' : 'alert');
-    const text = state === 'completed' ? (dur != null ? T.doneIn(fmtDur(dur)) : T.doneLabel) : state === 'cancelled' ? T.cancelledTurn : state === 'interrupted' ? (pendingKind() === 'ask_user' ? T.questionTurn : T.interruptedTurn) : T.failedTurn;
+    const paused = state === 'error' && record?.error?.code === 'STEP_LIMIT';  // a pause at the step limit, not a failure
+    if (paused) t.head.dataset.state = 'paused';
+    lead.innerHTML = icon(state === 'completed' ? 'check' : state === 'error' && !paused ? 'x-circle' : 'alert');
+    const text = state === 'completed' ? (dur != null ? T.doneIn(fmtDur(dur)) : T.doneLabel) : state === 'cancelled' ? T.cancelledTurn : state === 'interrupted' ? (pendingKind() === 'ask_user' ? T.questionTurn : T.interruptedTurn) : paused ? T.pausedTurn : T.failedTurn;
     label.textContent = text + (steps ? ` · ${T.stepsN(steps)}` : '');
   }
   t.process.toggleAttribute('data-empty', !t.body.children.length);
@@ -3275,10 +3280,28 @@ function generalMarkup() {
   const modes = a.modes.filter((m) => m.builtin !== false).map((m) => `<option value="${esc(m.id)}" ${m.id === a.default_mode ? 'selected' : ''}>${esc(modeLabel(m.id))}</option>`).join('');
   const limit = a.approval_timeout || 0; const limits = [0, 60, 300, 900, 3600]; if (!limits.includes(limit)) limits.push(limit);
   const limitLabel = (s) => (!s ? T.noTimeout : s % 3600 === 0 ? T.hours(s / 3600) : s % 60 === 0 ? T.minutes(s / 60) : T.seconds(s));
+  const steps = a.max_steps || 0; const stepChoices = [0, 25, 50, 100, 200, 500]; if (!stepChoices.includes(steps)) stepChoices.push(steps);
   return `<h3 class="sectionTitle">${esc(T.tabGeneral)}</h3><p class="sectionIntro">${esc(T.settingsIntro)}</p>
     <div class="srow"><div class="main"><div class="title">${esc(T.defaultMode)}</div><div class="desc">${esc(T.modeDesc[a.default_mode] || '')}</div></div><div class="ctl"><div class="selectWrap"><select class="select" data-field="defaultMode">${modes}</select>${icon('chev-down', 'ico chev')}</div></div></div>
     <div class="srow"><div class="main"><div class="title">${esc(T.approvalTimeout)}</div><div class="desc">${esc(T.approvalTimeoutHint)}</div></div><div class="ctl"><div class="selectWrap"><select class="select" data-field="approvalTimeout">${limits.map((s) => `<option value="${s}" ${s === limit ? 'selected' : ''}>${esc(limitLabel(s))}</option>`).join('')}</select>${icon('chev-down', 'ico chev')}</div></div></div>
+    <div class="srow"><div class="main"><div class="title">${esc(T.maxSteps)}</div><div class="desc">${esc(T.maxStepsHint)}</div></div><div class="ctl"><div class="selectWrap"><select class="select" data-field="maxSteps">${stepChoices.map((n) => `<option value="${n}" ${n === steps ? 'selected' : ''}>${esc(n ? T.stepsN(n) : T.noLimit)}</option>`).join('')}</select>${icon('chev-down', 'ico chev')}</div></div></div>
+    <div class="srow"><div class="main"><div class="title">${esc(T.maxParallel)}</div><div class="desc">${esc(T.maxParallelHint)}</div></div><div class="ctl"><span class="numField"><input class="input num" type="number" data-field="maxParallel" value="${a.max_parallel_tool_calls || 10}" min="1" max="64" step="1" style="width:72px"></span></div></div>
+    <div data-review></div>
     <div data-compaction></div>`;
+}
+function modelSelect(attr, current, emptyLabel) { // a model of the directory, or the empty choice
+  const groups = state.directory?.groups || []; const known = groups.some((g) => g.models.some((m) => m.spec === current));
+  return `<div class="selectWrap"><select class="select" ${attr} style="max-width:260px"><option value="">${esc(emptyLabel)}</option>${current && !known ? `<option value="${esc(current)}" selected>${esc(current)}</option>` : ''}${groups.map((g) => `<optgroup label="${esc(g.title)}">${g.models.map((m) => `<option value="${esc(m.spec)}" ${m.spec === current ? 'selected' : ''}>${esc(m.name || m.id)}</option>`).join('')}</optgroup>`).join('')}</select>${icon('chev-down', 'ico chev')}</div>`;
+}
+async function renderReviewSettings(box) {
+  if (!box) return;
+  let r;
+  try { r = await json('/settings/review'); } catch { box.innerHTML = ''; return; }
+  box.innerHTML = `<h4 class="subTitle">${esc(T.modeTitle['auto-review'])}</h4>
+    <div class="srow"><div class="main"><div class="title">${esc(T.reviewModel)}</div><div class="desc">${esc(T.reviewModelHint)}</div></div><div class="ctl">${modelSelect('data-review-model', r.model, T.sameAsSession)}</div></div>`;
+  box.querySelector('[data-review-model]').onchange = async (e) => {
+    try { await json('/settings/review', { method: 'PUT', body: JSON.stringify({ model: e.target.value || null }) }); toast(T.applied); } catch (err) { toast(err.message); }
+  };
 }
 function bindGeneral() {
   const content = $('settingsContent');
@@ -3288,6 +3311,14 @@ function bindGeneral() {
   content.querySelector('[data-field="approvalTimeout"]').onchange = async (e) => {
     try { const r = await json('/settings/agent', { method: 'PUT', body: JSON.stringify({ approval_timeout: +e.target.value || null }) }); state.agent = { ...state.agent, ...r }; toast(T.applied); } catch (err) { toast(err.message); }
   };
+  content.querySelector('[data-field="maxSteps"]').onchange = async (e) => {
+    try { const r = await json('/settings/agent', { method: 'PUT', body: JSON.stringify({ max_steps: +e.target.value || null }) }); state.agent = { ...state.agent, ...r }; toast(T.applied); } catch (err) { toast(err.message); }
+  };
+  content.querySelector('[data-field="maxParallel"]').onchange = async (e) => {
+    const value = Math.min(64, Math.max(1, Math.round(+e.target.value || 1))); e.target.value = value;
+    try { const r = await json('/settings/agent', { method: 'PUT', body: JSON.stringify({ max_parallel_tool_calls: value }) }); state.agent = { ...state.agent, ...r }; toast(T.applied); } catch (err) { toast(err.message); }
+  };
+  renderReviewSettings(content.querySelector('[data-review]'));
   renderCompactionSettings(content.querySelector('[data-compaction]'));
 }
 function appearanceMarkup() {
@@ -3326,11 +3357,13 @@ async function renderCompactionSettings(box) {
     ${row('auto', T.compAuto, T.compAutoHint, `<div class="selectWrap"><select class="select" data-comp="auto"><option value="1" ${c.auto ? 'selected' : ''}>${esc(T.compOn)}</option><option value="0" ${c.auto ? '' : 'selected'}>${esc(T.compOff)}</option></select>${icon('chev-down', 'ico chev')}</div>`)}
     ${row('threshold_ratio', T.compThreshold, T.compThresholdHint, num('threshold_ratio', pct(c.threshold_ratio), '%'))}
     ${row('retain_ratio', T.compRetain, T.compRetainHint, num('retain_ratio', pct(c.retain_ratio), '%'))}
-    ${row('default_context_window', T.compWindow, T.compWindowHint, `<span class="numField"><input class="input num" data-comp="default_context_window" ${amountAttrs()} value="${fmtAmount(c.default_context_window || 128000)}" style="width:110px"></span>`)}`;
+    ${row('default_context_window', T.compWindow, T.compWindowHint, `<span class="numField"><input class="input num" data-comp="default_context_window" ${amountAttrs()} value="${fmtAmount(c.default_context_window || 128000)}" style="width:110px"></span>`)}
+    ${row('summary_model', T.summaryModel, T.summaryModelHint, modelSelect('data-comp="summary_model"', c.summary_model, T.sameAsSession))}`;
   box.querySelectorAll('[data-comp]').forEach((el) => {
     el.onchange = async () => {
       const key = el.dataset.comp; let value;
       if (key === 'auto') value = el.value === '1';
+      else if (key === 'summary_model') value = el.value || null;
       else if (key === 'default_context_window') { value = parseAmount(el.value); el.setAttribute('aria-invalid', String(!value)); if (!value) { toast(T.amountInvalid); return; } el.value = fmtAmount(value); }
       else value = Math.min(key === 'retain_ratio' ? 0.99 : 1, Math.max(key === 'retain_ratio' ? 0 : 0.01, (+el.value || 0) / 100));
       try { await json('/settings/compaction', { method: 'PUT', body: JSON.stringify({ [key]: value }) }); toast(T.applied); }

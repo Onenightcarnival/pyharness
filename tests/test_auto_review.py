@@ -224,3 +224,18 @@ async def test_subagent_calls_are_reviewed_against_the_parent_task(profile):
             c["messages"] for c in scripted.CALLS if "messages" in c and c["messages"][0][1].startswith("You review")
         )
         assert json.loads(review[1][1])["history"] == [{"role": "parent-instruction", "text": "destroy staging"}]
+
+
+async def test_the_reviewer_model_is_a_setting(profile, workspace):
+    async with (
+        Harness(profile, patch=patch([])) as h,
+        httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t") as c,
+    ):
+        config, default = h.get("autoReview"), h.get("llm").default
+        assert (await c.get("/api/settings/review")).json() == {"model": None}
+        saved = (await c.put("/api/settings/review", json={"model": default})).json()
+        assert saved == {"application": "applied", "model": default} and config.model == default  # live
+        assert (await c.put("/api/settings/review", json={"model": "nowhere:none"})).status_code == 422
+        assert config.model == default
+        assert (await c.put("/api/settings/review", json={"model": None})).json()["model"] is None
+        assert config.model is None  # the model of the reviewed call again

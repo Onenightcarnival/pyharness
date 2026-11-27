@@ -34,3 +34,4 @@ def apply(ctx: Any, config: Config) -> None:
         return kwargs
 
     ctx.agentLoop.add_mode(MODE["id"], MODE["title"], MODE["description"], base="workspace-write", build=build)
+    ctx.provide("autoReview", config)  # the live configuration: the settings API changes `model` in place

@@ -261,6 +261,13 @@ class DeepAgentsLoop(Service):
             self.config.default_mode = mode
         return {"default_preset": self.config.default_preset, "default_mode": self.config.default_mode}
 
+    def set_parallel_tool_calls(self, limit: int) -> int:
+        """Change how many tool calls of one agent run at a time (live); the settings API persists it."""
+        if limit < 1:
+            raise ValueError("max_parallel_tool_calls is at least 1")
+        self.config.max_parallel_tool_calls = limit
+        return limit
+
     # ------------------------------------------------------------------ build
     async def build(self, workspace: str | None = None, mode: str | None = None, preset: str | None = None) -> Any:
         """Graph for a workspace root (``None``: the default), a permission mode and an agent preset."""

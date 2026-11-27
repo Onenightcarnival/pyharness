@@ -75,6 +75,17 @@
 | `set_approval_timeout(seconds)` | 即时生效，作用于此后发起的审批；持久化由 settings API 完成 |
 | 提问（`ask_user_question`） | 不适用 |
 
+## 步数上限
+
+| 项 | 契约 |
+|---|---|
+| `config.max_steps` | 一轮里主 agent 的模型调用数上限；默认 100；`None`：不限 |
+| 计数 | 该轮已完成的模型调用（`stats.steps`）；子 agent 的模型调用不计 |
+| 检查 | `agent/model-request` 的监听者，在主 agent 的每次模型调用之前 |
+| 到达 | 抛出 `StepLimit`（代码 `STEP_LIMIT`）：该轮以 `error` 结束，`continuable` |
+| 继续 | `retry_run`：新的一轮，从上限处接着跑，重新计数 |
+| `set_max_steps(steps)` | 即时生效，运行中的轮次同样遵循；持久化由 settings API 完成 |
+
 ## 总线事件
 
 | 事件 | 模式 | 监听者 |
@@ -88,7 +99,7 @@
 |---|---|
 | 每轮记录 | outcome 为 `error` 的轮次保留 `error: {code, message}` |
 | `failure(session_id)` | 该轮是最后一轮时，报告这次失败 |
-| `retry_run(session_id)` | 失败代码属于 `CONTINUABLE_CODES` 时继续这次失败：一次 kind 为 `retry` 的运行 |
+| `retry_run(session_id)` | 失败代码属于 `CONTINUABLE`（`pyxis_harness_llm` 的 `CONTINUABLE_CODES` 与 `STEP_LIMIT`）时继续这次失败：一次 kind 为 `retry` 的运行 |
 | `retry` 运行 | 图从失败的那一步恢复；不加消息 |
 
 ## 图片

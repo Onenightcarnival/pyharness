@@ -173,7 +173,7 @@ async def build(
     for spec in subagents:
         if "runnable" in spec or "graph_id" in spec:
             continue  # compiled and remote subagents keep their own middleware
-        spec["middleware"] = [HarnessMiddleware(ctx, built_spec), *spec.get("middleware", [])]
+        spec["middleware"] = [HarnessMiddleware(ctx, built_spec, subagent=True), *spec.get("middleware", [])]
     workspaces = ctx.get("workspace", None)
     ws = workspaces.open(workspace) if workspaces is not None and hasattr(workspaces, "open") else workspaces
     permissions = ws.permissions() if ws is not None and hasattr(ws, "permissions") else []

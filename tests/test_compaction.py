@@ -76,6 +76,13 @@ async def test_automatic_and_manual_compaction(profile):
                 "context_window"
             ] == 600
             dispose()
+            chosen = (await client.put("/api/settings/compaction", json={"summary_model": "scripted:test"})).json()
+            assert chosen["summary_model"] == "scripted:test" == h.get("compaction").config.summary_model
+            assert (
+                await client.put("/api/settings/compaction", json={"summary_model": "nowhere:x"})
+            ).status_code == 422
+            cleared = (await client.put("/api/settings/compaction", json={"summary_model": None})).json()
+            assert cleared["summary_model"] is None and h.get("compaction").config.summary_model is None
             first = sse_events((await client.post(f"/api/sessions/{sid}/messages", json={"content": LONG})).text)
             assert [e["type"] for e in first] == ["context", "token", "done"]
             # Second turn: ~800 estimated tokens ≥ 480 → the head (first exchange) becomes a checkpoint.

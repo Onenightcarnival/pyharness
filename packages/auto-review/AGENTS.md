@@ -27,6 +27,8 @@
 | `model` | `None` | 审查用的模型；`None`：被审调用所在请求的模型 |
 | `timeout` | `60.0` | 一次审查的时限（秒） |
 
+`ctx.autoReview`：生效中的配置对象；settings API 就地修改 `model`，下一次审查起生效。
+
 ## 流程
 
 | 步骤 | 契约 |
