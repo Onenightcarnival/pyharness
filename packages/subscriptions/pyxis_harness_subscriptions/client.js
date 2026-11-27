@@ -66,7 +66,7 @@ window.__PyhModules__.load({
           .subHint { font-size: 11px; color: var(--label-tertiary); }
           .subTableWrap { border-radius: 10px; box-shadow: inset 0 0 0 0.5px var(--border-l2); overflow: auto; max-height: 55vh; }
           .subTable { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 12.5px; }
-          .subTable th { position: sticky; top: 0; text-align: left; padding: 8px 10px; background: var(--layer-2); font-weight: 500; color: var(--label-secondary); border-bottom: 0.5px solid var(--border-l2); }
+          .subTable th { position: sticky; top: 0; z-index: 1; text-align: left; padding: 8px 10px; background: var(--bg-layer-1); font-weight: 500; color: var(--label-secondary); border-bottom: 0.5px solid var(--border-l2); }
           .subTable td { padding: 7px 10px; border-bottom: 0.5px solid var(--border-l2); vertical-align: top; }
           .subTable td .mid { display: block; font: 11px var(--mono); color: var(--label-tertiary); }
           .subTable td.ctx .input { width: 120px; height: 26px; font-size: 12px; } .subTable td.ctx small { display: block; font-size: 11px; color: var(--label-tertiary); margin-top: 3px; }
@@ -96,7 +96,7 @@ window.__PyhModules__.load({
         // ------------------------------------------------------------ page
         function page(el) {
           let alive = true;
-          const st = { status: null, provider: "codex", account: null, tab: "models", catalog: null, usage: null, notice: null, filter: "", busy: false, pollTimer: null, saved: false };
+          const st = { status: null, provider: "codex", account: null, tab: "models", catalog: null, usage: null, notice: null, filter: "", busy: false, pollTimer: null, saved: false, loading: false };
           const root = h("div", { class: "subPage" }); el.replaceChildren(root);
           const P = (id) => t.providers[id];
           const setNotice = (kind, text) => { st.notice = kind ? { kind, text } : null; render(); };
@@ -111,9 +111,11 @@ window.__PyhModules__.load({
           }
           function schedulePoll() { clearTimeout(st.pollTimer); if (!alive) return; if (st.status && Object.values(st.status.providers).some((p) => p.busy)) st.pollTimer = setTimeout(() => loadStatus(true), 1500); }
           async function loadCatalog(force) {
-            st.catalog = null; render();
-            try { const cat = await call(`/provider-settings?provider=${st.provider}${force ? "&force=true" : ""}`); if (!alive || cat.provider !== st.provider) return; st.catalog = cat; render(); }
+            if (st.catalog && st.catalog.provider !== st.provider) st.catalog = null;
+            st.loading = true; render();
+            try { const cat = await call(`/provider-settings?provider=${st.provider}${force ? "&force=true" : ""}`); if (!alive || cat.provider !== st.provider) return; st.catalog = cat; }
             catch (err) { fail(err); }
+            finally { st.loading = false; render(); }
           }
           async function loadUsage(force) {
             if (!st.account) return;
@@ -172,7 +174,7 @@ window.__PyhModules__.load({
           function modelsTab() {
             const cat = st.catalog;
             if (!cat) return h("div", { class: "subHint" }, t.loading);
-            const search = h("input", { class: "input", placeholder: t.search, value: st.filter, onInput: (e) => { st.filter = e.target.value; render(); } });
+            const search = h("input", { class: "input", "data-field": "search", placeholder: t.search, value: st.filter, onInput: (e) => { st.filter = e.target.value; render(); } });
             const visible = cat.settings.visibleModels;
             const auto = h("label", { style: { display: "flex", alignItems: "center", gap: "6px", fontSize: "12px" } }, h("input", { type: "checkbox", checked: visible == null, onChange: (e) => savePrefs({ visibleModels: e.target.checked ? undefined : cat.models.map((m) => m.id) }) }), t.autoModels);
             const f = st.filter.toLowerCase();
@@ -180,27 +182,27 @@ window.__PyhModules__.load({
             const unavailable = cat.accounts.some((a) => a.unavailable);
             const table = h("table", { class: "subTable" }, h("thead", null, h("tr", null, h("th", null, t.modelName), h("th", null, t.context), h("th", null, t.reasoning))), h("tbody", null, rows.map((m) => {
               const checked = visible == null || visible.includes(m.id);
-              const toggle = h("input", { type: "checkbox", checked, onChange: (e) => { const list = new Set(visible == null ? cat.models.map((x) => x.id) : visible); if (e.target.checked) list.add(m.id); else list.delete(m.id); savePrefs({ visibleModels: [...list] }); } });
+              const toggle = h("input", { type: "checkbox", "data-field": `show:${m.id}`, checked, onChange: (e) => { const list = new Set(visible == null ? cat.models.map((x) => x.id) : visible); if (e.target.checked) list.add(m.id); else list.delete(m.id); savePrefs({ visibleModels: [...list] }); } });
               const configured = cat.settings.contextWindows[m.id];
-              const ctxInput = h("input", { class: "input mono", placeholder: fmtTokens(m.defaultContextWindow) || "256K / 1M", value: configured ? fmtTokens(configured) : "" });
+              const ctxInput = h("input", { class: "input mono", "data-field": `ctx:${m.id}`, placeholder: fmtTokens(m.defaultContextWindow) || "256K / 1M", value: configured ? fmtTokens(configured) : "" });
               const err = h("div", { class: "err" });
               ctxInput.onkeydown = (e) => {
                 if (e.key === "Escape") { ctxInput.value = configured ? fmtTokens(configured) : ""; err.textContent = ""; return; }
                 if (e.key !== "Enter") return; e.preventDefault();
                 const raw = ctxInput.value.trim(); const windows = { ...cat.settings.contextWindows };
-                if (!raw) { delete windows[m.id]; savePrefs({ contextWindows: windows }).then(() => loadCatalog(false)); return; }
+                if (!raw) { delete windows[m.id]; ctxInput.blur(); savePrefs({ contextWindows: windows }).then(() => loadCatalog(false)); return; }
                 const v = parseTokens(raw); if (!v) { err.textContent = t.contextInvalid; return; }
                 if (m.maxContextWindow && v > m.maxContextWindow) { err.textContent = t.contextTooLarge(fmtTokens(m.maxContextWindow)); return; }
-                windows[m.id] = v; savePrefs({ contextWindows: windows }).then(() => loadCatalog(false));
+                windows[m.id] = v; ctxInput.blur(); savePrefs({ contextWindows: windows }).then(() => loadCatalog(false));
               };
               const sub = [t.contextDefault(fmtTokens(m.defaultContextWindow))]; if (m.maxContextWindow) sub.push(t.contextMax(fmtTokens(m.maxContextWindow))); if (m.contextWindow !== m.defaultContextWindow) sub.push(t.contextEffective(fmtTokens(m.contextWindow)));
               const effort = m.efforts && m.efforts.length ? h("span", { class: "selectWrap" }, h("select", { class: "select", style: { height: "26px", fontSize: "12px", width: "auto", padding: "0 24px 0 8px" }, onChange: async (e) => { try { await call("/model-default", { method: "POST", body: JSON.stringify({ provider: st.provider, model: m.id, effort: e.target.value || undefined }) }); m.configured = e.target.value || undefined; st.saved = true; render(); setTimeout(() => { st.saved = false; render(); }, 1500); } catch (e2) { fail(e2); } } }, h("option", { value: "", selected: !m.configured }, t.providerDefault), m.efforts.map((ef) => h("option", { value: ef.id, selected: m.configured === ef.id }, ef.name))), ico("chev-down", "ico chev")) : "—";
               return h("tr", null, h("td", null, h("label", { style: { display: "flex", gap: "8px", alignItems: "flex-start" } }, toggle, h("span", null, m.name, h("span", { class: "mid" }, m.id)))), h("td", { class: "ctx" }, ctxInput, h("small", null, sub.join(" · ")), err), h("td", null, effort));
             })));
             return h("div", { style: { display: "flex", flexDirection: "column", gap: "10px" } },
-              h("div", { class: "subToolbar" }, search, h("button", { type: "button", class: "btn outline sm", onClick: () => loadCatalog(true) }, t.refresh), auto, st.saved ? h("span", { class: "subHint", style: { color: "var(--success)" } }, t.saved) : null),
+              h("div", { class: "subToolbar" }, search, h("button", { type: "button", class: "btn outline sm", onClick: () => loadCatalog(true) }, t.refresh), auto, st.loading ? h("span", { class: "subHint" }, t.loading) : st.saved ? h("span", { class: "subHint", style: { color: "var(--success)" } }, t.saved) : null),
               h("div", { class: "subHint" }, `${t.modelHint} ${t.contextHint}`), unavailable ? h("div", { class: "subNotice", "data-kind": "error" }, h("span", null, t.unavailable)) : null,
-              rows.length ? h("div", { class: "subTableWrap" }, table) : h("div", { class: "subHint", style: { padding: "20px", textAlign: "center" } }, cat.models.length ? t.noMatches : t.noModels));
+              rows.length ? h("div", { class: "subTableWrap", "data-scroll": "models" }, table) : h("div", { class: "subHint", style: { padding: "20px", textAlign: "center" } }, cat.models.length ? t.noMatches : t.noModels));
           }
           function toolsTab() {
             const cat = st.catalog;
@@ -232,13 +234,32 @@ window.__PyhModules__.load({
             const bar = h("div", { class: "subTabs", role: "tablist" }, tabs.map(([k, label]) => h("button", { type: "button", role: "tab", "aria-selected": String(st.tab === k), onClick: () => { st.tab = k; render(); if (k === "usage" && !st.usage) loadUsage(false); } }, label)));
             return h("div", { class: "subCard" }, head, bar, st.tab === "models" ? modelsTab() : st.tab === "tools" ? toolsTab() : usageTab());
           }
+          // A render rebuilds the page. It keeps the offsets of the [data-scroll] containers and, for the [data-field]
+          // control in use, the focus, the typed text and the selection.
+          function kept() {
+            const scrolls = [...root.querySelectorAll("[data-scroll]")].map((box) => [box.dataset.scroll, box.scrollTop, box.scrollLeft]);
+            const active = document.activeElement;
+            if (!active || !root.contains(active) || !active.dataset.field) return { scrolls, field: null };
+            const text = active.type !== "checkbox";
+            return { scrolls, field: { key: active.dataset.field, value: text ? active.value : null, start: text ? active.selectionStart : null, end: text ? active.selectionEnd : null } };
+          }
+          function restore({ scrolls, field }) {
+            for (const [key, top, left] of scrolls) { const box = root.querySelector(`[data-scroll="${key}"]`); if (box) { box.scrollTop = top; box.scrollLeft = left; } }
+            const control = field && [...root.querySelectorAll("[data-field]")].find((x) => x.dataset.field === field.key);
+            if (!control) return;
+            if (field.value !== null) control.value = field.value;
+            control.focus({ preventScroll: true });
+            if (field.start !== null) control.setSelectionRange(field.start, field.end);
+          }
           function render() {
             if (!alive) return;
+            const before = kept();
             const head = h("div", { class: "pageHead" }, h("div", null, h("h1", { class: "pageTitle" }, t.title), h("p", { class: "pageIntro" }, t.intro)), h("div", { class: "headTools" }, h("button", { type: "button", class: "btn outline sm", onClick: async () => { try { await call("/refresh", { method: "POST", body: "{}" }); setNotice("ok", t.saved); loadCatalog(false); } catch (err) { fail(err); } } }, t.refreshRoutes), h("button", { type: "button", class: "iconButton", title: t.refresh, onClick: () => { loadStatus(false); loadCatalog(false); } }, ico("refresh"))));
             const parts = [head];
             if (st.notice) parts.push(h("div", { class: "subNotice", "data-kind": st.notice.kind }, h("span", null, st.notice.text), h("button", { type: "button", class: "iconButton sm", onClick: () => setNotice(null) }, ico("x"))));
-            parts.push(h("div", { class: "subBody" }, side(), h("div", { class: "subMain" }, main())));
+            parts.push(h("div", { class: "subBody" }, side(), h("div", { class: "subMain", "data-scroll": "main" }, main())));
             root.replaceChildren(...parts);
+            restore(before);
           }
           render(); loadStatus(false).then(() => loadCatalog(false));
           return () => { alive = false; clearTimeout(st.pollTimer); };
