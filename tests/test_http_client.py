@@ -1,6 +1,6 @@
 """
 HTTP client: the wire helpers, the stores, the request engine over a mocked transport (secret variables, captured
-variables and their refresh included), the agent tools and the management routes.
+variables and their refresh included), the agent tools, configuration export and import, and the management routes.
 """
 
 from __future__ import annotations
@@ -50,6 +50,7 @@ from pyxis_harness_http_client.store import (
     usable_request_auth,
 )
 from pyxis_harness_http_client.tools import build_tools, render_exchange, to_output
+from pyxis_harness_http_client.transfer import export_bundle, plan_import
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
 ORIGIN = "http://api.test"
@@ -1567,6 +1568,348 @@ async def test_stored_data_from_before_these_fields(tmp_path):
     await bare.aclose()
 
 
+# ---------------------------------------------------------------------- export and import
+SEEDED_SECRETS = (
+    "super-secret-token",
+    "pw-secret",
+    "literal-key",
+    "literal-cookie",
+    "request-secret",
+    "app-secret-value",
+    "literal-query-key",
+)
+
+
+def seed(lab: Lab) -> dict[str, str]:
+    """Targets with literal and referenced credentials, their requests and one without a target: ids by name."""
+    api = lab.target(
+        name="api",
+        auth={"type": "bearer", "token": "super-secret-token"},
+        headers={"X-API-Key": "literal-key", "X-Trace": "on", "Authorization": "Bearer {{token}}"},
+        variables={"org": "acme"},
+        secrets={"client_secret": "app-secret-value"},
+        allowMutations=True,
+    )
+    legacy = lab.target(name="legacy", auth={"type": "basic", "username": "svc", "password": "pw-secret"})
+    login = lab.saved(
+        api["id"],
+        name="login",
+        method="POST",
+        path="/login",
+        bodyMode="json",
+        body='{"user":"a"}',
+        captures=[rule("token", "data.access_token", "expired", ttlPath="data.expires_in")],
+    )
+    credentials = [
+        {"key": "Authorization", "value": "Bearer {{token}}", "enabled": True},
+        {"key": "Cookie", "value": "sid=literal-cookie", "enabled": True},
+    ]
+    lab.saved(api["id"], name="me", path="/me", headers=credentials)
+    lab.saved(
+        legacy["id"], name="ping", path="/ping", auth={"type": "header", "name": "X-Key", "value": "request-secret"}
+    )
+    lab.saved("direct", name="health", path=f"{ORIGIN}/health")
+    return {"api": api["id"], "legacy": legacy["id"], "login": login["id"]}
+
+
+def exported(lab: Lab) -> dict[str, Any]:
+    """The export document as a file carries it."""
+    return json.loads(json.dumps(export_bundle(lab.store.list(), lab.requests.list(), lab.store.settings())))
+
+
+async def test_export(lab):
+    ids = seed(lab)
+    lab.target(name="dynamic", auth={"type": "bearer", "token": "{{access_token}}"})
+    lab.target(name="keyed", auth={"type": "query", "name": "access_token", "value": "literal-query-key"})
+    lab.store.set_settings({"agentTools": True, "historyLimit": 300})
+    # A history entry and a captured value exist; neither is part of the document.
+    request = {"method": "POST", "path": "/login", "requestId": ids["login"]}
+    sent = await lab.engine.send(ids["api"], request, PANEL)
+    assert sent["captures"][0]["ok"] and lab.values.map(ids["api"]) == {"token": "secret-token-1"}
+    bundle = export_bundle(lab.store.list(), lab.requests.list(), lab.store.settings(), 1)
+    text = json.dumps(bundle)
+    assert set(bundle) == {"format", "version", "exportedAt", "settings", "targets", "requests"}
+    assert (bundle["format"], bundle["version"], bundle["exportedAt"]) == ("pyxis-harness-http", 1, 1)
+    assert bundle["settings"] == {"historyLimit": 300}
+    for absent in (*SEEDED_SECRETS, "secret-token-1", "agentTools", sent["id"], "createdAt"):
+        assert absent not in text
+    targets = {target["name"]: target for target in bundle["targets"]}
+    requests = {request["name"]: request for request in bundle["requests"]}
+    api = targets["api"]
+    assert set(api) == {
+        "id",
+        "name",
+        "baseUrl",
+        "auth",
+        "headers",
+        "variables",
+        "secrets",
+        "allowedHosts",
+        "allowMutations",
+        "allowPrivate",
+        "timeoutMs",
+    }
+    # A literal secret is blank; a credential that references a variable is configuration and stays.
+    assert api["auth"] == {"type": "bearer", "token": ""}
+    assert api["headers"] == {"X-API-Key": "", "X-Trace": "on", "Authorization": "Bearer {{token}}"}
+    assert api["secrets"] == {"client_secret": ""} and api["variables"] == {"org": "acme"}
+    assert (api["id"], api["allowMutations"], api["timeoutMs"]) == (ids["api"], True, 30_000)
+    assert targets["legacy"]["auth"] == {"type": "basic", "username": "svc", "password": ""}
+    assert targets["dynamic"]["auth"] == {"type": "bearer", "token": "{{access_token}}"}
+    assert targets["keyed"]["auth"] == {"type": "query", "name": "access_token", "value": ""}
+    assert [row["value"] for row in requests["me"]["headers"]] == ["Bearer {{token}}", ""]
+    assert requests["ping"]["auth"] == {"type": "header", "name": "X-Key", "value": ""}
+    assert requests["login"]["captures"] == [rule("token", "data.access_token", "expired", ttlPath="data.expires_in")]
+    assert (requests["login"]["id"], requests["login"]["targetId"], requests["login"]["body"]) == (
+        ids["login"],
+        ids["api"],
+        '{"user":"a"}',
+    )
+    assert requests["health"]["targetId"] == "direct" and len(bundle["requests"]) == 4
+    # The stores keep what the document leaves out.
+    assert lab.store.find("api")["auth"]["token"] == "super-secret-token"
+    # A request whose target is gone is left out.
+    lab.store.delete(ids["legacy"])
+    assert "ping" not in [request["name"] for request in exported(lab)["requests"]]
+
+
+async def test_import_into_an_empty_configuration(lab, tmp_path):
+    ids = seed(lab)
+    lab.store.set_settings({"historyLimit": 300})
+    bundle = exported(lab)
+    plan = plan_import(bundle, [], [], "skip")
+    assert plan.result == {
+        "conflicts": [],
+        "created": ["api", "legacy"],
+        "overwritten": [],
+        "skipped": [],
+        "needAuth": ["api", "legacy"],
+        "requests": 4,
+    }
+    assert plan.history_limit == 300
+    api = next(target for target in plan.targets if target["name"] == "api")
+    assert api["auth"] == {"type": "bearer", "token": ""} and api["secrets"] == {"client_secret": ""}
+    # A fixed header the export blanked is left out.
+    assert api["headers"] == {"X-Trace": "on", "Authorization": "Bearer {{token}}"}
+    assert api["id"] != ids["api"] and api["variables"] == {"org": "acme"} and api["allowMutations"] is True
+    # Requests follow their target under its new id and keep their own ids.
+    assert [r["name"] for r in plan.requests if r["targetId"] == api["id"]] == ["login", "me"]
+    assert sorted(r["id"] for r in plan.requests) == sorted(r["id"] for r in lab.requests.list())
+    assert [r["name"] for r in plan.requests if r["targetId"] == "direct"] == ["health"]
+    login = next(r for r in plan.requests if r["name"] == "login")
+    assert login["captures"][0]["refresh"] == "expired" and login["createdAt"] > 0
+    # A target that lacks only a secret variable needs its secrets too; one without secrets does not.
+    bare = {**bundle["targets"][0], "auth": {"type": "none"}}
+    assert plan_import({**bundle, "targets": [bare], "requests": []}, [], [], "skip").result["needAuth"] == ["api"]
+    plain = {**bare, "secrets": {}}
+    assert plan_import({**bundle, "targets": [plain], "requests": []}, [], [], "skip").result["needAuth"] == []
+    # The plan written to empty stores: the missing state, in the summary and in the engine.
+    other = Lab(tmp_path / "other")
+    other.requests.replace_all(plan.requests)
+    other.store.replace_all(plan.targets, plan.history_limit)
+    assert other.store.settings() == {"agentTools": False, "historyLimit": 300}
+    assert len(RequestStore(other.requests.path).list()) == 4
+    stored = TargetStore(other.store.path).find("api")
+    summary = summarize(stored)
+    assert summary["auth"] == {"type": "bearer", "hint": "", "missing": True}
+    assert summary["secrets"] == {"client_secret": ""}
+    assert summarize(other.store.find("legacy"))["auth"] == {"type": "basic", "username": "svc", "missing": True}
+    assert secrets_of(stored["auth"]) == []
+    legacy = other.store.find("legacy")["id"]
+    refused = await other.send("legacy", "GET", "/echo")
+    assert refused["error"] == "authentication of target 'legacy' is not filled in (edit the target on the HTTP page)"
+    assert "response" not in refused and other.api.seen == []
+    assert (await other.engine.test("legacy"))["error"] == refused["error"]
+    assert other.history.list(legacy)[0]["error"] == refused["error"]
+    # An edit that leaves the secret empty is refused; filling it in ends the missing state.
+    blank = {"type": "basic", "username": "svc", "password": ""}
+    rejects(lambda: other.store.update(legacy, {"auth": blank}), "auth.password is required")
+    other.store.update(legacy, {"auth": {**blank, "password": "filled-in-password"}})
+    assert summarize(other.store.find("legacy"))["auth"] == {"type": "basic", "username": "svc"}
+    assert "error" not in await other.send("legacy", "GET", "/echo")
+    pair = base64.b64encode(b"svc:filled-in-password").decode()
+    assert other.api.seen_at("/echo")["authorization"] == f"Basic {pair}"
+    tid = stored["id"]
+    rejects(lambda: other.store.update(tid, {"secrets": {"client_secret": ""}}), '"client_secret" is required')
+    other.store.update(tid, {"auth": {"type": "bearer", "token": "filled-in-token"}})
+    assert summarize(other.store.find("api"))["auth"] == {"type": "bearer", "hint": "fil…en"}
+    unfilled = await other.send("api", "POST", "/token", body="{{client_secret}}")
+    assert unfilled["error"].startswith("secret variable {{client_secret}} of target 'api' is not filled in")
+    other.store.update(tid, {"secrets": {"client_secret": "filled-in-secret"}})
+    assert summarize(other.store.find("api"))["secrets"] == {"client_secret": "fil…et"}
+    assert "error" not in await other.send("api", "POST", "/token", body="{{client_secret}}")
+    assert other.api.token_bodies == ["filled-in-secret"]
+    await other.engine.aclose()
+
+
+def test_import_over_an_existing_configuration(lab):
+    ids = seed(lab)
+    bundle = exported(lab)
+    bundle["targets"][0]["baseUrl"] = "https://api.example.com/v2"
+    bundle["targets"][0]["name"] = "API"
+    fresh = {"id": "file-new", "name": "fresh", "baseUrl": "https://fresh.example.com", "auth": {"type": "none"}}
+    bundle["targets"].append(fresh)
+    bundle["requests"] = [request for request in bundle["requests"] if request["name"] != "me"]
+    bundle["requests"].append({"id": "zzzz", "targetId": "file-new", "name": "first", "method": "GET", "path": "/"})
+    local = lab.saved(ids["api"], name="local only", path="/local")
+    targets, requests = lab.store.list(), lab.requests.list()
+    before = (lab.store.path.read_text(), lab.requests.path.read_text())
+
+    skip = plan_import(bundle, targets, requests, "skip")
+    assert skip.result == {
+        "conflicts": ["api", "legacy", "direct"],
+        "created": ["fresh"],
+        "overwritten": [],
+        "skipped": ["api", "legacy"],
+        "needAuth": [],
+        "requests": 1,
+    }
+    assert next(t for t in skip.targets if t["name"] == "api")["baseUrl"] == ORIGIN
+    assert local["id"] in [r["id"] for r in skip.requests]
+    assert [r["name"] for r in skip.requests if r["targetId"] == "direct"] == ["health"]
+    assert len(skip.requests) == len(requests) + 1
+
+    over = plan_import(bundle, targets, requests, "overwrite")
+    assert over.result == {
+        "conflicts": ["api", "legacy", "direct"],
+        "created": ["fresh"],
+        "overwritten": ["API", "legacy"],
+        "skipped": [],
+        "needAuth": [],
+        "requests": 4,
+    }
+    api = next(t for t in over.targets if t["id"] == ids["api"])
+    # The file's settings; the stored secrets where the file's are blank.
+    assert (api["name"], api["baseUrl"]) == ("API", "https://api.example.com/v2")
+    assert api["auth"] == {"type": "bearer", "token": "super-secret-token"}
+    assert api["headers"] == {"X-API-Key": "literal-key", "X-Trace": "on", "Authorization": "Bearer {{token}}"}
+    assert api["secrets"] == {"client_secret": "app-secret-value"}
+    assert api["createdAt"] == lab.store.find("api")["createdAt"]
+    legacy = next(t for t in over.targets if t["id"] == ids["legacy"])
+    assert legacy["auth"] == {"type": "basic", "username": "svc", "password": "pw-secret"}
+    # The request list of an overwritten target is the file's; ids stay while they are free.
+    assert [r["name"] for r in over.requests if r["targetId"] == ids["api"]] == ["login"]
+    assert next(r for r in over.requests if r["name"] == "login")["id"] == ids["login"]
+    assert [r["name"] for r in over.requests if r["targetId"] == "direct"] == ["health"]
+    first = next(r for r in over.requests if r["name"] == "first")
+    assert len(first["id"]) == 12 and first["id"] != "zzzz"
+    assert first["targetId"] == next(t for t in over.targets if t["name"] == "fresh")["id"]
+    # A secret of another type, a secret variable of another name and a new credential header come without a value.
+    changed = json.loads(json.dumps(bundle))
+    changed["targets"][0].update(
+        auth={"type": "header", "name": "X-Token", "value": ""},
+        secrets={"other_secret": ""},
+        headers={"x-api-key": "", "Cookie": ""},
+    )
+    retyped = plan_import(changed, targets, requests, "overwrite")
+    api = next(t for t in retyped.targets if t["id"] == ids["api"])
+    assert api["auth"] == {"type": "header", "name": "X-Token", "value": ""}
+    assert api["secrets"] == {"other_secret": ""} and api["headers"] == {"x-api-key": "literal-key"}
+    assert retyped.result["needAuth"] == ["API"]
+    # A request id held by a request that stays gets a new one.
+    taken = {**bundle["requests"][-1], "id": local["id"]}
+    kept = plan_import({**bundle, "requests": [taken]}, targets, requests, "skip")
+    assert [r["id"] for r in kept.requests].count(local["id"]) == 1 and kept.result["requests"] == 1
+    # A plan writes nothing.
+    assert (lab.store.path.read_text(), lab.requests.path.read_text()) == before
+    assert lab.store.find("api")["baseUrl"] == ORIGIN and len(lab.requests.list()) == 5
+
+
+def test_import_validation():
+    base = {"format": "pyxis-harness-http", "version": 1, "settings": {"historyLimit": 200}}
+    one = {"id": "a", "name": "x", "baseUrl": "https://a.example"}
+    plan = lambda document, conflict="skip": plan_import(document, [], [], conflict)  # noqa: E731
+    for document in (None, [], {"version": 1}, {**base, "format": "postman"}, {**base, "format": ["dsh-http"]}):
+        rejects(lambda document=document: plan(document), "not a pyxis-harness-http export file")
+    for version in (2, 99, "1", None, True):
+        rejects(lambda version=version: plan({**base, "version": version}), "unsupported export version")
+    for targets, message in (
+        ([{**one, "baseUrl": "ftp://nope"}], "target 'x': baseUrl must be an http"),
+        ([{"id": "a", "name": "x"}], "target 'x': baseUrl is required"),
+        ([{**one, "name": " "}], "a target in the file has no name"),
+        ([{**one, "name": "a/b"}], "target 'a/b': name may contain"),
+        ([one, {**one, "id": "b", "name": "X"}], "the file lists target 'X' twice"),
+        ([{**one, "headers": {"Host": "evil"}}], "target 'x': headers"),
+        ([{**one, "variables": {"k": "v"}, "secrets": {"k": ""}}], "both a variable and a secret variable"),
+        ([{**one, "name": f"t{i}"} for i in range(201)], "at most 200 targets per file"),
+    ):
+        rejects(lambda targets=targets: plan({**base, "targets": targets}), message)
+    for request, message in (
+        ({"targetId": "a", "name": "brew", "method": "TRACE", "path": "/"}, "request 'brew': unsupported method"),
+        ({"targetId": "a", "path": "/p", "captures": "all"}, "request '/p': captures must be an array"),
+    ):
+        rejects(lambda request=request: plan({**base, "targets": [one], "requests": [request]}), message)
+    crowded = [{"targetId": "a", "path": f"/{i}"} for i in range(501)]
+    rejects(lambda: plan({**base, "targets": [one], "requests": crowded}), "at most 500 requests per target")
+    # Requests of a target the file does not define are left out; an invalid history limit is not taken.
+    assert plan({**base, "requests": [{"targetId": "ghost", "path": "/"}]}).result["requests"] == 0
+    for limit in (5, 5000, "200", True, None):
+        assert plan({**base, "settings": {"historyLimit": limit}}).history_limit is None
+    assert plan({"format": "pyxis-harness-http", "version": 1}).result["created"] == []
+    # A file of dsh-http has the same shape and is read like one of this package.
+    dsh = {
+        "format": "dsh-http",
+        "version": 1,
+        "exportedAt": 0,
+        "settings": {"historyLimit": 50},
+        "targets": [
+            {
+                "id": "0123456789ab",
+                "name": "moved",
+                "baseUrl": "https://moved.example.com/v1",
+                "auth": {"type": "bearer", "token": ""},
+                "headers": {"Authorization": "Bearer {{token}}", "X-API-Key": ""},
+                "variables": {"org": "acme"},
+                "secrets": {"client_secret": ""},
+                "allowedHosts": ["cdn.example.com"],
+                "allowMutations": True,
+                "allowPrivate": False,
+                "timeoutMs": 5000,
+            }
+        ],
+        "requests": [
+            {
+                "id": "ba9876543210",
+                "targetId": "0123456789ab",
+                "name": "token",
+                "method": "POST",
+                "path": "/token",
+                "query": [],
+                "headers": [],
+                "auth": {"type": "none"},
+                "bodyMode": "json",
+                "body": '{"secret":"{{client_secret}}"}',
+                "form": [],
+                "captures": [rule("token", "access_token", "rejected", ttlPath="expires_in")],
+            },
+            {"id": "ba9876543211", "targetId": "direct", "method": "GET", "path": "https://example.org/health"},
+        ],
+    }
+    moved = plan(dsh)
+    assert moved.result == {
+        "conflicts": [],
+        "created": ["moved"],
+        "overwritten": [],
+        "skipped": [],
+        "needAuth": ["moved"],
+        "requests": 2,
+    }
+    target = moved.targets[0]
+    assert (target["baseUrl"], target["timeoutMs"], target["allowedHosts"], target["allowMutations"]) == (
+        "https://moved.example.com/v1",
+        5000,
+        ["cdn.example.com"],
+        True,
+    )
+    assert target["headers"] == {"Authorization": "Bearer {{token}}"} and moved.history_limit == 50
+    assert [(r["id"], r["targetId"]) for r in moved.requests] == [
+        ("ba9876543210", target["id"]),
+        ("ba9876543211", "direct"),
+    ]
+    assert moved.requests[0]["captures"] == [rule("token", "access_token", "rejected", ttlPath="expires_in")]
+    rejects(lambda: plan({**dsh, "version": 2}), "unsupported export version 2")
+
+
 # ---------------------------------------------------------------------- harness
 async def test_http_client_in_the_harness(home, tmp_path):
     profile = Profile.init("web", home=str(home))
@@ -1807,3 +2150,155 @@ async def test_variable_routes_in_the_harness(home, tmp_path):
             )
     files = {path.name: stat.S_IMODE(path.stat().st_mode) for path in (tmp_path / "hc").iterdir()}
     assert files == {"targets.json": 0o600, "requests.json": 0o600, "values.json": 0o600, "history.jsonl": 0o600}
+
+
+async def test_transfer_routes_in_the_harness(home, tmp_path):
+    profile = Profile.init("web", home=str(home))
+    data = tmp_path / "hc"
+    patch = [HTTP_OFF, {"id": "http-client", "config": {"data_dir": str(data)}, "merge": True}]
+    async with Harness(profile, patch=patch) as h:
+        service = h.get("httpClient")
+        await service.engine.aclose()
+        stub = Api()
+        service.engine.client = httpx.AsyncClient(
+            transport=httpx.MockTransport(stub), follow_redirects=False, timeout=None
+        )
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t") as c:
+            api = "/api/http-client"
+            transfer = lambda **body: c.post(f"{api}/transfer", json=body)  # noqa: E731
+            payload = {
+                "name": "main",
+                "baseUrl": ORIGIN,
+                "allowPrivate": True,
+                "auth": {"type": "bearer", "token": "panel-secret-1"},
+                "headers": {"X-API-Key": "literal-key", "X-Trace": "on"},
+                "secrets": {"client_secret": "app-secret-value"},
+            }
+            tid = (await c.post(f"{api}/targets", json=payload)).json()["target"]["id"]
+            capture = [{"name": "session", "source": "header", "path": "x-session"}]
+            form = {"targetId": tid, "name": "login", "method": "POST", "path": "/login", "captures": capture}
+            saved = (await c.post(f"{api}/requests", json=form)).json()["request"]
+            await c.post(f"{api}/requests", json={"targetId": "direct", "name": "loose", "path": f"{ORIGIN}/echo"})
+            await c.post(f"{api}/settings", json={"agentTools": True, "historyLimit": 50})
+            own = {"id": tid, "request": {"method": "POST", "path": "/login", "requestId": saved["id"]}}
+            assert (await c.post(f"{api}/send", json=own)).json()["exchange"]["captures"] == [
+                {"name": "session", "ok": True}
+            ]
+            # Export: targets, saved requests and the history limit; no secret, captured value, history or switch.
+            got = await c.get(f"{api}/transfer")
+            bundle = got.json()["bundle"]
+            assert (bundle["format"], bundle["version"], bundle["settings"]) == (
+                "pyxis-harness-http",
+                1,
+                {"historyLimit": 50},
+            )
+            for absent in ("panel-secret-1", "literal-key", "app-secret-value", "sess-1", "agentTools", "response"):
+                assert absent not in got.text
+            assert [t["name"] for t in bundle["targets"]] == ["main"]
+            assert [r["name"] for r in bundle["requests"]] == ["login", "loose"]
+            assert bundle["targets"][0]["auth"] == {"type": "bearer", "token": ""}
+            # A file with one invalid entry is refused as a whole.
+            files = lambda: {path.name: path.read_text() for path in data.iterdir()}  # noqa: E731
+            before = files()
+            broken = json.loads(json.dumps(bundle))
+            broken["targets"].append({"id": "n", "name": "new", "baseUrl": "https://new.example.com"})
+            broken["requests"].append({"targetId": "n", "method": "BREW", "path": "/"})
+            for conflict in ("overwrite", "skip"):
+                refused = await transfer(bundle=broken, conflict=conflict)
+                assert refused.status_code == 400 and "unsupported method" in refused.json()["detail"]
+            assert (await transfer(bundle={"format": "postman"})).status_code == 400
+            assert (await transfer(conflict="skip")).status_code == 400
+            assert files() == before
+            # Dry run: the conflicts, nothing written.
+            changed = json.loads(json.dumps(bundle))
+            changed["settings"]["historyLimit"] = 80
+            changed["targets"][0].update(baseUrl=f"{ORIGIN}/v2", headers={"X-API-Key": "", "X-Trace": "off"})
+            changed["targets"].append({"id": "n", "name": "new", "baseUrl": "https://new.example.com"})
+            changed["requests"] = [{"targetId": "n", "name": "first", "path": "/first"}, changed["requests"][0]]
+            checked = (await transfer(bundle=changed, dryRun=True)).json()["result"]
+            assert checked["conflicts"] == ["main"] and files() == before
+            assert (await transfer(bundle=changed, dryRun=True, conflict="overwrite")).json()["result"][
+                "overwritten"
+            ] == ["main"]
+            assert files() == before
+            # Skip, the default: the matched target and its requests stay; the others are added.
+            skipped = (await transfer(bundle=changed)).json()["result"]
+            assert skipped == {
+                "conflicts": ["main"],
+                "created": ["new"],
+                "overwritten": [],
+                "skipped": ["main"],
+                "needAuth": [],
+                "requests": 1,
+            }
+            listed = (await c.get(f"{api}/targets")).json()["targets"]
+            assert [(t["name"], t["baseUrl"]) for t in listed] == [("main", ORIGIN), ("new", "https://new.example.com")]
+            assert (await c.get(f"{api}/settings")).json()["settings"] == {"agentTools": True, "historyLimit": 80}
+            assert [
+                r["name"] for r in (await c.get(f"{api}/requests", params={"target": "direct"})).json()["requests"]
+            ] == ["loose"]
+            # Overwrite: the file's settings and request list; the stored secrets, history and captured values stay.
+            over = (await transfer(bundle=changed, conflict="overwrite")).json()["result"]
+            assert (over["conflicts"], over["overwritten"], over["created"], over["skipped"], over["needAuth"]) == (
+                ["main", "new"],
+                ["main", "new"],
+                [],
+                [],
+                [],
+            )
+            main = service.store.find("main")
+            assert (main["id"], main["baseUrl"], main["auth"]) == (
+                tid,
+                f"{ORIGIN}/v2",
+                {"type": "bearer", "token": "panel-secret-1"},
+            )
+            assert main["headers"] == {"X-API-Key": "literal-key", "X-Trace": "off"}
+            assert main["secrets"] == {"client_secret": "app-secret-value"}
+            requests = (await c.get(f"{api}/requests", params={"target": tid})).json()["requests"]
+            assert [(r["id"], r["name"]) for r in requests] == [(saved["id"], "login")]
+            # The file holds no request without a target: the stored ones stay.
+            assert [
+                r["name"] for r in (await c.get(f"{api}/requests", params={"target": "direct"})).json()["requests"]
+            ] == ["loose"]
+            assert [v["name"] for v in (await c.get(f"{api}/values", params={"target": tid})).json()["values"]] == [
+                "session"
+            ]
+            assert len((await c.get(f"{api}/history", params={"target": tid})).json()["entries"]) == 1
+            # A dsh-http file: its targets arrive without secrets and say so; their requests are not sent.
+            dsh = {
+                "format": "dsh-http",
+                "version": 1,
+                "targets": [
+                    {
+                        "id": "0123456789ab",
+                        "name": "moved",
+                        "baseUrl": ORIGIN,
+                        "auth": {"type": "header", "name": "X-Key", "value": ""},
+                        "secrets": {"client_secret": ""},
+                        "allowPrivate": True,
+                    }
+                ],
+                "requests": [{"id": "ba9876543210", "targetId": "0123456789ab", "path": "/echo"}],
+            }
+            moved = (await transfer(bundle=dsh, conflict="skip")).json()["result"]
+            assert (moved["created"], moved["needAuth"], moved["requests"]) == (["moved"], ["moved"], 1)
+            summary = next(t for t in (await c.get(f"{api}/targets")).json()["targets"] if t["name"] == "moved")
+            assert summary["auth"] == {"type": "header", "name": "X-Key", "hint": "", "missing": True}
+            assert summary["secrets"] == {"client_secret": ""}
+            calls = len(stub.seen)
+            body = {"id": summary["id"], "request": {"method": "GET", "path": "/echo", "requestId": "ba9876543210"}}
+            refused = (await c.post(f"{api}/send", json=body)).json()["exchange"]
+            missing = "authentication of target 'moved' is not filled in (edit the target on the HTTP page)"
+            assert refused["error"] == missing and "response" not in refused and len(stub.seen) == calls
+            tested = (await c.post(f"{api}/test", json={"id": summary["id"]})).json()["result"]
+            assert (tested["ok"], tested["error"]) == (False, missing)
+            filled = {"auth": {"type": "header", "name": "X-Key", "value": "typed-key-1"}}
+            patched = (await c.patch(f"{api}/targets", params={"id": summary["id"]}, json=filled)).json()["target"]
+            assert patched["auth"] == {"type": "header", "name": "X-Key", "hint": "typ…-1"}
+            assert (await c.post(f"{api}/send", json=body)).json()["exchange"]["response"]["status"] == 200
+            assert stub.seen_at("/echo")["x-key"] == "typed-key-1"
+    assert {path.name: stat.S_IMODE(path.stat().st_mode) for path in data.iterdir() if path.suffix == ".json"} == {
+        "targets.json": 0o600,
+        "requests.json": 0o600,
+        "values.json": 0o600,
+    }

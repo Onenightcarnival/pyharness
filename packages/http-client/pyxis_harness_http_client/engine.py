@@ -41,6 +41,7 @@ from .store import (
     StoreError,
     TargetStore,
     ValueStore,
+    auth_missing,
     missing_secrets,
     normalize_request_auth,
     secrets_of,
@@ -760,6 +761,10 @@ class HttpEngine:
                 structured = body.lstrip().startswith(("{", "["))
                 sent["content-type"] = f"{'application/json' if structured else 'text/plain'}; charset=utf-8"
             sent.setdefault("accept", "*/*")
+            if auth_missing(target["auth"]):
+                raise PolicyError(
+                    f"authentication of target '{target['name']}' is not filled in (edit the target on the HTTP page)"
+                )
             url = _apply_auth(auth, sent, url)
             exchange["request"]["url"] = mask_secrets(str(url), secrets)
             exchange["request"]["sentHeaders"] = _masked(sent, secrets)

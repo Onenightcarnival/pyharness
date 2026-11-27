@@ -163,12 +163,17 @@ def normalize_variables(value: Any) -> dict[str, str]:
     return _map(value, "variables", VARIABLE_NAME)
 
 
-def normalize_secrets(value: Any, previous: dict[str, str] | None = None) -> dict[str, str]:
-    """Secret variables of a payload; an empty value takes the value ``previous`` stores under that name."""
+def normalize_secrets(
+    value: Any, previous: dict[str, str] | None = None, allow_missing: bool = False
+) -> dict[str, str]:
+    """
+    Secret variables of a payload; an empty value takes the value ``previous`` stores under that name.
+    ``allow_missing`` keeps a value that is neither given nor stored empty (an imported target).
+    """
     out: dict[str, str] = {}
     for name, given in _map(value, "secrets", VARIABLE_NAME).items():
         kept = given or (previous or {}).get(name) or ""
-        if not kept:
+        if not kept and not allow_missing:
             raise StoreError(f'secrets: value of "{name}" is required')
         out[name] = kept
     return out
@@ -210,10 +215,10 @@ def _integer(value: Any, low: int, high: int, name: str) -> int:
     return value
 
 
-def normalize_auth(value: Any, previous: dict[str, Any] | None = None) -> dict[str, Any]:
+def normalize_auth(value: Any, previous: dict[str, Any] | None = None, allow_missing: bool = False) -> dict[str, Any]:
     """
     Validate a target's auth payload; ``previous`` supplies a secret the form left empty when the type is
-    unchanged.
+    unchanged. ``allow_missing`` keeps a secret that is neither given nor stored empty (an imported target).
     """
     if value is None:
         return previous or {"type": "none"}
@@ -234,6 +239,8 @@ def normalize_auth(value: Any, previous: dict[str, Any] | None = None) -> dict[s
         kept = previous.get(field) if previous is not None and previous.get("type") == kind else None
         if isinstance(kept, str) and kept:
             return kept
+        if allow_missing:
+            return ""
         raise StoreError(f"auth.{field} is required")
 
     if kind == "none":
@@ -307,15 +314,22 @@ def _auth_hint(secret: str) -> str:
     return secret.strip() if VARIABLE.fullmatch(secret.strip()) else _hint(secret)
 
 
-def summarize_auth(auth: dict[str, Any]) -> dict[str, Any]:
-    """Secret-free view: the type, non-secret names and a hint of the secret."""
+def auth_missing(auth: dict[str, Any]) -> bool:
+    """Whether the secret of a target's auth is not stored."""
     kind = auth["type"]
+    return kind in SECRET_FIELDS and not auth[SECRET_FIELDS[kind]]
+
+
+def summarize_auth(auth: dict[str, Any]) -> dict[str, Any]:
+    """Secret-free view: the type, non-secret names, a hint of the secret, ``missing`` when it is not stored."""
+    kind = auth["type"]
+    missing = {"missing": True} if auth_missing(auth) else {}
     if kind == "bearer":
-        return {"type": "bearer", "hint": _auth_hint(auth["token"])}
+        return {"type": "bearer", "hint": _auth_hint(auth["token"]), **missing}
     if kind == "basic":
-        return {"type": "basic", "username": auth["username"]}
+        return {"type": "basic", "username": auth["username"], **missing}
     if kind in ("header", "query"):
-        return {"type": kind, "name": auth["name"], "hint": _auth_hint(auth["value"])}
+        return {"type": kind, "name": auth["name"], "hint": _auth_hint(auth["value"]), **missing}
     return {"type": "none"}
 
 
@@ -340,6 +354,52 @@ def summarize(target: dict[str, Any]) -> dict[str, Any]:
         "secrets": {name: _hint(value) for name, value in target["secrets"].items()},
         "allowedHosts": list(target["allowedHosts"]),
         **{k: target[k] for k in ("allowMutations", "allowPrivate", "timeoutMs", "createdAt", "updatedAt")},
+    }
+
+
+def build_target(
+    payload: dict[str, Any], taken: list[str], previous: dict[str, Any] | None = None, allow_missing: bool = False
+) -> dict[str, Any]:
+    """
+    A validated target from a payload. ``previous`` supplies the fields the payload leaves out, the secrets it
+    leaves empty, the id and the creation time; ``taken``: names of the other targets. ``allow_missing`` keeps a
+    secret that is neither given nor stored empty (an imported target).
+    """
+
+    def field(name: str, normalize: Callable[[Any], Any]) -> Any:
+        return previous[name] if previous is not None and name not in payload else normalize(payload.get(name))
+
+    def switch(name: str) -> bool:
+        given = payload.get(name)
+        return given if isinstance(given, bool) else previous is not None and previous[name]
+
+    base_url = field("baseUrl", normalize_base_url)
+    name = field("name", lambda wanted: _text(wanted).strip())
+    if name and not _valid_name(name):
+        raise StoreError(NAME_RULE)
+    variables = field("variables", normalize_variables)
+    stored = previous["secrets"] if previous is not None else None
+    secret_variables = field("secrets", lambda value: normalize_secrets(value, stored, allow_missing))
+    _distinct(variables, secret_variables)
+    now = now_ms()
+    return {
+        "id": previous["id"] if previous is not None else secrets.token_hex(6),
+        "name": _unique_name(name or _default_name(base_url), taken),
+        "baseUrl": base_url,
+        "auth": normalize_auth(payload.get("auth"), previous["auth"] if previous is not None else None, allow_missing),
+        "headers": field("headers", normalize_headers),
+        "variables": variables,
+        "secrets": secret_variables,
+        "allowedHosts": field("allowedHosts", normalize_allowed_hosts),
+        "allowMutations": switch("allowMutations"),
+        "allowPrivate": switch("allowPrivate"),
+        "timeoutMs": _integer(payload["timeoutMs"], MIN_TIMEOUT_MS, MAX_TIMEOUT_MS, "timeoutMs")
+        if "timeoutMs" in payload
+        else previous["timeoutMs"]
+        if previous is not None
+        else DEFAULT_TIMEOUT_MS,
+        "createdAt": previous.get("createdAt", now) if previous is not None else now,
+        "updatedAt": now,
     }
 
 
@@ -387,36 +447,9 @@ class TargetStore:
         self._save(file)
         return dict(settings)
 
-    def _name(self, wanted: Any, base_url: str, others: list[dict[str, Any]]) -> str:
-        name = _text(wanted).strip()
-        if name and not _valid_name(name):
-            raise StoreError(NAME_RULE)
-        return _unique_name(name or _default_name(base_url), [t["name"] for t in others])
-
     def create(self, payload: dict[str, Any]) -> dict[str, Any]:
         file = self._load()
-        base_url = normalize_base_url(payload.get("baseUrl"))
-        variables = normalize_variables(payload.get("variables"))
-        secret_variables = normalize_secrets(payload.get("secrets"))
-        _distinct(variables, secret_variables)
-        now = now_ms()
-        target = {
-            "id": secrets.token_hex(6),
-            "name": self._name(payload.get("name"), base_url, file["targets"]),
-            "baseUrl": base_url,
-            "auth": normalize_auth(payload.get("auth")),
-            "headers": normalize_headers(payload.get("headers")),
-            "variables": variables,
-            "secrets": secret_variables,
-            "allowedHosts": normalize_allowed_hosts(payload.get("allowedHosts")),
-            "allowMutations": payload.get("allowMutations") is True,
-            "allowPrivate": payload.get("allowPrivate") is True,
-            "timeoutMs": _integer(payload["timeoutMs"], MIN_TIMEOUT_MS, MAX_TIMEOUT_MS, "timeoutMs")
-            if "timeoutMs" in payload
-            else DEFAULT_TIMEOUT_MS,
-            "createdAt": now,
-            "updatedAt": now,
-        }
+        target = build_target(payload, [t["name"] for t in file["targets"]])
         file["targets"].append(target)
         self._save(file)
         return target
@@ -427,32 +460,17 @@ class TargetStore:
         target = next((t for t in file["targets"] if t["id"] == target_id), None)
         if target is None:
             raise StoreError(f"target '{target_id}' not found")
-        base_url = normalize_base_url(patch["baseUrl"]) if "baseUrl" in patch else target["baseUrl"]
-        changes: dict[str, Any] = {
-            "name": self._name(
-                patch.get("name", target["name"]), base_url, [t for t in file["targets"] if t["id"] != target_id]
-            ),
-            "baseUrl": base_url,
-            "auth": normalize_auth(patch.get("auth"), target["auth"]),
-        }
-        for field, normalize in (
-            ("headers", normalize_headers),
-            ("variables", normalize_variables),
-            ("allowedHosts", normalize_allowed_hosts),
-        ):
-            if field in patch:
-                changes[field] = normalize(patch[field])
-        if "secrets" in patch:
-            changes["secrets"] = normalize_secrets(patch["secrets"], target["secrets"])
-        _distinct(changes.get("variables", target["variables"]), changes.get("secrets", target["secrets"]))
-        for field in ("allowMutations", "allowPrivate"):
-            if isinstance(patch.get(field), bool):
-                changes[field] = patch[field]
-        if "timeoutMs" in patch:
-            changes["timeoutMs"] = _integer(patch["timeoutMs"], MIN_TIMEOUT_MS, MAX_TIMEOUT_MS, "timeoutMs")
-        target.update(changes, updatedAt=now_ms())
+        target.update(build_target(patch, [t["name"] for t in file["targets"] if t["id"] != target_id], target))
         self._save(file)
         return target
+
+    def replace_all(self, targets: list[dict[str, Any]], history_limit: int | None = None) -> None:
+        """Write the whole target list at once (an import); ``history_limit`` sets that setting."""
+        file = self._load()
+        file["targets"] = list(targets)
+        if history_limit is not None:
+            file["settings"] = {**DEFAULT_SETTINGS, **file["settings"], "historyLimit": history_limit}
+        self._save(file)
 
     def delete(self, target_id: str) -> None:
         file = self._load()
@@ -665,6 +683,28 @@ def _request_fields(payload: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def build_request(target_id: str, payload: dict[str, Any], request_id: str | None = None) -> dict[str, Any]:
+    """A saved request of a scope from a payload: its validated fields over the defaults; a new id without one."""
+    now = now_ms()
+    return {
+        "id": request_id or secrets.token_hex(6),
+        "targetId": target_id,
+        "name": "",
+        "method": "GET",
+        "path": "",
+        "query": [],
+        "headers": [],
+        "auth": {"type": "none"},
+        "bodyMode": "none",
+        "body": "",
+        "form": [],
+        "captures": [],
+        **_request_fields(payload),
+        "createdAt": now,
+        "updatedAt": now,
+    }
+
+
 class RequestStore:
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -687,24 +727,7 @@ class RequestStore:
         if not target_id:
             raise StoreError("targetId is required")
         self._room(target_id)
-        now = now_ms()
-        request = {
-            "id": secrets.token_hex(6),
-            "targetId": target_id,
-            "name": "",
-            "method": "GET",
-            "path": "",
-            "query": [],
-            "headers": [],
-            "auth": {"type": "none"},
-            "bodyMode": "none",
-            "body": "",
-            "form": [],
-            "captures": [],
-            **_request_fields(payload),
-            "createdAt": now,
-            "updatedAt": now,
-        }
+        request = build_request(target_id, payload)
         self._save([*self._load(), request])
         return request
 
@@ -726,6 +749,10 @@ class RequestStore:
         if self.get(request_id) is None:
             raise StoreError(f"request '{request_id}' not found")
         self._save([r for r in self._load() if r["id"] != request_id])
+
+    def replace_all(self, requests: list[dict[str, Any]]) -> None:
+        """Write the whole request list at once (an import)."""
+        self._save(list(requests))
 
     def delete_by_target(self, target_id: str) -> int:
         """Remove every request of a target; returns the count."""

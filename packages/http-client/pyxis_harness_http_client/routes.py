@@ -14,11 +14,13 @@ from pyxis_harness import package_toml
 from .engine import HttpEngine, PolicyError, SendOptions
 from .protocol import DIRECT_TARGET_ID, PANEL_BODY_BYTES
 from .store import HistoryStore, RequestStore, StoreError, TargetStore, ValueStore, summarize
+from .transfer import export_bundle, plan_import
 
 _CFG = package_toml(__file__)["routes"]
 MAX_SEND_BYTES: int = _CFG["MAX_SEND_BYTES"]
 MAX_HISTORY_PAGE: int = _CFG["MAX_HISTORY_PAGE"]
 MAX_REQUEST_BYTES: int = _CFG["MAX_REQUEST_BYTES"]
+MAX_IMPORT_BYTES: int = _CFG["MAX_IMPORT_BYTES"]
 NDJSON_HEADERS = {"cache-control": "no-store", "referrer-policy": "no-referrer", "x-accel-buffering": "no"}
 
 
@@ -187,6 +189,22 @@ def build_router(service: Host) -> APIRouter:
         if not known_scope(target):
             raise HTTPException(400, f"target '{target}' not found")
         return {"removed": values.delete(target, name or None)}
+
+    # ------------------------------------------------------------------ export and import
+    @router.get("/transfer")
+    async def export_config() -> dict[str, Any]:
+        return {"bundle": export_bundle(store.list(), requests.list(), store.settings())}
+
+    @router.post("/transfer")
+    async def import_config(request: Request) -> dict[str, Any]:
+        data = await _body(request, MAX_IMPORT_BYTES)
+        conflict = "overwrite" if data.get("conflict") == "overwrite" else "skip"
+        plan = checked(plan_import, data.get("bundle"), store.list(), requests.list(), conflict)
+        # A dry run validates the file and reports what the import would do.
+        if data.get("dryRun") is not True:
+            requests.replace_all(plan.requests)
+            store.replace_all(plan.targets, plan.history_limit)
+        return {"result": plan.result}
 
     # ------------------------------------------------------------------ history and test
     @router.get("/history")
