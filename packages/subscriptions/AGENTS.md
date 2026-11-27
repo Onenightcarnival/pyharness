@@ -123,6 +123,17 @@ Cloud Code 后端只服务 Antigravity CLI User-Agent 家族的内容请求。
 | `parse_cli_version()` | auto-updater 文本中的第一个 `x.y.z`，否则 `None` |
 | `CliVersion` | 使用中的版本；`prime()` 每次启动从 CLI auto-updater 读取一次 stable 版本；读取失败 → 保留固定版本 |
 
+## Antigravity 的 thought signature（`antigravity_wire.py`）
+
+Gemini 3 及以后的模型：带工具调用的历史里，每个模型回合的函数调用要带 `thoughtSignature`，否则请求被 400 拒绝。
+
+| 项 | 契约 |
+|---|---|
+| 适用模型 | `gemini_major(model) >= 3`；Gemini 2.x、Claude、gpt-oss 不带 |
+| 收到 | 应答里函数调用 part 的 `thoughtSignature` 记入 `AIMessage.additional_kwargs["thought_signatures"]`：`{model: {tool call id: signature}}` |
+| 发回 | 该消息有本模型的签名：按调用 id 原样带回 |
+| 没有本模型的签名 | 回合的第一个函数调用带 `skip_thought_signature_validator`（换过模型的历史、压缩后的历史） |
+
 ## `config.toml`
 
 | 项 | 规则 |

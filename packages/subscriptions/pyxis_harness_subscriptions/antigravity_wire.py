@@ -22,6 +22,14 @@ FALLBACK_ORIGIN: str = _CFG["FALLBACK_ORIGIN"]
 FALLBACK_STATUSES: set[int] = set(_CFG["FALLBACK_STATUSES"])
 UNSUPPORTED_CLIENT = re.compile(_CFG["UNSUPPORTED_CLIENT_PATTERN"], re.IGNORECASE)
 UNSUPPORTED_CLIENT_CODE = "UNSUPPORTED_CLIENT"
+SIGNATURES = "thought_signatures"  # AIMessage.additional_kwargs: {model: {tool call id: thought signature}}
+SKIP_SIGNATURE = "skip_thought_signature_validator"  # stands in for a signature the model did not issue
+
+
+def gemini_major(model: str) -> int:
+    """Major version of a Gemini model id (``gemini-4-…`` → 4); 0 for any other model."""
+    match = re.match(r"gemini-(\d+)", model.lower())
+    return int(match.group(1)) if match else 0
 
 
 # ---------------------------------------------------------------------- efforts and thinking
@@ -40,7 +48,7 @@ def efforts_for(model: str) -> list[str]:
     tail = re.search(r"-(low|medium|high)$", m)
     if tail:
         return [tail.group(1)]
-    if m.startswith(("gemini-2.5", "gemini-3")):
+    if m.startswith("gemini-2.5") or gemini_major(m) >= 3:
         return ["low", "medium", "high"]
     return []
 
@@ -193,11 +201,16 @@ def to_contents(messages: list[BaseMessage], model: str) -> tuple[str | None, li
     """
     ``(system_instruction, contents)``; consecutive same-role messages merge; tool results become
     ``functionResponse`` parts in a user turn.
+
+    | function call of a model turn, for a Gemini model from 3 on | ``thoughtSignature``                  |
+    |--------------------------------------------------------------|---------------------------------------|
+    | ``model`` returned one with it (``SIGNATURES``)              | that signature                        |
+    | the first call of a turn without any                         | ``SKIP_SIGNATURE``: no validation     |
     """
     system: list[str] = []
     contents: list[dict[str, Any]] = []
     call_names: dict[str, str] = {}
-    gemini3 = model.lower().startswith("gemini-3")
+    signed = gemini_major(model) >= 3
 
     def push(role: str, parts: list[dict[str, Any]]) -> None:
         if not parts:
@@ -225,14 +238,17 @@ def to_contents(messages: list[BaseMessage], model: str) -> tuple[str | None, li
             text = _text_of(message.content)
             if text:
                 parts.append({"text": text})
+            returned = (message.additional_kwargs.get(SIGNATURES) or {}).get(model) or {}
             for i, call in enumerate(message.tool_calls or []):
                 cid = str(call.get("id") or "")
                 call_names[cid] = str(call.get("name") or "")
                 part: dict[str, Any] = {
                     "functionCall": {"id": cid, "name": call.get("name"), "args": call.get("args") or {}}
                 }
-                if gemini3 and i == 0:
-                    part["thoughtSignature"] = "skip_thought_signature_validator"
+                if signed and returned.get(cid):
+                    part["thoughtSignature"] = returned[cid]
+                elif signed and not returned and i == 0:
+                    part["thoughtSignature"] = SKIP_SIGNATURE
                 parts.append(part)
             push("model", parts)
         elif isinstance(message, ToolMessage):
@@ -296,8 +312,9 @@ def build_request(
 
 # ---------------------------------------------------------------------- streaming translation
 class AntigravityTranslator:
-    def __init__(self, label: str) -> None:
+    def __init__(self, label: str, model: str = "") -> None:
         self.label = label
+        self.model = model  # its thought signatures return to this model only
         self.saw_content = False
         self.saw_call = False
         self.finished = False
@@ -353,8 +370,10 @@ class AntigravityTranslator:
                     idx = self.calls
                     self.calls += 1
                     cid = str(call.get("id") or f"call_{uuid.uuid4().hex}")
+                    signature = part.get("thoughtSignature")
                     yield AIMessageChunk(
                         content="",
+                        additional_kwargs={SIGNATURES: {self.model: {cid: str(signature)}}} if signature else {},
                         tool_call_chunks=[
                             {
                                 "name": str(call.get("name") or ""),

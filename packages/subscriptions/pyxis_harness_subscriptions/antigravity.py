@@ -439,7 +439,7 @@ class AntigravityChatModel(ResponsesChatModel):
             last: Exception | None = None
             done = False
             for origin in provider.origins():
-                translator = AntigravityTranslator(self.label)
+                translator = AntigravityTranslator(self.label, self.model_name)
                 try:
                     async with provider.http.stream(
                         "POST",

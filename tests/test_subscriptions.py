@@ -24,6 +24,7 @@ from pyxis_harness_subscriptions.antigravity_wire import (
     AntigravityTranslator,
     build_request,
     efforts_for,
+    gemini_major,
     simple_schema,
     thinking_config,
     to_contents,
@@ -290,6 +291,28 @@ def test_antigravity_wire():
         "name": "f",
         "response": {"ok": True},
     } and contents[2]["parts"][1] == {"text": "next"}
+    # Every Gemini model from 3 on wants a signature on the first call of a turn; other models none.
+    placeholder = {"thoughtSignature": "skip_thought_signature_validator"}
+    for model, wanted in (("gemini-4-hydrogen-high", True), ("gemini-2.5-flash", False), ("claude-sonnet-4", False)):
+        first = to_contents(messages, model)[1][1]["parts"][0]
+        assert ("thoughtSignature" in first) is wanted, model
+    assert gemini_major("gemini-4-argon-high") == 4 and gemini_major("gemini-3.1-pro") == 3
+    assert gemini_major("claude-sonnet-4") == 0 and efforts_for("gemini-4-argon") == ["low", "medium", "high"]
+    # A signature the model returned goes back with its call, to that model only.
+    translator = AntigravityTranslator("antigravity", "gemini-4-argon-high")
+    part = {"functionCall": {"id": "c1", "name": "f", "args": {"a": 1}}, "thoughtSignature": "SIG"}
+    second = {"functionCall": {"id": "c2", "name": "f", "args": {"a": 2}}}
+    payload = {"response": {"candidates": [{"content": {"parts": [part, second]}, "finishReason": "STOP"}]}}
+    chunks = list(translator.feed(json.dumps(payload)))
+    merged = chunks[0]
+    for chunk in chunks[1:]:
+        merged = merged + chunk
+    assert merged.additional_kwargs["thought_signatures"] == {"gemini-4-argon-high": {"c1": "SIG"}}
+    reply = AIMessage(content="", tool_calls=merged.tool_calls, additional_kwargs=merged.additional_kwargs)
+    parts = to_contents([HumanMessage(content="hi"), reply], "gemini-4-argon-high")[1][1]["parts"]
+    assert parts[0]["thoughtSignature"] == "SIG" and "thoughtSignature" not in parts[1]
+    other = to_contents([HumanMessage(content="hi"), reply], "gemini-4-hydrogen-high")[1][1]["parts"]
+    assert other[0]["thoughtSignature"] == placeholder["thoughtSignature"] and "thoughtSignature" not in other[1]
     req = build_request(
         project="p", model="claude-sonnet-4", session_id="s", messages=messages, tools=[], max_tokens=70000, effort=None
     )
