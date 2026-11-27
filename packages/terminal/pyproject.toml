@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-terminal"
-version = "0.1.1.dev2"
+version = "0.1.1.dev3"
 description = "PyxisHarness plugin: the shell tool (bash; PowerShell on Windows), background jobs, PTY terminals for the Web UI"
 license = "MIT"
 requires-python = ">=3.12"
@@ -16,9 +16,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "pyxis-harness-core==0.1.1.dev2",
-    "pyxis-harness-tools==0.1.1.dev2",
-    "pyxis-harness-http==0.1.1.dev2",
+    "pyxis-harness-core==0.1.1.dev3",
+    "pyxis-harness-tools==0.1.1.dev3",
+    "pyxis-harness-http==0.1.1.dev3",
     "fastapi==0.162.0",
     "langchain-core==1.7.1",
     "langgraph==1.2.18",
