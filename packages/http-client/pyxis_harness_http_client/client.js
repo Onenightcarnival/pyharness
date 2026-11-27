@@ -1,26 +1,34 @@
 window.__PyhModules__.load({
   id: "http-client",
   factory(require) {
-    const { h, icon, esc } = require("pyxis-harness");
+    const { h, icon, esc, json } = require("pyxis-harness");
     const ico = (name, cls) => { const tpl = document.createElement("template"); tpl.innerHTML = icon(name, cls); return tpl.content.firstChild; };
     const L = {
       zh: {
         entry: "HTTP", title: "HTTP 请求", close: "关闭",
         intro: "HTTP API 客户端：目标与凭证、保存的请求、请求历史与事件流；可开放给 Agent 的 http_* 工具。",
         agentTools: "允许 Agent 使用", toolsOn: "已注册 http_* 工具", toolsOff: "已注销 http_* 工具", resize: "调整请求与响应的比例",
+        transferImport: "导入", transferExport: "导出", transferTitle: "导入配置",
+        transferExported: (targets, requests) => `已导出 ${targets} 个目标、${requests} 个请求，不含已存密钥。`,
+        transferInvalid: (error) => `无法导入：${error}`, transferConflicts: (names) => `以下目标已存在：${names}`,
+        transferDirect: "无目标的请求", transferOverwrite: "覆盖", transferSkip: "跳过",
+        transferHint: "覆盖：用文件替换同名目标的设置与请求，保留已存密钥。跳过：只导入其余目标。",
+        transferDone: (created, overwritten, skipped, requests) => `已导入：新增 ${created}，覆盖 ${overwritten}，跳过 ${skipped}，请求 ${requests}。`,
+        transferNeedAuth: (names) => `待补填密钥：${names}`,
         targetsSelect: "目标", targetsDirect: "无目标",
         targetsDirectHint: "直接请求：填写完整 URL。凭证不由 harness 保管，Agent 不可调用。",
         targetsAdd: "＋ 新增目标…", targetsFromRequest: "由此地址新建目标", targetsEdit: "编辑目标", targetsDelete: "删除目标",
         targetsTest: "测试连接", targetsDeleteConfirm: (name) => `确定删除目标「${name}」？同时删除它保存的请求与请求历史。`,
         targetsTesting: "连接测试中…", targetsTestOk: (status, latency) => `HTTP ${status}（${latency} ms）`,
         targetsTestFail: (error) => `连接失败：${error}`, targetsMutations: "允许变更", targetsReadOnly: "仅读",
+        targetsAuthMissing: "密钥未填写",
         formCreate: "新增目标", formEdit: (name) => `编辑目标「${name}」`, formName: "名称", formNamePlaceholder: "默认用主机名",
         formBaseUrl: "Base URL", formAuth: "认证",
         auth: { none: "无", bearer: "Bearer token", basic: "Basic", header: "自定义 header", query: "Query 参数" },
         authToken: "Token", authUsername: "用户名", authPassword: "密码", authHeaderName: "Header 名", authQueryName: "参数名",
         authValue: "值", authKeep: "留空保留已保存的值",
         formHeaders: "固定 header", formVariables: "变量", formVariablesHint: "在路径、query、header 和 body 中以 {{名称}} 引用。",
-        formSecrets: "密钥变量", formSecretsHint: "用法同变量。值仅存 harness，遮罩显示；留空保留已保存的值。",
+        formSecrets: "密钥变量", formSecretsHint: "用法同变量。值仅存 harness，遮罩显示，不导出；留空保留已保存的值。",
         formAllowedHosts: "允许的额外 host", formAllowedHostsHint: "每行一个；Base URL 的 host 始终允许，*.example.com 匹配子域。",
         formAllowMutations: "允许 Agent 使用 POST / PUT / PATCH / DELETE（每次仍需确认）", formAllowPrivate: "允许访问回环与内网地址",
         formTimeout: "超时（毫秒）", formAdvanced: "高级", cancel: "取消", save: "保存", saving: "保存中…",
@@ -38,6 +46,7 @@ window.__PyhModules__.load({
         requestNoBody: (method) => `${method} 请求不发送 body。`, requestFormatJson: "格式化",
         requestInvalidJson: (error) => `JSON 无效：${error}`, requestFixedHeaders: "目标的固定 header",
         requestAuthNote: "认证在目标上配置，由 harness 在发送时注入。",
+        requestAuthMissing: "目标的认证密钥未填写，请求不会发送。",
         captureName: "变量", captureValue: "取值", captureSource: "来源", captureSources: { body: "响应 JSON", header: "响应头" },
         capturePaths: { body: "JSON 路径，如 data.token", header: "Header 名，如 X-Token" }, captureAdd: "添加规则",
         captureLifetime: "有效期", captureLifetimeHint: "秒数，或响应 JSON 中秒数所在的路径；留空不过期。",
@@ -87,6 +96,13 @@ window.__PyhModules__.load({
         entry: "HTTP", title: "HTTP requests", close: "Close",
         intro: "HTTP API client: targets with their credentials, saved requests, request history and event streams; the http_* tools can be opened to the agent.",
         agentTools: "Allow agent", toolsOn: "http_* tools registered", toolsOff: "http_* tools unregistered",
+        transferImport: "Import", transferExport: "Export", transferTitle: "Import configuration",
+        transferExported: (targets, requests) => `Exported ${targets} targets and ${requests} requests, without stored secrets.`,
+        transferInvalid: (error) => `Import failed: ${error}`, transferConflicts: (names) => `These targets already exist: ${names}`,
+        transferDirect: "requests without a target", transferOverwrite: "Overwrite", transferSkip: "Skip",
+        transferHint: "Overwrite: the file replaces the settings and requests of matching targets; stored secrets stay. Skip: import the other targets only.",
+        transferDone: (created, overwritten, skipped, requests) => `Imported: ${created} new, ${overwritten} overwritten, ${skipped} skipped, ${requests} requests.`,
+        transferNeedAuth: (names) => `Secrets to fill in: ${names}`,
         resize: "Resize request and response", targetsSelect: "Target", targetsDirect: "No target",
         targetsDirectHint: "Direct requests: enter a full URL. Credentials are not kept by the harness, and the agent cannot call them.",
         targetsAdd: "＋ New target…", targetsFromRequest: "New target from this URL", targetsEdit: "Edit target",
@@ -94,6 +110,7 @@ window.__PyhModules__.load({
         targetsDeleteConfirm: (name) => `Delete target "${name}"? Its saved requests and request history are deleted too.`,
         targetsTesting: "Testing connection…", targetsTestOk: (status, latency) => `HTTP ${status} (${latency} ms)`,
         targetsTestFail: (error) => `Connection failed: ${error}`, targetsMutations: "mutations allowed", targetsReadOnly: "read-only",
+        targetsAuthMissing: "secret not filled in",
         formCreate: "New target", formEdit: (name) => `Edit target "${name}"`, formName: "Name",
         formNamePlaceholder: "Defaults to the host name", formBaseUrl: "Base URL", formAuth: "Authentication",
         auth: { none: "None", bearer: "Bearer token", basic: "Basic", header: "Custom header", query: "Query parameter" },
@@ -101,7 +118,7 @@ window.__PyhModules__.load({
         authQueryName: "Parameter name", authValue: "Value", authKeep: "Leave empty to keep the saved value",
         formHeaders: "Fixed headers", formVariables: "Variables",
         formVariablesHint: "Reference them as {{name}} in path, query, headers and body.", formSecrets: "Secret variables",
-        formSecretsHint: "Used like variables. Values stay on the harness and are masked; an empty value keeps the saved one.",
+        formSecretsHint: "Used like variables. Values stay on the harness, are masked and are not exported; an empty value keeps the saved one.",
         formAllowedHosts: "Extra allowed hosts",
         formAllowedHostsHint: "One per line; the base URL host is always allowed, *.example.com matches subdomains.",
         formAllowMutations: "Allow the agent to use POST / PUT / PATCH / DELETE (each call still asks for confirmation)",
@@ -122,6 +139,7 @@ window.__PyhModules__.load({
         requestNoBody: (method) => `${method} requests send no body.`, requestFormatJson: "Format",
         requestInvalidJson: (error) => `Invalid JSON: ${error}`, requestFixedHeaders: "Fixed headers of the target",
         requestAuthNote: "Authentication is configured on the target and injected by the harness when sending.",
+        requestAuthMissing: "The target's authentication secret is not filled in; requests are not sent.",
         captureName: "Variable", captureValue: "Value from", captureSource: "Source", captureSources: { body: "JSON body", header: "Header" },
         capturePaths: { body: "JSON path, e.g. data.token", header: "Header name, e.g. X-Token" }, captureAdd: "Add rule",
         captureLifetime: "Lifetime", captureLifetimeHint: "Seconds, or the path of the seconds in the response JSON; empty means no expiry.",
@@ -205,6 +223,12 @@ window.__PyhModules__.load({
     // Distance from the bottom within which new rows keep the event list scrolled to the end.
     const STICK_PX = 48;
     const NO_AUTH = { type: "none" };
+    // What stands for a value the browser does not hold.
+    const VALUE_MASK = "••••••";
+    // Text above this size renders without highlighting.
+    const HIGHLIGHT_MAX_CHARS = 200000;
+    // Highlighted texts kept for redraws.
+    const HIGHLIGHT_KEEP = 16;
 
     // ------------------------------------------------------------ protocol
     const toPairs = (value) => (value === undefined ? [] : Array.isArray(value) ? value : Object.entries(value));
@@ -653,23 +677,32 @@ window.__PyhModules__.load({
       return { method: state.method, path: state.path, query: rowsToPairs(state.query), headers, body,
         ...(state.auth.type === "none" ? {} : { auth: state.auth }) };
     }
+    // Names whose values stay on the harness: the secret variables of a target and the captured variables of its
+    // scope (`captured`: the entries of `GET values`).
+    const hiddenNames = (target, captured) => [...Object.keys(target.secrets || {}), ...(captured || []).map((value) => value.name)];
+    // The mask of a hidden value reads as the mask, not as its percent-encoding.
+    const unmasked = (url) => url.split(encodeURIComponent(VALUE_MASK)).join(VALUE_MASK);
     // URL the server will request for a form (query auth excluded): `{ url }`, or `{ error }` when it cannot be built.
-    function previewUrl(target, state) {
-      const vars = target.variables;
+    // Variables are substituted by value; secret and captured ones show as the mask.
+    function previewUrl(target, state, captured) {
+      const vars = { ...target.variables, ...Object.fromEntries(hiddenNames(target, captured).map((name) => [name, VALUE_MASK])) };
       // A request without a target has nothing to preview until a URL is typed.
       if (target.baseUrl === "" && state.path.trim() === "") return { url: "" };
       try {
         const query = rowsToPairs(state.query).map(([name, value]) => [substitute(name, vars), substitute(value, vars)]);
-        return { url: joinUrl(target.baseUrl, substitute(state.path.trim(), vars), query).toString() };
+        return { url: unmasked(joinUrl(target.baseUrl, substitute(state.path.trim(), vars), query).toString()) };
       } catch (err) { return { error: message(err) }; }
     }
     const base64 = (text) => btoa(String.fromCharCode(...new TextEncoder().encode(text)));
     // The request as a cURL command: the target's fixed headers and the request's own authentication included, the
-    // target's credentials left out (the browser never holds them). Undefined while the URL cannot be built.
-    function curlOf(target, state) {
-      const preview = previewUrl(target, state);
+    // target's credentials left out (the browser never holds them). Variables are substituted by value; secret and
+    // captured ones show as the mask in the URL and stay `{{name}}` in headers and body. Undefined while the URL
+    // cannot be built.
+    function curlOf(target, state, captured) {
+      const preview = previewUrl(target, state, captured);
       if (!preview.url) return undefined;
-      const vars = target.variables;
+      const hidden = new Set(hiddenNames(target, captured));
+      const vars = Object.fromEntries(Object.entries(target.variables).filter(([name]) => !hidden.has(name)));
       const input = toRequestInput(state);
       const url = new URL(preview.url);
       const headers = [...Object.entries(target.headers), ...Object.entries(input.headers).map(([name, value]) => [name, substitute(value, vars)])];
@@ -678,7 +711,7 @@ window.__PyhModules__.load({
       if (auth.type === "basic" && auth.username !== "") headers.push(["Authorization", `Basic ${base64(`${auth.username}:${auth.password}`)}`]);
       if (auth.type === "header" && auth.name !== "" && auth.value !== "") headers.push([auth.name, auth.value]);
       if (auth.type === "query" && auth.name !== "" && auth.value !== "") url.searchParams.set(auth.name, auth.value);
-      return toCurl({ method: state.method, url: url.toString(), headers,
+      return toCurl({ method: state.method, url: unmasked(url.toString()), headers,
         body: input.body === undefined ? undefined : substitute(input.body, vars) });
     }
     // Path and query of a recorded request; the composed path when no URL was built.
@@ -706,11 +739,42 @@ window.__PyhModules__.load({
     // Variable names as `{{name}}` references.
     const references = (names) => names.map((name) => `{{${name}}}`).join(" ");
 
+    // ------------------------------------------------------------ highlighting
+    // Lexer of a body: by media type, then JSON by shape. Undefined: the body renders plain.
+    function languageOf(contentType, text) {
+      const type = contentType.split(";")[0].trim().toLowerCase();
+      if (/json/.test(type)) return "json";
+      if (type === "text/html" || type === "application/xhtml+xml") return "html";
+      if (/xml/.test(type)) return "xml";
+      if (/javascript|ecmascript/.test(type)) return "javascript";
+      if (type === "text/css") return "css";
+      if (/yaml/.test(type)) return "yaml";
+      const trimmed = text.trimStart();
+      return trimmed.startsWith("{") || trimmed.startsWith("[") ? "json" : undefined;
+    }
+    // Whether a text is sent for highlighting: within the size limit, and more than the mask of a hidden value.
+    const highlightable = (text) => text.length <= HIGHLIGHT_MAX_CHARS && text.split(VALUE_MASK).join("").trim() !== "";
+    // Highlighted HTML of a text by lexer, from the harness (`POST /api/highlight`): lines of spans with `hl-*`
+    // classes, empty when no lexer matched. One request per text; the latest texts are kept.
+    const HIGHLIGHTS = new Map();
+    function highlightOf(text, lang) {
+      const key = `${lang}\n${text}`;
+      let found = HIGHLIGHTS.get(key);
+      if (found === undefined) {
+        found = json("/highlight", { method: "POST", body: JSON.stringify({ items: [{ code: text, lang }] }) })
+          .then((data) => (data.items[0] || {}).html || "");
+        found.catch(() => HIGHLIGHTS.delete(key));
+        HIGHLIGHTS.set(key, found);
+        if (HIGHLIGHTS.size > HIGHLIGHT_KEEP) HIGHLIGHTS.delete(HIGHLIGHTS.keys().next().value);
+      }
+      return found;
+    }
+
     return {
       // The pure functions of the module; the page reads nothing from here.
       lib: { SseParser, parseSse, isEventStream, sseRows, deltaText, tokenize, parseCurl, splitQuery, toCurl, joinUrl, substitute,
         rowsToBulk, bulkToRows, toRequestInput, previewUrl, curlOf, formFromCurl, formFromExchange, pathBelow, saveName,
-        lifetimeText, parseLifetime, valueExpired },
+        lifetimeText, parseLifetime, valueExpired, languageOf, highlightable },
       apply(ctx) {
         const t = L[ctx.locale] || L.en;
         const style = document.createElement("style");
@@ -739,6 +803,7 @@ window.__PyhModules__.load({
           .hc-targetUrl { font: 11.5px var(--mono); color: var(--label-secondary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
           .hc-targetMeta { font-size: 11px; color: var(--label-tertiary); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
           .hc-targetMeta[data-wrap] { white-space: normal; line-height: 1.5; }
+          .hc-targetMeta[data-missing] { color: var(--hc-warn); }
           .hc-targetInfo .hc-link { padding-left: 0; }
           .hc-sideTabs { display: flex; align-items: center; gap: 2px; flex: none; padding: 0 6px; border-bottom: 0.5px solid var(--border-l2); min-height: 34px; }
           .hc-sideFilter { padding: 8px 10px; flex: none; }
@@ -1030,7 +1095,25 @@ window.__PyhModules__.load({
           button.textContent = t.responseCopied;
           setTimeout(() => { button.textContent = label; }, 1500);
         }
-        function authLabel(auth) {
+        // A read-only code block: the text at once, its token colours once the harness returns them.
+        function codeBlock(text, lang) {
+          const node = h("pre", { class: "hc-code" }, text);
+          if (lang !== undefined && highlightable(text)) highlightOf(text, lang).then((html) => {
+            if (html !== "" && node.textContent === text) { node.innerHTML = html; node.classList.add("hl"); }
+          }, () => { /* the text stays plain */ });
+          return node;
+        }
+        function download(blob, name) {
+          const href = URL.createObjectURL(blob);
+          const link = h("a", { href, download: name });
+          document.body.appendChild(link); link.click(); link.remove();
+          setTimeout(() => URL.revokeObjectURL(href), 10000);
+        }
+        // Whether a target summary lacks a secret: of its authentication, or of a secret variable.
+        const secretsMissing = (target) => !!target.auth.missing || Object.values(target.secrets || {}).some((hint) => hint === "");
+        function authLabel(target) {
+          const auth = target.auth;
+          if (secretsMissing(target)) return t.targetsAuthMissing;
           if (auth.type === "bearer") return `Bearer ${auth.hint}`;
           if (auth.type === "basic") return `Basic ${auth.username}`;
           if (auth.type === "header") return `${auth.name}: ${auth.hint}`;
@@ -1038,10 +1121,11 @@ window.__PyhModules__.load({
         }
         function authSummary(auth) {
           const rows = [[t.formAuth, t.auth[auth.type]]];
-          if (auth.type === "bearer") rows.push([t.authToken, auth.hint]);
-          if (auth.type === "basic") rows.push([t.authUsername, auth.username], [t.authPassword, "••••••"]);
-          if (auth.type === "header") rows.push([t.authHeaderName, auth.name], [t.authValue, auth.hint]);
-          if (auth.type === "query") rows.push([t.authQueryName, auth.name], [t.authValue, auth.hint]);
+          const secret = (shown) => (auth.missing ? "—" : shown);
+          if (auth.type === "bearer") rows.push([t.authToken, secret(auth.hint)]);
+          if (auth.type === "basic") rows.push([t.authUsername, auth.username], [t.authPassword, secret(VALUE_MASK)]);
+          if (auth.type === "header") rows.push([t.authHeaderName, auth.name], [t.authValue, secret(auth.hint)]);
+          if (auth.type === "query") rows.push([t.authQueryName, auth.name], [t.authValue, secret(auth.hint)]);
           return rows;
         }
         // The fields of one authentication type; `read` and `write` address them as token, username, password, name
@@ -1126,8 +1210,8 @@ window.__PyhModules__.load({
           let alive = true; let dialog = null; let scopeGen = 0; let newest; let pollTimer = 0; let focusAfterLoad = false;
           // Set by the pane on display: the derived parts of the request form, and the growth of the live event stream.
           let syncForm = () => {}; let liveSync = null;
-          // Pending autosave timers by request id.
-          const saveTimers = new Map();
+          // Pending autosave timers by request id, and the writes on their way to the server.
+          const saveTimers = new Map(); const saving = new Set();
           const st = { targets: [], scopeId: DIRECT, agentTools: false, historyLimit: null, banner: null, testing: false, loaded: false,
             requests: [], selected: {}, shown: {}, history: [], values: [], sideTab: "requests", requestFilter: "", historyFilter: "", requestTab: "params",
             responseTab: "preview", sending: null, live: null, menuId: null, renaming: null };
@@ -1136,6 +1220,7 @@ window.__PyhModules__.load({
           const view = { id: undefined, pretty: true, rendered: false, mode: "events", open: new Set() };
 
           const headBox = h("div", { class: "pageHead" });
+          const fileInput = h("input", { type: "file", accept: "application/json,.json", hidden: true, onChange: onImportFile });
           const bannerBox = h("div");
           const sideTopBox = h("div", { class: "hc-sideTop" });
           const sideTabsBox = h("div", { class: "hc-sideTabs", role: "tablist" });
@@ -1154,14 +1239,14 @@ window.__PyhModules__.load({
           const panes = h("div", { class: "hc-panes" }, requestBox, divider, responseBox);
           panes.style.setProperty("--hc-split", `${readSplit()}%`);
           const root = h("section", { class: "hc-page", onKeydown },
-            headBox, bannerBox,
+            headBox, fileInput, bannerBox,
             h("div", { class: "hc-body" },
               h("aside", { class: "hc-side" }, sideTopBox, sideTabsBox, filterBox, listBox, footBox),
               h("div", { class: "hc-panesWrap" }, panes)));
           el.replaceChildren(root);
 
           // Stand-in summary of the scope without a target.
-          const directScope = () => ({ id: DIRECT, name: t.targetsDirect, baseUrl: "", auth: NO_AUTH, headers: {}, variables: {} });
+          const directScope = () => ({ id: DIRECT, name: t.targetsDirect, baseUrl: "", auth: NO_AUTH, headers: {}, variables: {}, secrets: {} });
           const scopeOf = () => st.targets.find((target) => target.id === st.scopeId) || directScope();
           const currentOf = () => st.requests.find((request) => request.id === st.selected[st.scopeId]) || st.requests[0];
           // Exchanges of the saved request, newest first.
@@ -1252,7 +1337,7 @@ window.__PyhModules__.load({
               const data = await call(inScope("/values", scope));
               if (!alive || scope !== st.scopeId) return;
               st.values = data.values;
-              if (st.requestTab === "captures") syncForm();
+              syncForm();
             } catch { /* the list is informational */ }
           }
           // Clears one captured variable of the current scope, or all of them.
@@ -1273,10 +1358,12 @@ window.__PyhModules__.load({
             clearTimeout(timer); saveTimers.delete(id);
             const request = st.requests.find((item) => item.id === id);
             if (!request) return;
-            write("PATCH", byId("/requests", id), { name: request.name, ...storedForm(request) }, { keepalive: !!keepalive })
-              .catch((err) => setBanner("error", t.requestsSaveFailed(message(err))));
+            const done = write("PATCH", byId("/requests", id), { name: request.name, ...storedForm(request) }, { keepalive: !!keepalive })
+              .catch((err) => setBanner("error", t.requestsSaveFailed(message(err)))).finally(() => saving.delete(done));
+            saving.add(done);
           }
-          const flushAll = (keepalive) => { for (const id of [...saveTimers.keys()]) flushSave(id, keepalive); };
+          // Writes every pending edit; resolves once the server holds them all.
+          const flushAll = (keepalive) => { for (const id of [...saveTimers.keys()]) flushSave(id, keepalive); return Promise.all([...saving]); };
           const dropSave = (id) => { clearTimeout(saveTimers.get(id)); saveTimers.delete(id); };
           // Applies a field change to a saved request and schedules its save.
           function editRequest(request, patch) {
@@ -1298,8 +1385,61 @@ window.__PyhModules__.load({
             const sw = h("button", { type: "button", class: "switch", role: "switch", "data-k": "agentTools",
               "aria-checked": String(st.agentTools), "aria-label": t.agentTools,
               disabled: !st.loaded, onClick: () => toggleAgentTools(!st.agentTools) }, h("span", { class: "knob" }));
+            const tool = (key, label, disabled, run) => h("button",
+              { type: "button", class: "btn outline sm", "data-k": key, disabled, onClick: run }, label);
             redraw(headBox, () => headBox.replaceChildren(h("div", null, h("h1", { class: "pageTitle" }, t.title)),
-              h("div", { class: "headTools" }, h("span", null, t.agentTools), sw)));
+              h("div", { class: "headTools" }, h("span", null, t.agentTools), sw,
+                tool("import", t.transferImport, !st.loaded || !!st.sending, () => fileInput.click()),
+                tool("export", t.transferExport, !st.loaded, runExport))));
+          }
+
+          // -------------------------------------------------------- export, import
+          async function runExport() {
+            try {
+              await flushAll();
+              const { bundle } = await call("/transfer");
+              const date = new Date(bundle.exportedAt);
+              download(new Blob([`${JSON.stringify(bundle, null, 2)}\n`], { type: "application/json" }),
+                `${bundle.format}-${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}.json`);
+              setBanner("ok", t.transferExported(bundle.targets.length, bundle.requests.length));
+            } catch (err) { fail(err); }
+          }
+          // Imports a document over the saved state of the page, then reads the targets, the settings and the current
+          // scope again.
+          async function runImport(bundle, conflict) {
+            try {
+              await flushAll();
+              const result = (await write("POST", "/transfer", { bundle, conflict })).result;
+              const done = t.transferDone(result.created.length, result.overwritten.length, result.skipped.length, result.requests);
+              setBanner("ok", result.needAuth.length ? `${done} ${t.transferNeedAuth(result.needAuth.join(", "))}` : done);
+              const gen = scopeGen;
+              await refresh();
+              if (alive && gen === scopeGen) enterScope(st.scopeId);
+            } catch (err) { setBanner("error", t.transferInvalid(message(err))); }
+          }
+          // The choice between overwrite and skip for the names an import collides with.
+          function askImport(bundle, conflicts) {
+            const names = conflicts.map((name) => (name === DIRECT ? t.transferDirect : name)).join(", ");
+            const { el: box, close } = openModal(`<div class="modalHead">${esc(t.transferTitle)}</div>`
+              + `<div class="modalBody"><p>${esc(t.transferConflicts(names))}</p><p>${esc(t.transferHint)}</p></div>`
+              + `<div class="modalFoot"><button type="button" class="btn outline" data-no>${esc(t.cancel)}</button><span class="spacer"></span>`
+              + `<button type="button" class="btn outline" data-skip>${esc(t.transferSkip)}</button>`
+              + `<button type="button" class="btn primary" data-over style="background:var(--error)">${esc(t.transferOverwrite)}</button></div>`);
+            box.querySelector("[data-no]").onclick = close;
+            box.querySelector("[data-skip]").onclick = () => { close(); runImport(bundle, "skip"); };
+            box.querySelector("[data-over]").onclick = () => { close(); runImport(bundle, "overwrite"); };
+          }
+          // Reads the picked file and lets the harness check it; then imports, or asks about the names that exist.
+          async function onImportFile() {
+            const file = fileInput.files[0];
+            fileInput.value = "";
+            if (!file || st.sending) return;
+            try {
+              const bundle = JSON.parse(await file.text());
+              const check = (await write("POST", "/transfer", { bundle, dryRun: true })).result;
+              if (!alive) return;
+              if (check.conflicts.length) askImport(bundle, check.conflicts); else await runImport(bundle, "skip");
+            } catch (err) { setBanner("error", t.transferInvalid(message(err))); }
           }
           function renderBanner() {
             bannerBox.replaceChildren();
@@ -1341,7 +1481,8 @@ window.__PyhModules__.load({
             h("option", { value: NEW_TARGET }, t.targetsAdd));
             const info = direct ? h("span", { class: "hc-targetMeta", "data-wrap": true }, t.targetsDirectHint) : [
               h("span", { class: "hc-targetUrl", title: scope.baseUrl }, scope.baseUrl),
-              h("span", { class: "hc-targetMeta" }, `${authLabel(scope.auth)} · ${scope.allowMutations ? t.targetsMutations : t.targetsReadOnly}`),
+              h("span", { class: "hc-targetMeta", "data-missing": secretsMissing(scope) },
+                `${authLabel(scope)} · ${scope.allowMutations ? t.targetsMutations : t.targetsReadOnly}`),
               h("button", { type: "button", class: "hc-link", "data-k": "test", disabled: st.testing,
                 onClick: () => runTest(scope) }, t.targetsTest)];
             redraw(sideTopBox, () => sideTopBox.replaceChildren(
@@ -1506,7 +1647,7 @@ window.__PyhModules__.load({
           const duplicateRequest = (request) => createRequest({ ...storedForm(request),
             name: request.name === "" ? "" : `${request.name} ${t.requestsCopySuffix}` });
           async function copyCurl(request) {
-            const command = curlOf(scopeOf(), request);
+            const command = curlOf(scopeOf(), request, st.values);
             if (command === undefined) { setBanner("error", t.requestsCurlUnavailable); return; }
             try { await copyText(command); setBanner("ok", t.requestsCurlCopied); } catch (err) { fail(err); }
           }
@@ -1599,7 +1740,7 @@ window.__PyhModules__.load({
                 set({ path, query }, true);
               };
               sync = () => {
-                const preview = previewUrl(target, request);
+                const preview = previewUrl(target, request, st.values);
                 box.replaceChildren(h("div", { class: "hc-previewHead" }, h("span", { class: "hc-label" }, t.requestUrlPreview), spacer(),
                   request.path.includes("?") ? h("button",
                     { type: "button", class: "hc-link", "data-k": "import", disabled: sending, onClick: importQuery },
@@ -1648,6 +1789,7 @@ window.__PyhModules__.load({
             function authTab() {
               if (!ownAuth) {
                 return [h("div", { class: "hc-block" }, table(authSummary(target.auth)), h("p", { class: "hc-note" }, t.requestAuthNote),
+                  target.auth.missing ? h("div", { class: "hc-formError" }, t.requestAuthMissing) : null,
                   h("div", null, h("button", { type: "button", class: "btn outline sm", "data-k": "editTarget",
                     onClick: () => openTargetForm({ mode: "edit", target }) }, t.targetsEdit)))];
               }
@@ -1763,7 +1905,7 @@ window.__PyhModules__.load({
               if (liveSync) liveSync(batch);
             };
             const ticker = setInterval(tickElapsed, 100);
-            renderBanner(); renderSideTop(); renderRequest(); renderResponse();
+            renderHead(); renderBanner(); renderSideTop(); renderRequest(); renderResponse();
             try {
               const exchange = await sendRequest(targetId, { ...toRequestInput(request), requestId: request.id }, controller.signal, {
                 onHead: (head) => { st.live = { head, rows: [], open: new Set() }; st.responseTab = "preview"; renderResponse(); },
@@ -1776,7 +1918,7 @@ window.__PyhModules__.load({
             }
             cancelAnimationFrame(frame); clearInterval(ticker);
             st.live = null; st.sending = null;
-            renderSideTop(); renderList(); renderRequest(); renderResponse();
+            renderHead(); renderSideTop(); renderList(); renderRequest(); renderResponse();
             // The exchange, and the variables it captured or refreshed. A cancelled request is recorded by the server once
             // its connection closes.
             const reload = () => { loadHistory(targetId); loadValues(targetId); };
@@ -1836,10 +1978,12 @@ window.__PyhModules__.load({
             const current = () => (modes().includes(view.mode) ? view.mode : "events");
             // New content keeps the view at the end while the reader has not scrolled away from it.
             const toEnd = () => { if (streaming && stick) scroll.scrollTop = scroll.scrollHeight; };
+            // Data of one event: pretty-printed and highlighted when it is JSON.
+            const eventData = (data) => { const formatted = prettyJson(data); return codeBlock(formatted.text, formatted.json ? "json" : undefined); };
             const detail = (row) => h("div", { class: "hc-sseDetail" },
               row.id === undefined && row.retry === undefined ? null : h("span", { class: "hc-meta" },
                 [row.id === undefined ? "" : `id: ${row.id}`, row.retry === undefined ? "" : `retry: ${row.retry}`].filter(Boolean).join(" · ")),
-              h("pre", { class: "hc-code" }, prettyJson(row.data).text));
+              eventData(row.data));
             function rowNode(index) {
               const row = rows[index];
               const head = h("button", { type: "button", class: "hc-sseHead", onClick: () => { if (!open.delete(index)) open.add(index); show(); } },
@@ -1915,11 +2059,7 @@ window.__PyhModules__.load({
           }
           function saveBody(exchange) {
             const blob = bodyBlob(exchange.response);
-            if (!blob) return;
-            const href = URL.createObjectURL(blob);
-            const link = h("a", { href, download: saveName(exchange.request.url, exchange.response.contentType) });
-            document.body.appendChild(link); link.click(); link.remove();
-            setTimeout(() => URL.revokeObjectURL(href), 10000);
+            if (blob) download(blob, saveName(exchange.request.url, exchange.response.contentType));
           }
           function exchangeView(exchange, versions) {
             const { request, response } = exchange; const tab = st.responseTab;
@@ -1966,7 +2106,8 @@ window.__PyhModules__.load({
                       onClick: (event) => copyFlash(event.currentTarget, request.url, t.responseCopyUrl) }, t.responseCopyUrl)),
                   h("code", { class: "hc-previewUrl" }, request.url || request.path)),
                 sentHeaders.length ? block(t.responseSentHeaders, table(sentHeaders)) : null,
-                request.body === "" ? null : block(t.responseSentBody, h("pre", { class: "hc-code" }, request.body),
+                request.body === "" ? null : block(t.responseSentBody,
+                  codeBlock(request.body, languageOf(contentTypeOf(sentHeaders), request.body)),
                   request.bodyTruncated ? note(t.responseRequestTruncated) : null)];
             } else {
               let body = null;
@@ -1980,7 +2121,7 @@ window.__PyhModules__.load({
               else if (html && view.rendered) body = h("iframe",
                 { class: "hc-frame", sandbox: "", referrerpolicy: "no-referrer", title: t.responseRender,
                 srcdoc: `<base href="${escapeAttribute(request.url)}">${response.body}` });
-              else if (response) body = h("pre", { class: "hc-code" }, bodyText);
+              else if (response) body = codeBlock(bodyText, languageOf(response.contentType, bodyText));
               const results = exchange.captures || [];
               const captured = results.filter((result) => result.ok).map((result) => result.name);
               content = [
@@ -2075,7 +2216,7 @@ window.__PyhModules__.load({
               h("div", { class: "hc-field" }, h("span", { class: "hc-fieldLabel" }, t.formAuth),
                 segments("type", AUTH_TYPES.map((type) => [type, t.auth[type]]), d.type, (type) => { d.type = type; drawAuth(); })),
               ...authFields(d.type, (name) => d.auth[name], (name, value) => { d.auth[name] = value; },
-                { autocomplete: "new-password", keep: target && stored.type === d.type ? t.authKeep : null })));
+                { autocomplete: "new-password", keep: !target || stored.type !== d.type ? null : stored.missing ? t.targetsAuthMissing : t.authKeep })));
             const moreBox = h("div", { class: "hc-formPart" });
             const drawMore = () => redraw(moreBox, () => moreBox.replaceChildren(...[
               h("button", { type: "button", class: "hc-link", "data-k": "advanced", "aria-expanded": String(d.advanced),
@@ -2087,7 +2228,8 @@ window.__PyhModules__.load({
                     view: {} }), h("span", { class: "hc-fieldHint" }, t.formVariablesHint)),
                 h("div", { class: "hc-field" }, h("span", { class: "hc-fieldLabel" }, t.formSecrets),
                   kvEditor({ name: "secrets", rows: d.secrets, onChange: (rows) => { d.secrets = rows; },
-                    view: {}, secret: true, hint: (row) => hints.get(row.key.trim()) }), h("span", { class: "hc-fieldHint" }, t.formSecretsHint)),
+                    view: {}, secret: true, hint: (row) => (hints.get(row.key.trim()) === "" ? t.targetsAuthMissing : hints.get(row.key.trim())) }),
+                  h("span", { class: "hc-fieldHint" }, t.formSecretsHint)),
                 field(t.formAllowedHosts, [h("textarea",
                   { class: "input mono", rows: 2, placeholder: "cdn.example.com\n*.example.net", spellcheck: "false",
                   onInput: (e) => { d.allowedHosts = e.target.value; } }, d.allowedHosts),
