@@ -46,4 +46,6 @@ packages = ["pyxis_harness_otel"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "AGENTS.md" = "pyxis_harness_otel/AGENTS.md"
-"../../LICENSE" = "pyxis_harness_otel/LICENSE"
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../LICENSE" = "LICENSE"

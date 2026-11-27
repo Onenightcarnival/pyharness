@@ -41,4 +41,6 @@ packages = ["pyxis_harness_mcp"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "AGENTS.md" = "pyxis_harness_mcp/AGENTS.md"
-"../../LICENSE" = "pyxis_harness_mcp/LICENSE"
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../LICENSE" = "LICENSE"

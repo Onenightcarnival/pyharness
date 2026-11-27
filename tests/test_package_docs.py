@@ -41,10 +41,7 @@ def test_every_package_has_an_agents_md_and_ships_it():
         if wheel.get("bypass-selection"):  # a distribution of dependencies only
             continue
         (module,) = wheel["packages"]
-        assert wheel["force-include"] == {
-            "AGENTS.md": f"{module}/AGENTS.md",
-            "../../LICENSE": f"{module}/LICENSE",
-        }, package.name
+        assert wheel["force-include"] == {"AGENTS.md": f"{module}/AGENTS.md"}, package.name
 
 
 def test_sources_have_no_file_header():

@@ -44,15 +44,15 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 | `docs/` | 设计文档 |
 | `manual/` | 用户手册；`images/`：界面的整页截图，1280×800，8 位调色板 PNG |
 | `.github/workflows/ci.yml` | CI，Python 3.12：全量测试；Windows 上的终端测试；Postgres 测试 |
-| `.github/workflows/release.yml` | 发布：构建全部发行包的 wheel，上传 PyPI 或 TestPyPI；标签触发时创建 GitHub Release |
+| `.github/workflows/release.yml` | 发布：构建全部发行包，上传 PyPI 或 TestPyPI；标签触发时创建 GitHub Release |
 
 ## 发布
 
 | 项 | 内容 |
 |---|---|
-| 发行包 | `packages/*` 各一个 wheel，不发布源码包；入口 `pyxis-harness`（`packages/meta`）依赖内核与全部 bundle |
+| 发行包 | `packages/*` 各一个；入口 `pyxis-harness`（`packages/meta`）依赖内核与全部 bundle |
 | 版本 | 全部发行包同一个版本，互相以 `==` 锁定；`scripts/set_version.py` 一次改完并更新 `uv.lock` |
-| 元数据 | PyPI 页面取各包的 `AGENTS.md`；`LICENSE` 进入 wheel 的模块目录 |
+| 元数据 | PyPI 页面取各包的 `AGENTS.md`；`LICENSE` 经源码包进入 wheel |
 | 不变量 | `tests/test_release.py` |
 
 | 步骤 | 做法 |
@@ -69,7 +69,7 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 本地构建与检查：
 
 ```bash
-uv build --all-packages --wheel  # dist/：每个发行包一个 wheel
+uv build --all-packages          # dist/：每个发行包一个源码包、一个 wheel
 uvx twine check --strict dist/*
 ```
 

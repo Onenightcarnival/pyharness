@@ -26,7 +26,7 @@ jobs:
         if: github.event_name == 'push'
         run: test "v$(uv run python -c 'import pyxis_harness; print(pyxis_harness.__version__)')" = "$GITHUB_REF_NAME"
       - run: uv run pytest -q tests/test_release.py
-      - run: uv build --all-packages --wheel
+      - run: uv build --all-packages
       - run: uvx twine check --strict dist/*
       - name: Publish to TestPyPI
         if: github.event_name == 'workflow_dispatch' && inputs.index == 'testpypi'

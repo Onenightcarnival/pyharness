@@ -95,7 +95,7 @@ def test_distributions_carry_their_metadata():
         assert project["readme"] == "AGENTS.md" and project["license"] == "MIT", directory
         assert project["authors"] and project["classifiers"] and project["keywords"], directory
         assert {"Homepage", "Repository", "Issues", "Documentation"} <= set(project["urls"]), directory
-        assert set(HATCH[directory]["build"]["targets"]) == {"wheel"}, directory  # wheels only; no source archive
+        assert HATCH[directory]["build"]["targets"]["sdist"]["force-include"] == {"../../LICENSE": "LICENSE"}, directory
 
 
 def test_set_version_rewrites_the_version_and_the_pins():

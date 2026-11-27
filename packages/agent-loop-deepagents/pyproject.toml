@@ -42,4 +42,6 @@ packages = ["pyxis_harness_agent_loop_deepagents"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "AGENTS.md" = "pyxis_harness_agent_loop_deepagents/AGENTS.md"
-"../../LICENSE" = "pyxis_harness_agent_loop_deepagents/LICENSE"
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../LICENSE" = "LICENSE"

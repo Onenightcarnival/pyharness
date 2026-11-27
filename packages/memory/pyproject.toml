@@ -44,4 +44,6 @@ packages = ["pyxis_harness_memory"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "AGENTS.md" = "pyxis_harness_memory/AGENTS.md"
-"../../LICENSE" = "pyxis_harness_memory/LICENSE"
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../LICENSE" = "LICENSE"

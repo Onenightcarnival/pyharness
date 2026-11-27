@@ -42,4 +42,6 @@ packages = ["pyxis_harness_auto_review"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "AGENTS.md" = "pyxis_harness_auto_review/AGENTS.md"
-"../../LICENSE" = "pyxis_harness_auto_review/LICENSE"
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../LICENSE" = "LICENSE"
