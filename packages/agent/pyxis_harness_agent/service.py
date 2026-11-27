@@ -43,7 +43,7 @@ class AgentConfig(BaseModel):
         None, gt=0, description="Seconds a tool approval waits for a decision before it is rejected; None: no limit."
     )
     max_steps: int | None = Field(
-        100, gt=0, description="Model calls of the main agent in one turn; the turn pauses there. None: no limit."
+        None, gt=0, description="Model calls of the main agent in one turn; the turn pauses there. None: no limit."
     )
 
 

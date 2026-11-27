@@ -79,7 +79,7 @@
 
 | 项 | 契约 |
 |---|---|
-| `config.max_steps` | 一轮里主 agent 的模型调用数上限；默认 100；`None`：不限 |
+| `config.max_steps` | 一轮里主 agent 的模型调用数上限；默认 `None`：不限 |
 | 计数 | 该轮已完成的模型调用（`stats.steps`）；子 agent 的模型调用不计 |
 | 检查 | `agent/model-request` 的监听者，在主 agent 的每次模型调用之前 |
 | 到达 | 抛出 `StepLimit`（代码 `STEP_LIMIT`）：该轮以 `error` 结束，`continuable` |
