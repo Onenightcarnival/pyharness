@@ -7,7 +7,7 @@
 | 条目 | `agents`（`base` bundle） |
 | 服务 | `AgentService`，`ctx.agents` |
 | 注入 | `agentLoop`、`store` |
-| 数据 | `ctx.store`：`("pyharness", "sessions")`、`("pyharness", "turns", session_id)`；`ctx.checkpointer`：LangGraph thread |
+| 数据 | `ctx.store`：`("pyharness", "sessions")`、`("pyharness", "turns", session_id)`；`ctx.checkpointer`：LangGraph thread；临时会话：`ctx.temporary` 的同一组 |
 
 ## 文件
 
@@ -30,7 +30,21 @@
 | 拒绝 | 重启挂起 → `AgentService.start_run` 抛出 `RestartPending` |
 | 续跑 | 受 supervisor 管理的一代在 `app/started` 时：向每个列出的会话发送一条续跑消息 |
 | 模型 | `session.model`（`route:model`）以 `configurable.model_spec` 到达 loop |
-| 图 | 会话的每组（`workspace`、`mode`、`preset`）一张图，首次使用时构建 |
+| 图 | 会话的每组（`workspace`、`mode`、`preset`、是否临时）一张图，首次使用时构建 |
+
+## 临时会话
+
+| 项 | 契约 |
+|---|---|
+| 创建 | `create_session(temporary=True)`；没有 `ctx.temporary` → `ValueError` |
+| 记录 | `temporary: true`；会话记录、每轮记录、审批期限、thread 都在 `ctx.temporary` |
+| `ctx.store`、`ctx.checkpointer` | 不含临时会话的任何内容 |
+| `list_sessions()` | 两处的会话一并列出 |
+| `is_temporary(session_id)` | 会话记录在 `ctx.temporary` |
+| `store_for(session_id)` | 会话记录所在的 store；按会话存数据的插件用它 |
+| 结束 | 被删除；最后一轮之后满 `config.temporary_ttl`（默认 86400 秒；`None`：不到期）；进程结束 |
+| `expire_temporary(now)` | 删除到期且没有运行中轮次的临时会话；`app/started` 起定时执行 |
+| 重启后 | 不存在：续跑跳过，审批期限不恢复 |
 
 ## 运行（`runs.py`）
 
@@ -92,6 +106,7 @@
 |---|---|---|
 | `agent/turn-start` | parallel | `(turn: Turn)` |
 | `agent/turn-end` | parallel | `(turn: Turn)`；`turn.outcome` 已设置 |
+| `agent/session-delete` | parallel | `(session: dict)`；先于会话记录的删除 |
 
 ## 失败的轮次
 

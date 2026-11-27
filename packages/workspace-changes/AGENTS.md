@@ -7,7 +7,7 @@
 | 条目 | `workspace-changes`（`base` bundle） |
 | 服务 | `WorkspaceChangesService`，`ctx.workspaceChanges` |
 | 注入 | `agents`、`workspace`、`store` |
-| 数据 | 摘要：`ctx.store`；diff：仅在本进程内 |
+| 数据 | 摘要：会话所在的 store（`ctx.agents.store_for`）；diff：仅在本进程内 |
 
 ## 文件
 
@@ -23,6 +23,7 @@
 |---|---|
 | `agent/turn-start` | 把会话工作区的工作树快照进私有对象目录（tree id） |
 | `agent/turn-end` | 第二次快照；两者之间 `diff-tree` → 摘要；写入 `turn.extras["changes"]` |
+| `agent/session-delete` | 删除该会话的摘要与私有对象目录 |
 
 ## 服务
 

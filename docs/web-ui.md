@@ -86,8 +86,8 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | DELETE | `/plugins/bundles/{name}` | | 卸载装在 profile 里的 bundle；其他 409 |
 | PUT | `/plugins/entries/{id}` | `{"enabled"}` | 启用 / 停用条目 |
 | POST | `/restart` | | 请求重启（运行中的轮次结束后）；未受 supervisor 管理时 409 |
-| GET | `/sessions` | | 会话列表 |
-| POST | `/sessions` | `{"title"?, "model"?, "workspace"?, "mode"?, "preset"?}` | 会话；工作区为绝对路径，不在 harness home 内 |
+| GET | `/sessions` | | 会话列表；临时会话带 `temporary: true` |
+| POST | `/sessions` | `{"title"?, "model"?, "workspace"?, "mode"?, "preset"?, "temporary"?}` | 会话；工作区为绝对路径，不在 harness home 内；`temporary: true`：临时会话 |
 | PUT | `/sessions/{id}` | `{"title"}` | 重命名会话 |
 | PUT | `/sessions/{id}/mode` | `{"mode"}` | 权限模式；下一轮生效 |
 | PUT | `/sessions/{id}/preset` | `{"preset"}` | 预设；下一轮生效 |

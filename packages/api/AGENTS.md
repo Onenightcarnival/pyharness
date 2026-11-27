@@ -60,8 +60,8 @@
 
 | 方法 | 路径 | 请求 | 应答 | 处理函数 |
 |---|---|---|---|---|
-| GET | `/sessions` | | 会话列表 | `list_sessions` |
-| POST | `/sessions` | `{"title"?, "model"?, "workspace"?, "mode"?, "preset"?}` | 会话 | `create_session` |
+| GET | `/sessions` | | 会话列表；临时会话带 `temporary: true` | `list_sessions` |
+| POST | `/sessions` | `{"title"?, "model"?, "workspace"?, "mode"?, "preset"?, "temporary"?}` | 会话；`temporary: true`：临时会话 | `create_session` |
 | PUT | `/sessions/{id}` | `{"title"}` | 重命名会话 | `rename_session` |
 | PUT | `/sessions/{id}/model` | `{"model"}` | 为会话选择 `route:model` | `set_session_model` |
 | PUT | `/sessions/{id}/mode` | `{"mode"}` | 权限模式；下一次运行起 | `set_session_mode` |
@@ -92,7 +92,7 @@
 |---|---|
 | 404 | 会话不存在 |
 | 409 | 有运行中的轮次；审批待处理，或没有待处理的审批 |
-| 422 | 向不接受图片输入的模型发送图片 |
+| 422 | 向不接受图片输入的模型发送图片；没有 `ctx.temporary` 时创建临时会话 |
 | 503 | 重启待执行（`Retry-After: 2`） |
 
 ## 工作区路由（`routes_workspaces.py`）

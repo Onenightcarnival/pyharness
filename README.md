@@ -6,7 +6,7 @@
 |---|---|
 | 内核 | `pyxis-harness-core`：服务容器、类型化事件、分层组合、Loader、supervisor |
 | agent loop | deepagents；插件，可替换 |
-| 持久化 | LangGraph checkpointer + store：SQLite 或 Postgres；插件，patch 切换 |
+| 持久化 | LangGraph checkpointer + store：SQLite 或 Postgres；插件，patch 切换。临时会话：进程内存 |
 | HTTP | FastAPI + uvicorn；插件 |
 | 变更生效 | 新一代 worker 进程：预检、回滚、会话续跑 |
 

@@ -46,6 +46,7 @@ class WorkspaceChangesService(Service):
     async def start(self) -> None:
         self.ctx.on("agent/turn-start", self._on_start)
         self.ctx.on("agent/turn-end", self._on_end)
+        self.ctx.on("agent/session-delete", self._on_delete)
 
     async def stop(self) -> None:
         for path in self._dirs.values():
@@ -53,13 +54,17 @@ class WorkspaceChangesService(Service):
         self._dirs.clear()
         self._trees.clear()
 
+    async def _store(self, session_id: str) -> Any:
+        """Store of the session's summaries: the one that holds the session's records."""
+        return await self.ctx.agents.store_for(session_id)
+
     # ------------------------------------------------------------------ queries
     async def summaries(self, session_id: str) -> list[dict[str, Any]]:
-        items = await self.ctx.store.asearch((*NAMESPACE, session_id), limit=1000)
+        items = await (await self._store(session_id)).asearch((*NAMESPACE, session_id), limit=1000)
         return sorted((dict(i.value) for i in items), key=lambda s: s.get("seq", 0))
 
     async def summary(self, session_id: str, run_id: str) -> dict[str, Any] | None:
-        item = await self.ctx.store.aget((*NAMESPACE, session_id), run_id)
+        item = await (await self._store(session_id)).aget((*NAMESPACE, session_id), run_id)
         return dict(item.value) if item is not None else None
 
     async def diff(self, session_id: str, run_id: str, index: int) -> dict[str, Any]:
@@ -142,10 +147,24 @@ class WorkspaceChangesService(Service):
                 "deleted": sum(f["deleted"] or 0 for f in files),
             }
             self._trees[(turn.session_id, turn.run_id)] = (repo, info["base"], head)
-            await self.ctx.store.aput((*NAMESPACE, turn.session_id), turn.run_id, summary)
+            await (await self._store(turn.session_id)).aput((*NAMESPACE, turn.session_id), turn.run_id, summary)
             turn.extras["changes"] = summary
         except Exception as exc:  # noqa: BLE001
             self.ctx.logger.warning("workspace changes: record skipped for %s: %s", turn.session_id, exc)
+
+    async def _on_delete(self, session: dict[str, Any]) -> None:
+        """Remove the session's summaries and its private git directory."""
+        session_id = session["id"]
+        store = await self._store(session_id)
+        for item in await store.asearch((*NAMESPACE, session_id), limit=10000):
+            await store.adelete((*NAMESPACE, session_id), item.key)
+        for key in [key for key in self._trees if key[0] == session_id]:
+            del self._trees[key]
+        self._seq.pop(session_id, None)
+        self._locks.pop(session_id, None)
+        directory = self._dirs.pop(session_id, None)
+        if directory is not None:
+            await asyncio.to_thread(shutil.rmtree, directory, ignore_errors=True)
 
     # ------------------------------------------------------------------ git
     def _workspace_root(self, workspace: str | None) -> Path:

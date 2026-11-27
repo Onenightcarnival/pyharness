@@ -45,8 +45,14 @@ class AgentConfig(BaseModel):
     max_steps: int | None = Field(
         None, gt=0, description="Model calls of the main agent in one turn; the turn pauses there. None: no limit."
     )
+    temporary_ttl: float | None = Field(
+        86_400.0,
+        gt=0,
+        description="Seconds a temporary session stays after its last turn; None: until it is deleted or a restart.",
+    )
 
 
+SWEEP_SECONDS = 300.0  # longest wait between two sweeps of expired temporary sessions
 STEP_LIMIT = "STEP_LIMIT"
 CONTINUABLE = (*CONTINUABLE_CODES, STEP_LIMIT)  # failure codes a turn can be continued from
 
@@ -82,7 +88,8 @@ class AgentService(Service):
     def __init__(self, ctx: Any, config: AgentConfig) -> None:
         super().__init__(ctx, config)
         self.graph: Any = None
-        self._graphs: dict[tuple[str | None, str, str], Any] = {}
+        self._temporary_graph: Any = None  # reads the threads of temporary sessions
+        self._graphs: dict[tuple[str | None, str, str, bool], Any] = {}
         self._runs: dict[str, RunHandle] = {}
         self._turn_seq: dict[str, int] = {}
         self._tasks: set[asyncio.Task[Any]] = set()
@@ -94,11 +101,15 @@ class AgentService(Service):
         self.ctx.define_event(
             "agent/turn-end", "parallel", "listener(turn: Turn) after a run settles; turn.outcome is set."
         )
+        self.ctx.define_event(
+            "agent/session-delete", "parallel", "listener(session: dict) before a session's records are removed."
+        )
         self.ctx.on("app/ready", self._build)
         self.ctx.on("agent/model-retry", self._on_model_retry)
         self.ctx.on("agent/model-request", self._limit_steps)
         self.ctx.on("app/started", self._resume_after_restart)
         self.ctx.on("app/started", self._restore_deadlines)
+        self.ctx.on("app/started", self._sweep_temporary)
         self.ctx.on("app/stopping", self.stop)
 
     async def stop(self) -> None:
@@ -119,18 +130,40 @@ class AgentService(Service):
         workspace = record.get("workspace") or None
         mode = loop.mode(record.get("mode"))
         preset = loop.preset(record.get("preset"))[0]
-        key = (workspace, mode, preset)
+        temporary = bool(record.get("temporary"))
+        key = (workspace, mode, preset, temporary)
         if key not in self._graphs:
-            self._graphs[key] = await loop.build(workspace=workspace, mode=mode, preset=preset)
+            variant = {"temporary": True} if temporary else {}
+            self._graphs[key] = await loop.build(workspace=workspace, mode=mode, preset=preset, **variant)
         return self._graphs[key]
 
     def invalidate_graphs(self) -> None:
         self._graphs.clear()
+        self._temporary_graph = None
 
     def _require_graph(self) -> Any:
         if self.graph is None:
             raise RuntimeError("agent graph unavailable before app/ready")
         return self.graph
+
+    # ------------------------------------------------------------------ persistence of a session
+    async def is_temporary(self, session_id: str) -> bool:
+        """Whether the session is a temporary one: its record lives in ``ctx.temporary``."""
+        temporary = self.ctx.get("temporary", None)
+        return temporary is not None and await temporary.store.aget(NAMESPACE, session_id) is not None
+
+    async def store_for(self, session_id: str) -> Any:
+        """Store of the session's records: ``ctx.temporary.store`` for a temporary session, else ``ctx.store``."""
+        return self.ctx.temporary.store if await self.is_temporary(session_id) else self.ctx.store
+
+    async def _state(self, session_id: str) -> Any:
+        """State of the session's thread, read from the checkpointer that holds it."""
+        graph = self._require_graph()
+        if await self.is_temporary(session_id):
+            if self._temporary_graph is None:
+                self._temporary_graph = await self.ctx.agentLoop.build(temporary=True)
+            graph = self._temporary_graph
+        return await graph.aget_state(self._config(session_id))
 
     def config_for(self, session_id: str, model: str | None = None) -> dict[str, Any]:
         """LangGraph config of the session's thread (``model`` selects the model spec of the call)."""
@@ -152,11 +185,17 @@ class AgentService(Service):
         workspace: str | None = None,
         mode: str | None = None,
         preset: str | None = None,
+        temporary: bool = False,
     ) -> dict[str, Any]:
         """
         New session; ``workspace`` (root directory), ``mode`` and ``preset`` are validated and defaulted by their
         services.
+
+        ``temporary``: the session's thread and records live in ``ctx.temporary``; it is deleted on request,
+        ``temporary_ttl`` after its last turn, and with the process.
         """
+        if temporary and self.ctx.get("temporary", None) is None:
+            raise ValueError("temporary sessions need the `temporary` service (entry checkpoint-temporary)")
         loop = self.ctx.get("agentLoop", None)
         workspaces = self.ctx.get("workspace", None)
         if workspaces is not None and hasattr(workspaces, "open"):
@@ -177,16 +216,24 @@ class AgentService(Service):
             "workspace": workspace,
             "mode": mode,
             "preset": preset,
+            "temporary": temporary,
         }
-        await self.ctx.store.aput(NAMESPACE, record["id"], record)
+        await self._store(record).aput(NAMESPACE, record["id"], record)
         return record
 
+    def _store(self, record: dict[str, Any]) -> Any:
+        return self.ctx.temporary.store if record.get("temporary") else self.ctx.store
+
     async def get_session(self, session_id: str) -> dict[str, Any] | None:
-        item = await self.ctx.store.aget(NAMESPACE, session_id)
+        item = await (await self.store_for(session_id)).aget(NAMESPACE, session_id)
         return dict(item.value) if item is not None else None
 
     async def list_sessions(self, limit: int = 100) -> list[dict[str, Any]]:
+        """Sessions, most recently updated first: the stored ones and the temporary ones (``temporary: true``)."""
+        temporary = self.ctx.get("temporary", None)
         items = await self.ctx.store.asearch(NAMESPACE, limit=limit)
+        if temporary is not None:
+            items = [*items, *await temporary.store.asearch(NAMESPACE, limit=limit)]
         rows = [dict(item.value) | {"busy": self.busy(item.key)} for item in items]
         return sorted(rows, key=lambda r: r.get("updated_at") or 0, reverse=True)
 
@@ -211,7 +258,7 @@ class AgentService(Service):
         if record is None:
             return None
         record[field] = value
-        await self.ctx.store.aput(NAMESPACE, session_id, record)
+        await self._store(record).aput(NAMESPACE, session_id, record)
         return record
 
     async def _touch(self, session_id: str, title_hint: str | None = None) -> None:
@@ -223,11 +270,11 @@ class AgentService(Service):
             record["title"] = (
                 title_hint.strip().splitlines()[0][: self.config.title_chars] if title_hint.strip() else None
             )
-        await self.ctx.store.aput(NAMESPACE, session_id, record)
+        await self._store(record).aput(NAMESPACE, session_id, record)
 
     async def turns(self, session_id: str) -> list[dict[str, Any]]:
         """Per-turn records (stats and trajectory), oldest first."""
-        items = await self.ctx.store.asearch((*TURNS, session_id), limit=10000)
+        items = await (await self.store_for(session_id)).asearch((*TURNS, session_id), limit=10000)
         return sorted((dict(i.value) for i in items), key=lambda t: t.get("seq", 0))
 
     async def _next_turn_seq(self, session_id: str) -> int:
@@ -237,11 +284,11 @@ class AgentService(Service):
         return self._turn_seq[session_id]
 
     async def messages(self, session_id: str) -> list[dict[str, Any]]:
-        state = await self._require_graph().aget_state(self._config(session_id))
+        state = await self._state(session_id)
         return [serialize_message(m) for m in (state.values or {}).get("messages", [])]
 
     async def pending(self, session_id: str) -> list[dict[str, Any]]:
-        state = await self._require_graph().aget_state(self._config(session_id))
+        state = await self._state(session_id)
         return [{"id": i.id, "value": _jsonable(i.value)} for i in (state.interrupts or ())]
 
     async def failure(self, session_id: str) -> dict[str, Any] | None:
@@ -262,7 +309,7 @@ class AgentService(Service):
         code = error.get("code") or "UNKNOWN"
         continuable = False
         if code in CONTINUABLE:
-            state = await self._require_graph().aget_state(self._config(session_id))
+            state = await self._state(session_id)
             continuable = bool(state.next) and not state.interrupts
         return {"run_id": last.get("run_id"), "code": code, "message": error.get("message"), "continuable": continuable}
 
@@ -334,17 +381,26 @@ class AgentService(Service):
         return True
 
     async def delete_session(self, session_id: str) -> bool:
-        """Delete the session's metadata and checkpointed history; returns whether it existed."""
+        """
+        Delete the session's metadata and checkpointed history; returns whether it existed.
+
+        ``agent/session-delete`` runs first: listeners remove what they keep of the session.
+        """
         if self.busy(session_id):
             raise SessionBusy(f"session {session_id} has a running turn")
-        if await self.get_session(session_id) is None:
+        record = await self.get_session(session_id)
+        if record is None:
             return False
-        await self.ctx.store.adelete(NAMESPACE, session_id)
-        for item in await self.ctx.store.asearch((*TURNS, session_id), limit=10000):
-            await self.ctx.store.adelete((*TURNS, session_id), item.key)
-        self._turn_seq.pop(session_id, None)
+        store = self._store(record)
+        await self.ctx.parallel("agent/session-delete", record)
         await self._disarm(session_id)
-        checkpointer = self.ctx.get("checkpointer", None)
+        await store.adelete(NAMESPACE, session_id)
+        for item in await store.asearch((*TURNS, session_id), limit=10000):
+            await store.adelete((*TURNS, session_id), item.key)
+        self._turn_seq.pop(session_id, None)
+        checkpointer = (
+            self.ctx.temporary.checkpointer if record.get("temporary") else self.ctx.get("checkpointer", None)
+        )
         if checkpointer is not None and hasattr(checkpointer, "adelete_thread"):
             await checkpointer.adelete_thread(session_id)
         self._runs.pop(session_id, None)
@@ -450,7 +506,7 @@ class AgentService(Service):
                 try:
                     record = recorder.finish(outcome, len(await self.messages(session_id)), error)
                     record["seq"] = await self._next_turn_seq(session_id)
-                    await self.ctx.store.aput((*TURNS, session_id), handle.id, record)
+                    await (await self.store_for(session_id)).aput((*TURNS, session_id), handle.id, record)
                     turn.extras["turn"] = record
                 except Exception:  # pragma: no cover
                     self.ctx.logger.exception("turn record failed")
@@ -470,6 +526,39 @@ class AgentService(Service):
                 await handle.finish()
                 self._arm(session_id)
 
+    # ------------------------------------------------------------------ temporary sessions
+    async def expire_temporary(self, now: float | None = None) -> list[str]:
+        """Delete the temporary sessions whose last turn is ``temporary_ttl`` old; returns their ids."""
+        temporary = self.ctx.get("temporary", None)
+        ttl = self.config.temporary_ttl
+        if temporary is None or ttl is None:
+            return []
+        before = (time.time() if now is None else now) - ttl
+        expired = []
+        for item in await temporary.store.asearch(NAMESPACE, limit=10000):
+            if (item.value.get("updated_at") or 0) < before and not self.busy(item.key):
+                await self.delete_session(item.key)
+                expired.append(item.key)
+        return expired
+
+    async def _sweep_temporary(self) -> None:
+        if self.ctx.get("temporary", None) is None:
+            return
+        task = asyncio.get_running_loop().create_task(self._sweep())
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+
+    async def _sweep(self) -> None:
+        while True:
+            await asyncio.sleep(min((self.config.temporary_ttl or SWEEP_SECONDS) / 4, SWEEP_SECONDS))
+            try:
+                expired = await self.expire_temporary()
+            except Exception:  # pragma: no cover
+                self.ctx.logger.exception("temporary sessions: sweep failed")
+                continue
+            if expired:
+                self.ctx.logger.info("temporary sessions: %d expired", len(expired))
+
     # ------------------------------------------------------------------ approval time limit
     def approval_deadline(self, session_id: str) -> float | None:
         """Time (epoch seconds) at which the session's pending tool approval is rejected; ``None`` without one."""
@@ -487,7 +576,7 @@ class AgentService(Service):
             return None
         deadline = time.time() + self.config.approval_timeout
         self._deadlines[session_id] = deadline
-        await self.ctx.store.aput(APPROVALS, session_id, {"deadline": deadline})
+        await (await self.store_for(session_id)).aput(APPROVALS, session_id, {"deadline": deadline})
         return deadline
 
     def _arm(self, session_id: str) -> None:
@@ -503,7 +592,7 @@ class AgentService(Service):
         if timer is not None and timer is not asyncio.current_task():
             timer.cancel()
         if self._deadlines.pop(session_id, None) is not None:
-            await self.ctx.store.adelete(APPROVALS, session_id)
+            await (await self.store_for(session_id)).adelete(APPROVALS, session_id)
 
     async def _expire(self, session_id: str, deadline: float) -> None:
         await asyncio.sleep(max(0.0, deadline - time.time()))

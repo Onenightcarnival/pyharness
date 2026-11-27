@@ -12,6 +12,7 @@ class NewSession(BaseModel):
     workspace: str | None = Field(None, description="Absolute workspace directory; null: the default workspace.")
     mode: str | None = Field(None, description="Permission mode; null: the default.")
     preset: str | None = Field(None, description="Agent preset; null: the default.")
+    temporary: bool = Field(False, description="A temporary session: kept in memory, never in the session store.")
 
 
 class SessionMode(BaseModel):

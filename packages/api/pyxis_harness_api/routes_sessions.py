@@ -62,7 +62,12 @@ def build_sessions_router(ctx: Any) -> APIRouter:
         body = body or NewSession()
         try:
             record = await agents.create_session(
-                title=body.title, model=body.model, workspace=body.workspace, mode=body.mode, preset=body.preset
+                title=body.title,
+                model=body.model,
+                workspace=body.workspace,
+                mode=body.mode,
+                preset=body.preset,
+                temporary=body.temporary,
             )
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None

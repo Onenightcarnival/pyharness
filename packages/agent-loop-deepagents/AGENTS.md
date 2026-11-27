@@ -26,6 +26,7 @@
 |---|---|
 | `build()` 的返回值 | LangGraph 图，带 `astream` 与 `aget_state` |
 | `build(workspace, mode, preset)` | 构建一张图 |
+| `build(..., temporary=True)` | 临时会话的图：thread 与 store 在 `ctx.temporary`；没有该服务 → `ValueError` |
 | `build()` | 默认图；在 `app/ready` 构建 |
 | 会话 | 选择 workspace（根目录）、权限模式、agent 预设 |
 | `ctx.agents` | 每种组合保留一张图 |
@@ -100,7 +101,7 @@
 | 模型 | `ctx.llm` |
 | 工具 | `ctx.tools` |
 | 系统提示词 | `ctx.prompt` |
-| 持久化 | `ctx.checkpointer`；`ctx.store`（存在时） |
+| 持久化 | `ctx.checkpointer`；`ctx.store`（存在时）；`temporary=True`：`ctx.temporary` 的一对 |
 | 文件、shell | `ctx.backend` 与 `ctx.workspace` 的权限（存在时） |
 | 审批 | `ctx.tools.interrupt_on()` 与 `config.interrupt_on` |
 | 子 agent | `config.subagents` 与 `DeepAgentsLoop.add_subagent` |

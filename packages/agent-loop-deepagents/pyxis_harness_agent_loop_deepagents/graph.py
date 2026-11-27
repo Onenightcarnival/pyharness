@@ -152,11 +152,17 @@ async def build(
     subagents: list[dict[str, Any]],
     middleware: list[AgentMiddleware],
     workspace: str | None = None,
+    temporary: bool = False,
 ) -> Any:
     """
     Graph for a workspace root (``None``: the default), a permission mode, a ``(id, config)`` preset, the
     ``skills`` and ``mounts`` of that preset, and the subagent specs and middleware added by plugins.
+
+    ``temporary``: threads and store items live in ``ctx.temporary`` instead of ``ctx.checkpointer`` / ``ctx.store``.
     """
+    persistence = ctx.get("temporary", None) if temporary else None
+    if temporary and persistence is None:
+        raise ValueError("temporary sessions need the `temporary` service (entry checkpoint-temporary)")
     preset_id, preset_cfg = preset
     keep = set(preset_cfg.tools) if preset_cfg.tools is not None else None
     drop = set(preset_cfg.exclude_tools)
@@ -192,8 +198,8 @@ async def build(
         "tools": tools,
         "system_prompt": ctx.prompt.render(preset_id) + "\n\n" + policy,
         "middleware": [HarnessMiddleware(ctx, built_spec), *middleware],
-        "checkpointer": ctx.get("checkpointer"),
-        "store": ctx.get("store", None),
+        "checkpointer": persistence.checkpointer if temporary else ctx.get("checkpointer"),
+        "store": persistence.store if temporary else ctx.get("store", None),
         "backend": backend,
         "interrupt_on": interrupt_on or None,
         "subagents": subagents or None,

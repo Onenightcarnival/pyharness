@@ -271,8 +271,18 @@ class DeepAgentsLoop(Service):
         return limit
 
     # ------------------------------------------------------------------ build
-    async def build(self, workspace: str | None = None, mode: str | None = None, preset: str | None = None) -> Any:
-        """Graph for a workspace root (``None``: the default), a permission mode and an agent preset."""
+    async def build(
+        self,
+        workspace: str | None = None,
+        mode: str | None = None,
+        preset: str | None = None,
+        temporary: bool = False,
+    ) -> Any:
+        """
+        Graph for a workspace root (``None``: the default), a permission mode and an agent preset.
+
+        ``temporary``: the graph of temporary sessions, on ``ctx.temporary``.
+        """
         preset_id, preset_cfg = self.preset(preset)
         return await build_graph(
             self.ctx,
@@ -288,4 +298,5 @@ class DeepAgentsLoop(Service):
             subagents=[s for s, _ in self._subagents],
             middleware=[m for m, _ in self._middleware],
             workspace=workspace,
+            temporary=temporary,
         )
