@@ -174,7 +174,8 @@ def build_sessions_router(ctx: Any) -> APIRouter:
         content = body.content
         refs: list[dict[str, Any]] = []
         workspaces = ctx.get("workspace", None)
-        if workspaces is not None and hasattr(workspaces, "open") and "@" in content:
+        referable = workspaces is not None and hasattr(workspaces, "open") and not session.get("temporary")
+        if referable and "@" in content:
             try:
                 content, refs = references.expand(content, workspaces.open(session.get("workspace")))
             except Exception:

@@ -61,7 +61,7 @@
 | 方法 | 路径 | 请求 | 应答 | 处理函数 |
 |---|---|---|---|---|
 | GET | `/sessions` | | 会话列表；临时会话带 `temporary: true` | `list_sessions` |
-| POST | `/sessions` | `{"title"?, "model"?, "workspace"?, "mode"?, "preset"?, "temporary"?}` | 会话；`temporary: true`：临时会话 | `create_session` |
+| POST | `/sessions` | `{"title"?, "model"?, "workspace"?, "mode"?, "preset"?, "temporary"?}` | 会话；`temporary: true`：临时会话，不带 `workspace`、`mode`、`preset` | `create_session` |
 | PUT | `/sessions/{id}` | `{"title"}` | 重命名会话 | `rename_session` |
 | PUT | `/sessions/{id}/model` | `{"model"}` | 为会话选择 `route:model` | `set_session_model` |
 | PUT | `/sessions/{id}/mode` | `{"mode"}` | 权限模式；下一次运行起 | `set_session_mode` |
@@ -83,7 +83,7 @@
 |---|---|
 | 单个会话的应答 | 会话记录与 `context_window`：会话模型的上下文窗口（`compaction` 采用的值；无该服务时为模型声明的值） |
 | `/sessions/{id}/messages` 的 `images` | data URL |
-| `/sessions/{id}/messages` 的 `@path` | 引用被展开（`references.py`） |
+| `/sessions/{id}/messages` 的 `@path` | 引用被展开（`references.py`）；临时会话不展开 |
 | `/sessions/{id}/answers` | 回答待处理的 `ask_user_question` |
 | `decision` | `{"type": "approve"}` 或 `{"type": "reject"}` |
 | `_sse` | 运行事件，`text/event-stream`；每个事件一行 `data:` |
@@ -92,7 +92,7 @@
 |---|---|
 | 404 | 会话不存在 |
 | 409 | 有运行中的轮次；审批待处理，或没有待处理的审批 |
-| 422 | 向不接受图片输入的模型发送图片；没有 `ctx.temporary` 时创建临时会话 |
+| 422 | 向不接受图片输入的模型发送图片；没有 `ctx.temporary` 时创建临时会话；临时会话带工作区、权限模式或预设，或对它设置模式、预设 |
 | 503 | 重启待执行（`Retry-After: 2`） |
 
 ## 工作区路由（`routes_workspaces.py`）

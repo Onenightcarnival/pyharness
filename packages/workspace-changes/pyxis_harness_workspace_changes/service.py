@@ -103,6 +103,8 @@ class WorkspaceChangesService(Service):
     async def _on_start(self, turn: Any) -> None:
         try:
             record = await self.ctx.agents.get_session(turn.session_id)
+            if (record or {}).get("temporary"):
+                return  # a temporary session has no workspace
             repo = await self._repo_for((record or {}).get("workspace"))
             if repo is None:
                 return

@@ -88,8 +88,8 @@ class AgentService(Service):
     def __init__(self, ctx: Any, config: AgentConfig) -> None:
         super().__init__(ctx, config)
         self.graph: Any = None
-        self._temporary_graph: Any = None  # reads the threads of temporary sessions
-        self._graphs: dict[tuple[str | None, str, str, bool], Any] = {}
+        self._chat_graph: Any = None  # the graph of temporary sessions
+        self._graphs: dict[tuple[str | None, str, str], Any] = {}
         self._runs: dict[str, RunHandle] = {}
         self._turn_seq: dict[str, int] = {}
         self._tasks: set[asyncio.Task[Any]] = set()
@@ -123,23 +123,31 @@ class AgentService(Service):
         self.graph = await self.ctx.agentLoop.build()
 
     async def graph_for(self, record: dict[str, Any] | None) -> Any:
-        """Graph for the session's workspace, mode and preset; the default graph when the loop has no variants."""
+        """
+        Graph for the session's workspace, mode and preset; the default graph when the loop has no variants.
+        A temporary session: the chat graph.
+        """
         loop = self.ctx.agentLoop
+        if record is not None and record.get("temporary"):
+            return await self._chat()
         if record is None or not hasattr(loop, "preset"):
             return self._require_graph()
         workspace = record.get("workspace") or None
         mode = loop.mode(record.get("mode"))
         preset = loop.preset(record.get("preset"))[0]
-        temporary = bool(record.get("temporary"))
-        key = (workspace, mode, preset, temporary)
+        key = (workspace, mode, preset)
         if key not in self._graphs:
-            variant = {"temporary": True} if temporary else {}
-            self._graphs[key] = await loop.build(workspace=workspace, mode=mode, preset=preset, **variant)
+            self._graphs[key] = await loop.build(workspace=workspace, mode=mode, preset=preset)
         return self._graphs[key]
+
+    async def _chat(self) -> Any:
+        if self._chat_graph is None:
+            self._chat_graph = await self.ctx.agentLoop.build_chat()
+        return self._chat_graph
 
     def invalidate_graphs(self) -> None:
         self._graphs.clear()
-        self._temporary_graph = None
+        self._chat_graph = None
 
     def _require_graph(self) -> Any:
         if self.graph is None:
@@ -158,11 +166,7 @@ class AgentService(Service):
 
     async def _state(self, session_id: str) -> Any:
         """State of the session's thread, read from the checkpointer that holds it."""
-        graph = self._require_graph()
-        if await self.is_temporary(session_id):
-            if self._temporary_graph is None:
-                self._temporary_graph = await self.ctx.agentLoop.build(temporary=True)
-            graph = self._temporary_graph
+        graph = await self._chat() if await self.is_temporary(session_id) else self._require_graph()
         return await graph.aget_state(self._config(session_id))
 
     def config_for(self, session_id: str, model: str | None = None) -> dict[str, Any]:
@@ -191,18 +195,20 @@ class AgentService(Service):
         New session; ``workspace`` (root directory), ``mode`` and ``preset`` are validated and defaulted by their
         services.
 
-        ``temporary``: the session's thread and records live in ``ctx.temporary``; it is deleted on request,
-        ``temporary_ttl`` after its last turn, and with the process.
+        ``temporary``: a chat without workspace, permission mode or preset. Its thread and records live in
+        ``ctx.temporary``; it is deleted on request, ``temporary_ttl`` after its last turn, and with the process.
         """
         if temporary and self.ctx.get("temporary", None) is None:
             raise ValueError("temporary sessions need the `temporary` service (entry checkpoint-temporary)")
+        if temporary and (workspace or mode or preset):
+            raise ValueError("a temporary session has no workspace, permission mode or preset")
         loop = self.ctx.get("agentLoop", None)
         workspaces = self.ctx.get("workspace", None)
-        if workspaces is not None and hasattr(workspaces, "open"):
+        if not temporary and workspaces is not None and hasattr(workspaces, "open"):
             ws = workspaces.open(workspace)
             workspace = None if ws is workspaces.default else str(ws.root)
             await workspaces.remember(workspace)
-        if loop is not None and hasattr(loop, "mode"):
+        if not temporary and loop is not None and hasattr(loop, "mode"):
             mode = loop.mode(mode)
             preset = loop.preset(preset)[0]
         now = time.time()
@@ -246,12 +252,18 @@ class AgentService(Service):
         return await self._set(session_id, "title", (title or "").strip()[: self.config.title_chars] or None)
 
     async def set_mode(self, session_id: str, mode: str | None) -> dict[str, Any] | None:
-        """Switch the permission mode; takes effect on the next run."""
+        """Switch the permission mode; takes effect on the next run. A temporary session has none."""
+        await self._with_workspace(session_id)
         return await self._set(session_id, "mode", self.ctx.agentLoop.mode(mode))
 
     async def set_preset(self, session_id: str, preset: str | None) -> dict[str, Any] | None:
-        """Switch the agent preset; takes effect on the next run."""
+        """Switch the agent preset; takes effect on the next run. A temporary session has none."""
+        await self._with_workspace(session_id)
         return await self._set(session_id, "preset", self.ctx.agentLoop.preset(preset)[0])
+
+    async def _with_workspace(self, session_id: str) -> None:
+        if await self.is_temporary(session_id):
+            raise ValueError("a temporary session has no workspace, permission mode or preset")
 
     async def _set(self, session_id: str, field: str, value: Any) -> dict[str, Any] | None:
         record = await self.get_session(session_id)

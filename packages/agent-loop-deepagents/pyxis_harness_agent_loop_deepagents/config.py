@@ -64,6 +64,10 @@ class LoopConfig(BaseModel):
         None, description="Skill source paths in the backend (workspace paths such as /skills/mine/)."
     )
     memory: list[str] | None = Field(None, description="AGENTS.md-style memory files, relative to the backend root.")
+    chat_tools: list[str] = Field(
+        default_factory=lambda: ["web_search", "web_fetch"],
+        description="Registered tool names a temporary chat keeps; those with an approval gate stay out.",
+    )
     max_parallel_tool_calls: int = Field(10, ge=1, description="Tool calls of one agent running at a time.")
     recursion_limit: int = Field(
         10_000, ge=1, description="LangGraph steps of one run: the bound behind the agents service's max_steps."

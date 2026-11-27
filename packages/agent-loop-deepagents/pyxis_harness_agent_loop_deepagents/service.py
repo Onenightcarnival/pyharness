@@ -11,7 +11,7 @@ from langchain.agents.middleware import AgentMiddleware
 from pyxis_harness import Service
 
 from .config import FALLBACK_MODE, MODES, SKILLS_MOUNT, LoopConfig, Mode, PresetConfig
-from .graph import build as build_graph
+from .graph import build as build_graph, build_chat as build_chat_graph
 
 
 class DeepAgentsLoop(Service):
@@ -271,18 +271,8 @@ class DeepAgentsLoop(Service):
         return limit
 
     # ------------------------------------------------------------------ build
-    async def build(
-        self,
-        workspace: str | None = None,
-        mode: str | None = None,
-        preset: str | None = None,
-        temporary: bool = False,
-    ) -> Any:
-        """
-        Graph for a workspace root (``None``: the default), a permission mode and an agent preset.
-
-        ``temporary``: the graph of temporary sessions, on ``ctx.temporary``.
-        """
+    async def build(self, workspace: str | None = None, mode: str | None = None, preset: str | None = None) -> Any:
+        """Graph for a workspace root (``None``: the default), a permission mode and an agent preset."""
         preset_id, preset_cfg = self.preset(preset)
         return await build_graph(
             self.ctx,
@@ -298,5 +288,8 @@ class DeepAgentsLoop(Service):
             subagents=[s for s, _ in self._subagents],
             middleware=[m for m, _ in self._middleware],
             workspace=workspace,
-            temporary=temporary,
         )
+
+    async def build_chat(self) -> Any:
+        """Graph of temporary chats: the model and ``config.chat_tools``; no workspace, mode or preset."""
+        return build_chat_graph(self.ctx, self.config, middleware=[m for m, _ in self._middleware])

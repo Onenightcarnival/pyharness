@@ -21,7 +21,7 @@
 
 | 时机 | 工作 |
 |---|---|
-| `agent/turn-start` | 把会话工作区的工作树快照进私有对象目录（tree id） |
+| `agent/turn-start` | 把会话工作区的工作树快照进私有对象目录（tree id）；临时会话没有工作区：不快照 |
 | `agent/turn-end` | 第二次快照；两者之间 `diff-tree` → 摘要；写入 `turn.extras["changes"]` |
 | `agent/session-delete` | 删除该会话的摘要与私有对象目录 |
 

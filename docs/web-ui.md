@@ -29,7 +29,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 |---|---|
 | 侧边栏 | 品牌行与当前代；新会话；插件页入口；「工作区」区头（搜索会话、视图选项：按工作区分组 / 单一列表、按最近更新 / 创建时间排序，添加工作区）；工作区行可折叠，悬停显示「操作」（重命名、删除工作区：从列表移除，文件夹与会话保留，会话归入「未分组」）与「在此新建会话」；会话行：相对时间、运行中圆点，悬停显示操作菜单（重命名、复制会话 ID、删除会话，删除需确认）；底部「更多」菜单：设置、主题、profile 状态。收起后为图标栏，点标志展开 |
 | 会话参数 | 欢迎区两个标签：工作区（最近列表、「选择目录…」打开本机的系统文件夹对话框，macOS `osascript` / Windows PowerShell / Linux zenity、kdialog；无对话框时退回内置目录浏览器；会话创建后不可改）、预设（标准 / 创造）；输入框左下角权限标签（仅可查看 / 工作区内修改 / 完全权限 / 自动审查，切换完全权限与自动审查需确认；已有会话可切换，下一轮生效）。会话打开后顶栏显示其工作区与预设 |
-| 临时对话 | 欢迎区第三个标签「临时对话」是开关：打开后新建的会话是临时会话（`POST /sessions` 的 `temporary: true`）。侧边栏的行与顶栏带「临时对话」标记。只保存在内存里：删除、闲置到期或 harness 重启后清空；重启后回到欢迎区并提示。会重启 harness 的操作（安装、卸载、启停插件，保存 MCP 服务器，切换 shell、开关网页工具）在存在临时会话时先确认。页面模块用 `require("pyxis-harness").confirmRestart()` 做同样的确认 |
+| 临时对话 | 纯聊天：没有工作区、文件、shell 与子 agent。欢迎区第三个标签「临时对话」是开关：打开后工作区、预设、权限三个标签隐藏，新建的会话是临时会话（`POST /sessions` 的 `temporary: true`）。临时会话在侧边栏自成一组「临时对话」，顶栏带标记，没有右侧栏，`@` 不弹出文件菜单。只保存在内存里：删除、闲置到期或 harness 重启后清空；重启后回到欢迎区并提示。会重启 harness 的操作（安装、卸载、启停插件，保存 MCP 服务器，切换 shell、开关网页工具）在存在临时会话时先确认。页面模块用 `require("pyxis-harness").confirmRestart()` 做同样的确认 |
 | 对话 | 空会话：居中欢迎区与输入框。会话开始后输入区固定在底部，消息区独立滚动。用户消息：浅蓝气泡，附图显示在气泡上方。回复：Markdown（代码块带语言与复制、表格、引用、图片），模型返回的图片块作为图片渲染；点击图片放大。`diff` / `patch` 围栏按行着色（新增绿、删除红、hunk 头与文件头各一色，整行铺满滚动宽度），复制得到原文。数学公式：行内 `$…$`、`\(…\)`，块级 `$$…$$`、`\[…\]` 与 `latex` / `tex` / `math` 围栏，用随包分发的 KaTeX（`GET /vendor/katex.min.js`，首次出现公式时才加载）渲染成 MathML；加载完成前与解析失败时显示 TeX 原文，流式输出中未闭合的公式按普通文本显示；复制含公式的选区得到 `$…$` / `$$…$$` |
 | 代码高亮 | 服务端 Pygments：回复定稿后与历史加载时，代码块按围栏语言请求 `POST /api/highlight` 得到 token span；文件预览的「代码」渲染器按文件名选择 lexer；diff 两侧按文件名分别高亮。配色由 `GET /api/highlight.css` 提供（浅色 xcode、深色 github-dark），仅 token 颜色，背景沿用页面 |
 | 改动文件卡片 | 每轮结束后，`pyxis-harness-workspace-changes` 用 git 工作树快照汇总本轮改动的文件与增删行数；卡片出现在该轮回复之后：单文件显示「已编辑 文件名」，多文件显示文件数与合计，前 4 行展开，其余可展开。点击行在右侧栏打开「第 N 轮改动」tab：文件选择器、单栏 / 左右对比、换行、在侧边栏打开文件、重新读取；hunk 带两侧行号与增删底色，新建 / 删除文件给出说明。摘要持久化；逐文件对比只在记录它的进程内可用，重启后提示不可用。工作区不在 git 仓库内时不记录 |
@@ -88,7 +88,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | PUT | `/plugins/entries/{id}` | `{"enabled"}` | 启用 / 停用条目 |
 | POST | `/restart` | | 请求重启（运行中的轮次结束后）；未受 supervisor 管理时 409 |
 | GET | `/sessions` | | 会话列表；临时会话带 `temporary: true` |
-| POST | `/sessions` | `{"title"?, "model"?, "workspace"?, "mode"?, "preset"?, "temporary"?}` | 会话；工作区为绝对路径，不在 harness home 内；`temporary: true`：临时会话 |
+| POST | `/sessions` | `{"title"?, "model"?, "workspace"?, "mode"?, "preset"?, "temporary"?}` | 会话；工作区为绝对路径，不在 harness home 内；`temporary: true`：临时会话（纯聊天，不带工作区、权限模式、预设） |
 | PUT | `/sessions/{id}` | `{"title"}` | 重命名会话 |
 | PUT | `/sessions/{id}/mode` | `{"mode"}` | 权限模式；下一轮生效 |
 | PUT | `/sessions/{id}/preset` | `{"preset"}` | 预设；下一轮生效 |

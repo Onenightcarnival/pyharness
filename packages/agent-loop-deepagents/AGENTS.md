@@ -26,7 +26,7 @@
 |---|---|
 | `build()` 的返回值 | LangGraph 图，带 `astream` 与 `aget_state` |
 | `build(workspace, mode, preset)` | 构建一张图 |
-| `build(..., temporary=True)` | 临时会话的图：thread 与 store 在 `ctx.temporary`；没有该服务 → `ValueError` |
+| `build_chat()` | 临时会话的聊天图：thread 与 store 在 `ctx.temporary`；没有该服务 → `ValueError` |
 | `build()` | 默认图；在 `app/ready` 构建 |
 | 会话 | 选择 workspace（根目录）、权限模式、agent 预设 |
 | `ctx.agents` | 每种组合保留一张图 |
@@ -101,7 +101,7 @@
 | 模型 | `ctx.llm` |
 | 工具 | `ctx.tools` |
 | 系统提示词 | `ctx.prompt` |
-| 持久化 | `ctx.checkpointer`；`ctx.store`（存在时）；`temporary=True`：`ctx.temporary` 的一对 |
+| 持久化 | `ctx.checkpointer`；`ctx.store`（存在时） |
 | 文件、shell | `ctx.backend` 与 `ctx.workspace` 的权限（存在时） |
 | 审批 | `ctx.tools.interrupt_on()` 与 `config.interrupt_on` |
 | 子 agent | `config.subagents` 与 `DeepAgentsLoop.add_subagent` |
@@ -117,6 +117,19 @@
 | `resolve_subagent()` | 一个子 agent spec 内：工具名 → 已注册的工具，model spec → 模型 |
 | `built_model()` | 构建图所用的 `(spec, model)`；默认模型在启动时不可用：`echo:echo` |
 | `build()` | 编译好的 deepagents 图，取自 loop 的 context、配置与扩展状态 |
+| `build_chat()` | 编译好的聊天图（`langchain.agents.create_agent`） |
+
+### 聊天图（`build_chat()`）
+
+| 项 | 契约 |
+|---|---|
+| 用途 | 临时会话 |
+| 没有 | 工作区、文件工具、shell、子 agent、技能、挂载、权限模式、预设、审批 |
+| 工具 | `config.chat_tools`（默认 `web_search`、`web_fetch`）中已注册且不带审批门的 |
+| 系统提示词 | `config.system_prompt` 与 `prompts.toml` 的 `chat_policy` |
+| middleware | `HarnessMiddleware`、插件经 `add_middleware` 添加的、`RequestScope` |
+| 持久化 | `ctx.temporary` 的 `checkpointer` 与 `store` |
+| `agent-loop/build` | 不分发 |
 
 ### 技能挂载
 

@@ -12,3 +12,11 @@ Permission mode: ${mode_title}. ${mode_description}
 Agent preset: ${preset_title}. Workspace root: ${root};
 the file tools address it as `/` (paths inside the workspace are relative to that root).
 '''
+
+# Appended to the identity section in a temporary chat.
+chat_policy = '''
+## Temporary chat
+This is a conversation only: no workspace, no files, no shell, no subagents. Nothing of it is kept once it ends.
+Answer from what you know and from the tools listed here. When a request needs files or commands, say that it
+belongs in a regular session.
+'''

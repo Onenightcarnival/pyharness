@@ -1104,7 +1104,7 @@ const T = zh ? {
   failureCodes: { RATE_LIMIT: '限流（429）', SERVER: '服务端错误（5xx）', TIMEOUT: '超时', TRANSPORT: '网络连接', EMPTY_RESPONSE: '空响应', STREAM_CLOSED: '流中断' },
   recRetry: '重试', retryAttempt: (n) => `第 ${n} 次重试`, retryWait: '等待', failureCode: '失败类型',
   placeholderBusy: 'agent 工作中…', collapse: '收起侧边栏', expand: '展开侧边栏', attach: '添加图片（也可粘贴或拖入）', send: '发送', stop: '停止',
-  temporaryChat: '临时对话', temporaryHint: '只保存在内存里，不进会话库：删除、长时间闲置或 harness 重启后清空；agent 写进工作区的文件不受影响', temporaryGone: '临时对话已随重启清空', restartEndsTemporary: (n) => `这项操作会重启 harness，${n} 个临时对话将被清空。`, continueLabel: '继续',
+  temporaryChat: '临时对话', temporaryHint: '纯聊天：没有工作区、文件和 shell。只保存在内存里，删除、长时间闲置或 harness 重启后清空', temporaryGone: '临时对话已随重启清空', restartEndsTemporary: (n) => `这项操作会重启 harness，${n} 个临时对话将被清空。`, continueLabel: '继续',
   thought: '思考过程', toolRunning: '运行中', copy: '复制', copied: '已复制', del: '删除会话', deleted: '会话已删除',
   approvalStrip: '待批准', approvalCountdown: (t) => `${t} 后自动拒绝`, approvalExpired: '已超时，正在拒绝…', maxSteps: '每轮步数上限', maxStepsHint: '一轮里主 agent 调用模型的次数；到达后本轮暂停，可以继续', noLimit: '不限', maxParallel: '并行工具调用数', maxParallelHint: '模型一次返回多个工具调用时，同时执行的上限', reviewModel: '审查模型', reviewModelHint: '自动审查权限下，审查工具调用的模型', sameAsSession: '与会话相同', summaryModel: '摘要模型', summaryModelHint: '压缩时写检查点摘要的模型', pausedTurn: '已暂停', stepLimitHint: '已达到每轮步数上限：点右侧按钮继续运行，或输入新消息', stepLimitReached: '已达到每轮步数上限，本轮已暂停；点发送按钮继续，或输入新消息。', approvalTimeout: '审批时限', approvalTimeoutHint: '工具审批等待决定的最长时间；到期后自动拒绝，agent 继续。', noTimeout: '不超时', minutes: (n) => `${n} 分钟`, hours: (n) => `${n} 小时`, seconds: (n) => `${n} 秒`, approve: '批准', reject: '拒绝', cmdCompact: '压缩较早的对话历史', cmdHelp: '列出可用命令', cmdNew: '新建会话', cmdModel: '切换模型', cmdMode: '切换权限模式', cmdSettings: '打开设置', cmdFiles: '在右侧栏打开工作区文件', cmdTerminal: '在右侧栏打开终端', cmdJobs: '在右侧栏查看后台任务', cmdClear: '收起已完成的工作步骤', commandsTitle: '命令', referencesTitle: '文件', noCommands: '没有匹配的命令', noFiles: '没有匹配的文件', helpIntro: '可用命令：', refHint: '输入 @ 引用工作区文件，/ 使用命令', questionStrip: 'agent 有问题要问你', questionPending: '先回答上面的问题', questionTurn: '等待回答', submitAnswers: '提交回答', skipAll: '全部跳过', customAnswer: '其他…', customPlaceholder: '输入你的回答', chooseOne: '选一项', chooseMany: '可多选', approvalOne: '批准这次工具调用？', approvalMany: (n) => `批准这 ${n} 次工具调用？`,
   restarting: '重启中：应用插件变更…', restarted: (g) => `第 ${g} 代已启动`, rolledBack: (g) => `变更启动失败；第 ${g} 代运行上一份配置`, offline: '离线', online: '在线', gen: (g) => `第 ${g} 代`,
@@ -1123,7 +1123,7 @@ const T = zh ? {
   failureCodes: { RATE_LIMIT: 'Rate limit (429)', SERVER: 'Server error (5xx)', TIMEOUT: 'Timeout', TRANSPORT: 'Connection', EMPTY_RESPONSE: 'Empty response', STREAM_CLOSED: 'Stream closed' },
   recRetry: 'Retry', retryAttempt: (n) => `retry ${n}`, retryWait: 'Wait', failureCode: 'Failure',
   placeholderBusy: 'The agent is working…', collapse: 'Collapse sidebar', expand: 'Expand sidebar', attach: 'Add images (paste or drop works too)', send: 'Send', stop: 'Stop',
-  temporaryChat: 'Temporary chat', temporaryHint: 'Kept in memory only, never in the session store: gone when deleted, after long inactivity, or when the harness restarts; files the agent writes to the workspace stay', temporaryGone: 'The temporary chat ended with the restart', restartEndsTemporary: (n) => `This restarts the harness and ends ${n} temporary chat${n === 1 ? '' : 's'}.`, continueLabel: 'Continue',
+  temporaryChat: 'Temporary chat', temporaryHint: 'Chat only: no workspace, files or shell. Kept in memory; gone when deleted, after long inactivity, or when the harness restarts', temporaryGone: 'The temporary chat ended with the restart', restartEndsTemporary: (n) => `This restarts the harness and ends ${n} temporary chat${n === 1 ? '' : 's'}.`, continueLabel: 'Continue',
   thought: 'Thoughts', toolRunning: 'Running', copy: 'Copy', copied: 'Copied', del: 'Delete session', deleted: 'Session deleted',
   approvalStrip: 'Awaiting approval', approvalCountdown: (t) => `rejected in ${t}`, approvalExpired: 'Timed out; rejecting…', maxSteps: 'Steps per turn', maxStepsHint: 'Model calls of the main agent in one turn; the turn pauses there and can be continued', noLimit: 'No limit', maxParallel: 'Parallel tool calls', maxParallelHint: 'Upper bound on tool calls running at once when the model returns several', reviewModel: 'Reviewer model', reviewModelHint: 'The model that reviews tool calls under the Auto review permission', sameAsSession: 'Same as the session', summaryModel: 'Summary model', summaryModelHint: 'The model that writes the checkpoint summary of a compaction', pausedTurn: 'Paused', stepLimitHint: 'The turn reached its step limit: use the button to continue, or type a new message', stepLimitReached: 'The turn reached its step limit and paused; press send to continue, or type a new message.', approvalTimeout: 'Approval time limit', approvalTimeoutHint: 'How long a tool approval waits for a decision; after that it is rejected and the agent goes on.', noTimeout: 'No limit', minutes: (n) => `${n} min`, hours: (n) => `${n} h`, seconds: (n) => `${n} s`, approve: 'Approve', reject: 'Reject', cmdCompact: 'Compact older conversation history', cmdHelp: 'List available commands', cmdNew: 'Start a new session', cmdModel: 'Choose the model', cmdMode: 'Choose the permission mode', cmdSettings: 'Open settings', cmdFiles: 'Open workspace files in the sidebar', cmdTerminal: 'Open a terminal in the sidebar', cmdJobs: 'Show background jobs in the sidebar', cmdClear: 'Collapse finished work details', commandsTitle: 'Commands', referencesTitle: 'Files', noCommands: 'No matching commands', noFiles: 'No matching files', helpIntro: 'Available commands:', refHint: 'Type @ to reference a workspace file, / for commands', questionStrip: 'The agent has a question for you', questionPending: 'Answer the question above first', questionTurn: 'Waiting for your answer', submitAnswers: 'Submit answers', skipAll: 'Skip all', customAnswer: 'Other…', customPlaceholder: 'Type your answer', chooseOne: 'Choose one', chooseMany: 'Choose any', approvalOne: 'Approve this tool call?', approvalMany: (n) => `Approve these ${n} tool calls?`,
   restarting: 'Restarting: applying plugin changes…', restarted: (g) => `Generation ${g} started`, rolledBack: (g) => `Change failed to boot; generation ${g} runs the previous configuration`, offline: 'Offline', online: 'Online', gen: (g) => `generation ${g}`,
@@ -1566,9 +1566,14 @@ function renderSessions() {
   }
   const known = state.workspaces?.recent || [{ root: defaultPath, name: state.health?.workspace?.name || 'workspace', default: true, exists: true }];
   const groups = new Map(known.map((w) => [w.root, { ...w, sessions: [] }]));
-  const ungrouped = [];
-  for (const s of sessions) { const key = s.workspace || defaultPath; if (groups.has(key)) groups.get(key).sessions.push(s); else ungrouped.push(s); }
+  const ungrouped = []; const chats = sessions.filter((s) => s.temporary);
+  for (const s of sessions) { if (s.temporary) continue; const key = s.workspace || defaultPath; if (groups.has(key)) groups.get(key).sessions.push(s); else ungrouped.push(s); }
   const html = [];
+  if (chats.length) {
+    const isFolded = folded.has('__temporary');
+    html.push(`<div class="projectRow" data-workspace="__temporary" ${isFolded ? 'data-folded' : ''} role="button" tabindex="0"><span class="folder">${icon('eye-off')}</span>${icon('chev-down', 'ico fold')}<span class="name">${esc(T.temporaryChat)}</span></div>`);
+    if (!isFolded) html.push(chats.map(sessionRowHtml).join(''));
+  }
   for (const w of groups.values()) {
     const isFolded = folded.has(w.root);
     const rows = w.sessions.map(sessionRowHtml).join('');
@@ -1736,7 +1741,7 @@ function setView(view, key) {
   $('panelSlots').querySelectorAll('[data-panel]').forEach((b) => { if (b.dataset.panel === state.panel) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   $('topBar').toggleAttribute('data-bordered', view !== 'chat' || $('chatView').dataset.phase !== 'hero');
   $('topBar').toggleAttribute('data-panel', view !== 'chat');
-  $('rbExpand').hidden = view !== 'chat' || !state.current || rightbar.open;
+  $('rbExpand').hidden = view !== 'chat' || !state.current || rightbar.open || !!state.session?.temporary;
   $('viewTabs').hidden = view !== 'chat' || !state.current; $('topBar').toggleAttribute('data-tabs', !$('viewTabs').hidden); if (view === 'chat' && state.current && state.convView === 'trajectory') { $('scroll').hidden = true; $('trajectoryView').hidden = false; } if ($('statsRow')) $('statsRow').hidden = view !== 'chat' || $('statsRow').dataset.empty === '1';
 }
 function selectPanel(key) {
@@ -1810,7 +1815,7 @@ async function openSession(id) {
   $('crumb').textContent = s.title || T.untitled;
   state.session = s; state.sessionModel = s.model || null; renderModelChip(); renderSessionChips(); renderDock(); renderRightbar(); emitPlugin('session', s);
   state.failure = s.failure || null;
-  setPhase('active'); $('rbExpand').hidden = rightbar.open; setConvView('chat'); renderStats();
+  setPhase('active'); $('rbExpand').hidden = rightbar.open || !!s.temporary; setConvView('chat'); renderStats();
   renderHistory(s.messages, s.changes, s.turns);
   if (s.failure) addFailure(s.failure);
   renderApproval(s.pending || [], s.approval_deadline);
@@ -2330,7 +2335,7 @@ function cmenuToken() {
   const cmd = /^\/([a-z0-9_-]*)$/i.exec(before);
   if (cmd) return { mode: 'cmd', query: cmd[1], start: 0, end: pos };
   const ref = /(?:^|[\s(\[{,，、])@(?:"([^"\n]*)|([^\s"@]*))$/.exec(before);
-  if (ref) { const query = ref[1] ?? ref[2] ?? ''; const at = before.lastIndexOf('@'); return { mode: 'ref', query, start: at, end: pos, quoted: ref[1] != null }; }
+  if (ref && !isTemporary()) { const query = ref[1] ?? ref[2] ?? ''; const at = before.lastIndexOf('@'); return { mode: 'ref', query, start: at, end: pos, quoted: ref[1] != null }; }
   return null;
 }
 function cmenuRender() {
@@ -2538,6 +2543,7 @@ async function loadAgentOptions() {
 }
 const modeLabel = (id) => (T.modeTitle[id] || (state.agent?.modes.find((m) => m.id === id) || {}).title || id || '');
 const presetLabel = (id) => (T.presetTitle[id] || (state.agent?.presets.find((p) => p.id === id) || {}).title || id || '');
+function isTemporary() { return !!(state.session ? state.session.temporary : state.sessionTemporary); }
 function currentWorkspace() { return state.session ? (state.session.workspace || state.health?.workspace?.path || '') : (state.sessionWorkspace || state.health?.workspace?.path || ''); }
 function workspaceName(path) { const w = (state.workspaces?.recent || []).find((x) => x.root === path); return w ? w.name : (path.split('/').filter(Boolean).pop() || path); }
 function currentMode() { return (state.session ? state.session.mode : state.sessionMode) || state.agent?.default_mode || ''; }
@@ -2547,13 +2553,14 @@ const MODE_CONFIRM = { 'full-access': 'fullAccessConfirm', 'auto-review': 'autoR
 function renderSessionChips() {
   const ws = currentWorkspace(); const name = workspaceName(ws);
   const mode = currentMode(); const preset = currentPreset();
-  const hw = $('heroWorkspace'); hw.querySelector('.label').textContent = name; hw.title = ws; hw.hidden = !ws;
-  const hp = $('heroPreset'); hp.querySelector('.label').textContent = presetLabel(preset); hp.title = `${T.preset_}: ${T.presetDesc[preset] || ''}`; hp.hidden = !preset;
-  const mc = $('modeChip'); mc.querySelector('.label').textContent = modeLabel(mode); mc.title = `${T.mode_}: ${T.modeDesc[mode] || ''}`; mc.hidden = !mode;
+  const chat = isTemporary();  // a temporary chat has no workspace, preset or permission mode
+  const hw = $('heroWorkspace'); hw.querySelector('.label').textContent = name; hw.title = ws; hw.hidden = !ws || chat;
+  const hp = $('heroPreset'); hp.querySelector('.label').textContent = presetLabel(preset); hp.title = `${T.preset_}: ${T.presetDesc[preset] || ''}`; hp.hidden = !preset || chat;
+  const mc = $('modeChip'); mc.querySelector('.label').textContent = modeLabel(mode); mc.title = `${T.mode_}: ${T.modeDesc[mode] || ''}`; mc.hidden = !mode || chat;
   mc.querySelector('.lead').innerHTML = `<use href="#i-${MODE_ICON[mode] || 'shield'}"/>`;
   const ht = $('heroTemporary'); ht.setAttribute('aria-pressed', String(!!state.sessionTemporary)); ht.title = T.temporaryHint;
   const temporary = state.session?.temporary ? `<span class="tag" data-tone="warning" title="${esc(T.temporaryHint)}">${icon('eye-off')}${esc(T.temporaryChat)}</span>` : '';
-  $('crumbTags').innerHTML = state.session ? `${temporary}<span class="tag" data-tone="outline" title="${esc(ws)}">${icon('folder')}${esc(name)}</span><span class="tag" data-tone="outline">${icon('mode')}${esc(presetLabel(preset))}</span>` : '';
+  $('crumbTags').innerHTML = !state.session ? '' : temporary || `<span class="tag" data-tone="outline" title="${esc(ws)}">${icon('folder')}${esc(name)}</span><span class="tag" data-tone="outline">${icon('mode')}${esc(presetLabel(preset))}</span>`;
 }
 function toggleTemporary() { state.sessionTemporary = !state.sessionTemporary; renderSessionChips(); $('input').focus(); }
 let chipMenu = null;
@@ -2955,7 +2962,7 @@ const rightbar = (() => { try { return { open: false, width: 380, ...JSON.parse(
 function saveRightbar() { try { localStorage.setItem('pyh-rightbar', JSON.stringify({ open: rightbar.open, width: rightbar.width })); } catch { /* no storage */ } }
 const rbLayouts = {}; const rbStores = new Map(); let rbMounted = null;
 function rbLayout() {
-  const sid = state.current; if (!sid) return null;
+  const sid = state.current; if (!sid || state.session?.temporary) return null;
   if (!rbLayouts[sid]) {
     let saved = null; try { saved = JSON.parse(localStorage.getItem(`pyh.rightbar.v1.${sid}`) || 'null'); } catch { /* ignore */ }
     const tabs = Array.isArray(saved?.tabs) ? saved.tabs.filter((t) => t && typeof t.id === 'string' && typeof t.kind === 'string').map((t) => ({ ...t, params: t.params || {}, title: String(t.title || t.kind) })) : [];
