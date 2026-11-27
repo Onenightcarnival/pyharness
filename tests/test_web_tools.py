@@ -196,3 +196,40 @@ async def test_tools_over_mock_transport_and_optional_bundle(home, monkeypatch):
     assert "web" not in profile.bundles()
     assert profile.set_bundle_enabled("web", True) and "web" in profile.bundles()
     assert yaml.safe_load(profile.manifest_path.read_text())["disabled"] == []
+
+
+async def test_web_tools_settings(home, monkeypatch):
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    profile = Profile.init("web", home=str(home))
+    async with (
+        Harness(profile, patch=[HTTP_OFF]) as h,
+        httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t") as c,
+    ):
+        web, lifecycle = h.get("web"), h.ctx.lifecycle
+        current = (await c.get("/api/web-tools/settings")).json()
+        assert (current["search"], current["fetch"], current["search_provider"]) == (True, True, "deepseek-search-api")
+        assert current["key"] == {"reference": "DEEPSEEK_API_KEY", "configured": False, "source": None}
+        # Provider and counts apply at once.
+        saved = (
+            await c.put("/api/web-tools/settings", json={"search_provider": "deepseek-legacy", "max_results": 3})
+        ).json()
+        assert (saved["application"], saved["search_provider"], saved["max_results"]) == (
+            "applied",
+            "deepseek-legacy",
+            3,
+        )
+        assert web.config.max_results == 3 and lifecycle.restart_pending is None
+        refused = await c.put("/api/web-tools/settings", json={"max_results": 500})
+        assert refused.status_code == 422 and refused.json()["detail"].startswith("max_results: ")
+        assert (await c.put("/api/web-tools/settings", json={"search_provider": "elsewhere"})).status_code == 422
+        # The key goes to the profile's credential file and is never returned.
+        keyed = (await c.put("/api/web-tools/settings", json={"api_key": " sk-test "})).json()
+        assert keyed["key"] == {"reference": "DEEPSEEK_API_KEY", "configured": True, "source": "store"}
+        assert "sk-test" not in json.dumps(keyed) and web.api_key() == "sk-test"
+        assert (await c.put("/api/web-tools/settings", json={"api_key": ""})).json()["key"]["configured"] is False
+        assert web.api_key() is None
+        # Which tools the agent has changes with the next generation.
+        off = (await c.put("/api/web-tools/settings", json={"fetch": False})).json()
+        assert off["application"] == "restart" and lifecycle.restart_pending["reasons"] == ["web tools settings"]
+        saved = {o["id"]: o["config"] for o in yaml.safe_load((profile.dir / "harness.patch.yaml").read_text())}
+        assert saved["web-tools"] == {"search_provider": "deepseek-legacy", "max_results": 3, "fetch": False}

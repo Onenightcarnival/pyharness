@@ -63,7 +63,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 插件槽位 | 页面在加载时读取 `window.__PYH_BOOT__` 的模块清单，依次加载各插件的 `client.js`；模块通过 `ctx.slots.register` 填入槽位：侧边栏面板行、「更多」菜单行、主区面板、输入框旁的停靠位、设置分区、右侧栏 tab。契约见 `pyxis_harness_web_ui` 包文档与创造模式 skill 的 `references/ui-plugin.md` |
 | 模型菜单 | 输入框右下角的模型标签：按提供方分组的模型菜单；选择后写入会话（`PUT /sessions/{id}/model`），下一次请求生效；新会话在创建时带上选择；菜单底部「管理模型…」进入设置 |
 | 会话顶栏 | 两行（同 dsh）：标题行（标题、工作区与预设标签、右侧栏按钮）与视图页签行（对话 / 轨迹，下划线样式）；首页不显示 |
-| 设置对话框 | 800 × 800、28px 圆角、layer-2 底色；左侧 188px 导航（40px 行）；MCP 服务器改在左侧栏「MCP」页管理；「内置插件」有搜索框与按来源分组的两列卡片。「更多 → 设置」或模型菜单的「管理模型…」进入；左侧分区：通用（新会话权限、审批时限（不超时 / 1 分钟 / 5 分钟 / 15 分钟 / 1 小时）、上下文压缩）、外观（主题浅色 / 深色 / 跟随系统、语言、工作步骤展示、工作步骤收起时机、性能与用量、左侧栏入口）、模型、预设（卡片，点击设为新会话默认）、内置插件（条目只读）。「模型」：新会话默认模型（下拉列出全部可选模型，含 AI 订阅等插件发布的路由）；只列出在这里配置的提供方，插件发布的路由（AI 订阅的 Codex / ChatGPT / Antigravity / Grok）不在此列、在各自的页面管理；提供方行（标题、类型、默认标记、密钥状态点、端点、模型数），点击展开编辑卡（同时只开一张）：API Key（只写、可显示）、Base URL（占位符为默认端点）、模型列表（ID、显示名、上下文、最大输出、输入模态勾选：文本 / 图像；「获取可用模型」打开可搜索的勾选列表，端点披露的模态随之带入，「恢复默认模型」）、测试连接、删除（确认框）、应用。「添加模型提供方」：「第三方模型提供方」从预置目录选择（OpenAI、Anthropic、DeepSeek、Google Gemini、OpenRouter；集成包随 pyxis-harness-llm 安装），或「自定义模型 API」填写提供方 ID、显示名、API 协议（OpenAI Chat Completions / Responses / Anthropic Messages）、端点，至少一个模型。应用后立即生效，无需重启；密钥写入 profile 的 `credentials.yaml`，配置只记录引用名 |
+| 设置对话框 | 800 × 800、28px 圆角、layer-2 底色；左侧 188px 导航（40px 行）；MCP 服务器改在左侧栏「MCP」页管理；「内置插件」有搜索框与按来源分组的两列卡片。「更多 → 设置」或模型菜单的「管理模型…」进入；左侧分区：通用（新会话权限、审批时限（不超时 / 1 分钟 / 5 分钟 / 15 分钟 / 1 小时）、每轮步数上限、并行工具调用数、自动审查的模型、上下文压缩及其摘要模型）、外观（主题浅色 / 深色 / 跟随系统、语言、工作步骤展示、工作步骤收起时机、性能与用量、左侧栏入口）、模型、预设（卡片，点击设为新会话默认）、内置插件（条目只读）。「模型」：新会话默认模型（下拉列出全部可选模型，含 AI 订阅等插件发布的路由）；只列出在这里配置的提供方，插件发布的路由（AI 订阅的 Codex / ChatGPT / Antigravity / Grok）不在此列、在各自的页面管理；提供方行（标题、类型、默认标记、密钥状态点、端点、模型数），点击展开编辑卡（同时只开一张）：API Key（只写、可显示）、Base URL（占位符为默认端点）、模型列表（ID、显示名、上下文、最大输出、输入模态勾选：文本 / 图像；「获取可用模型」打开可搜索的勾选列表，端点披露的模态随之带入，「恢复默认模型」）、测试连接、删除（确认框）、应用。「添加模型提供方」：「第三方模型提供方」从预置目录选择（OpenAI、Anthropic、DeepSeek、Google Gemini、OpenRouter；集成包随 pyxis-harness-llm 安装），或「自定义模型 API」填写提供方 ID、显示名、API 协议（OpenAI Chat Completions / Responses / Anthropic Messages）、端点，至少一个模型。应用后立即生效，无需重启；密钥写入 profile 的 `credentials.yaml`，配置只记录引用名 |
 
 | 适配 | 行为 |
 |---|---|
@@ -92,7 +92,10 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | PUT | `/sessions/{id}/mode` | `{"mode"}` | 权限模式；下一轮生效 |
 | PUT | `/sessions/{id}/preset` | `{"preset"}` | 预设；下一轮生效 |
 | GET | `/agent` | | 预设、权限模式（`builtin: false`：插件添加，不作新会话默认）、新会话默认、审批时限 `approval_timeout` |
-| PUT | `/settings/agent` | `{"default_preset"?, "default_mode"?, "approval_timeout"?}` | 新会话默认；审批时限（秒，`null`：不超时）；写入 profile 补丁 |
+| PUT | `/settings/agent` | `{"default_preset"?, "default_mode"?, "approval_timeout"?, "max_steps"?, "max_parallel_tool_calls"?}` | 新会话默认；审批时限（秒，`null`：不超时）；每轮步数上限（`null`：不限）；并行工具调用数；写入 profile 补丁 |
+| GET / PUT | `/settings/review` | `{"model"}` | 自动审查的模型（`null`：与被审调用相同）；立即生效并写入 profile 补丁 |
+| GET / PUT | `/terminal/settings` | `{"timeout"?, "max_output_chars"?, "promote_on_timeout"?, "dialect"?, "shell"?, "pwsh"?}` | shell 工具：超时、输出上限、超时转后台立即生效；shell 的更换写入后请求重启；应答的 `application` 为 `applied` 或 `restart` |
+| GET / PUT | `/web-tools/settings` | `{"search"?, "fetch"?, "search_provider"?, "search_base_url"?, "base_url"?, "max_results"?, "max_uses"?, "api_key"?}` | 网页搜索与获取：提供方、地址、数量与密钥立即生效；工具的开关写入后请求重启；密钥存入凭据文件，应答只带其状态 |
 | GET | `/workspaces` | | 默认与最近工作区 |
 | POST | `/workspaces` | `{"path"}` | 校验并记住工作区 |
 | PUT | `/workspaces` | `{"path", "name"}` | 工作区显示名；空值恢复目录名 |

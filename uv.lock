@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -2543,16 +2543,20 @@ name = "pyxis-harness-web-tools"
 version = "0.1.1.dev3"
 source = { editable = "packages/web-tools" }
 dependencies = [
+    { name = "fastapi" },
     { name = "httpx" },
     { name = "langchain-core" },
+    { name = "pydantic" },
     { name = "pyxis-harness-core" },
     { name = "pyxis-harness-tools" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "fastapi", specifier = "==0.162.0" },
     { name = "httpx", specifier = "==0.28.1" },
     { name = "langchain-core", specifier = "==1.7.1" },
+    { name = "pydantic", specifier = "==2.14.1" },
     { name = "pyxis-harness-core", editable = "packages/core" },
     { name = "pyxis-harness-tools", editable = "packages/tools" },
 ]

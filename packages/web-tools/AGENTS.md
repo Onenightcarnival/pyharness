@@ -7,18 +7,20 @@
 | 条目 | `web-tools`（`web` bundle） |
 | 服务 | `WebToolsService`，`ctx.web` |
 | 注入 | `tools` |
+| 可选 | `http`：设置路由，前缀 `/api/web-tools`；`webui`：设置分区 |
 
 ## 文件
 
 | 文件 | 内容 |
 |---|---|
 | `__init__.py` | 导出 |
-| `service.py` | `WebToolsService`：注册 `web_search` 与 `web_fetch`，持有凭据 |
+| `service.py` | `WebToolsService`：注册 `web_search` 与 `web_fetch`，持有凭据；设置及其路由 |
 | `config.py` | 插件配置 |
 | `common.py` | `search.py` 与 `fetch.py` 共用 |
 | `search.py` | `web_search`：DeepSeek 搜索 |
 | `fetch.py` | `web_fetch`：HTTP GET，正文化为可读文本 |
 | `prompts.toml` | 模型可见文本；`pyxis_harness.package_prompts(__file__)` 加载 |
+| `client.js` | 浏览器模块：设置分区「网页搜索」 |
 
 ## 工具
 
@@ -39,6 +41,14 @@
 | `search()` | `search.search` |
 | `fetch()` | `fetch.fetch` |
 | `transport` | 全部请求的 httpx transport 覆盖（测试） |
+| `settings()` | 设置与搜索密钥的状态（不含密钥的值） |
+| `save(fields)` | 更改设置并写入 profile 补丁；`GET`、`PUT /api/web-tools/settings` |
+
+| `save` 的字段 | 生效 |
+|---|---|
+| `search_provider`、`search_base_url`、`base_url`、`max_results`、`max_uses` | 立即：下一次搜索 |
+| `api_key` | 立即；存入 profile 的凭据文件；空串：删除 |
+| `search`、`fetch` | 下一代；请求重启 |
 
 ## 配置
 
