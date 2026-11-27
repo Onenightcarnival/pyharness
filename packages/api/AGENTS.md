@@ -121,7 +121,7 @@
 | PUT | `/settings/review` | `{"model"}` | 审查模型（`route:model`；`null`：与被审调用相同）；立即生效；持久化；未知模型 → 422 | `put_review_settings` |
 | GET | `/settings/compaction` | | 压缩设置 | `get_compaction_settings` |
 | PUT | `/settings/compaction` | `{"auto"?, "threshold_ratio"?, "retain_ratio"?, "default_context_window"?, "summary_model"?}` | 压缩设置；立即生效；持久化 | `put_compaction_settings` |
-| GET | `/settings/models` | | 已配置的路由及其凭据状态、目录、`groups`（全部可选模型，含插件发布的路由） | `get_model_settings` |
+| GET | `/settings/models` | | 已配置的路由及其凭据状态、目录、`groups`（全部可选模型，含插件发布的路由）、未声明时的 `default_context_window` 与 `default_max_tokens` | `get_model_settings` |
 | PUT | `/settings/models` | `{"default"}` | 新会话的默认模型 | `put_default_model` |
 | PUT | `/settings/model-retry` | `{"retry"}` | 没有自有策略的路由的重试策略 | `put_model_retry` |
 | PUT | `/settings/models/{route}` | `route settings` | 创建或编辑一条路由；立即生效；route id 属于插件发布的路由 → 409 | `put_route` |

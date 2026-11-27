@@ -39,7 +39,7 @@
 | 窗口 | 来源 |
 |---|---|
 | 首选 | 模型声明的 `context_window`（设置 → 模型） |
-| 否则 | `default_context_window` |
+| 否则 | `default_context_window`（默认 1M） |
 
 ## 检查点
 

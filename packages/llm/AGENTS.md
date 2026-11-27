@@ -31,6 +31,11 @@
 | 模型 spec | `"route:model"` |
 | 模型条目的 `input` | 输入模态：`text`、`image`；选择器与附件处理读取 |
 
+| 模型的输出上限（`max_tokens`） | 来源 |
+|---|---|
+| 已配置的路由 | 模型条目的 `max_tokens`；否则 `config.default_max_tokens`（默认 128K；`None`：不发送） |
+| 已发布的路由 | 模型条目的 `max_tokens`；否则不发送 |
+
 | `type` | 来源 |
 |---|---|
 | 预设（`PRESETS`） | 设置页提供；其集成包是本插件的依赖 |

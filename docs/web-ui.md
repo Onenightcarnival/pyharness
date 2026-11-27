@@ -132,7 +132,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | GET | `/sessions/{id}/stream` | | 运行中轮次的 SSE；空闲时 204 |
 | PUT | `/sessions/{id}/model` | `{"model"}` | 会话的模型 `route:model`；`null` 回到默认 |
 | GET | `/models` | | 选择器目录：按路由分组的模型、默认模型 |
-| GET | `/settings/models` | | 路由（密钥状态与打码，不含值；各自的 `retry`）、提供方目录、协议、全局重试策略 `retry` 与可选的失败代码 `retry_choices` |
+| GET | `/settings/models` | | 路由（密钥状态与打码，不含值；各自的 `retry`）、提供方目录、协议、全局重试策略 `retry` 与可选的失败代码 `retry_choices`、模型未声明时的 `default_context_window` 与 `default_max_tokens` |
 | PUT | `/settings/models` | `{"default"}` | 新会话默认模型 |
 | PUT | `/settings/model-retry` | `{"retry": 策略 \| null}` | 全局重试策略；`null` 不重试。策略：`mode`（`transient` / `all`）、`max_retries`（0–10）、`codes`、`initial_delay_ms`、`backoff_factor`、`max_delay_ms` |
 | PUT | `/settings/models/{route}` | 路由设置 | 新建或修改路由；立即生效并写入 profile 补丁 |

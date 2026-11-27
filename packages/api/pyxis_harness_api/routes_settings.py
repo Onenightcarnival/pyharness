@@ -40,6 +40,9 @@ def build_settings_router(ctx: Any, llm_entry: str) -> APIRouter:
             "groups": service.directory()["groups"],
             "protocols": [{"id": k, "title": v["title"], "type": v["type"]} for k, v in PROTOCOLS.items()],
             "entry": llm_entry,
+            "default_context_window": getattr(
+                getattr(ctx.get("compaction", None), "config", None), "default_context_window", None
+            ),
             "generation": lifecycle.generation,
             "editable": ctx.get("profile", None) is not None,
         }

@@ -224,10 +224,17 @@ class LLMService(Service):
         return entry.context_window if entry is not None else None
 
     def options_for(self, route: str, model: str | None = None, **overrides: Any) -> dict[str, Any]:
-        """Keyword arguments for ``route``: global, route, model, then ``overrides``; credential resolved."""
+        """
+        Keyword arguments for ``route``: global, route, model, then ``overrides``; credential resolved.
+
+        ``max_tokens`` of a configured route starts at ``config.default_max_tokens``; a published route's is its
+        plugin's.
+        """
         cfg = self.route(route)
         kind = self.route_type(route)
         options: dict[str, Any] = {**self.config.options}
+        if route not in self._published and self.config.default_max_tokens:
+            options.setdefault("max_tokens", self.config.default_max_tokens)
         if cfg.protocol:
             options.update(PROTOCOLS[cfg.protocol]["options"])
         options.update(cfg.kwargs())
@@ -342,6 +349,7 @@ class LLMService(Service):
             "registered": self.providers(),
             "retry": self.config.retry.model_dump(mode="json") if self.config.retry else None,
             "retry_choices": list(RETRY_CHOICES),
+            "default_max_tokens": self.config.default_max_tokens,
             "env_model": os.environ.get("PYH_MODEL") or None,
         }
 

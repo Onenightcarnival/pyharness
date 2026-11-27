@@ -3357,7 +3357,7 @@ async function renderCompactionSettings(box) {
     ${row('auto', T.compAuto, T.compAutoHint, `<div class="selectWrap"><select class="select" data-comp="auto"><option value="1" ${c.auto ? 'selected' : ''}>${esc(T.compOn)}</option><option value="0" ${c.auto ? '' : 'selected'}>${esc(T.compOff)}</option></select>${icon('chev-down', 'ico chev')}</div>`)}
     ${row('threshold_ratio', T.compThreshold, T.compThresholdHint, num('threshold_ratio', pct(c.threshold_ratio), '%'))}
     ${row('retain_ratio', T.compRetain, T.compRetainHint, num('retain_ratio', pct(c.retain_ratio), '%'))}
-    ${row('default_context_window', T.compWindow, T.compWindowHint, `<span class="numField"><input class="input num" data-comp="default_context_window" ${amountAttrs()} value="${fmtAmount(c.default_context_window || 128000)}" style="width:110px"></span>`)}
+    ${row('default_context_window', T.compWindow, T.compWindowHint, `<span class="numField"><input class="input num" data-comp="default_context_window" ${amountAttrs()} value="${fmtAmount(c.default_context_window)}" style="width:110px"></span>`)}
     ${row('summary_model', T.summaryModel, T.summaryModelHint, modelSelect('data-comp="summary_model"', c.summary_model, T.sameAsSession))}`;
   box.querySelectorAll('[data-comp]').forEach((el) => {
     el.onchange = async () => {
@@ -3534,7 +3534,8 @@ const HEAD_ROW = () => `<thead><tr><th>${esc(T.modelId)}</th><th>${esc(T.modelNa
 function modelRowMarkup(m, i) {
   const input = m.input && m.input.length ? m.input : ['text'];
   const box = (k, label) => `<label class="checkOpt"><input type="checkbox" data-mf="input" value="${k}" ${input.includes(k) ? 'checked' : ''}><span>${esc(label)}</span></label>`;
-  const amount = (k) => `<td class="num"><input class="input num" data-mf="${k}" ${amountAttrs()} value="${esc(Number.isNaN(m[k]) ? m.typed?.[k] : fmtAmount(m[k]))}" aria-invalid="${Number.isNaN(m[k])}"></td>`;
+  const fallback = { context_window: models.data?.default_context_window, max_tokens: models.data?.default_max_tokens };  // what an empty cell means
+  const amount = (k) => `<td class="num"><input class="input num" data-mf="${k}" ${amountAttrs()} placeholder="${esc(fmtAmount(fallback[k]))}" value="${esc(Number.isNaN(m[k]) ? m.typed?.[k] : fmtAmount(m[k]))}" aria-invalid="${Number.isNaN(m[k])}"></td>`;
   return `<tr data-row="${i}"><td><input class="input mono" data-mf="id" value="${esc(m.id)}" placeholder="model-id" spellcheck="false"></td><td><input class="input" data-mf="name" value="${esc(m.name || '')}"></td>${amount('context_window')}${amount('max_tokens')}<td class="inputs">${box('text', T.inputText)}${box('image', T.inputImage)}</td><td class="rowDel"><button type="button" class="iconButton" data-del="${i}" title="${esc(T.remove)}">${icon('trash')}</button></td></tr>`;
 }
 function mountEditor(slot) {

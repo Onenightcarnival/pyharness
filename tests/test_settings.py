@@ -283,6 +283,20 @@ async def test_plain_key_in_the_configuration_moves_to_the_store_on_save(profile
     assert yaml.safe_load(profile.credentials_path.read_text()) == {"ALT_API_KEY": "plain-9999"}
 
 
+async def test_a_model_without_an_output_limit_gets_the_default(profile):
+    providers = {"alt": {"type": "scripted", "models": [{"id": "m1"}, {"id": "m2", "max_tokens": 10}]}}
+    async with Harness(profile, patch=base_patch({"providers": providers})) as h, client(h) as c:
+        llm = h.get("llm")
+        assert (await c.get("/api/settings/models")).json()["default_max_tokens"] == 128_000
+        assert llm.options_for("alt", "m1")["max_tokens"] == 128_000
+        assert llm.options_for("alt", "m2")["max_tokens"] == 10
+        assert llm.options_for("alt", "m1", max_tokens=5)["max_tokens"] == 5
+        llm.publish({"pub": {"type": "scripted", "models": [{"id": "p1"}]}})  # its limits are its plugin's
+        assert "max_tokens" not in llm.options_for("pub", "p1")
+    async with Harness(profile, patch=base_patch({"providers": providers, "default_max_tokens": None})) as h:
+        assert "max_tokens" not in h.get("llm").options_for("alt", "m1")
+
+
 async def test_unusable_default_model_boots_and_reports_in_the_session(profile, monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     patch = base_patch({"default": "openai:gpt-test"})

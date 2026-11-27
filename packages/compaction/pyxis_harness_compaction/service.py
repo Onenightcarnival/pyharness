@@ -33,7 +33,7 @@ class Config(BaseModel):
     auto: bool = True  # compact before a model call once the context reaches threshold_ratio × window
     threshold_ratio: float = Field(0.8, gt=0, le=1)
     retain_ratio: float = Field(0.16, ge=0, lt=1)  # recent tail kept verbatim (automatic compaction)
-    default_context_window: int = Field(128_000, gt=0)  # when the model declares no context window
+    default_context_window: int = Field(1_000_000, gt=0)  # when the model declares no context window
     summary_model: str | None = None  # route:model for the summary call; None: the session's model
     tool_result_chars: int = Field(4000, gt=0)  # longest tool result quoted in the transcript given to the summarizer
 

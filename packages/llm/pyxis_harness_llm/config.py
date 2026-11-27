@@ -114,6 +114,11 @@ class ProviderConfig(BaseModel):
 class LLMConfig(BaseModel):
     default: str | None = Field(None, description="Default model, 'route:model'.")
     options: dict[str, Any] = Field(default_factory=dict, description="Keyword arguments for every model.")
+    default_max_tokens: int | None = Field(
+        128_000,
+        gt=0,
+        description="Output limit of a configured route's model that declares none; None: the provider's own.",
+    )
     providers: dict[str, ProviderConfig] = Field(default_factory=dict, description="Routes by id.")
     retry: RetryPolicy | None = Field(
         None, description="Retry policy of routes without their own; None: the provider client's retries only."
