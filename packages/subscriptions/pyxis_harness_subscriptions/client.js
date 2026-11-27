@@ -66,7 +66,7 @@ window.__PyhModules__.load({
           .subHint { font-size: 11px; color: var(--label-tertiary); }
           .subTableWrap { border-radius: 10px; box-shadow: inset 0 0 0 0.5px var(--border-l2); overflow: auto; max-height: 55vh; }
           .subTable { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 12.5px; }
-          .subTable th { position: sticky; top: 0; z-index: 1; text-align: left; padding: 8px 10px; background: var(--bg-layer-1); font-weight: 500; color: var(--label-secondary); border-bottom: 0.5px solid var(--border-l2); }
+          .subTable th { position: sticky; top: 0; z-index: 1; text-align: left; padding: 8px 10px; background: var(--layer-2); font-weight: 500; color: var(--label-secondary); border-bottom: 0.5px solid var(--border-l2); }
           .subTable td { padding: 7px 10px; border-bottom: 0.5px solid var(--border-l2); vertical-align: top; }
           .subTable td .mid { display: block; font: 11px var(--mono); color: var(--label-tertiary); }
           .subTable td.ctx .input { width: 120px; height: 26px; font-size: 12px; } .subTable td.ctx small { display: block; font-size: 11px; color: var(--label-tertiary); margin-top: 3px; }
