@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import hashlib
 import json
 import re
 import time
-import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Any
@@ -16,7 +14,6 @@ import httpx
 from pyxis_harness import package_toml
 
 _CFG = package_toml(__file__)["common"]
-USER_AGENT: str = _CFG["USER_AGENT"]
 RESET_FIELDS: tuple[str, ...] = tuple(_CFG["RESET_FIELDS"])
 PREEMPT_MS = 5 * 60 * 1000
 STREAM_IDLE_TIMEOUT = 300.0
@@ -149,10 +146,6 @@ def jwt_claims(token: str | None) -> dict[str, Any]:
         return {}
 
 
-def headers_with_ua(headers: dict[str, str]) -> dict[str, str]:
-    return {"user-agent": USER_AGENT, **headers}
-
-
 # ---------------------------------------------------------------------- token manager
 class TokenManager:
     """
@@ -206,16 +199,3 @@ class TokenManager:
 
 class PermanentRefreshError(RuntimeError):
     pass
-
-
-def session_uuid(session_id: str | None) -> str:
-    """A UUID for a session id: the id itself when it is one, else a UUIDv8 from its hash, else random."""
-    if session_id:
-        try:
-            return str(uuid.UUID(session_id))
-        except ValueError:
-            digest = bytearray(hashlib.sha256(session_id.encode()).digest()[:16])
-            digest[6] = (digest[6] & 0x0F) | 0x80
-            digest[8] = (digest[8] & 0x3F) | 0x80
-            return str(uuid.UUID(bytes=bytes(digest)))
-    return str(uuid.uuid4())

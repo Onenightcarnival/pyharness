@@ -70,7 +70,7 @@ bundle 中条目的位置（`after` / `before` / `parent`）对应 mount 路径�
 | S3（dsh-toolkit s3） | 有：`pyxis-harness-s3`，同样的 profile 模型、11 个工具、页面；boto3 而不是 AWS SDK for JS |
 | 配置中心（dsh-toolkit config-center） | 有：`pyxis-harness-config-center`，MCP 页 + 连接测试 + JSON 导入、技能页（SKILL.md 包，挂载为 `/skills/user/`）、环境依赖页（受管 bun 替代 dsh 的受管 uv，覆盖 JS MCP 服务器） |
 | 可观测（dsh-toolkit otel） | 有：`pyxis-harness-otel`，同样的 trace 结构与属性名、Langfuse 端点处理与测试流程；由本轮记录生成 span 而不是在调用链里实时打点，没有指标导出 |
-| AI 订阅（dsh-toolkit subscriptions） | 有：`pyxis-harness-subscriptions`，四个提供方的登录、目录、用量、聊天与七个工具；未做多账号配额感知的池化路由与出站代理设置，每个提供方用默认账号 |
+| AI 订阅（dsh-toolkit subscriptions） | 有：`pyxis-harness-subscriptions`，ChatGPT 的登录、目录与聊天；未做多账号配额感知的池化路由与出站代理设置，用默认账号 |
 | API 网关（dsh-toolkit gateway） | 有：`pyxis-harness-gateway`，同样的三种协议端点、参数取舍、错误形状、API key、用量账本与页面；模型请求走 LangChain `astream` 而不是 dsh 的流式块协议，图片不经附件存储而是直接以 data URL 传给模型；`reasoning_effort` 只传给 `openai`、`azure_openai`、`subscription` 类型的路由；管理路由没有 dsh 的浏览器会话与回环校验 |
 | HTTP 请求工具（dsh-toolkit http） | 有：`pyxis-harness-http-client`，同样的目标、保存的请求、历史、host 与内网策略、重定向规则、遮罩、事件流读取、密钥变量、提取变量与自动刷新、配置导入导出和三个 agent 工具；导出文件的格式标记是 `pyxis-harness-http`，导入时也接受 `dsh-http` 的文件；语法高亮由宿主页的服务端高亮（`/api/highlight`）完成，正文编辑框不高亮；包名与路由前缀换成 `http-client`（`pyxis-harness-http` 已是 FastAPI 服务）；管理路由没有 dsh 的浏览器会话与回环校验；出站请求走 httpx，遵循环境变量里的代理设置 |
 | MCP 客户端 | 有：`pyxis-harness-mcp`，stdio / HTTP / SSE，左侧栏 MCP 页配置，`${credential:REF}` 凭据模板（连接时解析、缺值时「等待凭据」、错误文本遮罩）；未做 MCP resources 与 prompts |

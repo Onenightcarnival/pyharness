@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 import json
-import mimetypes
-import re
 from typing import Any, Protocol
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import FileResponse
 
 from .providers import Provider
-from .store import PROVIDERS, MediaStore, ModelDefaults, ProviderSettings
+from .store import PROVIDERS, ModelDefaults, ProviderSettings
 
 
 class Host(Protocol):
@@ -18,12 +15,10 @@ class Host(Protocol):
     providers: dict[str, Provider]
     settings: ProviderSettings | None
     defaults: ModelDefaults | None
-    media: MediaStore | None
 
     async def status(self) -> dict[str, Any]: ...
     async def catalog(self, provider_id: str, force: bool = False) -> dict[str, Any]: ...
     async def sync_routes(self, discover: bool = True) -> None: ...
-    def sync_tools(self) -> None: ...
 
 
 def build_router(service: Host) -> APIRouter:
@@ -79,7 +74,6 @@ def build_router(service: Host) -> APIRouter:
         provider = provider_of(data)
         await provider.logout(str(data.get("account") or ""))
         await service.sync_routes(discover=False)
-        service.sync_tools()
         return {"ok": True}
 
     @router.post("/default")
@@ -105,8 +99,6 @@ def build_router(service: Host) -> APIRouter:
             raise HTTPException(400, "unknown provider")
         if force:
             service.providers[provider].catalogs.clear(provider)
-            if provider == "codex":
-                await service.providers["codex"].client_version(force=True)  # type: ignore[attr-defined]
         cat = await service.catalog(provider, force=force)
         if force:
             await service.sync_routes(discover=False)
@@ -122,7 +114,6 @@ def build_router(service: Host) -> APIRouter:
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         await service.sync_routes(discover=False)
-        service.sync_tools()
         return {"ok": True}
 
     @router.post("/model-default")
@@ -144,22 +135,6 @@ def build_router(service: Host) -> APIRouter:
     @router.post("/refresh")
     async def refresh_routes() -> dict[str, Any]:
         await service.sync_routes(discover=True)
-        service.sync_tools()
         return {"ok": True}
-
-    @router.get("/media/{name}")
-    async def media(name: str) -> FileResponse:
-        assert service.media is not None
-        if not re.fullmatch(r"[\w.-]+\.(png|jpg|webp|gif|mp4)", name) or ".." in name:
-            raise HTTPException(404, "not found")
-        folder = service.media.videos if name.endswith(".mp4") else service.media.images
-        path = folder / name
-        if not path.is_file():
-            raise HTTPException(404, "not found")
-        return FileResponse(
-            path,
-            media_type=mimetypes.guess_type(name)[0] or "application/octet-stream",
-            headers={"cache-control": "no-store"},
-        )
 
     return router

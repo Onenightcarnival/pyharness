@@ -35,7 +35,7 @@ services the entry waits for; `config` says whether the entry accepts `config`.
 | `pyxis-harness-prompt` | service | prompt |  | no | Ordered system-prompt sections. |
 | `pyxis-harness-rdb` | service | rdb | tools, prompt, http | yes | Database workbench: profiles, connections, tools, routes and the Database page module. |
 | `pyxis-harness-s3` | service | s3 | tools, prompt, http | yes | S3 browser: profiles, clients, tools, routes and the S3 page module. |
-| `pyxis-harness-subscriptions` | service | subscriptions | llm, tools, http, webui | yes | Subscriptions: providers, model routes, tools, the AI subscriptions page. |
+| `pyxis-harness-subscriptions` | service | subscriptions | llm, http, webui | yes | Subscriptions: providers, model routes, the AI subscriptions page. |
 | `pyxis-harness-terminal` | service | terminal | tools, http | yes | Plugin that provides one service under ``key``. |
 | `pyxis-harness-tools` | service | tools |  | no | Tool registry and the ``tools/execute`` → ``tools/result`` pipeline. |
 | `pyxis-harness-web-tools` | service | web | tools | yes | Plugin that provides one service under ``key``. |

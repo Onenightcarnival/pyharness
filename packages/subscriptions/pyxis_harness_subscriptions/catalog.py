@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Protocol
 
 from .providers import DiscoveredModel, Provider
-from .store import PROVIDER_TOOLS, ModelDefaults, ProviderSettings
+from .store import ModelDefaults, ProviderSettings
 
 
 class Host(Protocol):
@@ -53,7 +53,6 @@ async def provider_catalog(service: Host, provider_id: str, force: bool = False)
             "maxContextWindow": m.max_context_window,
             "efforts": m.efforts,
             "inputModalities": m.input_modalities,
-            "fastTier": m.fast_tier,
         }
         configured_effort = service.defaults.get(provider_id, m.id) if service.defaults else None
         if configured_effort:
@@ -63,7 +62,6 @@ async def provider_catalog(service: Host, provider_id: str, force: bool = False)
         "provider": provider_id,
         "settings": prefs,
         "models": rows,
-        "tools": list(PROVIDER_TOOLS[provider_id]),
         "accounts": accounts,
     }
 
@@ -99,8 +97,8 @@ async def cached_catalog(service: Host, provider_id: str) -> dict[str, Any]:
 
 async def rebuild_routes(service: Host, discover: bool = True) -> None:
     """
-    Publish the ``codex`` / ``chatgpt`` / ``grok`` routes to ``ctx.llm`` from the catalogs: one
-    per signed-in provider. A configured route of type ``subscription`` is removed from the live configuration.
+    Publish the ``chatgpt`` route to ``ctx.llm`` from the catalogs: one per signed-in provider. A configured route
+    of type ``subscription`` is removed from the live configuration.
     """
     assert service.settings is not None
     llm = service.ctx.llm

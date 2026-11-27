@@ -24,7 +24,6 @@ class DiscoveredModel:
     efforts: list[dict[str, str]] = field(default_factory=list)
     default_effort: str | None = None
     input_modalities: list[str] = field(default_factory=lambda: ["text"])
-    fast_tier: bool = False
 
     def describe(self) -> dict[str, Any]:
         return {
@@ -38,7 +37,6 @@ class DiscoveredModel:
             "efforts": self.efforts,
             "defaultEffort": self.default_effort,
             "inputModalities": self.input_modalities,
-            "fastTier": self.fast_tier,
         }
 
     @classmethod
@@ -54,7 +52,6 @@ class DiscoveredModel:
             efforts=list(d.get("efforts") or []),
             default_effort=d.get("defaultEffort"),
             input_modalities=list(d.get("inputModalities") or ["text"]),
-            fast_tier=bool(d.get("fastTier")),
         )
 
 
@@ -245,6 +242,3 @@ class Provider:
     # ------------------------------------------------------------------ chat models
     def chat_model(self, model: str, account: str | None, **options: Any) -> Any:
         raise NotImplementedError
-
-    def tools(self, service: Any) -> list[Any]:
-        return []

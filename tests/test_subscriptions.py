@@ -5,7 +5,6 @@ mocked HTTP, token refresh, model routes and the page routes.
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import json
 import time
@@ -18,10 +17,8 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, Tool
 
 from pyxis_harness import Harness, Profile
 from pyxis_harness_subscriptions import SubscriptionsService
-from pyxis_harness_subscriptions.codex import CodexProvider
-from pyxis_harness_subscriptions.codex_tools import SearchArgs, validate_commands
-from pyxis_harness_subscriptions.common import LlmError, http_error, jwt_claims, reset_delay_ms, session_uuid
-from pyxis_harness_subscriptions.grok import tier_name
+from pyxis_harness_subscriptions.chatgpt import ChatGPTProvider
+from pyxis_harness_subscriptions.common import LlmError, http_error, jwt_claims, reset_delay_ms
 from pyxis_harness_subscriptions.oauth import FlowSpec, LoginAttempt, LoginError
 from pyxis_harness_subscriptions.responses import ResponsesTranslator, to_responses_input
 from pyxis_harness_subscriptions.store import AuthStore, CatalogCache, ProviderSettings
@@ -112,41 +109,40 @@ async def test_loopback_login_flow():
 
 def test_stores(tmp_path):
     auth = AuthStore(tmp_path)
-    assert auth.accounts("codex") == {} and auth.default_key("codex") is None
-    auth.save("codex", "a", {"accessToken": "1"})
-    auth.save("codex", "b", {"accessToken": "2"})
-    assert auth.default_key("codex") == "a" and auth.ordered_keys("codex") == ["a", "b"]
+    assert auth.accounts("chatgpt") == {} and auth.default_key("chatgpt") is None
+    auth.save("chatgpt", "a", {"accessToken": "1"})
+    auth.save("chatgpt", "b", {"accessToken": "2"})
+    assert auth.default_key("chatgpt") == "a" and auth.ordered_keys("chatgpt") == ["a", "b"]
     assert (
-        auth.set_default("codex", "b")
-        and auth.ordered_keys("codex") == ["b", "a"]
-        and not auth.set_default("codex", "zzz")
+        auth.set_default("chatgpt", "b")
+        and auth.ordered_keys("chatgpt") == ["b", "a"]
+        and not auth.set_default("chatgpt", "zzz")
     )
-    assert auth.delete("codex", "b") and auth.default_key("codex") == "a" and not auth.delete("codex", "b")
+    assert auth.delete("chatgpt", "b") and auth.default_key("chatgpt") == "a" and not auth.delete("chatgpt", "b")
     # A section of a provider outside PROVIDERS is dropped when the store opens.
-    auth.file.update(lambda data: data.update(gone={"default": "x", "accounts": {"x": {"refreshToken": "r"}}}))
-    assert set(AuthStore(tmp_path).file.read()) == {"codex"}
+    auth.file.update(lambda data: data.update(codex={"default": "x", "accounts": {"x": {"refreshToken": "r"}}}))
+    assert set(AuthStore(tmp_path).file.read()) == {"chatgpt"}
     prefs = ProviderSettings(tmp_path)
-    assert prefs.get("codex") == {"accounts": {}, "contextWindows": {}, "tools": {}}
+    assert prefs.get("chatgpt") == {"accounts": {}, "contextWindows": {}}
     prefs.set(
-        "codex",
+        "chatgpt",
         {
             "visibleModels": ["gpt-5.1"],
             "contextWindows": {"gpt-5.1": 200000, "bad": "x"},
             "tools": {"web_search": False},
+            "accounts": {"a": {"alias": "work", "other": 1}},
         },
     )
-    assert prefs.get("codex")["visibleModels"] == ["gpt-5.1"] and prefs.get("codex")["contextWindows"] == {
-        "gpt-5.1": 200000
+    assert prefs.get("chatgpt") == {
+        "visibleModels": ["gpt-5.1"],
+        "contextWindows": {"gpt-5.1": 200000},
+        "accounts": {"a": {"alias": "work"}},
     }
-    assert prefs.tool_enabled("codex", "web_search") is False and prefs.tool_enabled("codex", "image_generate") is True
-    assert prefs.tool_enabled("codex", "web_search", at_ms=1) is True  # before the history entry
-    with pytest.raises(ValueError, match="unknown tool"):
-        prefs.set("codex", {"tools": {"x_search": True}})
     cache = CatalogCache(tmp_path)
-    cache.set("grok", [{"id": "grok-4", "name": "Grok 4"}], "acct")
-    assert cache.fresh("grok", "acct") and cache.get("grok", "acct")["models"][0]["id"] == "grok-4"
-    cache.clear("grok")
-    assert cache.get("grok", "acct") is None
+    cache.set("chatgpt", [{"id": "gpt-5.1", "name": "GPT-5.1"}], "acct")
+    assert cache.fresh("chatgpt", "acct") and cache.get("chatgpt", "acct")["models"][0]["id"] == "gpt-5.1"
+    cache.clear("chatgpt")
+    assert cache.get("chatgpt", "acct") is None
 
 
 def test_common_helpers():
@@ -162,10 +158,6 @@ def test_common_helpers():
     assert reset_delay_ms(json.dumps({"error": {"resets_in_seconds": 30}})) == 32000
     assert reset_delay_ms(json.dumps({"reset_at": int(time.time()) + 100})) >= 100000 and reset_delay_ms("nope") is None
     assert jwt_claims(fake_jwt({"a": 1})) == {"a": 1} and jwt_claims("junk") == {}
-    assert session_uuid("1e4b9b7a-0000-4000-8000-000000000000") == "1e4b9b7a-0000-4000-8000-000000000000"
-    u = session_uuid("session-abc")
-    assert u == session_uuid("session-abc") and u[14] == "8"
-    assert tier_name({"tier": 3}) == "X Premium" and tier_name({"tier": 42}) == "42" and tier_name({}) is None
 
 
 def test_responses_input_and_translation():
@@ -238,191 +230,94 @@ def test_responses_input_and_translation():
         list(ResponsesTranslator("t").feed(None, json.dumps({"type": "response.completed", "response": {}})))
 
 
-def test_codex_search_commands():
-    assert validate_commands(SearchArgs(query="cats")) == {"search_query": [{"q": "cats"}]}
-    with pytest.raises(ValueError, match="at least one"):
-        validate_commands(SearchArgs())
-    with pytest.raises(ValueError, match="response_length"):
-        validate_commands(SearchArgs(search_query=[{"q": str(i)} for i in range(4)]))
-    with pytest.raises(ValueError, match="cannot be combined"):
-        validate_commands(SearchArgs(query="x", time=[{"utc_offset": "+08:00"}]))
+CHATGPT_SESSION = {
+    "accessToken": "at",
+    "refreshToken": "rt",
+    "clientId": "client-abc123",
+    "subject": "user-1",
+    "emailAddress": "ann@example.com",
+    "planType": "plus",
+    "scopes": ["openid", "chatgpt.tokens.use.direct"],
+}
 
 
-def _mock_transport(handler: Any) -> httpx.MockTransport:
-    return httpx.MockTransport(handler)
-
-
-async def test_codex_provider_with_mocked_http(tmp_path):
-    calls: list[str] = []
-
+async def test_chatgpt_provider_with_mocked_http(tmp_path):
     def handler(request: httpx.Request) -> httpx.Response:
-        calls.append(f"{request.method} {request.url.path}")
-        if request.url.path == "/oauth/token":
-            body = (
-                json.loads(request.content)
-                if request.headers.get("content-type", "").startswith("application/json")
-                else parse_qs(request.content.decode())
-            )
-            grant = (
-                body.get("grant_type")
-                if isinstance(body, dict) and not isinstance(body.get("grant_type"), list)
-                else body["grant_type"][0]
-            )
-            if grant == "refresh_token" and (body.get("refresh_token") == "dead"):
-                return httpx.Response(400, json={"error": {"code": "refresh_token_expired"}})
-            id_token = fake_jwt(
-                {
-                    "email": "ann@example.com",
-                    "https://api.openai.com/auth": {
-                        "chatgpt_account_id": "acct1",
-                        "chatgpt_user_id": "u1",
-                        "chatgpt_plan_type": "plus",
-                    },
-                }
-            )
-            return httpx.Response(
-                200,
-                json={"access_token": "at-" + grant, "refresh_token": "rt2", "expires_in": 3600, "id_token": id_token},
-            )
-        if "codex/latest" in str(request.url):
-            return httpx.Response(200, json={"version": "0.160.0"})
-        if request.url.path == "/backend-api/codex/models":
-            assert request.headers["chatgpt-account-id"] == "acct1" and request.url.params["client_version"] in (
-                "0.160.0",
-                "0.153.4",
-            )
+        if request.url.path == "/api/accounts/oauth/token":
+            form = {k: v[0] for k, v in parse_qs(request.content.decode()).items()}
+            assert form["grant_type"] == "refresh_token" and form["client_id"] == "client-abc123"
+            if form["refresh_token"] == "dead":
+                return httpx.Response(400, json={"error": "invalid_grant"})
+            return httpx.Response(200, json={"access_token": "at-fresh", "refresh_token": "rt2", "expires_in": 3600})
+        if request.url.path == "/v1/models":
+            assert request.headers["authorization"].startswith("Bearer at")
             return httpx.Response(
                 200,
                 json={
                     "models": [
                         {
-                            "slug": "gpt-5.1-codex",
-                            "display_name": "GPT-5.1 Codex",
+                            "slug": "gpt-5.1",
+                            "display_name": "GPT-5.1",
                             "context_window": 400000,
-                            "max_context_window": 400000,
-                            "supported_reasoning_levels": [{"effort": "medium"}, {"effort": "xhigh"}],
+                            "max_context_window": 1000000,
+                            "supported_reasoning_levels": [{"effort": "medium"}, {"effort": "high"}],
                             "default_reasoning_level": "medium",
-                            "service_tiers": [{"id": "priority"}],
-                            "visibility": "list",
-                            "priority": 2,
+                            "input_modalities": ["text", "image"],
                         },
                         {"slug": "hidden", "visibility": "hide"},
-                        {"slug": "gpt-5.1", "display_name": "GPT-5.1", "priority": 1},
                     ]
                 },
             )
-        if request.url.path == "/backend-api/wham/usage":
-            return httpx.Response(
-                200,
-                json={
-                    "plan_type": "plus",
-                    "rate_limit": {
-                        "primary_window": {
-                            "used_percent": 12.5,
-                            "limit_window_seconds": 18000,
-                            "reset_after_seconds": 100,
-                        },
-                        "secondary_window": {
-                            "used_percent": 40,
-                            "limit_window_seconds": 604800,
-                            "reset_at": 1800000000,
-                        },
-                    },
-                },
-            )
-        if request.url.path == "/backend-api/codex/responses":
+        if request.url.path == "/v1/responses":
             body = json.loads(request.content)
             assert (
                 body["instructions"].startswith("be brief")
-                and body["tools"][0]["name"] == "f"
-                and request.headers["session-id"]
-                and body["prompt_cache_key"] == "sess-1"
+                and body["model"] == "gpt-5.1"
+                and body["reasoning"] == {"effort": "high", "summary": "auto"}
+                and body["tools"][0]["type"] == "namespace"
+                and body["tools"][0]["tools"][0]["name"] == "f"
             )
-            sse = (
-                "\n\n".join(
-                    "data: " + json.dumps(e)
-                    for e in [
-                        {"type": "response.output_text.delta", "delta": "pong"},
-                        {"type": "response.completed", "response": {"usage": {"input_tokens": 5, "output_tokens": 1}}},
-                    ]
-                )
-                + "\n\n"
-            )
+            events = [
+                {"type": "response.output_text.delta", "delta": "pong"},
+                {"type": "response.completed", "response": {"usage": {"input_tokens": 5, "output_tokens": 1}}},
+            ]
+            sse = "\n\n".join("data: " + json.dumps(e) for e in events) + "\n\n"
             return httpx.Response(200, headers={"content-type": "text/event-stream"}, content=sse.encode())
-        if request.url.path == "/backend-api/codex/alpha/search":
-            return httpx.Response(
-                200,
-                json={
-                    "output": "Cats are great.",
-                    "results": [
-                        {"url": "https://a.example", "title": "A", "snippet": "s"},
-                        {"url": "https://a.example"},
-                        {"url": "ftp://x"},
-                    ],
-                    "truncated": True,
-                },
-            )
         return httpx.Response(404, text="nope")
 
-    http = httpx.AsyncClient(transport=_mock_transport(handler))
-    provider = CodexProvider(AuthStore(tmp_path), CatalogCache(tmp_path), http, {})
-    attempt = LoginAttempt(
-        FlowSpec(
-            provider="codex",
-            authorize_url="https://auth.openai.com/oauth/authorize",
-            host="127.0.0.1",
-            ports=(0,),
-            callback_path="/auth/callback",
-            client_id="x",
-        )
-    )
-    await attempt.start()
-    key, session = await provider.exchange(attempt, "code", {})
-    await attempt.close()
-    assert (
-        key == json.dumps(["acct1", "user", "u1"])
-        and session["accountId"] == "acct1"
-        and session["planType"] == "plus"
-        and session["emailAddress"] == "ann@example.com"
-    )
-    provider.auth.save("codex", key, session)
-    assert provider.account_rows()[0]["account"] == "ann@example.com" and provider.account_rows()[0]["plan"] == "plus"
+    http = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    provider = ChatGPTProvider(AuthStore(tmp_path), CatalogCache(tmp_path), http, {})
+    key = CHATGPT_SESSION["clientId"]
+    session = {**CHATGPT_SESSION, "expiresAt": int(time.time() * 1000) + 10**7}
+    provider.auth.save("chatgpt", key, session)
+    row = provider.account_rows()[0]
+    assert row["account"] == "ann@example.com · abc123" and row["plan"] == "plus" and row["planEnabled"] is True
     models, available = await provider.models(key)
     assert (
         available
-        and [m.id for m in models] == ["gpt-5.1", "gpt-5.1-codex"]
-        and models[1].efforts == [{"id": "medium", "name": "Medium"}, {"id": "xhigh", "name": "Extra High"}]
-        and models[1].fast_tier is True
+        and [m.id for m in models] == ["gpt-5.1"]
+        and models[0].efforts == [{"id": "medium", "name": "Medium"}, {"id": "high", "name": "High"}]
+        and models[0].input_modalities == ["text", "image"]
+        and models[0].max_context_window == 1000000
     )
-    assert provider.catalogs.fresh("codex", key)
-    usage = await provider.usage_cached(key)
-    assert (
-        usage["plan"] == "plus"
-        and [w["kind"] for w in usage["windows"]] == ["session", "weekly"]
-        and usage["windows"][1]["resetsAt"] == 1800000000000
+    assert provider.catalogs.fresh("chatgpt", key) and await provider.usage_cached(key) == {"supported": False}
+    chat = provider.chat_model("gpt-5.1", key, reasoning_effort="high").bind_tools(
+        [{"name": "f", "description": "d", "parameters": {"type": "object", "properties": {}}}]
     )
-    chat = (
-        provider.chat_model("gpt-5.1-codex", key)
-        .bind_tools([{"name": "f", "description": "d", "parameters": {"type": "object", "properties": {}}}])
-        .model_copy(update={"session_id_hint": "sess-1"})
-    )
-    result = await chat.ainvoke(
-        [SystemMessage(content="be brief"), HumanMessage(content="ping")],
-        config={"configurable": {"thread_id": "sess-1"}},
-    )
+    result = await chat.ainvoke([SystemMessage(content="be brief"), HumanMessage(content="ping")])
     assert result.content == "pong" and result.usage_metadata["input_tokens"] == 5
+    # A session without the plan scope has no catalog.
+    provider.auth.save("chatgpt", key, {**session, "scopes": ["openid"]})
+    assert await provider.models(key, force=True) == (models, False) and "plan usage is disabled" in provider.last_error
     # Refresh: an expired session refreshes once; a dead refresh token deletes the account.
-    provider.auth.save("codex", key, {**session, "expiresAt": 0})
+    provider.auth.save("chatgpt", key, {**session, "expiresAt": 0})
     fresh = await provider.token_manager(key).session()
-    assert (
-        fresh["accessToken"] == "at-refresh_token"
-        and provider.auth.get("codex", key)["accessToken"] == "at-refresh_token"
-    )
-    provider.auth.save("codex", key, {**session, "expiresAt": 0, "refreshToken": "dead"})
+    assert fresh["accessToken"] == "at-fresh" and provider.auth.get("chatgpt", key)["refreshToken"] == "rt2"
+    provider.auth.save("chatgpt", key, {**session, "expiresAt": 0, "refreshToken": "dead"})
     provider._managers.clear()
     with pytest.raises(LlmError) as info:
         await provider.token_manager(key).session()
-    assert info.value.code == "INVALID_CREDENTIAL" and provider.auth.get("codex", key) is None
+    assert info.value.code == "INVALID_CREDENTIAL" and provider.auth.get("chatgpt", key) is None
     await http.aclose()
 
 
@@ -434,132 +329,104 @@ async def test_stream_idle_timeout_reaches_the_chat_models(home):
     configured = [HTTP_OFF, {"id": "subscriptions", "config": {"stream_idle_timeout": 45}}]
     async with Harness(profile, patch=configured) as h:
         factory = h.get("llm")._providers["subscription"][0]
-        for provider in ("codex", "chatgpt", "grok"):
-            model = factory("m", provider=provider)
-            assert model.stream_idle_timeout == 45.0, provider
-            assert model.bind_tools([]).stream_idle_timeout == 45.0  # a bound copy keeps it
+        model = factory("m", provider="chatgpt")
+        assert model.stream_idle_timeout == 45.0
+        assert model.bind_tools([]).stream_idle_timeout == 45.0  # a bound copy keeps it
     rejected = [HTTP_OFF, {"id": "subscriptions", "config": {"stream_idle_timeout": 0}}]
     async with Harness(profile, patch=rejected) as h:  # an invalid value fails the entry, not the boot
         assert h.ctx.get("subscriptions", None) is None
 
 
-async def test_service_routes_and_model_routes(home, tmp_path, monkeypatch):
+async def test_service_routes_and_model_routes(home):
     profile = Profile.init("web", home=str(home))
     async with Harness(profile, patch=[HTTP_OFF]) as h:
         service: SubscriptionsService = h.get("subscriptions")
-        assert set(service.providers) == {"codex", "chatgpt", "grok"}
+        assert set(service.providers) == {"chatgpt"}
         llm = h.get("llm")
-        assert "subscription" in llm.providers() and not any(r in llm.routes() for r in service.providers)
+        assert "subscription" in llm.providers() and "chatgpt" not in llm.routes()
         # A subscription route saved in the configuration by an earlier version is dropped from it.
         llm.update(providers={"codex": {"type": "subscription", "models": [{"id": "old"}]}, "kept": {"type": "echo"}})
-        # A stored Grok session with a cached catalog becomes a model route and registers the Grok tools.
-        grok = service.providers["grok"]
-        grok.auth.save(
-            "grok",
-            "ann@x.ai",
-            {
-                "accessToken": fake_jwt({"tier": 1}),
-                "refreshToken": "r",
-                "expiresAt": int(time.time() * 1000) + 10**7,
-                "account": "ann@x.ai",
-            },
-        )
-        grok.catalogs.set(
-            "grok",
+        # A stored ChatGPT session with a cached catalog becomes a model route.
+        chatgpt = service.providers["chatgpt"]
+        chatgpt.http = httpx.AsyncClient(transport=httpx.MockTransport(lambda request: httpx.Response(404)))
+        key = CHATGPT_SESSION["clientId"]
+        chatgpt.auth.save("chatgpt", key, {**CHATGPT_SESSION, "expiresAt": int(time.time() * 1000) + 10**7})
+        chatgpt.catalogs.set(
+            "chatgpt",
             [
-                {"id": "grok-4", "name": "Grok 4", "contextWindow": 256000, "inputModalities": ["text", "image"]},
                 {
-                    "id": "grok-code-fast-1",
-                    "name": "Grok Code Fast 1",
-                    "contextWindow": 256000,
-                    "inputModalities": ["text"],
+                    "id": "gpt-5.1",
+                    "name": "GPT-5.1",
+                    "contextWindow": 400000,
+                    "inputModalities": ["text", "image"],
+                    "efforts": [{"id": "high", "name": "High"}],
                 },
+                {"id": "gpt-5.1-mini", "name": "GPT-5.1 mini", "contextWindow": 400000, "inputModalities": ["text"]},
             ],
-            "ann@x.ai",
+            key,
         )
         await service.sync_routes(discover=False)
-        service.sync_tools()
         # The route is published, not configured: the settings view does not list it and nothing saves it.
-        assert list(llm.config.providers) == ["kept"] and llm.published() == {"grok": "subscriptions"}
+        assert list(llm.config.providers) == ["kept"] and llm.published() == {"chatgpt": "subscriptions"}
         assert [r["id"] for r in llm.describe()["routes"]] == ["kept"]
-        route = llm.routes()["grok"]
+        route = llm.routes()["chatgpt"]
         assert (
             route.type == "subscription"
-            and [m.id for m in route.models] == ["grok-4", "grok-code-fast-1"]
+            and [m.id for m in route.models] == ["gpt-5.1", "gpt-5.1-mini"]
             and route.models[0].input == ["text", "image"]
         )
         directory = h.get("llm").directory()
-        assert any(g["id"] == "grok" and g["title"].startswith("Grok") for g in directory["groups"])
-        chat = h.get("llm").resolve("grok:grok-4")
-        assert chat.label == "grok" and chat.model_name == "grok-4" and chat.provider_ref is grok
-        assert {"grok_x_search", "grok_image_generate", "grok_video_generate"} <= {
-            t.name for t in h.get("tools").list()
-        }
+        assert any(g["id"] == "chatgpt" and g["title"].startswith("ChatGPT") for g in directory["groups"])
+        chat = h.get("llm").resolve("chatgpt:gpt-5.1")
+        assert chat.label == "chatgpt" and chat.model_name == "gpt-5.1" and chat.provider_ref is chatgpt
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=30
         ) as c:
             st = (await c.get("/api/subscriptions/status")).json()["providers"]
+            assert list(st) == ["chatgpt"] and st["chatgpt"]["accounts"] == [
+                {
+                    "key": key,
+                    "account": "ann@example.com · abc123",
+                    "plan": "plus",
+                    "isDefault": True,
+                    "expiresAt": st["chatgpt"]["accounts"][0]["expiresAt"],
+                    "connected": True,
+                    "planEnabled": True,
+                }
+            ]
+            cat = (await c.get("/api/subscriptions/provider-settings", params={"provider": "chatgpt"})).json()
             assert (
-                st["grok"]["accounts"]
-                == [
-                    {
-                        "key": "ann@x.ai",
-                        "account": "ann@x.ai",
-                        "plan": "SuperGrok",
-                        "isDefault": True,
-                        "expiresAt": st["grok"]["accounts"][0]["expiresAt"],
-                        "connected": True,
-                    }
-                ]
-                and st["codex"]["accounts"] == []
-                and "clientVersion" in st["codex"]
-            )
-            cat = (await c.get("/api/subscriptions/provider-settings", params={"provider": "grok"})).json()
-            assert (
-                [m["id"] for m in cat["models"]] == ["grok-4", "grok-code-fast-1"]
-                and cat["tools"] == ["image_generate", "video_generate", "x_search"]
-                and cat["accounts"][0]["label"] == "ann@x.ai"
+                [m["id"] for m in cat["models"]] == ["gpt-5.1", "gpt-5.1-mini"]
+                and "tools" not in cat
+                and cat["accounts"][0]["label"] == "ann@example.com · abc123"
             )
             r = await c.put(
                 "/api/subscriptions/provider-settings",
                 json={
-                    "provider": "grok",
-                    "settings": {
-                        "visibleModels": ["grok-4"],
-                        "contextWindows": {"grok-4": 128000},
-                        "tools": {"x_search": False},
-                    },
+                    "provider": "chatgpt",
+                    "settings": {"visibleModels": ["gpt-5.1"], "contextWindows": {"gpt-5.1": 128000}},
                 },
             )
             assert r.json() == {"ok": True}
-            route = h.get("llm").routes()["grok"]
-            assert [m.id for m in route.models] == ["grok-4"] and route.models[0].context_window == 128000
+            route = h.get("llm").routes()["chatgpt"]
+            assert [m.id for m in route.models] == ["gpt-5.1"] and route.models[0].context_window == 128000
+            default = {"provider": "chatgpt", "model": "gpt-5.1", "effort": "high"}
+            assert (await c.post("/api/subscriptions/model-default", json=default)).json() == {"ok": True}
+            assert h.get("llm").resolve("chatgpt:gpt-5.1").reasoning_effort == "high"
             assert (
-                service.tool_enabled("grok", "x_search") is False
-                and service.tool_enabled("grok", "image_generate") is True
-            )
-            assert (
-                await c.put(
-                    "/api/subscriptions/provider-settings",
-                    json={"provider": "grok", "settings": {"tools": {"web_search": True}}},
-                )
-            ).status_code == 400
-            assert (
-                await c.post(
-                    "/api/subscriptions/model-default", json={"provider": "grok", "model": "grok-4", "effort": "high"}
-                )
+                await c.post("/api/subscriptions/model-default", json={**default, "model": "gpt-5.1-mini"})
             ).status_code == 400  # no efforts listed
             assert (
-                await c.post("/api/subscriptions/default", json={"provider": "grok", "account": "nobody"})
+                await c.post("/api/subscriptions/default", json={"provider": "chatgpt", "account": "nobody"})
             ).status_code == 404
-            assert (await c.post("/api/subscriptions/login", json={"provider": "nope"})).status_code == 400
-            assert (await c.get("/api/subscriptions/media/../etc/passwd")).status_code == 404
-            assert (await c.get("/api/subscriptions/media/missing.png")).status_code == 404
-            r = await c.post("/api/subscriptions/logout", json={"provider": "grok", "account": "ann@x.ai"})
+            for gone in ("codex", "grok", "antigravity", "nope"):
+                assert (await c.post("/api/subscriptions/login", json={"provider": gone})).status_code == 400
+            r = await c.post("/api/subscriptions/logout", json={"provider": "chatgpt", "account": key})
+            assert r.json() == {"ok": True} and "chatgpt" not in h.get("llm").routes()
             assert (
-                r.json() == {"ok": True}
-                and "grok" not in h.get("llm").routes()
-                and not any(t.name.startswith("grok_") for t in h.get("tools").list())
+                "Signed out locally"
+                in (await c.get("/api/subscriptions/status")).json()["providers"]["chatgpt"]["detail"]
             )
+        await chatgpt.http.aclose()
+        assert not any("subscriptions" in r.tags for r in h.get("tools").records())
         assert any(cl["entry"] == "subscriptions" for cl in h.get("webui").clients())
-    asyncio.get_event_loop()

@@ -1,5 +1,4 @@
 [common]
-USER_AGENT = "pyxis-harness-subscriptions/0.1 (+https://github.com/Onenightcarnival/dsh-toolkit)"
 # JSON fields searched for a rate-limit reset (seconds, epoch seconds or epoch ms).
 RESET_FIELDS = [
     "resets_in_seconds",
@@ -11,30 +10,7 @@ RESET_FIELDS = [
 ]
 
 [store]
-PROVIDERS = ["codex", "chatgpt", "grok"]
-
-[store.PROVIDER_TOOLS]
-codex = ["image_generate", "web_search"]
-grok = ["image_generate", "video_generate", "x_search"]
-chatgpt = []
-
-[codex]
-CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
-AUTHORIZE_URL = "https://auth.openai.com/oauth/authorize"
-TOKEN_URL = "https://auth.openai.com/oauth/token"
-SCOPE = "openid profile email offline_access api.connectors.read api.connectors.invoke"
-BACKEND = "https://chatgpt.com/backend-api"
-NPM_LATEST_URL = "https://registry.npmjs.org/@openai%2fcodex/latest"
-CLIENT_VERSION_FLOOR = "0.153.4"
-# Refresh error codes after which the stored account is dropped.
-PERMANENT = ["refresh_token_expired", "refresh_token_reused", "refresh_token_invalidated", "invalid_grant"]
-
-[codex.EFFORT_NAMES]
-xhigh = "Extra High"
-
-[codex_tools]
-SEARCH_MODEL = "gpt-5.6-terra"
-IMAGE_MODEL = "gpt-image-2"
+PROVIDERS = ["chatgpt"]
 
 [chatgpt]
 ISSUER = "https://auth.openai.com"
@@ -56,56 +32,3 @@ PERMANENT = [
     "refresh_token_invalidated",
     "refresh_token_reused",
 ]
-
-[grok]
-CLIENT_ID = "b1a00492-073a-47ea-816f-4c329264a828"
-DISCOVERY_URL = "https://auth.x.ai/.well-known/openid-configuration"
-# Authorize endpoint used until OIDC discovery has run.
-AUTHORIZE_URL = "https://auth.x.ai/oauth2/authorize"
-SCOPE = "openid profile email offline_access grok-cli:access api:access"
-API = "https://api.x.ai/v1"
-PROXY = "https://cli-chat-proxy.grok.com/v1"
-
-# Subscription tier names by the ``tier`` claim of the access token.
-[[grok.TIERS]]
-level = 0
-name = "Free"
-
-[[grok.TIERS]]
-level = 1
-name = "SuperGrok"
-
-[[grok.TIERS]]
-level = 2
-name = "X Basic"
-
-[[grok.TIERS]]
-level = 3
-name = "X Premium"
-
-[[grok.TIERS]]
-level = 4
-name = "X Premium+"
-
-[[grok.TIERS]]
-level = 5
-name = "SuperGrok Heavy"
-
-[[grok.TIERS]]
-level = 6
-name = "SuperGrok Lite"
-
-[[grok.TIERS]]
-level = 7
-name = "SuperGrok Plus"
-
-[grok_tools]
-SEARCH_MODEL = "grok-4"
-IMAGE_MODEL = "grok-imagine-image-2.0"
-VIDEO_MODEL = "grok-imagine-video-1.5"
-# Image size → Grok aspect ratio.
-[grok_tools.ASPECT]
-"1024x1024" = "1:1"
-"1024x1536" = "2:3"
-"1536x1024" = "3:2"
-auto = "auto"

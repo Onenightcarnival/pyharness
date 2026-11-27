@@ -1,12 +1,12 @@
 # pyxis-harness-subscriptions
 
-AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Grok（xAI），经各自的 OAuth 流程登录。
+ChatGPT 订阅作为模型路由：经「Sign in with ChatGPT」的 OAuth 流程登录。
 
 | 项 | 值 |
 |---|---|
 | 条目 | `subscriptions`（`toolkit` bundle） |
 | 服务 | `SubscriptionsService`，`ctx.subscriptions` |
-| 注入 | `llm`、`tools`、`http`、`webui` |
+| 注入 | `llm`、`http`、`webui` |
 | 路由前缀 | `/api/subscriptions` |
 | 数据根 | `<profile data>/toolkit/subscriptions/` |
 
@@ -15,20 +15,15 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Grok（xAI�
 | 文件 | 内容 |
 |---|---|
 | `__init__.py` | 导出 |
-| `service.py` | `SubscriptionsService`：provider、模型路由与工具、AI 订阅页的状态 |
+| `service.py` | `SubscriptionsService`：provider、模型路由、AI 订阅页的状态 |
 | `routes.py` | AI 订阅页的 HTTP API |
 | `providers.py` | provider 基类：登录流程的接线、token 管理器、目录与用量缓存；各 provider 模块继承它 |
-| `codex.py` | Codex（OpenAI，ChatGPT 订阅的 Codex 后端）：OAuth 登录、模型目录、用量、聊天、网页搜索、图像生成 |
-| `codex_tools.py` | Codex 的工具 |
 | `chatgpt.py` | ChatGPT（「Sign in with ChatGPT」，计套餐用量的公共 OpenAI API）：动态客户端注册、按 issuer 的 JWKS 校验 `id_token`、经 `/v1/responses` 聊天，工具命名空间为 `dsh` 风格 |
-| `grok.py` | Grok（xAI）：OIDC 发现的 OAuth、`api.x.ai` 与 CLI 代理的目录、账单用量、Responses 聊天、X 搜索、图像与视频生成 |
-| `grok_tools.py` | Grok 的工具 |
-| `responses.py` | Codex、ChatGPT、Grok 共用的 OpenAI Responses 线路格式：LangChain 消息 → `input` 条目、工具定义、Responses SSE 事件 → `AIMessageChunk`（文本、推理、工具调用、用量）的流式转换 |
+| `responses.py` | OpenAI Responses 线路格式：LangChain 消息 → `input` 条目、工具定义、Responses SSE 事件 → `AIMessageChunk`（文本、推理、工具调用、用量）的流式转换 |
 | `catalog.py` | 各 provider 的模型目录，以及由它们发布到 `ctx.llm` 的路由 |
 | `oauth.py` | OAuth 回环流程：每次登录尝试一个临时 HTTP 服务器（PKCE S256、state、nonce）；浏览器无法访问 harness 时手动输入回调；超时与取消 |
-| `common.py` | 共用部分：错误码、HTTP 错误映射、SSE 解析、JWT claims、token 管理器（刷新共享进行中的调用，识别永久性错误）、请求归属 |
+| `common.py` | 共用部分：错误码、HTTP 错误映射、SSE 解析、JWT claims、token 管理器（刷新共享进行中的调用，识别永久性错误） |
 | `store.py` | 数据根下的本地状态 |
-| `media.py` | 生成的媒体：图像 / 视频存入数据根，并向模型描述 |
 | `config.toml` | provider 端点、OAuth client id 与 scope、线路层标识符 |
 | `prompts.toml` | 模型可见文本 |
 | `client.js` | 浏览器模块 |
@@ -37,30 +32,15 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Grok（xAI�
 
 | 成员 | 契约 |
 |---|---|
-| `providers` | `{id: Provider}`：登录、账号、目录、用量、聊天模型、工具；启动时由数据根下的存储（`AuthStore`、`CatalogCache`）构建 |
-| `sync_routes()` | `catalog.rebuild_routes`：把发现的模型发布为 `ctx.llm` 路由 `codex` / `chatgpt` / `grok` |
-| `sync_tools()` | 注册每个已登录且有工具的 provider 的工具；登出时撤销 |
+| `providers` | `{id: Provider}`：登录、账号、目录、用量、聊天模型；启动时由数据根下的存储（`AuthStore`、`CatalogCache`）构建 |
+| `sync_routes()` | `catalog.rebuild_routes`：把发现的模型发布为 `ctx.llm` 路由 `chatgpt` |
 | `catalog()` | `catalog.provider_catalog` |
-| `status()` | `{"providers": {id: status}}`；Codex 项带 `clientVersion` |
-| `tool_enabled()` | 一个 provider 工具的已存偏好；可按会话创建时刻取值 |
-| `model_default()` | 一个模型的已存默认推理强度 |
-| `media_url()` | 已存媒体文件的 URL：`/api/subscriptions/media/{name}` |
+| `status()` | `{"providers": {id: status}}` |
 
 | 配置 | 含义 |
 |---|---|
-| `codexClientVersion` | 固定随目录请求发送的 Codex 客户端版本 |
-| `models`、`chatgpt.models`、`grok.models` | 静态目录；非空 → 该 provider 不做发现 |
-| `stream_idle_timeout` | 三个提供方的聊天模型：流无数据多少秒后以 `TIMEOUT` 失败；大于 0；默认 `300.0` |
-
-## 工具
-
-| 工具 | provider | 内容 |
-|---|---|---|
-| `codex_web_search` | `codex` | Codex 搜索后端及其命令集 |
-| `codex_image_generate` | `codex` | 图像生成 |
-| `grok_x_search` | `grok` | 托管的 X 搜索 |
-| `grok_image_generate` | `grok` | 图像生成 |
-| `grok_video_generate` | `grok` | 视频生成 |
+| `chatgpt.models` | 静态目录；非空 → 不做发现 |
+| `stream_idle_timeout` | 聊天模型：流无数据多少秒后以 `TIMEOUT` 失败；大于 0；默认 `300.0` |
 
 ## 模型路由（`catalog.py`）
 
@@ -68,7 +48,7 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Grok（xAI�
 |---|---|
 | `provider_catalog()` | 每个账号发现的模型，合并，带已存的上下文窗口与推理强度 |
 | `cached_catalog()` | 同样的行，只取最近一次已知的目录；不访问网络 |
-| `rebuild_routes()` | 以 `ctx.llm.publish` 发布 `codex` / `chatgpt` / `grok` 路由：已登录的 provider 各一条；配置里类型为 `subscription` 的路由从运行中的配置移除 |
+| `rebuild_routes()` | 以 `ctx.llm.publish` 发布 `chatgpt` 路由：已登录的 provider 各一条；配置里类型为 `subscription` 的路由从运行中的配置移除 |
 
 | 项 | 规则 |
 |---|---|
@@ -80,18 +60,17 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Grok（xAI�
 
 | 路径 | 方法 | 作用 |
 |---|---|---|
-| `status` | GET | 每个 provider：忙碌标志、账号、Codex 客户端版本 |
+| `status` | GET | 每个 provider：忙碌标志、账号 |
 | `login` | POST | 启动该 provider 的 OAuth 流程；已有登录在进行 → 409 |
 | `manual` | POST | 把粘贴的回调 URL / code 交给进行中的流程 |
 | `cancel` | POST | 中止进行中的流程 |
-| `logout` | POST | 移除一个账号；重建路由与工具 |
+| `logout` | POST | 移除一个账号；重建路由 |
 | `default` | POST | 选定 provider 的默认账号 |
 | `usage` | POST | 一个账号的缓存用量；`force` 刷新 |
 | `provider-settings` | GET | 目录；`force` 清除缓存并重新发现 |
-| `provider-settings` | PUT | 保存偏好；重建路由与工具 |
+| `provider-settings` | PUT | 保存偏好；重建路由 |
 | `model-default` | POST | 保存一个模型的默认推理强度 |
-| `refresh` | POST | 重新发现全部目录；重建路由与工具 |
-| `media/{name}` | GET | provider 工具存下的图像或视频 |
+| `refresh` | POST | 重新发现全部目录；重建路由 |
 
 ## 存储（`store.py`）
 
@@ -101,7 +80,7 @@ AI 订阅作为模型路由与工具：Codex（OpenAI）、ChatGPT、Grok（xAI�
 | `provider-settings.json` | provider 偏好 |
 | `models.json` | 最近一次已知的模型目录 |
 | `model-defaults.json` | 各模型的默认推理强度 |
-| 媒体 | 生成的图像、视频 |
+| `chatgpt-registrations.json` | ChatGPT 的宿主 id 与动态客户端注册 |
 
 JSON 文件的写入：原子，权限 `0600`。
 
@@ -124,5 +103,4 @@ JSON 文件的写入：原子，权限 `0600`。
 
 | 位置 | 内容 |
 |---|---|
-| 左侧栏「AI 订阅」页 | provider、账号登录（手动回调兜底）、模型 / 工具 / 用量标签页 |
-| 工具行 | 生成媒体的预览 |
+| 左侧栏「AI 订阅」页 | provider、账号登录（手动回调兜底）、模型 / 用量标签页 |

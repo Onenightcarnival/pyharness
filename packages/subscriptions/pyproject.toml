@@ -1,7 +1,7 @@
 [project]
 name = "pyxis-harness-subscriptions"
 version = "0.1.1.dev6"
-description = "PyxisHarness plugin: Codex, ChatGPT and Grok subscriptions as model routes and tools, with the AI subscriptions page"
+description = "PyxisHarness plugin: ChatGPT subscriptions as model routes, with the AI subscriptions page"
 license = "MIT"
 requires-python = ">=3.12"
 readme = "AGENTS.md"
@@ -18,7 +18,6 @@ classifiers = [
 dependencies = [
     "pyxis-harness-core==0.1.1.dev6",
     "pyxis-harness-llm==0.1.1.dev6",
-    "pyxis-harness-tools==0.1.1.dev6",
     "pyxis-harness-http==0.1.1.dev6",
     "pyxis-harness-web-ui==0.1.1.dev6",
     "fastapi==0.162.0",
