@@ -1267,7 +1267,7 @@ function h(tag, attrs, ...children) {
 const moduleFactories = {}; const moduleStatus = {}; let pendingModules = [];
 window.__PyhModules__ = { load({ id, factory }) { if (typeof factory !== 'function') throw new Error('load({ id, factory }) requires a factory function'); pendingModules.push({ id: String(id || ''), factory }); } };
 function pluginRequire(name) {
-  if (name === 'pyxis-harness') return { h, icon, esc, toast, json, api, markdown, copyText, confirmDialog, confirmRestart, promptDialog, waitForRestart, T, locale: zh ? 'zh' : 'en' };
+  if (name === 'pyxis-harness') return { h, icon, esc, toast, json, api, markdown, copyText, writeClipboard, confirmDialog, confirmRestart, promptDialog, waitForRestart, T, locale: zh ? 'zh' : 'en' };
   throw new Error(`module ${name} is not available; only "pyxis-harness" can be required`);
 }
 async function hostCall(entry, method, args) {
@@ -1508,8 +1508,16 @@ document.addEventListener('copy', (e) => {
   document.body.appendChild(box); const text = box.innerText; box.remove();
   e.clipboardData.setData('text/plain', text); e.clipboardData.setData('text/html', box.innerHTML); e.preventDefault();
 });
+async function writeClipboard(text) { // the async clipboard API, then a selection-based copy: that API is withheld outside secure contexts (plain HTTP on a LAN address)
+  try { await navigator.clipboard.writeText(text); return; } catch { /* selection-based copy below */ }
+  const area = document.createElement('textarea'); area.readOnly = true; area.value = text; area.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+  document.body.appendChild(area); const active = document.activeElement; area.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } finally { area.remove(); if (active instanceof HTMLElement) active.focus(); }
+  if (!ok) throw new Error('clipboard unavailable');
+}
 async function copyText(text, btn) {
-  try { await navigator.clipboard.writeText(text); } catch { toast(T.copy + ' ✗'); return; }
+  try { await writeClipboard(text); } catch { toast(T.copy + ' ✗'); return; }
   if (btn) { const old = btn.innerHTML; btn.innerHTML = btn.dataset.copy !== undefined ? `${icon('check')}<span>${T.copied}</span>` : icon('check'); setTimeout(() => (btn.innerHTML = old), 1400); }
 }
 

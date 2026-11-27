@@ -261,8 +261,10 @@ window.__PyhModules__.load({
           }
 
           // -------------------------------------------------------- editor + confirms
+          // 32 hex digits. crypto.randomUUID is withheld outside secure contexts (plain HTTP on a LAN address).
+          const newId = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
           function addEntry(kind, parentId) {
-            const entry = { id: crypto.randomUUID(), kind, fields: parentId ? (kind === "project" ? { workId: parentId } : { parentId }) : {} };
+            const entry = { id: newId(), kind, fields: parentId ? (kind === "project" ? { workId: parentId } : { parentId }) : {} };
             openEditor(entry);
           }
           function openEditor(entry) {

@@ -1,7 +1,7 @@
 window.__PyhModules__.load({
   id: "gateway",
   factory(require) {
-    const { h, icon, esc } = require("pyxis-harness");
+    const { h, icon, esc, writeClipboard } = require("pyxis-harness");
     const ico = (name, cls) => { const tpl = document.createElement("template"); tpl.innerHTML = icon(name, cls); return tpl.content.firstChild; };
     const L = {
       zh: {
@@ -400,7 +400,7 @@ window.__PyhModules__.load({
           const copyKey = (key) => run(async () => {
             const k = ks;
             const value = k.revealed[key.id] !== undefined ? k.revealed[key.id] : (await call(keyPath(key.id))).key;
-            await navigator.clipboard.writeText(value);
+            await writeClipboard(value);
             flash(k, "copied", key.id);
           });
           const toggleKey = (key) => run(async () => {
@@ -415,7 +415,7 @@ window.__PyhModules__.load({
           });
           async function copyCreated() {
             const k = ks;
-            try { await navigator.clipboard.writeText(k.created); flash(k, "createdCopied", k.created); } catch (err) { fail(err); render(); }
+            try { await writeClipboard(k.created); flash(k, "createdCopied", k.created); } catch (err) { fail(err); render(); }
           }
           function removeKey(key) {
             const k = ks;
