@@ -78,7 +78,8 @@ def _history_row(entry: dict[str, Any]) -> str:
         outcome = f"error: {entry.get('error') or 'no response'}"
     else:
         outcome = f"{response['status']} ({response['durationMs']} ms)"
-    row = f"{stamp} [{entry['source']}] {entry['targetName']}: {request['method']} {request['url']} → {outcome}"
+    where = request["url"] or request["path"]  # no URL: the request was refused before one was built
+    row = f"{stamp} [{entry['source']}] {entry['targetName']}: {request['method']} {where} → {outcome}"
     if request["body"]:
         row += f"\n    request body: {truncate(request['body'], REQUEST_PREVIEW_BYTES)[0]}"
     if response is not None and response["body"]:
