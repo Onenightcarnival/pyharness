@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-bundle-toolkit"
-version = "0.1.1.dev3"
+version = "0.1.1.dev4"
 description = "PyxisHarness bundle: the toolkit (memory, databases, S3, skills, MCP page, subscriptions, OpenTelemetry, API gateway, HTTP client); built in"
 license = "MIT"
 requires-python = ">=3.12"
@@ -16,15 +16,15 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "pyxis-harness-core==0.1.1.dev3",
-    "pyxis-harness-memory==0.1.1.dev3",
-    "pyxis-harness-rdb==0.1.1.dev3",
-    "pyxis-harness-s3==0.1.1.dev3",
-    "pyxis-harness-config-center==0.1.1.dev3",
-    "pyxis-harness-otel==0.1.1.dev3",
-    "pyxis-harness-subscriptions==0.1.1.dev3",
-    "pyxis-harness-gateway==0.1.1.dev3",
-    "pyxis-harness-http-client==0.1.1.dev3",
+    "pyxis-harness-core==0.1.1.dev4",
+    "pyxis-harness-memory==0.1.1.dev4",
+    "pyxis-harness-rdb==0.1.1.dev4",
+    "pyxis-harness-s3==0.1.1.dev4",
+    "pyxis-harness-config-center==0.1.1.dev4",
+    "pyxis-harness-otel==0.1.1.dev4",
+    "pyxis-harness-subscriptions==0.1.1.dev4",
+    "pyxis-harness-gateway==0.1.1.dev4",
+    "pyxis-harness-http-client==0.1.1.dev4",
 ]
 
 [project.entry-points."pyxis_harness.bundles"]

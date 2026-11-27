@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-s3"
-version = "0.1.1.dev3"
+version = "0.1.1.dev4"
 description = "PyxisHarness plugin: S3-compatible object storage browser (MinIO / OSS / COS / R2 / AWS) with s3_* tools and the S3 page"
 license = "MIT"
 requires-python = ">=3.12"
@@ -16,10 +16,10 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "pyxis-harness-core==0.1.1.dev3",
-    "pyxis-harness-tools==0.1.1.dev3",
-    "pyxis-harness-prompt==0.1.1.dev3",
-    "pyxis-harness-http==0.1.1.dev3",
+    "pyxis-harness-core==0.1.1.dev4",
+    "pyxis-harness-tools==0.1.1.dev4",
+    "pyxis-harness-prompt==0.1.1.dev4",
+    "pyxis-harness-http==0.1.1.dev4",
     "fastapi==0.162.0",
     "langchain-core==1.7.1",
     "pydantic==2.14.1",
