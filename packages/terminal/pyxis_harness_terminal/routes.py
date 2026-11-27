@@ -22,6 +22,8 @@ class Host(Protocol):
     terminals: dict[str, Terminal]
 
     def status(self) -> dict[str, Any]: ...
+    def settings(self) -> dict[str, Any]: ...
+    async def save(self, fields: dict[str, Any]) -> dict[str, Any]: ...
     def open_terminal(self, cwd: str | None, cols: int = 80, rows: int = 24, title: str | None = None) -> Terminal: ...
     async def close_terminal(self, terminal_id: str) -> bool: ...
 
@@ -31,6 +33,17 @@ class NewTerminal(BaseModel):
     cols: int = Field(80, ge=2, le=500)
     rows: int = Field(24, ge=1, le=300)
     title: str | None = None
+
+
+class ShellSettings(BaseModel):
+    """Settings of the shell tool; a field left out keeps its value."""
+
+    timeout: int | None = Field(None, ge=1)
+    max_output_chars: int | None = Field(None, ge=1000)
+    promote_on_timeout: bool | None = None
+    dialect: str | None = Field(None, pattern="^(auto|bash|pwsh)$")  # auto: by platform
+    shell: str | None = Field(None, min_length=1)
+    pwsh: str | None = None  # empty: resolved by the fixed order
 
 
 class Resize(BaseModel):
@@ -44,6 +57,22 @@ def make_router(service: Host) -> APIRouter:
     @router.get("/terminal/status")
     async def terminal_status() -> dict[str, Any]:
         return service.status()
+
+    @router.get("/terminal/settings")
+    async def shell_settings() -> dict[str, Any]:
+        return service.settings()
+
+    @router.put("/terminal/settings")
+    async def put_shell_settings(body: ShellSettings) -> dict[str, Any]:
+        fields = body.model_dump(exclude_unset=True, exclude_none=True)
+        if "dialect" in fields:
+            fields["dialect"] = None if fields["dialect"] == "auto" else fields["dialect"]
+        if "pwsh" in body.model_fields_set:
+            fields["pwsh"] = body.pwsh or None
+        try:
+            return await service.save(fields)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
 
     @router.get("/jobs")
     async def list_jobs(session: str | None = None) -> dict[str, Any]:

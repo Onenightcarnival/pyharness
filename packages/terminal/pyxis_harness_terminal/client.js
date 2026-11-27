@@ -1,10 +1,10 @@
 window.__PyhModules__.load({
   id: "terminal",
   factory(require) {
-    const { h, icon, esc, toast, json } = require("pyxis-harness");
+    const { h, icon, esc, toast, json, T } = require("pyxis-harness");
     const L = {
-      zh: { terminal: "终端", terminalDesc: "在工作区里打开一个交互式 shell", jobs: "后台任务", jobsDesc: "agent 启动的后台命令与它们的输出", newTerminal: "新终端", exited: (c) => `shell 已退出（退出码 ${c}）`, reconnect: "重新打开", unavailable: "此平台不支持终端", noJobs: "还没有后台任务", running: "运行中", exitedTag: "已结束", failed: "失败", killed: "已停止", kill: "停止", refresh: "刷新", output: "输出", back: "返回列表", started: "开始于", connecting: "连接中…", fallback: "xterm.js 未能加载；使用简易终端", send: "发送", inputPlaceholder: "输入命令，回车发送" },
-      en: { terminal: "Terminal", terminalDesc: "Open an interactive shell in the workspace", jobs: "Jobs", jobsDesc: "Background commands started by the agent and their output", newTerminal: "New terminal", exited: (c) => `The shell exited (code ${c})`, reconnect: "Open again", unavailable: "Terminals are unavailable on this platform", noJobs: "No background jobs yet", running: "Running", exitedTag: "Done", failed: "Failed", killed: "Stopped", kill: "Stop", refresh: "Refresh", output: "Output", back: "Back to list", started: "Started", connecting: "Connecting…", fallback: "xterm.js did not load; using the plain terminal", send: "Send", inputPlaceholder: "Type a command and press Enter" },
+      zh: { shellTool: "Shell 工具", shellIntro: "agent 运行命令的工具：每条命令一个新进程。", timeout: "命令超时", timeoutHint: (max) => `前台命令的默认等待秒数；模型可为单次调用指定，上限 ${max} 秒`, seconds: "秒", output: "输出上限", outputHint: "一次结果返回的最多字符数；超出时只返回尾部，完整输出存入日志文件", chars: "字符", promote: "超时后转为后台任务", promoteHint: "到达超时的命令继续运行，模型用任务工具读取输出；关闭后到时终止", on: "开启", off: "关闭", dialect: "Shell", dialectHint: "工具使用的 shell；更改后重启生效", auto: (name) => `自动（${name}）`, bashPath: "bash 可执行文件", bashPathHint: "Windows 上可指向 Git Bash 的 bash.exe", pwshPath: "PowerShell 可执行文件", pwshPathHint: "留空：PowerShell 7，否则 PATH 上的 pwsh，否则 Windows PowerShell 5.1", effective: "当前生效", restart: "已保存；重启后生效，没有运行中的轮次时自动重启。", terminal: "终端", terminalDesc: "在工作区里打开一个交互式 shell", jobs: "后台任务", jobsDesc: "agent 启动的后台命令与它们的输出", newTerminal: "新终端", exited: (c) => `shell 已退出（退出码 ${c}）`, reconnect: "重新打开", unavailable: "此平台不支持终端", noJobs: "还没有后台任务", running: "运行中", exitedTag: "已结束", failed: "失败", killed: "已停止", kill: "停止", refresh: "刷新", output: "输出", back: "返回列表", started: "开始于", connecting: "连接中…", fallback: "xterm.js 未能加载；使用简易终端", send: "发送", inputPlaceholder: "输入命令，回车发送" },
+      en: { shellTool: "Shell tool", shellIntro: "The tool the agent runs commands with: a fresh process per command.", timeout: "Command timeout", timeoutHint: (max) => `Seconds a foreground command is waited for by default; the model may set it per call, up to ${max}`, seconds: "s", output: "Output limit", outputHint: "Most characters one result returns; beyond it only the tail, with the full output in a log file", chars: "chars", promote: "Background on timeout", promoteHint: "A command that reaches its timeout keeps running and is read with the job tools; off: it is stopped", on: "On", off: "Off", dialect: "Shell", dialectHint: "The shell of the tool; a change takes effect after a restart", auto: (name) => `Automatic (${name})`, bashPath: "bash executable", bashPathHint: "On Windows this can point at the bash.exe of Git Bash", pwshPath: "PowerShell executable", pwshPathHint: "Empty: PowerShell 7, else pwsh on PATH, else Windows PowerShell 5.1", effective: "In effect", restart: "Saved; in effect after a restart, which happens once no turn is running.", terminal: "Terminal", terminalDesc: "Open an interactive shell in the workspace", jobs: "Jobs", jobsDesc: "Background commands started by the agent and their output", newTerminal: "New terminal", exited: (c) => `The shell exited (code ${c})`, reconnect: "Open again", unavailable: "Terminals are unavailable on this platform", noJobs: "No background jobs yet", running: "Running", exitedTag: "Done", failed: "Failed", killed: "Stopped", kill: "Stop", refresh: "Refresh", output: "Output", back: "Back to list", started: "Started", connecting: "Connecting…", fallback: "xterm.js did not load; using the plain terminal", send: "Send", inputPlaceholder: "Type a command and press Enter" },
     };
     const XTERM_JS = "https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js";
     const XTERM_CSS = "https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css";
@@ -146,6 +146,39 @@ window.__PyhModules__.load({
           return () => { alive = false; clearTimeout(timer); offRun(); };
         }
 
+        function shellSettings(el) {
+          let alive = true;
+          const row = (title, hint, control) => `<div class="srow"><div class="main"><div class="title">${esc(title)}</div><div class="desc">${esc(hint)}</div></div><div class="ctl">${control}</div></div>`;
+          const select = (key, options, value) => `<div class="selectWrap"><select class="select" data-shell="${key}">${options.map(([v, label]) => `<option value="${esc(v)}" ${v === value ? "selected" : ""}>${esc(label)}</option>`).join("")}</select>${icon("chev-down", "ico chev")}</div>`;
+          const number = (key, value, min, unit) => `<span class="numField"><input class="input num" type="number" data-shell="${key}" value="${value}" min="${min}" step="1" style="width:96px"><span class="unit">${esc(unit)}</span></span>`;
+          const path = (key, value, placeholder) => `<input class="input mono" data-shell="${key}" value="${esc(value || "")}" placeholder="${esc(placeholder)}" spellcheck="false" autocomplete="off" style="width:280px">`;
+          function render(s) {
+            const byPlatform = s.platform === "win32" ? "PowerShell" : "bash";
+            el.innerHTML = `<p class="sectionIntro">${esc(t.shellIntro)}</p>`
+              + row(t.timeout, t.timeoutHint(s.max_timeout), number("timeout", s.timeout, 1, t.seconds))
+              + row(t.output, t.outputHint, number("max_output_chars", s.max_output_chars, 1000, t.chars))
+              + row(t.promote, t.promoteHint, select("promote_on_timeout", [["1", t.on], ["0", t.off]], s.promote_on_timeout ? "1" : "0"))
+              + row(t.dialect, t.dialectHint, select("dialect", [["auto", t.auto(byPlatform)], ["bash", "bash"], ["pwsh", "PowerShell"]], s.dialect || "auto"))
+              + row(t.bashPath, t.bashPathHint, path("shell", s.shell, "bash"))
+              + row(t.pwshPath, t.pwshPathHint, path("pwsh", s.pwsh, "pwsh"))
+              + row(t.effective, s.effective.executable, `<span class="tag" data-tone="outline">${esc(s.effective.dialect === "pwsh" ? "PowerShell" : "bash")}</span>`);
+            el.querySelectorAll("[data-shell]").forEach((control) => {
+              control.onchange = async () => {
+                const key = control.dataset.shell;
+                const value = key === "promote_on_timeout" ? control.value === "1" : control.type === "number" ? Math.round(+control.value) : control.value.trim();
+                try {
+                  const saved = await json("/terminal/settings", { method: "PUT", body: JSON.stringify({ [key]: value }) });
+                  toast(saved.application === "restart" ? t.restart : T.applied);
+                  if (alive) render(saved);
+                } catch (err) { toast(err.message); if (alive) render(s); }
+              };
+            });
+          }
+          json("/terminal/settings").then((s) => { if (alive) render(s); }).catch((err) => { el.textContent = err.message; });
+          return () => { alive = false; };
+        }
+
+        ctx.slots.register({ slot: "settings.sections", key: "shell", label: t.shellTool, icon: "terminal", order: 60 }, shellSettings);
         ctx.slots.register({ slot: "rightbar.tabs", key: "terminal", label: t.terminal, icon: "terminal", guide: { title: t.terminal, description: t.terminalDesc, order: 30 } }, terminalTab);
         ctx.slots.register({ slot: "rightbar.tabs", key: "jobs", label: t.jobs, icon: "zap", guide: { title: t.jobs, description: t.jobsDesc, order: 40 } }, jobsTab);
       },

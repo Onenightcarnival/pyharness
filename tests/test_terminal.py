@@ -11,6 +11,7 @@ from pathlib import Path
 
 import httpx
 import pytest
+import yaml
 
 from pyxis_harness import Harness, Profile
 from pyxis_harness_terminal import (
@@ -321,3 +322,39 @@ async def test_terminal_class_exit(tmp_path: Path):
         if chunk is None:
             break
     assert term.exit_code == 3 and not term.alive
+
+
+async def test_shell_tool_settings(home):
+    profile = Profile.init("web", home=str(home))
+    async with (
+        Harness(profile, patch=[HTTP_OFF]) as h,
+        httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t") as c,
+    ):
+        service, lifecycle = h.get("terminal"), h.ctx.lifecycle
+        current = (await c.get("/api/terminal/settings")).json()
+        assert current["effective"] == {"dialect": SHELL.dialect, "executable": SHELL.executable}
+        assert (current["timeout"], current["max_timeout"], current["dialect"]) == (120, 900, None)
+        # Limits of a command apply at once and reach the tool's parameter text.
+        saved = (await c.put("/api/terminal/settings", json={"timeout": 30, "max_output_chars": 2000})).json()
+        assert (saved["application"], saved["timeout"], saved["max_output_chars"]) == ("applied", 30, 2000)
+        assert (await c.put("/api/terminal/settings", json={"promote_on_timeout": False})).json()[
+            "promote_on_timeout"
+        ] is False
+        assert service.config.timeout == 30 and lifecycle.restart_pending is None
+        tool = next(t for t in h.get("tools").list() if t.name == SHELL.dialect)
+        assert (
+            "default 30" in tool.args["timeout"]["description"] and "is stopped" in tool.args["timeout"]["description"]
+        )
+        # Refused: a timeout above the cap, an executable that is not there.
+        assert (await c.put("/api/terminal/settings", json={"timeout": 5000})).status_code == 422
+        missing = await c.put("/api/terminal/settings", json={"pwsh": "/no/such/shell"})
+        assert missing.status_code == 422 and "not an executable" in missing.json()["detail"]
+        assert service.config.timeout == 30 and service.config.pwsh is None
+        # The executable of the shell that is not in use is saved without a restart; a change of the shell restarts.
+        used, other = ("shell", "pwsh") if SHELL.dialect == "bash" else ("pwsh", "shell")
+        assert (await c.put("/api/terminal/settings", json={other: sys.executable})).json()["application"] == "applied"
+        assert lifecycle.restart_pending is None
+        switched = (await c.put("/api/terminal/settings", json={used: sys.executable})).json()
+        assert switched["application"] == "restart" and lifecycle.restart_pending["reasons"] == ["shell settings"]
+        saved = {o["id"]: o["config"] for o in yaml.safe_load((profile.dir / "harness.patch.yaml").read_text())}
+        assert saved["terminal"]["timeout"] == 30 and saved["terminal"]["promote_on_timeout"] is False

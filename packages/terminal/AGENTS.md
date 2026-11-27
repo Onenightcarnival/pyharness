@@ -103,6 +103,7 @@ agent 的 shell 工具、后台作业、Web UI 的 PTY 终端。
 | 对象 | 方法 | 路径 |
 |---|---|---|
 | 终端状态 | GET | `/terminal/status` |
+| shell 工具的设置 | GET、PUT | `/terminal/settings` |
 | 作业 | GET | `/jobs` |
 | 作业 | GET | `/jobs/{id}` |
 | 作业 | DELETE | `/jobs/{id}` |
@@ -119,9 +120,23 @@ agent 的 shell 工具、后台作业、Web UI 的 PTY 终端。
 | 依赖 | `pty`（POSIX） |
 | 其他平台 | 终端标签页报告自身不可用 |
 
+## 设置
+
+| 字段 | 生效 |
+|---|---|
+| `timeout`、`max_output_chars`、`promote_on_timeout` | 立即：下一条命令；工具重新登记，参数说明随之更新 |
+| `dialect`、`shell`、`pwsh` | 写入 profile 补丁；改变了生效的 shell 时请求重启 |
+
+| 拒绝（422） | 条件 |
+|---|---|
+| `timeout` | 大于 `max_timeout` |
+| 可执行文件 | 给出的路径，或将要生效的 shell，在本机上找不到 |
+
 ## 浏览器模块（`client.js`）
 
 | 右侧栏标签页类型 | 内容 |
 |---|---|
 | `terminal` | WebSocket 上的 PTY；xterm.js 加载成功时用它渲染，否则为纯行终端 |
 | `jobs` | 后台作业及其日志 |
+
+设置分区「Shell 工具」（`settings.sections`）：上表的各字段，及当前生效的 shell。
