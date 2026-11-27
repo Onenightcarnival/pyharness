@@ -35,6 +35,4 @@ packages = ["pyxis_harness_workspace_changes"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "AGENTS.md" = "pyxis_harness_workspace_changes/AGENTS.md"
-
-[tool.hatch.build.targets.sdist.force-include]
-"../../LICENSE" = "LICENSE"
+"../../LICENSE" = "pyxis_harness_workspace_changes/LICENSE"

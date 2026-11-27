@@ -35,6 +35,4 @@ packages = ["pyxis_harness_checkpoint_postgres"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "AGENTS.md" = "pyxis_harness_checkpoint_postgres/AGENTS.md"
-
-[tool.hatch.build.targets.sdist.force-include]
-"../../LICENSE" = "LICENSE"
+"../../LICENSE" = "pyxis_harness_checkpoint_postgres/LICENSE"
