@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -1740,7 +1740,7 @@ wheels = [
 
 [[package]]
 name = "pyxis-harness"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/meta" }
 dependencies = [
     { name = "pyxis-harness-agent" },
@@ -1811,7 +1811,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-agent"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/agent" }
 dependencies = [
     { name = "langchain-core" },
@@ -1830,7 +1830,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-agent-loop-deepagents"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/agent-loop-deepagents" }
 dependencies = [
     { name = "deepagents" },
@@ -1853,7 +1853,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-api"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/api" }
 dependencies = [
     { name = "fastapi" },
@@ -1874,7 +1874,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-ask-user"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/ask-user" }
 dependencies = [
     { name = "langchain-core" },
@@ -1893,7 +1893,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-auto-review"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/auto-review" }
 dependencies = [
     { name = "langchain" },
@@ -1916,7 +1916,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-checkpoint-memory"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/checkpoint-memory" }
 dependencies = [
     { name = "langgraph-checkpoint" },
@@ -1931,7 +1931,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-checkpoint-postgres"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/checkpoint-postgres" }
 dependencies = [
     { name = "langgraph-checkpoint-postgres" },
@@ -1950,7 +1950,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-checkpoint-sqlite"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/checkpoint-sqlite" }
 dependencies = [
     { name = "aiosqlite" },
@@ -1967,7 +1967,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-compaction"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/compaction" }
 dependencies = [
     { name = "langchain" },
@@ -1990,7 +1990,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-config-center"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/config-center" }
 dependencies = [
     { name = "fastapi" },
@@ -2019,7 +2019,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-core"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/core" }
 dependencies = [
     { name = "packaging" },
@@ -2038,7 +2038,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-gateway"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/gateway" }
 dependencies = [
     { name = "fastapi" },
@@ -2067,7 +2067,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-http"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/http" }
 dependencies = [
     { name = "fastapi" },
@@ -2084,7 +2084,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-http-client"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/http-client" }
 dependencies = [
     { name = "fastapi" },
@@ -2113,7 +2113,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-inspect"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/inspect" }
 dependencies = [
     { name = "langchain-core" },
@@ -2130,7 +2130,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-llm"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/llm" }
 dependencies = [
     { name = "httpx" },
@@ -2159,7 +2159,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-mcp"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/mcp" }
 dependencies = [
     { name = "httpx" },
@@ -2180,7 +2180,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-memory"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/memory" }
 dependencies = [
     { name = "fastapi" },
@@ -2207,7 +2207,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-monorepo"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { virtual = "." }
 dependencies = [
     { name = "pyxis-harness" },
@@ -2298,7 +2298,7 @@ dev = [
 
 [[package]]
 name = "pyxis-harness-otel"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/otel" }
 dependencies = [
     { name = "fastapi" },
@@ -2329,7 +2329,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-plugin-manager"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/plugin-manager" }
 dependencies = [
     { name = "langchain" },
@@ -2346,7 +2346,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-prompt"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/prompt" }
 dependencies = [
     { name = "pyxis-harness-core" },
@@ -2357,7 +2357,7 @@ requires-dist = [{ name = "pyxis-harness-core", editable = "packages/core" }]
 
 [[package]]
 name = "pyxis-harness-rdb"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/rdb" }
 dependencies = [
     { name = "fastapi" },
@@ -2386,7 +2386,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-s3"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/s3" }
 dependencies = [
     { name = "boto3" },
@@ -2413,7 +2413,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-subscriptions"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/subscriptions" }
 dependencies = [
     { name = "cryptography" },
@@ -2444,7 +2444,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-terminal"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/terminal" }
 dependencies = [
     { name = "fastapi" },
@@ -2469,7 +2469,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-tools"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/tools" }
 dependencies = [
     { name = "langchain" },
@@ -2486,7 +2486,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-web-tools"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/web-tools" }
 dependencies = [
     { name = "fastapi" },
@@ -2509,7 +2509,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-web-ui"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/web-ui" }
 dependencies = [
     { name = "fastapi" },
@@ -2524,7 +2524,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-workspace"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/workspace" }
 dependencies = [
     { name = "deepagents" },
@@ -2539,7 +2539,7 @@ requires-dist = [
 
 [[package]]
 name = "pyxis-harness-workspace-changes"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 source = { editable = "packages/workspace-changes" }
 dependencies = [
     { name = "pyxis-harness-agent" },

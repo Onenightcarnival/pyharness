@@ -1,6 +1,6 @@
 [project]
 name = "pyxis-harness-memory"
-version = "0.1.1.dev7"
+version = "0.1.1.dev8"
 description = "PyxisHarness plugin: layered career memory (profile, work, projects, lessons) with version history; memory_get / memory_save tools and the Memory page"
 license = "MIT"
 requires-python = ">=3.12"
@@ -16,10 +16,10 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    "pyxis-harness-core==0.1.1.dev7",
-    "pyxis-harness-tools==0.1.1.dev7",
-    "pyxis-harness-prompt==0.1.1.dev7",
-    "pyxis-harness-http==0.1.1.dev7",
+    "pyxis-harness-core==0.1.1.dev8",
+    "pyxis-harness-tools==0.1.1.dev8",
+    "pyxis-harness-prompt==0.1.1.dev8",
+    "pyxis-harness-http==0.1.1.dev8",
     "fastapi==0.162.0",
     "langchain-core==1.7.1",
     "langgraph==1.2.18",
