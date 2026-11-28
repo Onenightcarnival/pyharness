@@ -28,7 +28,7 @@ patch:
     config:
       providers:
         openai:
-          base_url: http://127.0.0.1:23333/v1
+          base_url: https://api.example.com/v1
   - id: web-ui                   # disable or enable
     disabled: true
   - id: checkpoint               # delete
