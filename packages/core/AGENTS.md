@@ -163,7 +163,7 @@ profile：harness home 中具名、持久的装配。harness home：`$PYH_HOME`�
 | `$PYH_HOME/profiles/<name>/profile.yaml` | 有序的 bundle 列表 |
 | `$PYH_HOME/profiles/<name>/harness.patch.yaml` | profile patch；`plugin_manager` 与 settings API 写入 |
 | `$PYH_HOME/profiles/<name>/credentials.yaml` | 凭据库（0600）；patch 按名称引用其中的值 |
-| `$PYH_HOME/profiles/<name>/site/` | 安装进该 profile 的 bundle（`pip --target`） |
+| `$PYH_HOME/profiles/<name>/site/` | 安装进该 profile 的 bundle（`uv pip install --target`） |
 | `$PYH_HOME/profiles/<name>/data/` | SQLite 的默认位置 |
 | `$PYH_HOME/profiles/<name>/runtime/` | 当前代的 ready 标记、交接文件、last-known-good、锁 |
 | `~/Documents/pyharness/<name>/` | `Profile.documents`：用户可见的文件，在 home 之外；插件各占一个子目录 |
@@ -287,6 +287,15 @@ CLI 与 `plugin_manager` 工具共用。每次变更是一个事务：
 | 无新的失败 | 保留变更 | `saved` |
 
 `saved` 的变更随下一代生效。
+
+安装（`_installer`）：随包的 `uv`（依赖 `uv`，版本锁定）执行 `uv pip install --target site/`，以 `kernel_pins` 为约束。
+
+| `kernel_pins` | 内容 |
+|---|---|
+| 列入 | harness 进程先于 `site/` 导入的分发包：`name==version` |
+| 不列入 | 从本地目录安装的分发包（源码检出）；`site/` 中的分发包 |
+| 效果 | 与 harness 所用版本矛盾的依赖：解析失败，不安装任何文件，变更被拒绝 |
+| 文件 | `runtime/install-constraints.txt`，每次安装重写 |
 
 | 锁 | 范围 |
 |---|---|

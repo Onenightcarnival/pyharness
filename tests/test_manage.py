@@ -1,10 +1,11 @@
-"""Bundle installation: pip/uv into the profile site, preflight, rollback, agent-facing tool."""
+"""Bundle installation: uv into the profile site under the kernel pins, preflight, rollback, agent-facing tool."""
 
 from __future__ import annotations
 
 import json
 import shutil
 import sys
+from importlib import metadata
 from textwrap import dedent
 
 import pytest
@@ -171,3 +172,33 @@ async def test_install_package_rejects_a_bad_requirement(profile):
 async def test_installer_output_is_plain_text():
     code, out = await manage._run([sys.executable, "-c", "import os; print(os.environ['NO_COLOR'])"])
     assert (code, out.strip()) == (0, "1")
+
+
+def test_kernel_pins_cover_what_the_harness_imports_first(profile):
+    pins = dict(pin.split("==", 1) for pin in manage.kernel_pins(profile))
+    by_name = {manage._norm(name): version for name, version in pins.items()}
+    assert by_name["pydantic"] == metadata.version("pydantic")
+    assert by_name["packaging"] == metadata.version("packaging")
+    # A distribution installed from a local directory has no version on an index: no pin.
+    local = metadata.distribution("pyxis-harness-core").read_text("direct_url.json") or ""
+    assert ("pyxis-harness-core" in by_name) is ('"dir_info"' not in local)
+
+
+async def test_a_requirement_against_the_kernel_is_rejected_before_anything_is_installed(
+    profile, example_bundle, tmp_path
+):
+    bundle = tmp_path / "old-packaging-audit"
+    shutil.copytree(example_bundle, bundle)
+    project = bundle / "pyproject.toml"
+    project.write_text(project.read_text().replace("dependencies = []", 'dependencies = ["packaging<20"]'))
+    before = profile.read_state()
+    result = await manage.install_bundle(profile, bundle)
+    assert result["application"] == "rejected" and result["stage"] == "dependencies", result
+    assert result["unmet"] == ["packaging<20"]
+    assert f"packaging=={metadata.version('packaging')}" in result["error"]
+    assert profile.read_state() == before and profile.site_distributions() == []
+    # The bundle installed from the directory is constrained by the kernel and not by the profile's own site.
+    result = await manage.install_bundle(profile, example_bundle, preflight=False)
+    assert result["application"] == "saved", result
+    assert not any("pyxis-harness-audit" in pin for pin in manage.kernel_pins(profile))
+    assert (profile.runtime / "install-constraints.txt").read_text().splitlines() == manage.kernel_pins(profile)

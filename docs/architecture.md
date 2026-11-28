@@ -153,7 +153,7 @@ $PYH_HOME/
   profiles/<name>/
     profile.yaml           ordered bundle list
     harness.patch.yaml     profile patch; written by plugin_manager
-    site/                  bundles installed into this profile (pip --target)
+    site/                  bundles installed into this profile (uv pip install --target)
     data/                  default SQLite location
     runtime/               ready markers, hand-off files, last-known-good, locks
 ```

@@ -21,7 +21,7 @@ A plugin that outgrows `plugin.py` splits into modules (`service.py`, `tools.py`
 | `pyxis_harness.plugins` | `<dist> = "<module>"` | the plugin; an entry's `name` refers to it |
 | `pyxis_harness.bundles` | `<bundle> = "<module>:BUNDLE"` | `BUNDLE` is the path of `bundle.yaml` |
 
-`dependencies` lists only packages the harness does not provide, each pinned to an exact version (`httpx==0.28.1`). Provided: `pyxis-harness-core`, `pydantic`, `langchain-core`, `langchain`, `fastapi`. A dependency is installed with `pip --target` into the profile `site/`; an unavailable package rejects the installation.
+`dependencies` lists only packages the harness does not provide, each pinned to an exact version (`httpx==0.28.1`). Provided: `pyxis-harness-core`, `pydantic`, `langchain-core`, `langchain`, `fastapi`. A dependency is installed with `uv pip install --target` into the profile `site/`, constrained to the versions the harness runs on: a requirement that contradicts one of them, or an unavailable package, rejects the installation and installs nothing.
 
 `bundle.yaml`:
 
@@ -103,7 +103,7 @@ Objects created outside `ctx` (threads, files, subprocesses) need `ctx.on_dispos
 
 | action | effect |
 |---|---|
-| `install_bundle target=/plugins/<name>` | pip-installs the directory into `site/`, enables the bundle, preflights, saves or restores |
+| `install_bundle target=/plugins/<name>` | installs the directory into `site/`, enables the bundle, preflights, saves or restores |
 | `uninstall_bundle target=<bundle>` | removes the distribution and disables the bundle |
 | `set_bundle_enabled`, `set_plugin_enabled` | toggles; preflighted |
 | `list` | entries with state (`active`, `pending`, `disabled`, `failed`), installed bundles |

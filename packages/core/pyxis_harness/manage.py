@@ -10,11 +10,12 @@ import shutil
 import sys
 import time
 from collections.abc import AsyncIterator
-from importlib import metadata, util
+from importlib import metadata
 from pathlib import Path
 from typing import Any
 
 from packaging.requirements import Requirement
+from uv import find_uv_bin
 
 from .config import ConfigError, find
 from .plugin import BUNDLE_GROUP
@@ -29,23 +30,50 @@ class ManageError(RuntimeError):
 
 
 # ---------------------------------------------------------------------- installer
-def _installer(target: Path) -> list[str]:
-    if util.find_spec("pip") is not None:
-        return [
-            sys.executable,
-            "-m",
-            "pip",
-            "install",
-            "--target",
-            str(target),
-            "--upgrade",
-            "--no-input",
-            "--disable-pip-version-check",
-        ]
-    uv = shutil.which("uv")
-    if uv:
-        return [uv, "pip", "install", "--python", sys.executable, "--target", str(target), "--upgrade"]
-    raise ManageError("neither pip nor uv is available to install bundles")
+def kernel_pins(profile: Profile) -> list[str]:
+    """
+    ``name==version`` of the distributions the harness process imports ahead of the profile's ``site/``.
+
+    | distribution                                   | pinned |
+    |------------------------------------------------|--------|
+    | installed from an index or a wheel             | yes    |
+    | installed from a local directory (a checkout)  | no     |
+    | in the profile's ``site/``                     | no     |
+    """
+    site = profile.site.resolve()
+    pins: dict[str, str] = {}
+    for dist in metadata.distributions():
+        name, location = dist.metadata["Name"], getattr(dist, "_path", None)
+        if not name or not dist.version or _norm(name) in pins:
+            continue
+        if location is not None and site in Path(location).resolve().parents:
+            continue
+        if '"dir_info"' in (dist.read_text("direct_url.json") or ""):
+            continue
+        pins[_norm(name)] = f"{name}=={dist.version}"
+    return sorted(pins.values())
+
+
+def _installer(profile: Profile) -> list[str]:
+    """
+    ``uv pip install`` into the profile's ``site/``, constrained by :func:`kernel_pins`: a requirement that
+    contradicts a version of the harness fails the resolution, and nothing is installed.
+    """
+    profile.runtime.mkdir(parents=True, exist_ok=True)
+    constraints = profile.runtime / "install-constraints.txt"
+    constraints.write_text("\n".join(kernel_pins(profile)) + "\n", encoding="utf-8")
+    return [
+        find_uv_bin(),
+        "pip",
+        "install",
+        "--python",
+        sys.executable,
+        "--target",
+        str(profile.site),
+        "--upgrade",
+        "--constraints",
+        str(constraints),
+    ]
 
 
 async def _run(cmd: list[str], timeout: float = 600.0) -> tuple[int, str]:
@@ -249,7 +277,7 @@ async def install_bundle(
         profile.activate_site()
         txn = _Transaction(profile, site=True)
         try:
-            code, out = await _run([*_installer(profile.site), "--no-deps", str(source)])
+            code, out = await _run([*_installer(profile), "--no-deps", str(source)])
             if code != 0:
                 return _rejected("install", txn, error=out[-4000:])
             dist = _dist_for_path(profile, source)
@@ -302,7 +330,7 @@ async def install_package(
         profile.activate_site()
         txn = _Transaction(profile, site=True)
         try:
-            argv = _installer(profile.site) + ([f"--index-url={index_url}"] if index_url else []) + [requirement]
+            argv = _installer(profile) + ([f"--index-url={index_url}"] if index_url else []) + [requirement]
             code, out = await _run(argv)
             if code != 0:
                 return _rejected("install", txn, error=out[-4000:])
@@ -337,7 +365,7 @@ async def _complete_install(
     _prune_stale_dist_infos(profile, dist)
     unmet = unmet_requirements(dist)
     if unmet:
-        code, deps_output = await _run(_installer(profile.site) + unmet)
+        code, deps_output = await _run(_installer(profile) + unmet)
         if code != 0:
             return _rejected("dependencies", txn, error=deps_output[-4000:], unmet=unmet)
     for bundle in bundles:
