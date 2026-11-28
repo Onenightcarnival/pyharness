@@ -8,7 +8,7 @@ from typing import Any
 from .config import Tree, compose, parse_ops
 from .context import Root
 from .lifecycle import Lifecycle
-from .loader import EntryState, Loader
+from .loader import BootError, EntryState, Loader, down_reason
 from .profile import Profile
 
 
@@ -23,10 +23,12 @@ class Harness:
         generation: int = 1,
         supervised: bool = False,
         preflight: bool = False,
+        partial: bool = False,
         variables: dict[str, str] | None = None,
         cwd: str | None = None,
     ) -> None:
         self.profile = profile
+        self.partial = partial  # a composition run with entries switched off on purpose: `required` is not enforced
         self.warnings: list[str] = []
         if tree is None:
             layers = []
@@ -68,8 +70,20 @@ class Harness:
 
     # ------------------------------------------------------------------ phases
     async def start(self) -> None:
+        """
+        Start the plugins. A required entry that is down raises :class:`BootError`.
+
+        | run       | required entry down          |
+        |-----------|------------------------------|
+        | boot      | ``BootError``                |
+        | preflight | listed in the report         |
+        | partial   | left pending or failed       |
+        """
         self.loader.resolve()
         await self.loader.start()
+        down = self.loader.down()
+        if down and not self.lifecycle.preflight and not self.partial:
+            raise BootError("; ".join(f"{rt.entry.id}: {down_reason(rt)}" for rt in down))
 
     async def ready(self, *, serve: bool = True) -> None:
         await self.root.events.series("app/ready")
@@ -84,8 +98,8 @@ class Harness:
         await self.loader.stop()
 
     async def __aenter__(self) -> Harness:
-        await self.start()
         try:
+            await self.start()
             await self.ready()
         except BaseException:
             await self.stop()

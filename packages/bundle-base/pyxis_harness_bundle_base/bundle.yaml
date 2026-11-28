@@ -70,10 +70,13 @@ patch:
     config:
       host: ${env:PYH_HOST:-127.0.0.1}
       port: ${env:PYH_PORT:-8765}
+  # The control surface is required: a generation without it fails to boot and the supervisor rolls back.
   - id: api
     name: pyxis-harness-api
+    required: true
   - id: web-ui
     name: pyxis-harness-web-ui
+    required: true
 
   # Persistent bash tool, background jobs and PTY terminals (right-sidebar tab): ctx.terminal.
   - id: terminal

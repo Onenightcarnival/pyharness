@@ -44,7 +44,7 @@ Module with `apply`:
 
 ```python
 name = "pyxis-harness-audit"  # optional; defaults to the entry-point name
-inject = ["tools"]  # services required before start; missing → entry PENDING
+inject = ["tools"]  # services read as ctx.<key>: required before start; missing → entry PENDING
 
 
 class Config(BaseModel): ...  # validates the entry's config; omitted → config None
@@ -73,6 +73,14 @@ class AuditService(Service):
 
 `apply` receives the plugin's `ctx` (`pyxis_harness.Context`): services as attributes (`ctx.tools`, `ctx.http`), `ctx.get(key, default)`, `ctx.has(key)`, `ctx.logger`, `ctx.lifecycle`, `ctx.loader`, `ctx.get("profile")`, `ctx.get("workspace")`.
 
+## Reading services
+
+| form | rule |
+|---|---|
+| `ctx.<key>` | the key is in the plugin's `inject`, or the plugin provides it, or it is a kernel service (`lifecycle`, `events`, `profile`, `loader`); any other key raises `AttributeError` |
+| `ctx.get(key, None)` | an optional service: `None` while no provider is active; no `inject` entry |
+| `self.caller` in a `Service` method | context of the calling plugin, in plain, `async`, generator and async-generator methods |
+
 ## Ownership of registrations
 
 Every registration made through `ctx` belongs to the plugin and is undone, in reverse order, when the entry stops or fails:
@@ -80,7 +88,7 @@ Every registration made through `ctx` belongs to the plugin and is undone, in re
 | call | effect |
 |---|---|
 | `ctx.tools.register(fn_or_tool, approval=...)` | tool; `approval` is an interrupt config or `False` |
-| `ctx.on("tools/result", fn)` / decorator | listener |
+| `ctx.on("tools/result", fn)` / decorator | listener; the call form returns its disposer |
 | `ctx.prompt.add(id, text_or_callable, order=100)` | system prompt section |
 | `ctx.http.include_router(router, prefix="")` | routes |
 | `ctx.provide(key, value)` | service; conflicts with an existing provider |

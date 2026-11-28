@@ -15,7 +15,7 @@
 | 属性 | 含义 |
 |---|---|
 | `name` | 插件名 |
-| `inject` | 启动前必须存在的服务 key |
+| `inject` | 启动前必须存在的服务 key；`ctx.<key>` 只对这些 key 开放，可选服务用 `ctx.get(key, None)` |
 | `Config` | pydantic 模型；校验条目的 `config` |
 
 条目的 `name` 引用插件：entry point 名（`pyxis-harness-tools`）或 `module[:attr]`（`testkit.scripted`）。
@@ -56,7 +56,7 @@ class Cache(Service):
 | `ctx.provide(key, obj)` | 提供服务 |
 | `ctx.get(key[, default])`、`ctx.<key>` | 按 key 查找服务（晚绑定），不 import 实现 |
 | `ctx.define_event(name, mode, doc)` | 声明事件及其分发模式 |
-| `ctx.on(name, fn)` | 监听；可作装饰器 |
+| `ctx.on(name, fn)` | 监听，返回 disposer；可作装饰器 |
 | `ctx.emit` / `parallel` / `serial` / `series` / `bail` / `waterfall` | 分发 |
 | `ctx.on_dispose(fn)`、`ctx.effect(setup)`、`await ctx.enter(cm)` | 可逆副作用 |
 | `ctx.lifecycle` | `hold()`、`request_restart(reason, resume=[...])`、`generation`、`supervised` |
@@ -99,6 +99,7 @@ waterfall 监听者 `listener(*args, next)`：
 | start | 条目的 `inject` 全部在其 scope 可见时启动 |
 | order | 就绪条目之间：配置顺序 |
 | pending | 依赖始终不出现 → `PENDING`；启动继续 |
+| required | `required: true` 的条目未启动（失败，或所需服务始终不出现）→ 启动失败，supervisor 回滚 |
 | failure | `apply` / `start` 出错：撤销已做的注册 → `FAILED` |
 | teardown | 启动顺序的逆序；每个插件内部的注册逆序撤销 |
 
@@ -121,7 +122,7 @@ waterfall 监听者 `listener(*args, next)`：
 
 | `id` | 字段 | 操作 |
 |---|---|---|
-| 已存在 | `name`、`config`、`disabled`、`isolate`、`children` | 替换给出的字段；`config` 整体替换，`merge: true` 时深合并 |
+| 已存在 | `name`、`config`、`disabled`、`required`、`isolate`、`children` | 替换给出的字段；`config` 整体替换，`merge: true` 时深合并 |
 | 已存在 | `remove: true` | 删除条目 |
 | 不存在 | `name` 或 `children` | 插入条目：默认末尾；`parent` / `before` / `after` 定位 |
 

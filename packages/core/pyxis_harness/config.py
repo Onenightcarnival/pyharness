@@ -21,6 +21,7 @@ class Entry(BaseModel):
     name: str | None = None
     config: dict[str, Any] | None = None
     disabled: bool = False
+    required: bool = Field(False, description="the boot fails unless this entry starts")
     isolate: list[str] = Field(default_factory=list)
     children: list[Entry] | None = None
     source: str | None = Field(default=None, description="layer that inserted this entry")
@@ -38,6 +39,7 @@ class PatchOp(BaseModel):
     config: dict[str, Any] | None = None
     merge: bool = False
     disabled: bool | None = None
+    required: bool | None = None
     isolate: list[str] | None = None
     children: list[dict[str, Any]] | None = None
     remove: bool = False
@@ -145,6 +147,8 @@ def apply_patch(tree: Tree, ops: list[PatchOp], source: str) -> list[str]:
                 entry.config = deep_merge(entry.config or {}, op.config) if op.merge else copy.deepcopy(op.config)
             if op.disabled is not None:
                 entry.disabled = op.disabled
+            if op.required is not None:
+                entry.required = op.required
             if op.isolate is not None:
                 entry.isolate = list(op.isolate)
             if op.children is not None:
@@ -214,6 +218,8 @@ def tree_to_data(tree: Tree, with_source: bool = False) -> list[dict[str, Any]]:
             data["name"] = entry.name
         if entry.disabled:
             data["disabled"] = True
+        if entry.required:
+            data["required"] = True
         if entry.isolate:
             data["isolate"] = list(entry.isolate)
         if entry.config:

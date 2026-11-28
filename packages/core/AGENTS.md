@@ -39,9 +39,13 @@
 | 概念 | 契约 |
 |---|---|
 | 服务 | 稳定 key 下的对象（`ctx.tools`）；消费方按 key 查找 |
+| `ctx.<key>` | 可读的 key：插件 `inject` 里的、插件自己提供的、内核提供的（`lifecycle`、`events`、`profile`、`loader`）；其余抛 `AttributeError` |
+| `ctx.get(key, default)` | 任意可见服务；用于可选服务 |
+| host context | `Harness.ctx`：可读全部服务 |
 | 注册 | `provide`、`on`、`effect`、`enter`、`on_dispose`；归属于插件 |
 | 卸载 | 插件的注册逆序撤销 |
-| 调用方 | `Service` 方法内，`self.caller` 是调用方插件的 context |
+| 调用方 | `Service` 方法内，`self.caller` 是调用方插件的 context：普通方法、协程、生成器、异步生成器的每一步都成立 |
+| `ctx.on(name, fn)` | 返回该监听的 disposer；`@ctx.on(name)` 返回被装饰的函数 |
 | 根 | `Root`：全部 context 共享的事件总线、lifecycle、变量、profile、host context |
 
 ## 事件（`events.py`）
@@ -85,7 +89,7 @@ waterfall 监听者 `listener(*args, next)`：
 
 | `id` | 操作 |
 |---|---|
-| 已存在 | 替换操作给出的字段；`config` 整体替换，`merge: true` 时深合并 |
+| 已存在 | 替换操作给出的字段（`name`、`config`、`disabled`、`required`、`isolate`、`children`）；`config` 整体替换，`merge: true` 时深合并 |
 | 已存在 | `remove: true` 删除条目 |
 | 不存在 | 插入条目（带 `name` 或 `children`）：末尾，或 `parent` / `before` / `after` 指定的位置 |
 
@@ -99,7 +103,7 @@ waterfall 监听者 `listener(*args, next)`：
 
 | 属性 | 含义 |
 |---|---|
-| `inject` | 插件启动前必须存在的服务 key |
+| `inject` | 插件启动前必须存在的服务 key；`ctx.<key>` 只对这些 key 开放 |
 | `Config` | pydantic 模型；校验条目的 `config` |
 | `doc` | 一行描述；`Service` 子类取类的文档字符串 |
 
@@ -125,7 +129,16 @@ waterfall 监听者 `listener(*args, next)`：
 | order | 就绪条目之间：配置顺序 |
 | pending | 所需服务始终不出现的条目停在 `PENDING`；启动继续 |
 | failure | `apply` / `start` 出错：撤销已做的注册 → `FAILED` |
+| required | `required: true` 的条目缺席 → `Harness.start` 抛 `BootError`；预检把它列入 `errors` |
 | teardown | 启动顺序的逆序；每个插件的注册逆序撤销 |
+
+`required` 条目缺席（`Loader.down`）：状态为 `FAILED`，或因所需服务始终不出现而停在 `PENDING`。
+
+| 运行 | `required` 条目缺席 |
+|---|---|
+| 启动（worker、`async with Harness`） | `BootError` |
+| 预检 | 列入 `errors`；变更被拒绝 |
+| `Harness(partial=True)`：有意关闭部分条目的运行（`pyh exec` 关闭 `http`） | 不检查 |
 
 ## Harness（`harness.py`）
 
@@ -233,7 +246,7 @@ worker 进程：一代 harness。`python -m pyxis_harness.worker --profile web`
 | 写出 ready 标记 | 记录 `ready` |
 | 退出 75 | 启动下一代 |
 | 退出 0，或收到 SIGINT / SIGTERM | 停止 |
-| 启动失败 | 恢复 last-known-good，写 `rollback.json`，再启动；仅一次 |
+| 启动失败（阶段抛出异常，或 `required` 条目缺席） | 恢复 last-known-good，写 `rollback.json`，再启动；仅一次 |
 | 启动失败，无可恢复配置 | 退出 3 |
 | 启动中被转发的信号终止 | 再启动；不回滚 |
 | 启动后其他退出 | 退避重启；`crash_window` 内超过 `max_crashes` 次则停止 |

@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .config import Entry, Tree, interpolate
-from .context import Context, Root, Scope, _maybe_await
+from .context import CORE_OWNER, Context, Root, Scope, _maybe_await
 from .plugin import PluginError, PluginSpec, call_apply, load_plugin
 
 log = logging.getLogger("pyxis_harness.loader")
@@ -59,6 +59,8 @@ class EntryRuntime:
             if spec.docs:
                 data["docs"] = spec.docs
             data["has_config_schema"] = spec.config_model is not None
+        if self.entry.required:
+            data["required"] = True
         if self.missing:
             data["missing"] = list(self.missing)
         if self.error:
@@ -68,13 +70,23 @@ class EntryRuntime:
         return data
 
 
+class BootError(RuntimeError):
+    """A required entry did not start."""
+
+
+def down_reason(rt: EntryRuntime) -> str:
+    if rt.state is EntryState.PENDING:
+        return f"required entry is pending: missing service(s) {', '.join(rt.missing) or '?'}"
+    return rt.error or "required entry failed"
+
+
 class Loader:
     def __init__(self, root: Root, tree: Tree) -> None:
         self.root = root
         self.tree = tree
         self.runtimes: list[EntryRuntime] = []
         self._started: list[EntryRuntime] = []
-        root.scope.services["loader"] = (self, "<core>")
+        root.scope.services["loader"] = (self, CORE_OWNER)
         self._plan(tree, (), root.scope, disabled_by=None)
 
     # ------------------------------------------------------------------ planning
@@ -144,7 +156,7 @@ class Loader:
 
     async def _start_one(self, rt: EntryRuntime) -> None:
         assert rt.spec is not None
-        ctx = Context(self.root, rt.scope, rt.entry)
+        ctx = Context(self.root, rt.scope, rt.entry, inject=rt.spec.inject)
         rt.ctx = ctx
         rt.missing = []
         spec = rt.spec
@@ -191,6 +203,10 @@ class Loader:
         log.error("%s failed: %s", rt.entry.id, message)
 
     # ------------------------------------------------------------------ reporting
+    def down(self) -> list[EntryRuntime]:
+        """Required entries that did not start: failed, or pending on a service that never appeared."""
+        return [rt for rt in self.runtimes if rt.entry.required and rt.state in (EntryState.FAILED, EntryState.PENDING)]
+
     def snapshot(self) -> list[dict[str, Any]]:
         return [rt.describe() for rt in self.runtimes]
 

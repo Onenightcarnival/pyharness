@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .harness import Harness
+from .loader import EntryState, down_reason
 from .profile import Profile
 from .worker import setup_logging
 
@@ -28,6 +29,11 @@ async def preflight_in_process(profile: Profile, extra_patches: list[str] | None
         except Exception as exc:  # noqa: BLE001
             report["errors"].append({"stage": "app/ready", "error": f"{type(exc).__name__}: {exc}"})
         report["entries"] = harness.loader.snapshot()
+        report["errors"].extend(
+            {"stage": "start", "entry": rt.entry.id, "error": down_reason(rt)}
+            for rt in harness.loader.down()
+            if rt.state is EntryState.PENDING  # the failed ones are listed with the other failures below
+        )
     finally:
         await harness.stop()
     for entry in report["entries"]:

@@ -17,6 +17,7 @@ from .lifecycle import Lifecycle
 Disposer = Callable[[], Any]
 
 _MISSING: Any = object()
+CORE_OWNER = "<core>"  # owner of the services and events the kernel provides
 _caller: ContextVar[Context | None] = ContextVar("pyxis_harness_caller", default=None)
 
 
@@ -82,11 +83,11 @@ class Root:
         self.scope = Scope(label="root")
         self.host = Context(self, self.scope)
         for name, mode, doc in CORE_EVENTS:
-            self.events.define(name, mode, doc, owner="<core>")
-        self.scope.services["lifecycle"] = (lifecycle, "<core>")
-        self.scope.services["events"] = (self.events, "<core>")
+            self.events.define(name, mode, doc, owner=CORE_OWNER)
+        self.scope.services["lifecycle"] = (lifecycle, CORE_OWNER)
+        self.scope.services["events"] = (self.events, CORE_OWNER)
         if profile is not None:
-            self.scope.services["profile"] = (profile, "<core>")
+            self.scope.services["profile"] = (profile, CORE_OWNER)
 
 
 CORE_EVENTS = [
@@ -122,10 +123,13 @@ CORE_EVENTS = [
 class Context:
     """Per-plugin view of the harness. Unknown attributes resolve to services (``ctx.tools``)."""
 
-    def __init__(self, root: Root, scope: Scope, entry: Entry | None = None) -> None:
+    def __init__(
+        self, root: Root, scope: Scope, entry: Entry | None = None, inject: Iterable[str] | None = None
+    ) -> None:
         self._root = root
         self._scope = scope
         self._entry = entry
+        self._inject = None if inject is None else frozenset(inject)  # None: every visible service
         self.disposers: list[Disposer] = []
         self.logger = logging.getLogger(f"pyxis_harness.plugin.{self.entry_id}")
 
@@ -184,9 +188,21 @@ class Context:
     def has(self, key: str) -> bool:
         return self._scope.lookup(key) is not None
 
+    def declares(self, key: str) -> bool:
+        """Whether ``ctx.<key>`` is open to this plugin: a declared ``inject`` key, its own service, a core service."""
+        if self._inject is None or key in self._inject:
+            return True
+        hit = self._scope.lookup(key)
+        return hit is not None and hit[1] in (self.entry_id, CORE_OWNER)
+
     def __getattr__(self, key: str) -> Any:
         if key.startswith("_"):
             raise AttributeError(key)
+        if not self.declares(key):
+            raise AttributeError(
+                f"service {key!r} is not in the `inject` of {self.entry_id!r}: declare it there, "
+                f"or read an optional service with ctx.get({key!r}, None)"
+            )
         try:
             return self.get(key)
         except ServiceNotFound as exc:
@@ -197,16 +213,26 @@ class Context:
         return self.on_dispose(self._root.events.define(name, mode, doc, owner=self.entry_id))
 
     def on(self, name: str, fn: Callable[..., Any] | None = None, *, prepend: bool = False) -> Any:
-        """Register a listener; also a decorator (``@ctx.on("tools/result")``)."""
+        """
+        Register a listener.
 
-        def register(listener: Callable[..., Any]) -> Callable[..., Any]:
-            self.on_dispose(self._root.events.on(name, listener, owner=self.entry_id, prepend=prepend))
+        | call                     | returns                         |
+        |--------------------------|---------------------------------|
+        | ``ctx.on(name, fn)``     | the disposer of the listener    |
+        | ``@ctx.on(name)``        | the decorated function          |
+        """
+
+        def register(listener: Callable[..., Any]) -> Disposer:
+            return self.on_dispose(self._root.events.on(name, listener, owner=self.entry_id, prepend=prepend))
+
+        if fn is not None:
+            return register(fn)
+
+        def decorate(listener: Callable[..., Any]) -> Callable[..., Any]:
+            register(listener)
             return listener
 
-        if fn is None:
-            return register
-        register(fn)
-        return fn
+        return decorate
 
     def emit(self, name: str, *args: Any) -> None:
         self._root.events.emit(name, *args)
@@ -323,23 +349,21 @@ class _Bound:
         if name.startswith("_") or not callable(attr) or inspect.isclass(attr):
             return attr
         ctx = self._ctx
-        if inspect.iscoroutinefunction(attr):
-
-            async def acall(*args: Any, **kwargs: Any) -> Any:
-                token = _caller.set(ctx)
-                try:
-                    return await attr(*args, **kwargs)
-                finally:
-                    _caller.reset(token)
-
-            return acall
 
         def call(*args: Any, **kwargs: Any) -> Any:
             token = _caller.set(ctx)
             try:
-                return attr(*args, **kwargs)
+                result = attr(*args, **kwargs)
             finally:
                 _caller.reset(token)
+            # The body of a coroutine or a generator runs after this call returns: each step runs as the caller.
+            if inspect.iscoroutine(result):
+                return _as_caller(ctx, result)
+            if inspect.isasyncgen(result):
+                return _aiter_as_caller(ctx, result)
+            if inspect.isgenerator(result):
+                return _iter_as_caller(ctx, result)
+            return result
 
         return call
 
@@ -348,6 +372,54 @@ class _Bound:
 
     def __repr__(self) -> str:
         return f"<bound {self._svc!r} for {self._ctx.entry_id}>"
+
+
+async def _as_caller(ctx: Context, coro: Any) -> Any:
+    token = _caller.set(ctx)
+    try:
+        return await coro
+    finally:
+        _caller.reset(token)
+
+
+async def _aiter_as_caller(ctx: Context, agen: Any) -> Any:
+    """Drive ``agen`` with the caller set during each step and unset while the consumer holds a value."""
+
+    async def step(advance: Callable[[], Any]) -> Any:
+        token = _caller.set(ctx)
+        try:
+            return await advance()
+        finally:
+            _caller.reset(token)
+
+    try:
+        while True:
+            try:
+                value = await step(agen.__anext__)
+            except StopAsyncIteration:
+                return
+            yield value
+    finally:
+        await step(agen.aclose)
+
+
+def _iter_as_caller(ctx: Context, gen: Any) -> Any:
+    def step(advance: Callable[[], Any]) -> Any:
+        token = _caller.set(ctx)
+        try:
+            return advance()
+        finally:
+            _caller.reset(token)
+
+    try:
+        while True:
+            try:
+                value = step(gen.__next__)
+            except StopIteration:
+                return
+            yield value
+    finally:
+        step(gen.close)
 
 
 def unwrap(value: Any) -> Any:

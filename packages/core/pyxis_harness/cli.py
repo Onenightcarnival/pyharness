@@ -112,11 +112,16 @@ def cmd_restart(args: argparse.Namespace) -> int:
 def cmd_exec(args: argparse.Namespace) -> int:
     setup_logging(args.log_level or "WARNING")
     profile = _profile(args)
-    # Headless: `http` disabled; plugins injecting it stay PENDING.
+    # Headless: `http` disabled; plugins injecting it stay PENDING, the required ones included.
     patch = [{"id": args.http_entry, "disabled": True}] if args.http_entry else []
 
     async def main() -> int:
-        harness = Harness(profile, patch=[p for p in patch if _has_entry(profile, p["id"])], extra_patches=args.patch)
+        harness = Harness(
+            profile,
+            patch=[p for p in patch if _has_entry(profile, p["id"])],
+            extra_patches=args.patch,
+            partial=bool(patch),
+        )
         async with harness:
             agents = harness.get("agents")
             session = await agents.create_session(title=args.prompt[:60], mode=args.mode)

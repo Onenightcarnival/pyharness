@@ -162,7 +162,7 @@ class AgentService(Service):
 
     async def store_for(self, session_id: str) -> Any:
         """Store of the session's records: ``ctx.temporary.store`` for a temporary session, else ``ctx.store``."""
-        return self.ctx.temporary.store if await self.is_temporary(session_id) else self.ctx.store
+        return self.ctx.get("temporary").store if await self.is_temporary(session_id) else self.ctx.store
 
     async def _state(self, session_id: str) -> Any:
         """State of the session's thread, read from the checkpointer that holds it."""
@@ -228,7 +228,7 @@ class AgentService(Service):
         return record
 
     def _store(self, record: dict[str, Any]) -> Any:
-        return self.ctx.temporary.store if record.get("temporary") else self.ctx.store
+        return self.ctx.get("temporary").store if record.get("temporary") else self.ctx.store
 
     async def get_session(self, session_id: str) -> dict[str, Any] | None:
         item = await (await self.store_for(session_id)).aget(NAMESPACE, session_id)
@@ -411,7 +411,7 @@ class AgentService(Service):
             await store.adelete((*TURNS, session_id), item.key)
         self._turn_seq.pop(session_id, None)
         checkpointer = (
-            self.ctx.temporary.checkpointer if record.get("temporary") else self.ctx.get("checkpointer", None)
+            self.ctx.get("temporary").checkpointer if record.get("temporary") else self.ctx.get("checkpointer", None)
         )
         if checkpointer is not None and hasattr(checkpointer, "adelete_thread"):
             await checkpointer.adelete_thread(session_id)

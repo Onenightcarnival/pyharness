@@ -36,8 +36,8 @@
 | `plugin-manager` | `pyxis-harness-plugin-manager` |
 | `dev-context` | `pyxis-harness-dev-context` |
 | `http` | `pyxis-harness-http` |
-| `api` | `pyxis-harness-api` |
-| `web-ui` | `pyxis-harness-web-ui` |
+| `api` | `pyxis-harness-api`；`required` |
+| `web-ui` | `pyxis-harness-web-ui`；`required` |
 | `terminal` | `pyxis-harness-terminal` |
 
 ## 条目配置

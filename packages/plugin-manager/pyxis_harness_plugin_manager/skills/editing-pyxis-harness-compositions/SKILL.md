@@ -61,6 +61,7 @@ Rules:
 | `name` | plugin: entry-point name of `pyxis_harness.plugins`, or `module[:attr]` |
 | `config` | validated by the plugin's `Config` model; unknown fields fail |
 | `disabled` | entry and its registrations absent; dependents of its service become `pending` |
+| `required` | the boot fails unless the entry starts (it failed, or a service it injects never appears); the supervisor then restores the last configuration that booted; preflight rejects a change that leaves it down |
 | `isolate` | group only: service keys the group provides for itself |
 | `children` | group members |
 
