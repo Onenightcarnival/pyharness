@@ -32,9 +32,7 @@ PYH_TEST_POSTGRES_DSN=postgresql://user@127.0.0.1:5432/pyh_test uv run pytest -q
 | `AGENTS.md` | 代码、文档、注释的统一风格要求 |
 | `packages/*/AGENTS.md` | 子包的设计文档；代码文件不带文件头文档 |
 | `packages/*/<模块>/__init__.py` | 导入与 `__all__`；实现在具名模块中（`service.py`、`plugin.py`、`bundle.py`） |
-| `packages/meta` | `pyxis-harness`：只有依赖的入口发行包 |
-| `packages/bundle-base` | `base` bundle |
-| `packages/bundle-creator` | `creator` bundle：插件编写 skills |
+| `packages/meta` | `pyxis-harness`：入口发行包；依赖全部插件包，带 `base` bundle |
 | `packages/plugin-manager/pyxis_harness_plugin_manager/skills` | agent 可读的 skills；`references/packages.md` 由 `scripts/gen_packages.py` 生成 |
 | `scripts/` | 维护脚本 |
 | `examples/pyxis-harness-audit` | 第三方 bundle 示例；不属于 workspace |

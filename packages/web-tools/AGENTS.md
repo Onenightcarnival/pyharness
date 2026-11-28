@@ -4,23 +4,38 @@
 
 | 项 | 值 |
 |---|---|
-| 条目 | `web-tools`（`web` bundle） |
+| 条目 | `web-tools`（`base` bundle） |
 | 服务 | `WebToolsService`，`ctx.web` |
 | 注入 | `tools` |
-| 可选 | `http`：设置路由，前缀 `/api/web-tools`；`webui`：设置分区 |
+| 可选 | `http`：设置路由，前缀 `/api/web-tools`；`webui`：设置分区；`agents`：开关切换后丢弃已构建的图 |
 
 ## 文件
 
 | 文件 | 内容 |
 |---|---|
 | `__init__.py` | 导出 |
-| `service.py` | `WebToolsService`：注册 `web_search` 与 `web_fetch`，持有凭据；设置及其路由 |
+| `service.py` | `WebToolsService`：按开关注册 `web_search` 与 `web_fetch`，持有凭据；设置及其路由 |
 | `config.py` | 插件配置 |
 | `common.py` | `search.py` 与 `fetch.py` 共用 |
 | `search.py` | `web_search`：DeepSeek 搜索 |
 | `fetch.py` | `web_fetch`：HTTP GET，正文化为可读文本 |
 | `prompts.toml` | 模型可见文本；`pyxis_harness.package_prompts(__file__)` 加载 |
 | `client.js` | 浏览器模块：设置分区「网页搜索」 |
+
+## 开关
+
+agent 是否拥有这两个工具：`agent_tools`。插件始终加载；关闭期间服务的 `search()`、`fetch()` 照常可用。
+
+| 项 | 契约 |
+|---|---|
+| 开启 | 注册 `web_search`（`search: true`）与 `web_fetch`（`fetch: true`） |
+| 关闭 | 两个工具都不注册 |
+| 切换 | 设置分区「允许 Agent 使用」，`PUT /api/web-tools/settings` `{"agent_tools": bool}`；立即注册或注销，不重启 |
+| 图 | 每个会话的下一轮按新的工具集构建，临时对话相同；进行中的一轮不变（`tools/changed`，见 `pyxis-harness-tools`） |
+| 保存 | profile patch 里 `web-tools` 的 `config.agent_tools`（`manage.set_entry_config`，`merge: true`） |
+| 默认 | 配置 `agent_tools`（`True`）：profile patch 没有保存值时生效 |
+| 层序 | 组合的层序（见 `pyxis-harness-core`）：bundle 层的值 < profile patch 里保存的值 < home patch、`--patch` 覆盖层 |
+| 提示词段 | 无 |
 
 ## 工具
 
@@ -37,15 +52,17 @@
 | 成员 | 契约 |
 |---|---|
 | `api_key()` | `api_key_env` 凭据 |
-| `status()` | `{"search": {凭据描述, enabled, provider, model, base_url}, "fetch": {enabled}}` |
+| `status()` | `{"search": {凭据描述, enabled, provider, model, base_url}, "fetch": {enabled}}`；`enabled`：工具已注册 |
 | `search()` | `search.search` |
 | `fetch()` | `fetch.fetch` |
 | `transport` | 全部请求的 httpx transport 覆盖（测试） |
+| `sync()` | 按 `agent_tools` 注册或注销两个工具；返回开关状态 |
 | `settings()` | 设置与搜索密钥的状态（不含密钥的值） |
-| `save(fields)` | 更改设置并写入 profile 补丁；`GET`、`PUT /api/web-tools/settings` |
+| `save(fields)` | 更改设置并写入 profile 补丁；`GET`、`PUT /api/web-tools/settings`；应答：`settings()` 加 `application`（`applied` 或 `restart`） |
 
 | `save` 的字段 | 生效 |
 |---|---|
+| `agent_tools` | 立即：`sync()` |
 | `search_provider`、`search_base_url`、`base_url`、`max_results`、`max_uses` | 立即：下一次搜索 |
 | `api_key` | 立即；存入 profile 的凭据文件；空串：删除 |
 | `search`、`fetch` | 下一代；请求重启 |
@@ -54,8 +71,9 @@
 
 | 配置 | 默认 | 含义 |
 |---|---|---|
-| `search` | `True` | 注册 `web_search` |
-| `fetch` | `True` | 注册 `web_fetch` |
+| `agent_tools` | `True` | agent 拥有这两个工具；开关保存前的值 |
+| `search` | `True` | `web_search` 存在 |
+| `fetch` | `True` | `web_fetch` 存在 |
 | `api_key_env` | `DEEPSEEK_API_KEY` | 搜索 key 的凭据引用 |
 | `search_provider` | `deepseek-search-api` | `deepseek-search-api` 或 `deepseek-legacy` |
 | `search_base_url` | `https://api.deepseek.com/v1/tools` | Search API 基址；追加 `/search` |

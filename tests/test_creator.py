@@ -48,7 +48,7 @@ def test_packages_reference_is_fresh():
     assert PACKAGES_MD.read_text(encoding="utf-8") == render_packages(), "run: uv run python scripts/gen_packages.py"
     text = PACKAGES_MD.read_text(encoding="utf-8")
     assert "| `pyxis-harness-plugin-manager` | function |" in text
-    assert "| `creator` | Creator |" in text
+    assert "| `base` | Base |" in text
 
 
 def test_templates_render_without_tokens():
@@ -82,7 +82,8 @@ def test_templates_render_in_an_installed_package(tmp_path, monkeypatch):
 
 async def test_creator_profile_mounts_skills_read_only(home):
     profile = Profile.init("creator", template="creator", home=str(home))
-    assert profile.bundles() == ["base", "creator", "toolkit", "web"]  # toolkit: built in; web: optional preset
+    assert profile.bundles() == ["base"]
+    assert profile.patch_ops_raw() == [{"id": "agent-loop", "merge": True, "config": {"default_preset": "creator"}}]
     replies = [
         {
             "content": "",

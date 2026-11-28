@@ -10,6 +10,7 @@ from pathlib import Path
 import yaml
 
 import pyxis_harness
+from pyxis_harness.plugin import PLUGIN_GROUP, load_bundle
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECTS = {
@@ -83,11 +84,16 @@ def test_distributions_pin_each_other_exactly():
                 assert requirement == f"{name}=={version}", f"{directory}: {requirement}"
 
 
-def test_the_entry_distribution_installs_every_bundle():
+def test_the_entry_distribution_installs_every_plugin_and_mounts_them():
     entry = PROJECTS["meta"]
-    bundles = {project["name"] for directory, project in PROJECTS.items() if directory.startswith("bundle-")}
+    others = {project["name"] for directory, project in PROJECTS.items() if directory != "meta"}
     assert entry["name"] == "pyxis-harness"
-    assert {requirement.split("==")[0] for requirement in entry["dependencies"]} == {"pyxis-harness-core", *bundles}
+    assert {requirement.split("==")[0] for requirement in entry["dependencies"]} == others
+    assert entry["entry-points"]["pyxis_harness.bundles"] == {"base": "pyxis_harness_bundle_base:BUNDLE"}
+    # Every plugin of the workspace is mounted by the base bundle.
+    plugins = {name for project in PROJECTS.values() for name in project.get("entry-points", {}).get(PLUGIN_GROUP, {})}
+    mounted = {op.name for op in load_bundle("base").ops}
+    assert plugins - mounted == {"pyxis-harness-checkpoint-postgres"}  # the alternative to checkpoint-sqlite
 
 
 def test_distributions_carry_their_metadata():

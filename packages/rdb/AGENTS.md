@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 条目 | `rdb`（`toolkit` bundle） |
+| 条目 | `rdb`（`base` bundle） |
 | 服务 | `RdbService`，`ctx.rdb` |
 | 注入 | `tools`、`prompt`、`http` |
 | 路由前缀 | `/api/rdb` |

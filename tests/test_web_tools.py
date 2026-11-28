@@ -1,4 +1,4 @@
-"""Web tools: HTML to text, web_fetch and web_search over a mocked transport, the optional ``web`` bundle."""
+"""Web tools: HTML to text, web_fetch and web_search over a mocked transport, settings, the agent switch."""
 
 from __future__ import annotations
 
@@ -15,6 +15,9 @@ from pyxis_harness_web_tools import format_search, html_to_text, map_search_resp
 from pyxis_harness_web_tools.common import Pacer
 
 HTTP_OFF = {"id": "http", "config": {"serve": False}}
+TOOLS_OFF = {"id": "web-tools", "merge": True, "config": {"agent_tools": False}}
+SETTINGS = "/api/web-tools/settings"
+WEB = {"web_search", "web_fetch"}
 PAGE = dedent(
     """
     <html><head><title>Hello &amp; welcome</title><style>p{}</style><script>alert(1)</script></head>
@@ -52,6 +55,27 @@ SEARCH_RESPONSE = {
         {"type": "text", "text": " B too."},
     ]
 }
+
+
+def client(h):
+    return httpx.AsyncClient(transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=120)
+
+
+def registered(h):
+    """The web tools in the registry."""
+    return WEB & {t.name for t in h.get("tools").list()}
+
+
+def tools_of(graph):
+    """Names of the tools a compiled agent graph can call."""
+    node = getattr(graph, "bound", graph).nodes.get("tools")
+    return set(node.bound.tools_by_name) if node is not None else set()
+
+
+def stored(profile):
+    """The ``web-tools`` config of the profile patch."""
+    ops = {o["id"]: o["config"] for o in yaml.safe_load((profile.dir / "harness.patch.yaml").read_text())}
+    return ops.get("web-tools")
 
 
 def test_html_to_text_and_search_parsing():
@@ -102,9 +126,8 @@ async def test_pacer():
     assert time.monotonic() - started >= 1.0
 
 
-async def test_tools_over_mock_transport_and_optional_bundle(home, monkeypatch):
+async def test_tools_over_mock_transport(home, monkeypatch):
     profile = Profile.init("web", home=str(home))
-    assert "web" in profile.bundles()  # optional bundle: on by default
     seen: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -176,26 +199,6 @@ async def test_tools_over_mock_transport_and_optional_bundle(home, monkeypatch):
         assert (await tools["web_fetch"].ainvoke({"url": "ftp://x.test/f"})).startswith("Error:")
         small = await tools["web_fetch"].ainvoke({"url": "https://x.test/page", "max_chars": 40})
         assert "truncated" in small
-        # Optional bundle: switchable through the API, not removable; built-in bundles stay read-only.
-        async with httpx.AsyncClient(
-            transport=httpx.ASGITransport(app=h.get("http").app), base_url="http://t", timeout=120
-        ) as c:
-            listed = {b["bundle"]: b for b in (await c.get("/api/plugins")).json()["bundles"]}
-            assert (
-                listed["web"]["optional"] is True
-                and listed["web"]["enabled"] is True
-                and listed["web"]["title"] == "Web"
-            )
-            assert listed["base"]["optional"] is False
-            r = await c.put("/api/plugins/bundles/web", json={"enabled": False})
-            assert r.status_code == 200 and r.json()["application"] == "saved-restart-required", r.text
-            assert (await c.delete("/api/plugins/bundles/web")).status_code == 409
-            assert (await c.put("/api/plugins/bundles/base", json={"enabled": False})).status_code == 409
-    manifest = yaml.safe_load(profile.manifest_path.read_text())
-    assert manifest["disabled"] == ["web"] and "web" not in manifest["bundles"]
-    assert "web" not in profile.bundles()
-    assert profile.set_bundle_enabled("web", True) and "web" in profile.bundles()
-    assert yaml.safe_load(profile.manifest_path.read_text())["disabled"] == []
 
 
 async def test_web_tools_settings(home, monkeypatch):
@@ -233,3 +236,55 @@ async def test_web_tools_settings(home, monkeypatch):
         assert off["application"] == "restart" and lifecycle.restart_pending["reasons"] == ["web tools settings"]
         saved = {o["id"]: o["config"] for o in yaml.safe_load((profile.dir / "harness.patch.yaml").read_text())}
         assert saved["web-tools"] == {"search_provider": "deepseek-legacy", "max_results": 3, "fetch": False}
+
+
+async def test_agent_tools_switch(home, workspace):
+    profile = Profile.init("web", home=str(home))
+    async with Harness(profile, patch=[HTTP_OFF]) as h, client(h) as c:
+        web, agents = h.get("web"), h.get("agents")
+        chat = (await c.post("/api/sessions", json={"temporary": True})).json()
+        session = (await c.post("/api/sessions", json={})).json()
+
+        async def in_graphs():
+            """The tools of the temporary chat and of the session, as their next turn has them."""
+            return tools_of(await agents.graph_for(chat)), tools_of(await agents.graph_for(session))
+
+        # Default: on.
+        assert (await c.get(SETTINGS)).json()["agent_tools"] is True and registered(h) == WEB
+        in_chat, in_session = await in_graphs()
+        assert in_chat == WEB and in_session > WEB
+        assert (web.status()["search"]["enabled"], web.status()["fetch"]["enabled"]) == (True, True)
+        # Off at run time: unregistered at once, absent from the temporary chat and the session, no restart.
+        off = (await c.put(SETTINGS, json={"agent_tools": False})).json()
+        assert (off["application"], off["agent_tools"]) == ("applied", False)
+        assert registered(h) == set() and h.ctx.lifecycle.restart_pending is None
+        in_chat, in_session = await in_graphs()
+        assert in_chat == set() and not in_session & WEB and "write_file" in in_session
+        assert (web.status()["search"]["enabled"], web.status()["fetch"]["enabled"]) == (False, False)
+        # On again.
+        on = (await c.put(SETTINGS, json={"agent_tools": True})).json()
+        assert (on["application"], on["agent_tools"]) == ("applied", True) and registered(h) == WEB
+        in_chat, in_session = await in_graphs()
+        assert in_chat == WEB and in_session > WEB and h.ctx.lifecycle.restart_pending is None
+        await c.put(SETTINGS, json={"agent_tools": False})
+    # The stored choice outlives the restart.
+    assert stored(profile) == {"agent_tools": False}
+    async with Harness(profile, patch=[HTTP_OFF]) as h, client(h) as c:
+        assert registered(h) == set() and (await c.get(SETTINGS)).json()["agent_tools"] is False
+
+
+async def test_agent_tools_default_and_stored_choice(home):
+    profile = Profile.init("web", home=str(home))
+    # The config default, off through a patch.
+    async with Harness(profile, patch=[HTTP_OFF, TOOLS_OFF]) as h:
+        assert registered(h) == set() and h.get("web").settings()["agent_tools"] is False
+    # A manifest of the four-bundle list with ``web`` disabled: the same default.
+    profile.save_manifest({**profile.manifest(), "disabled": ["web"]})
+    async with Harness(profile, patch=[HTTP_OFF]) as h, client(h) as c:
+        assert registered(h) == set() and (await c.get(SETTINGS)).json()["agent_tools"] is False
+        assert (await c.put(SETTINGS, json={"agent_tools": True})).json()["agent_tools"] is True
+        assert registered(h) == WEB
+    # The stored choice wins over that default.
+    assert stored(profile) == {"agent_tools": True}
+    async with Harness(profile, patch=[HTTP_OFF]) as h:
+        assert registered(h) == WEB and h.get("web").settings()["agent_tools"] is True

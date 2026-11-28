@@ -29,7 +29,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 |---|---|
 | 侧边栏 | 品牌行与当前代；新会话；插件页入口；「工作区」区头（搜索会话、视图选项：按工作区分组 / 单一列表、按最近更新 / 创建时间排序，添加工作区）；工作区行可折叠，悬停显示「操作」（重命名、删除工作区：从列表移除，文件夹与会话保留，会话归入「未分组」）与「在此新建会话」；会话行：相对时间、运行中圆点，悬停显示操作菜单（重命名、复制会话 ID、删除会话，删除需确认）；底部「更多」菜单：设置、主题、profile 状态。收起后为图标栏，点标志展开 |
 | 会话参数 | 欢迎区两个标签：工作区（最近列表、「选择目录…」打开本机的系统文件夹对话框，macOS `osascript` / Windows PowerShell / Linux zenity、kdialog；无对话框时退回内置目录浏览器；会话创建后不可改）、预设（标准 / 创造）；输入框左下角权限标签（仅可查看 / 工作区内修改 / 完全权限 / 自动审查，切换完全权限与自动审查需确认；已有会话可切换，下一轮生效）。会话打开后顶栏显示其工作区与预设 |
-| 临时对话 | 纯聊天：没有工作区、文件、shell 与子 agent。欢迎区第三个标签「临时对话」是开关：打开后工作区、预设、权限三个标签隐藏，新建的会话是临时会话（`POST /sessions` 的 `temporary: true`）。临时会话在侧边栏自成一组「临时对话」，顶栏带标记，没有右侧栏，`@` 不弹出文件菜单。只保存在内存里：删除、闲置到期或 harness 重启后清空；重启后回到欢迎区并提示。会重启 harness 的操作（安装、卸载、启停插件，保存 MCP 服务器，切换 shell、开关网页工具）在存在临时会话时先确认。页面模块用 `require("pyxis-harness").confirmRestart()` 做同样的确认 |
+| 临时对话 | 纯聊天：没有工作区、文件、shell 与子 agent。欢迎区第三个标签「临时对话」是开关：打开后工作区、预设、权限三个标签隐藏，新建的会话是临时会话（`POST /sessions` 的 `temporary: true`）。临时会话在侧边栏自成一组「临时对话」，顶栏带标记，没有右侧栏，`@` 不弹出文件菜单。只保存在内存里：删除、闲置到期或 harness 重启后清空；重启后回到欢迎区并提示。会重启 harness 的操作（安装、卸载、启停插件，保存 MCP 服务器，切换 shell、开启或关闭 `web_search` / `web_fetch` 单个工具）在存在临时会话时先确认。页面模块用 `require("pyxis-harness").confirmRestart()` 做同样的确认 |
 | 对话 | 空会话：居中欢迎区与输入框。会话开始后输入区固定在底部，消息区独立滚动。用户消息：浅蓝气泡，附图显示在气泡上方。回复：Markdown（代码块带语言与复制、表格、引用、图片），模型返回的图片块作为图片渲染；点击图片放大。`diff` / `patch` 围栏按行着色（新增绿、删除红、hunk 头与文件头各一色，整行铺满滚动宽度），复制得到原文。数学公式：行内 `$…$`、`\(…\)`，块级 `$$…$$`、`\[…\]` 与 `latex` / `tex` / `math` 围栏，用随包分发的 KaTeX（`GET /vendor/katex.min.js`，首次出现公式时才加载）渲染成 MathML；加载完成前与解析失败时显示 TeX 原文，流式输出中未闭合的公式按普通文本显示；复制含公式的选区得到 `$…$` / `$$…$$` |
 | 代码高亮 | 服务端 Pygments：回复定稿后与历史加载时，代码块按围栏语言请求 `POST /api/highlight` 得到 token span；文件预览的「代码」渲染器按文件名选择 lexer；diff 两侧按文件名分别高亮。配色由 `GET /api/highlight.css` 提供（浅色 xcode、深色 github-dark），仅 token 颜色，背景沿用页面 |
 | 改动文件卡片 | 每轮结束后，`pyxis-harness-workspace-changes` 用 git 工作树快照汇总本轮改动的文件与增删行数；卡片出现在该轮回复之后：单文件显示「已编辑 文件名」，多文件显示文件数与合计，前 4 行展开，其余可展开。点击行在右侧栏打开「第 N 轮改动」tab：文件选择器、单栏 / 左右对比、换行、在侧边栏打开文件、重新读取；hunk 带两侧行号与增删底色，新建 / 删除文件给出说明。摘要持久化；逐文件对比只在记录它的进程内可用，重启后提示不可用。工作区不在 git 仓库内时不记录 |
@@ -43,6 +43,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | MCP 页 | `pyxis-harness-config-center` 的浏览器模块，左侧栏「MCP」（替代原来设置里的 MCP 页签）：页头「导入 JSON」（Claude Desktop / Cursor 风格 `mcpServers`）与刷新；「连接设置」折叠区设启动等待秒数；左栏服务器列表（状态点：绿已连接 / 红失败、名称、命令或 URL、「已停用」标签），「＋ 添加」；右侧编辑卡：名称、连接方式（streamable HTTP / SSE / stdio）、stdio 的命令 / 参数（每行一个）/ 环境变量键值对 / 工作目录，HTTP 的地址 / 请求头键值对，调用前批准，启用开关；底部删除 / 测试连接（真实握手并列出工具名）/ 保存（写入 profile 补丁，重启后列表刷新）。环境变量与请求头的值可以写成 `${credential:NAME}`（也可与文字混写，如 `Bearer ${credential:GH_TOKEN}`）：配置里只留模板，值在编辑卡的「凭据」区逐项填写（只写，存入 profile 的 `credentials.yaml`；同名环境变量优先），缺值时服务器显示黄色「等待凭据」并列出缺的引用名 |
 | 技能页 | 左侧栏「技能」：页头刷新、打开目录、安装 ZIP（冲突时提示覆盖 / 跳过 / 取消）；左栏技能列表（版本、启停状态、描述），右侧详情：启用开关、打开目录、删除、描述、「技能信息」（路径与 frontmatter）、文件树与预览（256 KB 截断） |
 | 环境依赖 | 设置 →「环境依赖」（`settings.sections` 槽位）：bun / bunx 卡片（状态标签、已安装 / 提供版本、平台、可执行文件、数据目录、下载进度条、安装 / 修复 / 检测），安装中每 1.5 秒轮询 |
+| 网页搜索 | 设置 →「网页搜索」（`pyxis-harness-web-tools`，`settings.sections` 槽位）：「允许 Agent 使用」开关（说明行显示已开启 / 已关闭；切换后 `web_search` 与 `web_fetch` 立即注册或注销，会话与临时对话的下一轮生效，不重启）、网页搜索与网页获取各自的开启 / 关闭（重启生效）、搜索提供方、API Key（只写，可清除）、Base URL、每次搜索结果数、服务端搜索的单次请求搜索次数 |
 | 可观测 | 设置 →「可观测」（`pyxis-harness-otel`）：状态标签（上报中 / 未上报）、Endpoint、Public Key、Secret Key（已保存时留空保持）、启用上报、采集正文、高级设置（gzip、正文截断上限、单批 span 数）；「发送测试」「检查上报」「保存」；下方显示 trace 端点与本次运行的批次 / span 计数与最近一次结果 |
 | AI 订阅页 | `pyxis-harness-subscriptions` 的浏览器模块，左侧栏「AI 订阅」：左栏提供方（ChatGPT）与账号列表（方案、默认账号），「＋ 添加账号」发起登录（校验授权 URL 的域名后在新标签打开）；登录中显示「等待授权」框（取消、手动提交回调 URL，每 1.5 秒轮询状态）；未连接时显示连接按钮与说明；已连接：账号头（已连接 / 未授权套餐、方案、重新登录、设为默认、断开连接），「模型」页签（搜索、刷新目录、自动显示所有模型、按模型勾选可见、上下文窗口编辑（整数 / 256K / 1M；Enter 或「保存」提交；留空保存或「恢复默认」使用目录默认值）、默认推理强度下拉），「用量」页签（用量说明与 ChatGPT 用量管理链接）；页头「刷新模型目录」重新发现并重建模型路由 |
 | API 网关页 | `pyxis-harness-gateway` 的浏览器模块，左侧栏「API 网关」：顶部监听状态标签与刷新；三个 tab（记住上次所在）：概览（启用开关、地址、端口、保存；端点表与鉴权提示；模型数与启用的 key 数）、API key（列表：显示 / 隐藏、复制、启停、删除；可用模型在「提供方 → 模型」树形对话框里勾选，不勾选表示全部；新建后一次性展示完整 key）、用量（今日 / 7 日 / 30 日，按 key、模型、协议、结果筛选；指标卡片用 K / M 紧凑显示；最新 200 条请求明细） |
@@ -59,7 +60,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | 审批 | 黄色审批卡片停靠在输入框上方；对应工具行标记待批准；设有审批时限时卡片右上角倒计时，到期后调用被拒绝、agent 继续 |
 | 自动审查 | 被审查的工具行带结论标签（自动放行 / 审查未放行 / 审查失败），展开后的「审查」一栏列出风险与理由；未放行时审批卡片显示审查的理由 |
 | 重启 | 输入框上方进度提示；完成后自动重连；续跑消息显示为系统分隔行，回滚时为警告色 |
-| 插件页 | 全局面板不显示会话顶栏（同 dsh）：页面自带标题、简介、刷新与「添加插件」（默认按 PyPI 包名安装，可带版本；或切到本地目录，输入路径或用系统对话框选择；安装 → 预检 → 空闲后重启）。只有装进 profile 的用户插件可操作：其 bundle 行有启用 / 停用开关与卸载按钮，其条目有启用 / 停用开关；随环境安装的内置 bundle（base、creator）及其条目标为「内置」，不可改动，API 对它们返回 409（命令行与 agent 工具不受此限制）。每个变更都走预检，失败时回滚并提示；通过后在 supervisor 下等待空闲重启，页面显示重启进度并自动重连。bundle 与条目卡片用 40px 着色图标块；状态标签只在非运行态显示；「客户端模块」列出各插件的浏览器模块与加载状态 |
+| 插件页 | 全局面板不显示会话顶栏（同 dsh）：页面自带标题、简介、刷新与「添加插件」（默认按 PyPI 包名安装，可带版本；或切到本地目录，输入路径或用系统对话框选择；安装 → 预检 → 空闲后重启）。只有装进 profile 的用户插件可操作：其 bundle 行有启用 / 停用开关与卸载按钮，其条目有启用 / 停用开关；随环境安装的内置 bundle（base）及其条目标为「内置」，不可改动，API 对它们返回 409（命令行与 agent 工具不受此限制）。每个变更都走预检，失败时回滚并提示；通过后在 supervisor 下等待空闲重启，页面显示重启进度并自动重连。bundle 与条目卡片用 40px 着色图标块；状态标签只在非运行态显示；「客户端模块」列出各插件的浏览器模块与加载状态 |
 | 右侧栏 | 对齐 dsh：每个会话一组标签页，存于 `localStorage`（`pyh.rightbar.v1.<会话>`），刷新后恢复。标签条：带图标与关闭按钮的标签胶囊、「+」打开「开始」页、右端全屏切换与收起。「开始」页：罗盘标记与入口卡片（工作区文件、会话信息，插件注册的类型也可加卡片）；只有一个入口时直接打开该页。作为唯一标签的「开始」页不可关闭；关闭最后一个其它标签会一并收起右栏。文件 tab：根路径标签（目录弱化、末段高亮、过长左侧渐隐）、重新读取；目录树就地展开 / 折叠、目录优先、按类型着色的文件图标，轮次结束后自动刷新。点击文件打开预览 tab（同一路径只开一个）：路径头、渲染器菜单（Markdown / 代码 / 纯文本，图片直接显示）、换行开关、重新读取；二进制文件提示不支持，大文件截断提示。会话 tab：ID、工作区、预设、权限、模型、时间，复制 ID。终端 tab（`pyxis-harness-terminal` 的浏览器模块）：在工作区里开一个交互式 shell，xterm.js（CDN）渲染，加载不到时退化为逐行终端，刷新后重新接上同一个 PTY（服务端保留回放缓冲）；后台任务 tab：agent 用 `run_in_background` 启动的命令及其日志，可停止。面板可拖动调宽（280px 起，至多 70% 视口）；全屏形态覆盖整个窗口；窄屏自动全屏。文件页顶部有搜索框（200 ms 防抖，子串匹配路径）：结果显示为只含命中项及其上级目录的展开树，命中片段高亮，状态行给出结果数，超过 500 条时提示缩小范围；点文件照常打开，点目录清空搜索并在完整的树里展开定位到它；↓ / ↑ 在搜索框与结果行之间移动，Enter 打开，Esc 清空。页头的眼睛按钮切换是否显示点开头的文件，对树与搜索同时生效 |
 | 插件槽位 | 页面在加载时读取 `window.__PYH_BOOT__` 的模块清单，依次加载各插件的 `client.js`；模块通过 `ctx.slots.register` 填入槽位：侧边栏面板行、「更多」菜单行、主区面板、输入框旁的停靠位、设置分区、右侧栏 tab。契约见 `pyxis_harness_web_ui` 包文档与创造模式 skill 的 `references/ui-plugin.md` |
 | 模型菜单 | 输入框右下角的模型标签：按提供方分组的模型菜单；选择后写入会话（`PUT /sessions/{id}/model`），下一次请求生效；新会话在创建时带上选择；菜单底部「管理模型…」进入设置 |
@@ -83,7 +84,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | GET | `/health` | | 代、重启状态、模型、工作区 |
 | GET | `/plugins` | | Loader 条目、已安装 bundle |
 | POST | `/plugins/install` | `{"path"}` 或 `{"package", "index_url"?}` | 安装 bundle 目录或 PyPI 包到 profile site；预检失败 422；成功后 `restart-scheduled`（supervised）或 `saved-restart-required` |
-| PUT | `/plugins/bundles/{name}` | `{"enabled"}` | 启用 / 停用 bundle：装在 profile 里的，或 `optional: true` 的预置 bundle；内置 bundle 409 |
+| PUT | `/plugins/bundles/{name}` | `{"enabled"}` | 启用 / 停用装在 profile 里的 bundle；内置 bundle 409 |
 | DELETE | `/plugins/bundles/{name}` | | 卸载装在 profile 里的 bundle；其他 409 |
 | PUT | `/plugins/entries/{id}` | `{"enabled"}` | 启用 / 停用条目 |
 | POST | `/restart` | | 请求重启（运行中的轮次结束后）；未受 supervisor 管理时 409 |
@@ -96,7 +97,7 @@ DeepSeek Harness Web 的设计系统；不含 DeepSeek 标志、名称、标语�
 | PUT | `/settings/agent` | `{"default_preset"?, "default_mode"?, "approval_timeout"?, "max_steps"?, "max_parallel_tool_calls"?}` | 新会话默认；审批时限（秒，`null`：不超时）；每轮步数上限（`null`：不限）；并行工具调用数；写入 profile 补丁 |
 | GET / PUT | `/settings/review` | `{"model"}` | 自动审查的模型（`null`：与被审调用相同）；立即生效并写入 profile 补丁 |
 | GET / PUT | `/terminal/settings` | `{"timeout"?, "max_output_chars"?, "promote_on_timeout"?, "dialect"?, "shell"?, "pwsh"?}` | shell 工具：超时、输出上限、超时转后台立即生效；shell 的更换写入后请求重启；应答的 `application` 为 `applied` 或 `restart` |
-| GET / PUT | `/web-tools/settings` | `{"search"?, "fetch"?, "search_provider"?, "search_base_url"?, "base_url"?, "max_results"?, "max_uses"?, "api_key"?}` | 网页搜索与获取：提供方、地址、数量与密钥立即生效；工具的开关写入后请求重启；密钥存入凭据文件，应答只带其状态 |
+| GET / PUT | `/web-tools/settings` | `{"agent_tools"?, "search"?, "fetch"?, "search_provider"?, "search_base_url"?, "base_url"?, "max_results"?, "max_uses"?, "api_key"?}` | 网页搜索与获取：`agent_tools`（agent 是否拥有 `web_search` 与 `web_fetch`）立即注册或注销两个工具，下一轮生效，不重启；提供方、地址、数量与密钥立即生效；`search`、`fetch`（单个工具是否存在）写入后请求重启；设置写入 profile 补丁，密钥存入凭据文件，应答只带其状态；应答的 `application` 为 `applied` 或 `restart` |
 | GET | `/workspaces` | | 默认与最近工作区 |
 | POST | `/workspaces` | `{"path"}` | 校验并记住工作区 |
 | PUT | `/workspaces` | `{"path", "name"}` | 工作区显示名；空值恢复目录名 |

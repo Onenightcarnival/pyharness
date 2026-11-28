@@ -7,7 +7,7 @@ agent 编写插件、安装进自己的 profile，在下一代中使用。
 | `standard` | 不含 `plugin_manager`、`harness_inspect` | 系统提示词中三行「Extending this harness」：指向 Creator 预设 |
 | `creator` | 全部 | skill 目录（`/skills/pyxis-harness/`）；完整流程按需由 `read_file` 加载；包的设计文档与源码（`/harness/`） |
 
-预设按会话选择（输入框的「预设」标签），对照 dsh 的 agent preset；`creator` bundle 只把新会话默认预设设为 `creator`（`pyh init --template creator`）。
+预设按会话选择（输入框的「预设」标签），对照 dsh 的 agent preset；新会话的默认预设是 `agent-loop` 的 `default_preset`：「设置 → 预设」里选择，`pyh init --template creator` 把它设为 `creator`。
 
 ## 流程
 

@@ -26,10 +26,7 @@
 | `pyxis-harness-inspect` | `inspect` | — | `harness_inspect` 工具 |
 | `pyxis-harness-plugin-manager` | `plugin-manager` | — | `plugin_manager` 工具；插件编写 skills（`skills: true`）；三行提示词片段（`guidance`） |
 | `pyxis-harness-plugin-manager` | `dev-context` | — | `pyxis-harness-dev-context`：harness 位置提示词段 |
-| `pyxis-harness-bundle-base` | — | — | `base` bundle：以上条目的组合 |
-| `pyxis-harness-bundle-creator` | — | — | `creator` bundle：`plugin-manager` 的 `skills: true`、`guidance: false` |
-| `pyxis-harness-web-tools` | `web-tools` | `web` | `web_search`（DeepSeek Search API：每次搜索一次直连请求 `POST /v1/tools/search`，返回来源的标题、URL、摘要与日期，按每秒 5 次限速；`search_provider: deepseek-legacy` 保留旧路径，即一次 Anthropic 格式的 Messages 调用带 `web_search_20250305` 服务端工具，返回回答与来源）与 `web_fetch`（HTTP 抓取，HTML 转成文本）；搜索密钥取 `DEEPSEEK_API_KEY` 凭据（环境或 profile 凭据库），缺失时工具返回说明而不是让轮次出错 |
-| `pyxis-harness-bundle-web` | — | — | `web` bundle：上面两个工具；`optional: true`，默认开启，插件页可关闭 |
+| `pyxis-harness-web-tools` | `web-tools` | `web` | `web_search`（DeepSeek Search API：每次搜索一次直连请求 `POST /v1/tools/search`，返回来源的标题、URL、摘要与日期，按每秒 5 次限速；`search_provider: deepseek-legacy` 保留旧路径，即一次 Anthropic 格式的 Messages 调用带 `web_search_20250305` 服务端工具，返回回答与来源）与 `web_fetch`（HTTP 抓取，HTML 转成文本）；「允许 Agent 使用」开关（设置 →「网页搜索」，配置 `agent_tools`，默认开）：关闭后两个工具立即注销，不重启，选择写入 profile 补丁；搜索密钥取 `DEEPSEEK_API_KEY` 凭据（环境或 profile 凭据库），缺失时工具返回说明而不是让轮次出错 |
 | `pyxis-harness-memory` | `memory` | `memory` | agent 的职业履历记忆（对齐 dsh-memory）：`profile → work → project → lesson` 四层树，SQLite 存储（`<profile data>/toolkit/memory.sqlite`），每次改动记一条修订并保存整份快照（内容寻址去重）；`memory_get`（读一个节点：内容、祖先、分页子节点摘要）与 `memory_save`（一次原子应用 1–100 条带类型的改动，`stateToken` 并发校验，`ref` / `@ref` 批内引用）；提示词段 `plugin:memory`（order 155）；两者只在记忆页「允许 Agent 使用」开着时注册；`/api/memory` 路由；左侧栏「记忆」全页 |
 | `pyxis-harness-rdb` | `rdb` | `rdb` | 关系数据库工作台（对齐 dsh-rdb）：SQLite（标准库）/ PostgreSQL 与 GaussDB（psycopg 3）/ MySQL 与 MariaDB（PyMySQL）；连接配置存 `<profile data>/toolkit/rdb.json`，密码存 profile 凭据库（`RDB_<ID>`）；多主机按 `targetSessionAttrs`（libpq 语义）挑节点；每个连接一个常驻驱动（空闲 10 分钟关闭）；`db_connections` / `db_schema` / `db_query`（单条只读语句，服务端分类拒绝写入）/ `db_explain` / `db_execute`（一个事务，仅对勾选「允许 Agent 写入」的连接，且须 `confirm=true`）；提示词段 `plugin:rdb`（order 153）；工具与提示词只在数据库页「允许 Agent 使用」开着时注册；`/api/rdb/*` 路由（连接、测试、schema / 表 / 列 / DDL、分页行、query、execute、网格改动预览与应用、CSV 导出）；左侧栏「数据库」全页 |
 | `pyxis-harness-s3` | `s3` | `s3` | S3 兼容对象存储浏览器（对齐 dsh-s3）：boto3 客户端（path-style / virtual-host、`when_required` 校验和、3 次重试）；一个 profile 对应一个桶（endpoint、region、AK/SK、限定前缀），配置存 `<profile data>/toolkit/s3.json`，Secret Key 存 profile 凭据库（`S3_<ID>`），所有 key 相对前缀；`s3_buckets` / `s3_list`（按层级或递归、分页）/ `s3_stat` / `s3_get`（文本，二进制拒绝）/ `s3_put` / `s3_upload` / `s3_download` / `s3_copy` / `s3_presign` / `s3_mkdir` / `s3_delete`（前缀递归，须 `confirm=true`）；提示词段 `plugin:s3`（order 152）；工具只在 S3 页「允许 Agent 使用」开着时注册；`/api/s3/*` 路由（配置、测试、列表、stat、下载 / 内联预览、文本、流式上传、删除、文件夹、预签名、复制）；左侧栏「S3」全页 |
@@ -38,13 +35,15 @@
 | `pyxis-harness-subscriptions` | `subscriptions` | `subscriptions` | AI 订阅（对齐 dsh-subscriptions）：ChatGPT（「Sign in with ChatGPT」）；本机回环 OAuth（PKCE S256、state / nonce、端口占用时手动粘贴回调 URL、超时与取消）；会话存 `<profile data>/toolkit/subscriptions/auth.json`（0600），令牌管理器提前 5 分钟刷新、并发共享一次刷新、永久性错误时删除账号；模型目录（`/v1/models`）缓存 5 分钟并落盘；注册 `ctx.llm` 提供方类型 `subscription`，按账号把可见模型发布成路由 `chatgpt`（Responses 协议的流式翻译：文本、推理、工具调用、用量）；模型可见性与上下文窗口存 `provider-settings.json`；`/api/subscriptions/*` 路由；左侧栏「AI 订阅」全页 |
 | `pyxis-harness-gateway` | `gateway` | `gateway` | API 网关（对齐 dsh-gateway）：把 `ctx.llm` 的模型路由通过 OpenAI Chat Completions、OpenAI Responses、Anthropic Messages 三种协议对外提供，独立监听（默认 `127.0.0.1:8766`，`app/serve` 时绑定，绑定失败不影响启动）；`GET /v1/models`、`POST /v1/chat/completions`、`POST /v1/responses`、`POST /v1/messages`，流式与非流式；每个请求带 API key（`Authorization: Bearer` 或 `x-api-key`），key 全文存 `<profile data>/toolkit/gateway/keys.json`（0600，首次启动生成 `default`），可限定可用模型；模型 id 为 `route:model`，`aliases` 做请求名映射，没有默认模型；图片输入（data URL 或 http(s) URL）转成 data URL 交给模型；每个通过鉴权的协议请求写一行到 `usage.sqlite`（token、首字节、耗时、状态、错误码，保留 400 天），按 `pricing` 计费用；`/api/gateway/*` 管理路由；左侧栏「API 网关」全页（概览、API key、用量） |
 | `pyxis-harness-http-client` | `http-client` | `httpClient` | HTTP API 请求工具（对齐 dsh-http）：API 目标（Base URL、认证 bearer / basic / header / query、固定 header、`{{变量}}`、密钥变量、允许的额外 host、变更开关、内网开关、超时），密钥只留在宿主、交给页面与 agent 的内容里一律遮罩；保存的请求（每个目标 500 个；可带提取规则：从响应里取值存成变量，带有效期，缺失、过期或 401 时由 harness 自动重发来源请求续期）与不绑定目标的请求（完整 URL，仅页面可用，agent 不可调用也不可见）；请求历史由页面与 agent 共用（默认保留 200 条，正文各截 32 KiB）；配置导出与导入（目标、保存的请求、历史上限为一个 JSON 文件，不含密钥；整份文件先校验，同名目标选覆盖或跳过，覆盖时保留已存密钥，也接受 dsh-http 的导出文件；缺密钥的目标显示「密钥未填写」，其请求不发送）；应答正文、已发送正文与事件数据语法高亮（宿主页的 `/api/highlight`）；重定向最多 5 跳、逐跳检查允许的 host、跨 origin 去掉凭证；`text/event-stream` 逐事件读取，停止、超时、1 MiB 上限都保留已收到的内容；工具 `http_targets`、`http_request`（非 GET / HEAD / OPTIONS 需目标开启变更且 `confirm=true`）、`http_history`，「允许 Agent 使用」开启时注册；数据在 `<profile data>/toolkit/http-client/`（`targets.json`、`requests.json`、`values.json`、`history.jsonl`，0600）；`/api/http-client/*` 路由；左侧栏「HTTP」全页 |
-| `pyxis-harness-bundle-toolkit` | — | — | `toolkit` bundle：工具箱各模块（memory、rdb、s3、config-center、otel、subscriptions、gateway、http-client）；`builtin: true`，每个 profile 必含、不可关闭、不可卸载；左侧栏入口可取消固定，收进「更多」菜单 |
 
-条目 id 与配置：`packages/bundle-base/pyxis_harness_bundle_base/bundle.yaml`。
+`pyxis-harness`（入口包）带 `base` bundle：以上插件的组合。条目 id 与配置：`packages/meta/pyxis_harness_bundle_base/bundle.yaml`。
 
-可选 bundle：bundle 定义里 `optional: true` 的 bundle 不必写进 profile 的 `bundles` 列表就会生效（排在显式列表之后），profile 清单的 `disabled` 列表把它关掉；插件页与 `PUT /plugins/bundles/{name}` 对这类 bundle 允许开关，不允许卸载。内置 bundle（`base`）仍然只读。
+| bundle | 来源 | 插件页与 `/plugins` 接口 |
+|---|---|---|
+| `base` | 随 harness 安装 | 标为「内置」；不可停用、不可卸载（409）；条目没有开关 |
+| 其他 | 装进 profile 的 `site/` | 启用 / 停用开关、卸载按钮；条目有开关 |
 
-内置 bundle：bundle 定义里 `builtin: true` 的 bundle（`toolkit`）随环境安装、每个 profile 必含（排在显式列表之后、可选 bundle 之前），`set_bundle_enabled(…, False)` 抛 `ConfigError`，插件页与 API 返回 409；要少看一个模块就取消固定它的左侧栏入口。
+内置插件给 agent 的工具由各插件的开关控制（`memory`、`rdb`、`s3`、`http-client`、`web-tools`）；要少看一个模块就取消固定它的左侧栏入口。
 
 ## 事件
 

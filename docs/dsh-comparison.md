@@ -11,7 +11,7 @@
 | profile + bundle + `cordis.patch.yml` | profile + bundle（entry point）+ `harness.patch.yaml`；按 id 寻址的分层 patch |
 | `isolate` | 组条目的 `isolate: [key]` |
 | HMR：进程内热替换 | 换代：supervisor + worker generation |
-| Plugin Manager + 创造模式（`cordis` preset：`dsh-tool-cordis` + skills） | `plugin_manager` + `harness_inspect` + `creator` bundle：skills 挂载到 `/skills/pyxis-harness/`，deepagents skills 中间件按需加载 |
+| Plugin Manager + 创造模式（`cordis` preset：`dsh-tool-cordis` + skills） | `plugin_manager` + `harness_inspect` + `creator` 预设：skills 挂载到 `/skills/pyxis-harness/`，deepagents skills 中间件按需加载 |
 | `dsh-harness-dev-context` | `pyxis-harness-dev-context` 提示词段 |
 | 源码随包分发，agent 按实现所在路径读取 | `creator` 预设：已加载的包只读挂载到 `/harness/<模块名>/`（`AGENTS.md` 与源码） |
 | `dsh-skill` + `dsh-skill-filesystem` + `dsh-tool-skill` | deepagents `SkillsMiddleware`；`ctx.agentLoop.add_skills` |
@@ -65,7 +65,7 @@ bundle 中条目的位置（`after` / `before` / `parent`）对应 mount 路径�
 | `ask_user_question`（`dsh-tool-ask-user` + `dsh-user-questions` + 问题卡片） | 有：`pyxis-harness-ask-user`，同样的问题 / 答案结构（id、options、multi_select、selected、custom）；用 LangGraph interrupt 暂停，`POST /sessions/{id}/answers` 续跑；未做 dsh 的 timed 模式（超时后继续工作、稍后补答） |
 | Web 工具（`dsh-web` seam + `dsh-web-search-deepseek` / `dsh-web-fetch-http` + `dsh-tool-web`） | 有：`pyxis-harness-web-tools` 的 `web_search`（只有 DeepSeek 原生搜索，同样的 Anthropic 格式请求；密钥取 `DEEPSEEK_API_KEY` 凭据）与 `web_fetch`（stdlib HTML → 文本，dsh 用 turndown 转 Markdown）；作为可选的 `web` bundle 预置，插件页可关闭；未做多 provider seam、搜索设置页与结果卡片 |
 | 上下文压缩（`dsh-compaction-basic` + `/compact`） | 有：`pyxis-harness-compaction`，自动（阈值 / 保留比例）与 `/compact`，dsh 同款结构化检查点提示词；摘要调用用纯文本转写而非复用请求前缀缓存；未做工具结果裁剪与图片卸载（`dsh-compaction-tool-result-pruner` / `image-offload`） |
-| 记忆（dsh-toolkit memory） | 有：`pyxis-harness-memory`，同样的四层树、工具形状与提示词、版本历史与页面；内置于 `toolkit` bundle |
+| 记忆（dsh-toolkit memory） | 有：`pyxis-harness-memory`，同样的四层树、工具形状与提示词、版本历史与页面；内置于 `base` bundle |
 | 数据库（dsh-toolkit rdb） | 有：`pyxis-harness-rdb`，同样的四种引擎、工具形状、分页 / 网格改动 / CSV；读语句分类放宽了 `CASE…END`、`SHOW CREATE`、`PRAGMA x(...)`；行上限用游标 fetchmany 而不是整表取回；SQLite 也有语句超时 |
 | S3（dsh-toolkit s3） | 有：`pyxis-harness-s3`，同样的 profile 模型、11 个工具、页面；boto3 而不是 AWS SDK for JS |
 | 配置中心（dsh-toolkit config-center） | 有：`pyxis-harness-config-center`，MCP 页 + 连接测试 + JSON 导入、技能页（SKILL.md 包，挂载为 `/skills/user/`）、环境依赖页（受管 bun 替代 dsh 的受管 uv，覆盖 JS MCP 服务器） |

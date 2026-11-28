@@ -6,8 +6,11 @@ from pydantic import BaseModel, Field
 
 
 class Config(BaseModel):
-    search: bool = True  # register web_search
-    fetch: bool = True  # register web_fetch
+    agent_tools: bool = Field(
+        True, description="The agent has the tools; the value until the switch of the settings section is set."
+    )
+    search: bool = True  # web_search exists
+    fetch: bool = True  # web_fetch exists
     api_key_env: str = "DEEPSEEK_API_KEY"
     search_provider: Literal["deepseek-search-api", "deepseek-legacy"] = Field(
         "deepseek-search-api",

@@ -1,5 +1,5 @@
 title: Base
-description: Kernel services, the deepagents loop, SQLite persistence, workspace files, HTTP API and Web UI.
+description: The harness itself. The kernel services, the agent loop, persistence, the HTTP API and Web UI, the toolkit pages and the web tools.
 patch:
   # Registries: models, tools, prompt sections.
   - id: llm
@@ -10,32 +10,29 @@ patch:
     name: pyxis-harness-tools
   - id: prompt
     name: pyxis-harness-prompt
-
   # MCP servers as tools: ctx.mcp; servers come from Settings → MCP or the profile patch.
   - id: mcp
     name: pyxis-harness-mcp
-
+  # Web tools: ctx.web. Search key: the DEEPSEEK_API_KEY credential (Settings → Models, DeepSeek route) or the environment.
+  - id: web-tools
+    name: pyxis-harness-web-tools
   # ask_user_question: the agent pauses for the user's answer (question card in the Web UI).
   - id: ask-user
     name: pyxis-harness-ask-user
-
   # Persistence: ctx.checkpointer, ctx.store. Postgres: patch id `checkpoint` (examples/patches/postgres.yaml).
   - id: checkpoint
     name: pyxis-harness-checkpoint-sqlite
     config:
       path: ${data_dir}/checkpoints.sqlite
       store_path: ${data_dir}/store.sqlite
-
   # Temporary sessions: ctx.temporary (checkpointer and store in process memory).
   - id: checkpoint-temporary
     name: pyxis-harness-checkpoint-memory
-
   # Workspace: ctx.workspace, ctx.backend. `execute` tool: shell: true.
   - id: workspace
     name: pyxis-harness-workspace
     config:
       shell: false
-
   # Agent loop: ctx.agentLoop. Sessions and runs: ctx.agents.
   - id: agent-loop
     name: pyxis-harness-agent-loop-deepagents
@@ -43,19 +40,15 @@ patch:
       default_mode: auto-review
   - id: agents
     name: pyxis-harness-agent
-
   # Auto review permission mode: a model reviews each gated tool call; a call it denies asks the user.
   - id: auto-review
     name: pyxis-harness-auto-review
-
   # Context compaction: ctx.compaction; automatic under pressure, /compact on demand.
   - id: compaction
     name: pyxis-harness-compaction
-
   # Changed files per turn, from git work-tree snapshots: ctx.workspaceChanges.
   - id: workspace-changes
     name: pyxis-harness-workspace-changes
-
   # Self-extension: introspection, plugin management, where-am-I prompt section.
   - id: inspect
     name: pyxis-harness-inspect
@@ -63,7 +56,6 @@ patch:
     name: pyxis-harness-plugin-manager
   - id: dev-context
     name: pyxis-harness-dev-context
-
   # HTTP: server, REST + SSE, Web UI.
   - id: http
     name: pyxis-harness-http
@@ -77,7 +69,32 @@ patch:
   - id: web-ui
     name: pyxis-harness-web-ui
     required: true
-
+  # Career memory (profile → work → project → lesson) with version history: ctx.memory, memory_get / memory_save, the Memory page.
+  - id: memory
+    name: pyxis-harness-memory
+  # Relational databases (SQLite / PostgreSQL / GaussDB / MySQL): ctx.rdb, db_* tools, the Database page.
+  - id: rdb
+    name: pyxis-harness-rdb
+  # S3-compatible object storage: ctx.s3, s3_* tools, the S3 page.
+  - id: s3
+    name: pyxis-harness-s3
+  # Configuration center: the MCP page (connection test), user skills, the managed bun runtime.
+  - id: config-center
+    name: pyxis-harness-config-center
+  # OpenTelemetry export of turns (Settings → Observability): ctx.otel.
+  - id: otel
+    name: pyxis-harness-otel
+  # ChatGPT subscriptions as model routes: ctx.subscriptions.
+  - id: subscriptions
+    name: pyxis-harness-subscriptions
+  # Local LLM API gateway (OpenAI Chat Completions / Responses, Anthropic Messages) over the model routes, with API
+  # keys and usage accounting: ctx.gateway, the API gateway page.
+  - id: gateway
+    name: pyxis-harness-gateway
+  # HTTP API request tool (targets with injected auth, saved requests, history, event streams): ctx.httpClient,
+  # http_* tools, the HTTP page.
+  - id: http-client
+    name: pyxis-harness-http-client
   # Persistent bash tool, background jobs and PTY terminals (right-sidebar tab): ctx.terminal.
   - id: terminal
     name: pyxis-harness-terminal

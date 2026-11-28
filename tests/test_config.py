@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from pyxis_harness import Profile
 from pyxis_harness.config import ConfigError, compose, interpolate, parse_ops, tree_to_data
 
 
@@ -83,3 +84,31 @@ def test_interpolation(monkeypatch):
     monkeypatch.setenv("PYH_T_SET", "${cwd}")
     assert interpolate("${env:PYH_T_SET}", vars_) == "${cwd}"
     assert interpolate("${cwd}" * 100, vars_) == "/w" * 100
+
+
+def test_a_manifest_with_retired_bundle_names_composes_the_same_harness(tmp_path):
+    current = Profile.init("web", home=str(tmp_path / "current"))
+    old = Profile.init("web", home=str(tmp_path / "old"))
+    # Written while the built-in list was four bundles: creator on, the web preset off.
+    old.save_manifest({"title": "Web", "bundles": ["base", "creator"], "disabled": ["web"]})
+    assert old.bundles() == ["base"]
+    assert old.retired_ops() == [
+        {"id": "agent-loop", "merge": True, "config": {"default_preset": "creator"}},
+        {"id": "web-tools", "merge": True, "config": {"agent_tools": False}},
+    ]
+    tree = {entry["id"]: entry for entry in tree_to_data(old.compose().tree)}
+    assert [e["id"] for e in tree_to_data(current.compose().tree)] == list(tree)
+    assert tree["agent-loop"]["config"]["default_preset"] == "creator"
+    assert tree["web-tools"]["config"] == {"agent_tools": False}
+    # The names stay out of the listing and of the switch.
+    assert [b["bundle"] for b in old.installed_bundles()] == ["base"] and old.shipped_bundles() == ["base"]
+    with pytest.raises(ConfigError, match="ships with the harness"):
+        old.set_bundle_enabled("base", False)
+    assert old.set_bundle_enabled("base", True) is False
+
+
+def test_the_creator_template_is_the_base_bundle_with_a_default_preset(tmp_path):
+    profile = Profile.init("creator", template="creator", home=str(tmp_path))
+    tree = {entry["id"]: entry for entry in tree_to_data(profile.compose().tree)}
+    assert profile.bundles() == ["base"] and tree["agent-loop"]["config"]["default_preset"] == "creator"
+    assert Profile.init("empty", template="empty", home=str(tmp_path)).compose().tree == []

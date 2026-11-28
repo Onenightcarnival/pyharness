@@ -14,10 +14,6 @@ members = [
     "pyxis-harness-api",
     "pyxis-harness-ask-user",
     "pyxis-harness-auto-review",
-    "pyxis-harness-bundle-base",
-    "pyxis-harness-bundle-creator",
-    "pyxis-harness-bundle-toolkit",
-    "pyxis-harness-bundle-web",
     "pyxis-harness-checkpoint-memory",
     "pyxis-harness-checkpoint-postgres",
     "pyxis-harness-checkpoint-sqlite",
@@ -1747,20 +1743,70 @@ name = "pyxis-harness"
 version = "0.1.1.dev7"
 source = { editable = "packages/meta" }
 dependencies = [
-    { name = "pyxis-harness-bundle-base" },
-    { name = "pyxis-harness-bundle-creator" },
-    { name = "pyxis-harness-bundle-toolkit" },
-    { name = "pyxis-harness-bundle-web" },
+    { name = "pyxis-harness-agent" },
+    { name = "pyxis-harness-agent-loop-deepagents" },
+    { name = "pyxis-harness-api" },
+    { name = "pyxis-harness-ask-user" },
+    { name = "pyxis-harness-auto-review" },
+    { name = "pyxis-harness-checkpoint-memory" },
+    { name = "pyxis-harness-checkpoint-postgres" },
+    { name = "pyxis-harness-checkpoint-sqlite" },
+    { name = "pyxis-harness-compaction" },
+    { name = "pyxis-harness-config-center" },
     { name = "pyxis-harness-core" },
+    { name = "pyxis-harness-gateway" },
+    { name = "pyxis-harness-http" },
+    { name = "pyxis-harness-http-client" },
+    { name = "pyxis-harness-inspect" },
+    { name = "pyxis-harness-llm" },
+    { name = "pyxis-harness-mcp" },
+    { name = "pyxis-harness-memory" },
+    { name = "pyxis-harness-otel" },
+    { name = "pyxis-harness-plugin-manager" },
+    { name = "pyxis-harness-prompt" },
+    { name = "pyxis-harness-rdb" },
+    { name = "pyxis-harness-s3" },
+    { name = "pyxis-harness-subscriptions" },
+    { name = "pyxis-harness-terminal" },
+    { name = "pyxis-harness-tools" },
+    { name = "pyxis-harness-web-tools" },
+    { name = "pyxis-harness-web-ui" },
+    { name = "pyxis-harness-workspace" },
+    { name = "pyxis-harness-workspace-changes" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "pyxis-harness-bundle-base", editable = "packages/bundle-base" },
-    { name = "pyxis-harness-bundle-creator", editable = "packages/bundle-creator" },
-    { name = "pyxis-harness-bundle-toolkit", editable = "packages/bundle-toolkit" },
-    { name = "pyxis-harness-bundle-web", editable = "packages/bundle-web" },
+    { name = "pyxis-harness-agent", editable = "packages/agent" },
+    { name = "pyxis-harness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
+    { name = "pyxis-harness-api", editable = "packages/api" },
+    { name = "pyxis-harness-ask-user", editable = "packages/ask-user" },
+    { name = "pyxis-harness-auto-review", editable = "packages/auto-review" },
+    { name = "pyxis-harness-checkpoint-memory", editable = "packages/checkpoint-memory" },
+    { name = "pyxis-harness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
+    { name = "pyxis-harness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
+    { name = "pyxis-harness-compaction", editable = "packages/compaction" },
+    { name = "pyxis-harness-config-center", editable = "packages/config-center" },
     { name = "pyxis-harness-core", editable = "packages/core" },
+    { name = "pyxis-harness-gateway", editable = "packages/gateway" },
+    { name = "pyxis-harness-http", editable = "packages/http" },
+    { name = "pyxis-harness-http-client", editable = "packages/http-client" },
+    { name = "pyxis-harness-inspect", editable = "packages/inspect" },
+    { name = "pyxis-harness-llm", editable = "packages/llm" },
+    { name = "pyxis-harness-mcp", editable = "packages/mcp" },
+    { name = "pyxis-harness-memory", editable = "packages/memory" },
+    { name = "pyxis-harness-otel", editable = "packages/otel" },
+    { name = "pyxis-harness-plugin-manager", editable = "packages/plugin-manager" },
+    { name = "pyxis-harness-prompt", editable = "packages/prompt" },
+    { name = "pyxis-harness-rdb", editable = "packages/rdb" },
+    { name = "pyxis-harness-s3", editable = "packages/s3" },
+    { name = "pyxis-harness-subscriptions", editable = "packages/subscriptions" },
+    { name = "pyxis-harness-terminal", editable = "packages/terminal" },
+    { name = "pyxis-harness-tools", editable = "packages/tools" },
+    { name = "pyxis-harness-web-tools", editable = "packages/web-tools" },
+    { name = "pyxis-harness-web-ui", editable = "packages/web-ui" },
+    { name = "pyxis-harness-workspace", editable = "packages/workspace" },
+    { name = "pyxis-harness-workspace-changes", editable = "packages/workspace-changes" },
 ]
 
 [[package]]
@@ -1866,118 +1912,6 @@ requires-dist = [
     { name = "pyxis-harness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
     { name = "pyxis-harness-core", editable = "packages/core" },
     { name = "pyxis-harness-llm", editable = "packages/llm" },
-]
-
-[[package]]
-name = "pyxis-harness-bundle-base"
-version = "0.1.1.dev7"
-source = { editable = "packages/bundle-base" }
-dependencies = [
-    { name = "pyxis-harness-agent" },
-    { name = "pyxis-harness-agent-loop-deepagents" },
-    { name = "pyxis-harness-api" },
-    { name = "pyxis-harness-ask-user" },
-    { name = "pyxis-harness-auto-review" },
-    { name = "pyxis-harness-checkpoint-memory" },
-    { name = "pyxis-harness-checkpoint-postgres" },
-    { name = "pyxis-harness-checkpoint-sqlite" },
-    { name = "pyxis-harness-compaction" },
-    { name = "pyxis-harness-core" },
-    { name = "pyxis-harness-http" },
-    { name = "pyxis-harness-inspect" },
-    { name = "pyxis-harness-llm" },
-    { name = "pyxis-harness-mcp" },
-    { name = "pyxis-harness-plugin-manager" },
-    { name = "pyxis-harness-prompt" },
-    { name = "pyxis-harness-terminal" },
-    { name = "pyxis-harness-tools" },
-    { name = "pyxis-harness-web-ui" },
-    { name = "pyxis-harness-workspace" },
-    { name = "pyxis-harness-workspace-changes" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pyxis-harness-agent", editable = "packages/agent" },
-    { name = "pyxis-harness-agent-loop-deepagents", editable = "packages/agent-loop-deepagents" },
-    { name = "pyxis-harness-api", editable = "packages/api" },
-    { name = "pyxis-harness-ask-user", editable = "packages/ask-user" },
-    { name = "pyxis-harness-auto-review", editable = "packages/auto-review" },
-    { name = "pyxis-harness-checkpoint-memory", editable = "packages/checkpoint-memory" },
-    { name = "pyxis-harness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
-    { name = "pyxis-harness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },
-    { name = "pyxis-harness-compaction", editable = "packages/compaction" },
-    { name = "pyxis-harness-core", editable = "packages/core" },
-    { name = "pyxis-harness-http", editable = "packages/http" },
-    { name = "pyxis-harness-inspect", editable = "packages/inspect" },
-    { name = "pyxis-harness-llm", editable = "packages/llm" },
-    { name = "pyxis-harness-mcp", editable = "packages/mcp" },
-    { name = "pyxis-harness-plugin-manager", editable = "packages/plugin-manager" },
-    { name = "pyxis-harness-prompt", editable = "packages/prompt" },
-    { name = "pyxis-harness-terminal", editable = "packages/terminal" },
-    { name = "pyxis-harness-tools", editable = "packages/tools" },
-    { name = "pyxis-harness-web-ui", editable = "packages/web-ui" },
-    { name = "pyxis-harness-workspace", editable = "packages/workspace" },
-    { name = "pyxis-harness-workspace-changes", editable = "packages/workspace-changes" },
-]
-
-[[package]]
-name = "pyxis-harness-bundle-creator"
-version = "0.1.1.dev7"
-source = { editable = "packages/bundle-creator" }
-dependencies = [
-    { name = "pyxis-harness-core" },
-    { name = "pyxis-harness-plugin-manager" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pyxis-harness-core", editable = "packages/core" },
-    { name = "pyxis-harness-plugin-manager", editable = "packages/plugin-manager" },
-]
-
-[[package]]
-name = "pyxis-harness-bundle-toolkit"
-version = "0.1.1.dev7"
-source = { editable = "packages/bundle-toolkit" }
-dependencies = [
-    { name = "pyxis-harness-config-center" },
-    { name = "pyxis-harness-core" },
-    { name = "pyxis-harness-gateway" },
-    { name = "pyxis-harness-http-client" },
-    { name = "pyxis-harness-memory" },
-    { name = "pyxis-harness-otel" },
-    { name = "pyxis-harness-rdb" },
-    { name = "pyxis-harness-s3" },
-    { name = "pyxis-harness-subscriptions" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pyxis-harness-config-center", editable = "packages/config-center" },
-    { name = "pyxis-harness-core", editable = "packages/core" },
-    { name = "pyxis-harness-gateway", editable = "packages/gateway" },
-    { name = "pyxis-harness-http-client", editable = "packages/http-client" },
-    { name = "pyxis-harness-memory", editable = "packages/memory" },
-    { name = "pyxis-harness-otel", editable = "packages/otel" },
-    { name = "pyxis-harness-rdb", editable = "packages/rdb" },
-    { name = "pyxis-harness-s3", editable = "packages/s3" },
-    { name = "pyxis-harness-subscriptions", editable = "packages/subscriptions" },
-]
-
-[[package]]
-name = "pyxis-harness-bundle-web"
-version = "0.1.1.dev7"
-source = { editable = "packages/bundle-web" }
-dependencies = [
-    { name = "pyxis-harness-core" },
-    { name = "pyxis-harness-web-tools" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pyxis-harness-core", editable = "packages/core" },
-    { name = "pyxis-harness-web-tools", editable = "packages/web-tools" },
 ]
 
 [[package]]
@@ -2282,10 +2216,6 @@ dependencies = [
     { name = "pyxis-harness-api" },
     { name = "pyxis-harness-ask-user" },
     { name = "pyxis-harness-auto-review" },
-    { name = "pyxis-harness-bundle-base" },
-    { name = "pyxis-harness-bundle-creator" },
-    { name = "pyxis-harness-bundle-toolkit" },
-    { name = "pyxis-harness-bundle-web" },
     { name = "pyxis-harness-checkpoint-memory" },
     { name = "pyxis-harness-checkpoint-postgres" },
     { name = "pyxis-harness-checkpoint-sqlite" },
@@ -2330,10 +2260,6 @@ requires-dist = [
     { name = "pyxis-harness-api", editable = "packages/api" },
     { name = "pyxis-harness-ask-user", editable = "packages/ask-user" },
     { name = "pyxis-harness-auto-review", editable = "packages/auto-review" },
-    { name = "pyxis-harness-bundle-base", editable = "packages/bundle-base" },
-    { name = "pyxis-harness-bundle-creator", editable = "packages/bundle-creator" },
-    { name = "pyxis-harness-bundle-toolkit", editable = "packages/bundle-toolkit" },
-    { name = "pyxis-harness-bundle-web", editable = "packages/bundle-web" },
     { name = "pyxis-harness-checkpoint-memory", editable = "packages/checkpoint-memory" },
     { name = "pyxis-harness-checkpoint-postgres", editable = "packages/checkpoint-postgres" },
     { name = "pyxis-harness-checkpoint-sqlite", editable = "packages/checkpoint-sqlite" },

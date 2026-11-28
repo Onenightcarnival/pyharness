@@ -396,7 +396,8 @@ async def uninstall_bundle(
             return {
                 "application": "rejected",
                 "error": (
-                    f"bundle {bundle!r} is not installed in profile {profile.name!r}; environment bundles: disable only"
+                    f"bundle {bundle!r} is not installed in profile {profile.name!r}; "
+                    "a bundle shipped with the harness is neither uninstalled nor switched off"
                 ),
             }
         txn = _Transaction(profile, site=True)

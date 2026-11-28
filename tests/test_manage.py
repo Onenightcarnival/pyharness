@@ -32,7 +32,7 @@ async def test_install_preflight_boot_and_uninstall(profile, example_bundle, tmp
     result = await manage.install_bundle(profile, example_bundle)
     assert result["application"] == "saved", result
     assert result["bundles"] == ["audit"]
-    assert profile.bundles() == ["base", "audit", "toolkit", "web"]  # toolkit: built in; web: optional preset
+    assert profile.bundles() == ["base", "audit"]
     assert result["preflight"]["ok"] is True
 
     testtools.RESULTS.clear()
@@ -50,7 +50,7 @@ async def test_install_preflight_boot_and_uninstall(profile, example_bundle, tmp
 
     removed = await manage.uninstall_bundle(profile, "audit")
     assert removed["application"] == "saved"
-    assert profile.bundles() == ["base", "toolkit", "web"]
+    assert profile.bundles() == ["base"]
     assert not any(d.name == "pyxis-harness-audit" for d in profile.site_distributions())
 
 

@@ -4,7 +4,7 @@ agent 的分层职业记忆（profile → work → project → lesson），带�
 
 | 项 | 值 |
 |---|---|
-| 条目 | `memory`（`toolkit` bundle） |
+| 条目 | `memory`（`base` bundle） |
 | 服务 | `MemoryService`，`ctx.memory` |
 | 注入 | `tools`、`prompt`、`http` |
 | 路由前缀 | `/api/memory` |

@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 条目 | `config-center`（`toolkit` bundle） |
+| 条目 | `config-center`（`base` bundle） |
 | 服务 | `ConfigCenterService`，`ctx.configCenter` |
 | 注入 | `http`、`webui`、`agentLoop` |
 | 路由前缀 | `/api/config-center` |

@@ -1,11 +1,26 @@
-# profile.TEMPLATES: profile templates by name (``pyh init --template``).
+# profile.RETIRED: bundle names of manifests written while the built-in list was four bundles. A name listed under
+# ``bundles`` is replaced by its ``enabled`` patch, a name listed under ``disabled`` by its ``disabled`` patch.
+[profile.RETIRED.toolkit]
+enabled = []
+disabled = []
+
+[profile.RETIRED.web]
+enabled = []
+disabled = [{ id = "web-tools", merge = true, config = { agent_tools = false } }]
+
+[profile.RETIRED.creator]
+enabled = [{ id = "agent-loop", merge = true, config = { default_preset = "creator" } }]
+disabled = []
+
+# profile.TEMPLATES: profile templates by name (``pyh init --template``): title, bundles, optional profile patch.
 [profile.TEMPLATES.web]
 title = "Web"
 bundles = ["base"]
 
 [profile.TEMPLATES.creator]
 title = "Creator"
-bundles = ["base", "creator"]
+bundles = ["base"]
+patch = [{ id = "agent-loop", merge = true, config = { default_preset = "creator" } }]
 
 [profile.TEMPLATES.empty]
 title = "Empty"

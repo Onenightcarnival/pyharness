@@ -4,7 +4,7 @@ HTTP API 请求工具：注入鉴权的 API 目标、密钥变量、已存请求
 
 | 项 | 值 |
 |---|---|
-| 条目 | `http-client`（`toolkit` bundle） |
+| 条目 | `http-client`（`base` bundle） |
 | 服务 | `HttpClientService`，`ctx.httpClient` |
 | 注入 | `tools`、`prompt`、`http`、`webui` |
 | 路由前缀 | `/api/http-client` |

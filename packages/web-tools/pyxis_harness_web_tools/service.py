@@ -15,13 +15,15 @@ from .config import Config
 from .fetch import fetch as fetch_url, fetch_tool
 from .search import search as search_web, search_tool
 
+SWITCH = "agent_tools"  # whether the agent has the tools; applied by sync()
 LIVE = ("search_provider", "search_base_url", "base_url", "max_results", "max_uses")  # read at each search
-ON_RESTART = ("search", "fetch")  # which tools the agent has
+ON_RESTART = ("search", "fetch")  # which of the two tools exist
 
 
 class Settings(BaseModel):
     """Settings of the web tools; a field left out keeps its value."""
 
+    agent_tools: bool | None = None
     search: bool | None = None
     fetch: bool | None = None
     search_provider: str | None = None
@@ -42,13 +44,33 @@ class WebToolsService(Service):
         super().__init__(ctx, config)
         self.transport: Any = None  # httpx transport override (tests)
         self.pacer = Pacer()
+        self._on = False  # the tools are registered
+        self._tool_disposers: list[Any] = []
 
     async def start(self) -> None:
-        if self.config.search:
-            self.ctx.tools.register(search_tool(self), approval=self.config.approval, tags=("web",))
-        if self.config.fetch:
-            self.ctx.tools.register(fetch_tool(self), approval=self.config.approval, tags=("web",))
+        self.sync()
         self.ctx.on("app/ready", self._mount)
+
+    def _unregister(self) -> None:
+        for dispose in self._tool_disposers:
+            dispose()
+        self._tool_disposers = []
+
+    def sync(self) -> bool:
+        """Register ``web_search`` and ``web_fetch`` while ``agent_tools`` is on; returns that state."""
+        on = self.config.agent_tools
+        if on == self._on:
+            return on
+        self._on = on
+        if on:
+            for enabled, tool in ((self.config.search, search_tool), (self.config.fetch, fetch_tool)):
+                if enabled:
+                    self._tool_disposers.append(
+                        self.ctx.tools.register(tool(self), approval=self.config.approval, tags=("web",))
+                    )
+        else:
+            self._unregister()
+        return on
 
     def _mount(self) -> None:
         """With an HTTP server: the settings routes; with the Web UI: the settings section."""
@@ -78,7 +100,7 @@ class WebToolsService(Service):
         """The tools' settings and the state of the search key (never its value)."""
         key = self.status()["search"]
         return {
-            **{name: getattr(self.config, name) for name in (*ON_RESTART, *LIVE)},
+            **{name: getattr(self.config, name) for name in (SWITCH, *ON_RESTART, *LIVE)},
             "key": {name: key.get(name) for name in ("reference", "configured", "source")},
         }
 
@@ -88,6 +110,7 @@ class WebToolsService(Service):
 
         | fields                       | take effect                                    |
         |------------------------------|------------------------------------------------|
+        | ``agent_tools``              | at once: ``sync()``                            |
         | provider, base URLs, counts  | at once: the next search                       |
         | ``api_key``                  | at once                                        |
         | ``search``, ``fetch``        | in the next generation; a restart is requested |
@@ -108,8 +131,9 @@ class WebToolsService(Service):
                 profile.credentials.delete(self.config.api_key_env)
         if changed and profile is not None:
             await manage.set_entry_config(profile, "web-tools", changed, merge=True, preflight=False)
-        for name in LIVE:
+        for name in (SWITCH, *LIVE):
             setattr(self.config, name, getattr(config, name))
+        self.sync()
         restart = any(name in ON_RESTART for name in changed)
         if restart:
             self.ctx.lifecycle.request_restart("web tools settings")
@@ -144,12 +168,12 @@ class WebToolsService(Service):
         return {
             "search": {
                 **described,
-                "enabled": self.config.search,
+                "enabled": self._on and self.config.search,
                 "provider": self.config.search_provider,
                 "model": self.config.model if legacy else None,
                 "base_url": self.config.base_url if legacy else self.config.search_base_url,
             },
-            "fetch": {"enabled": self.config.fetch},
+            "fetch": {"enabled": self._on and self.config.fetch},
         }
 
     def client(self, timeout: float) -> httpx.AsyncClient:

@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 条目 | `gateway`（`toolkit` bundle） |
+| 条目 | `gateway`（`base` bundle） |
 | 服务 | `GatewayService`，`ctx.gateway` |
 | 注入 | `llm`、`http`、`webui` |
 | 路由前缀 | `/api/gateway`（管理路由）；`/v1`（网关监听器） |

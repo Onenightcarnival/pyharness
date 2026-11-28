@@ -36,6 +36,7 @@ except ImportError:  # pragma: no cover - POSIX only
 PATCH_HEADER = "# Patch operations addressed by entry id. Managed by PyxisHarness; comments are not preserved.\n"
 
 TEMPLATES: dict[str, dict[str, Any]] = package_toml(__file__)["profile"]["TEMPLATES"]  # name -> title, bundles
+RETIRED: dict[str, dict[str, list[dict[str, Any]]]] = package_toml(__file__)["profile"]["RETIRED"]
 
 
 def harness_home(home: str | os.PathLike[str] | None = None) -> Path:
@@ -88,7 +89,7 @@ class Profile:
             path.mkdir(parents=True, exist_ok=True)
         write_yaml(profile.manifest_path, {"title": tpl["title"], "bundles": list(tpl["bundles"])})
         if not profile.patch_path.exists() or force:
-            profile.patch_path.write_text(PATCH_HEADER + "[]\n", encoding="utf-8")
+            profile.save_patch(copy.deepcopy(tpl.get("patch", [])))
         return profile
 
     def require(self) -> Profile:
@@ -104,63 +105,37 @@ class Profile:
         if not isinstance(data, dict):
             raise ConfigError(f"{self.manifest_path} must be a mapping")
         data.setdefault("bundles", [])
-        data.setdefault("disabled", [])
         return data
 
     def save_manifest(self, data: dict[str, Any]) -> None:
         write_yaml(self.manifest_path, data)
 
     def bundles(self) -> list[str]:
-        """
-        Enabled bundles in composition order: the manifest's ``bundles``, then the built-in environment bundles
-        (``builtin: true``, always on), then the optional ones (``optional: true``) not listed under ``disabled``.
-        """
+        """Enabled bundles in composition order: the manifest's ``bundles`` without the retired names."""
+        return [str(b) for b in self.manifest().get("bundles", []) if str(b) not in RETIRED]
+
+    def retired_ops(self) -> list[dict[str, Any]]:
+        """Patch that stands for the retired bundle names of the manifest (``RETIRED``)."""
         data = self.manifest()
-        explicit = [str(b) for b in data.get("bundles", [])]
-        disabled = {str(b) for b in data.get("disabled", [])}
-        builtin = [b for b in self.builtin_bundles() if b not in explicit]
-        return (
-            explicit
-            + builtin
-            + [b for b in self.optional_bundles() if b not in explicit and b not in builtin and b not in disabled]
-        )
+        ops: list[dict[str, Any]] = []
+        for key in ("bundles", "disabled"):
+            state = "enabled" if key == "bundles" else "disabled"
+            for name in data.get(key, []):
+                ops.extend(copy.deepcopy(RETIRED.get(str(name), {}).get(state, [])))
+        return ops
 
-    def _flagged_bundles(self, flag: str) -> list[str]:
+    def shipped_bundles(self) -> list[str]:
+        """Bundles of the environment the harness is installed in: not uninstalled, not switched off."""
         self.activate_site()
-        names = []
-        for name in sorted(bundle_entry_points()):
-            try:
-                if getattr(load_bundle(name), flag):
-                    names.append(name)
-            except Exception:  # noqa: BLE001 — a broken bundle is reported where it is loaded
-                continue
-        return names
-
-    def optional_bundles(self) -> list[str]:
-        """Installed bundles declared ``optional: true``: on by default, switched off through ``disabled``."""
-        return self._flagged_bundles("optional")
-
-    def builtin_bundles(self) -> list[str]:
-        """Installed bundles declared ``builtin: true``: part of every profile, never switched off."""
-        return self._flagged_bundles("builtin")
+        site = {ep.name for dist in self.site_distributions() for ep in dist.entry_points if ep.group == BUNDLE_GROUP}
+        return sorted(name for name in bundle_entry_points() if name not in site and name not in RETIRED)
 
     def bundle_meta(self, name: str) -> dict[str, Any]:
         try:
             info = load_bundle(name)
         except Exception as exc:  # noqa: BLE001
-            return {
-                "title": name,
-                "description": "",
-                "optional": False,
-                "builtin": False,
-                "error": f"{type(exc).__name__}: {exc}",
-            }
-        return {
-            "title": info.title,
-            "description": info.description,
-            "optional": info.optional,
-            "builtin": info.builtin,
-        }
+            return {"title": name, "description": "", "error": f"{type(exc).__name__}: {exc}"}
+        return {"title": info.title, "description": info.description}
 
     def patch_ops_raw(self) -> list[dict[str, Any]]:
         data = load_yaml(self.patch_path, default=[]) or []
@@ -200,6 +175,9 @@ class Profile:
             info = load_bundle(bundle)
             infos.append(info)
             layers.append((f"bundle:{bundle}", info.ops))
+        retired = self.retired_ops()
+        if retired:
+            layers.append(("retired-bundles", parse_ops(retired, str(self.manifest_path))))
         layers.append(("profile-patch", parse_ops(self.patch_ops_raw(), str(self.patch_path))))
         layers.append(("home-patch", parse_ops(load_yaml(self.home_patch_path, default=[]), str(self.home_patch_path))))
         layers.extend(
@@ -247,36 +225,22 @@ class Profile:
 
     def set_bundle_enabled(self, bundle: str, enabled: bool) -> bool:
         """
-        Enable or disable a bundle: optional bundles move in and out of ``disabled``, others in and out of
-        ``bundles``.
-        A built-in bundle (``builtin: true``) is always on: disabling it raises :class:`ConfigError`.
+        Add ``bundle`` to the manifest's ``bundles`` or take it out; returns whether the manifest changed.
+        A bundle shipped with the harness stays on: disabling it raises :class:`ConfigError`.
         """
-        if not enabled and bundle in self.builtin_bundles():
-            raise ConfigError(f"bundle {bundle!r} is built in and cannot be disabled")
+        if not enabled and bundle in self.shipped_bundles():
+            raise ConfigError(f"bundle {bundle!r} ships with the harness and cannot be disabled")
         data = self.manifest()
         bundles = [str(b) for b in data.get("bundles", [])]
-        disabled = [str(b) for b in data.get("disabled", [])]
-        optional = bundle in self.optional_bundles()
-        changed = False
+        if enabled == (bundle in bundles):
+            return False
         if enabled:
-            if bundle in disabled:
-                disabled.remove(bundle)
-                changed = True
-            if not optional and bundle not in bundles:
-                bundles.append(bundle)
-                changed = True
+            bundles.append(bundle)
         else:
-            if bundle in bundles:
-                bundles.remove(bundle)
-                changed = True
-            if optional and bundle not in disabled:
-                disabled.append(bundle)
-                changed = True
-        if changed:
-            data["bundles"] = bundles
-            data["disabled"] = disabled
-            self.save_manifest(data)
-        return changed
+            bundles.remove(bundle)
+        data["bundles"] = bundles
+        self.save_manifest(data)
+        return True
 
     def site_distributions(self) -> list[metadata.Distribution]:
         if not self.site.exists():
@@ -286,7 +250,7 @@ class Profile:
     def installed_bundles(self) -> list[dict[str, Any]]:
         """
         Bundles of the profile site and the environment: ``enabled``, ``installed`` (``profile`` / ``environment``),
-        ``optional``, ``builtin``, ``title``, ``description``.
+        ``title``, ``description``. Retired names are left out.
         """
         enabled = set(self.bundles())
         out = []
@@ -306,7 +270,7 @@ class Profile:
                         }
                     )
         for ep in metadata.entry_points(group=BUNDLE_GROUP):
-            if ep.name in seen:
+            if ep.name in seen or ep.name in RETIRED:
                 continue
             seen.add(ep.name)
             dist = ep.dist

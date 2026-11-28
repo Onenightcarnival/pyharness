@@ -71,7 +71,7 @@ pyh run
 
 | 命令 | 效果 |
 |---|---|
-| `pyh init [--template web\|creator\|empty]` | 创建 profile；`creator`：`base` + `creator` bundle，agent 获得插件编写 skills |
+| `pyh init [--template web\|creator\|empty]` | 创建 profile；`creator`：新会话默认使用「创造」预设，agent 获得插件编写 skills |
 | `pyh run [--patch FILE] [--no-supervisor]` | 运行 profile |
 | `pyh dump-config` | 组合后的配置树；每个条目标注来源层 |
 | `pyh preflight [-v]` | 独立进程启动当前配置，输出报告 |

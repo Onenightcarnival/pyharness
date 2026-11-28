@@ -1,7 +1,7 @@
 [project]
 name = "pyxis-harness"
 version = "0.1.1.dev7"
-description = "PyxisHarness: an everything-is-a-plugin agent harness — the kernel with the base, toolkit, web and creator bundles"
+description = "PyxisHarness: an everything-is-a-plugin agent harness — the kernel, its plugins and the base bundle that mounts them"
 license = "MIT"
 requires-python = ">=3.12"
 readme = "AGENTS.md"
@@ -17,11 +17,39 @@ classifiers = [
 ]
 dependencies = [
     "pyxis-harness-core==0.1.1.dev7",
-    "pyxis-harness-bundle-base==0.1.1.dev7",
-    "pyxis-harness-bundle-toolkit==0.1.1.dev7",
-    "pyxis-harness-bundle-web==0.1.1.dev7",
-    "pyxis-harness-bundle-creator==0.1.1.dev7",
+    "pyxis-harness-llm==0.1.1.dev7",
+    "pyxis-harness-tools==0.1.1.dev7",
+    "pyxis-harness-mcp==0.1.1.dev7",
+    "pyxis-harness-ask-user==0.1.1.dev7",
+    "pyxis-harness-auto-review==0.1.1.dev7",
+    "pyxis-harness-prompt==0.1.1.dev7",
+    "pyxis-harness-agent==0.1.1.dev7",
+    "pyxis-harness-agent-loop-deepagents==0.1.1.dev7",
+    "pyxis-harness-compaction==0.1.1.dev7",
+    "pyxis-harness-checkpoint-sqlite==0.1.1.dev7",
+    "pyxis-harness-checkpoint-memory==0.1.1.dev7",
+    "pyxis-harness-checkpoint-postgres==0.1.1.dev7",
+    "pyxis-harness-workspace==0.1.1.dev7",
+    "pyxis-harness-workspace-changes==0.1.1.dev7",
+    "pyxis-harness-http==0.1.1.dev7",
+    "pyxis-harness-api==0.1.1.dev7",
+    "pyxis-harness-web-ui==0.1.1.dev7",
+    "pyxis-harness-terminal==0.1.1.dev7",
+    "pyxis-harness-inspect==0.1.1.dev7",
+    "pyxis-harness-plugin-manager==0.1.1.dev7",
+    "pyxis-harness-memory==0.1.1.dev7",
+    "pyxis-harness-rdb==0.1.1.dev7",
+    "pyxis-harness-s3==0.1.1.dev7",
+    "pyxis-harness-config-center==0.1.1.dev7",
+    "pyxis-harness-otel==0.1.1.dev7",
+    "pyxis-harness-subscriptions==0.1.1.dev7",
+    "pyxis-harness-gateway==0.1.1.dev7",
+    "pyxis-harness-http-client==0.1.1.dev7",
+    "pyxis-harness-web-tools==0.1.1.dev7",
 ]
+
+[project.entry-points."pyxis_harness.bundles"]
+base = "pyxis_harness_bundle_base:BUNDLE"
 
 [project.urls]
 Homepage = "https://github.com/Onenightcarnival/pyharness"
@@ -34,7 +62,10 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-bypass-selection = true
+packages = ["pyxis_harness_bundle_base"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"AGENTS.md" = "pyxis_harness_bundle_base/AGENTS.md"
 
 [tool.hatch.build.targets.sdist.force-include]
 "../../LICENSE" = "LICENSE"

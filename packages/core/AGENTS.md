@@ -80,7 +80,8 @@ waterfall 监听者 `listener(*args, next)`：
 
 | 顺序 | 层 |
 |---|---|
-| 1 | profile 的 bundle：`profile.yaml` 的 `bundles`（按其顺序），再是内置 bundle（`builtin: true`），再是未列入 `disabled` 的可选 bundle（`optional: true`） |
+| 1 | profile 的 bundle：`profile.yaml` 的 `bundles`，按其顺序 |
+| 1a | 旧 manifest 中已并入 `base` 的 bundle 名所对应的 patch（见「Profile」） |
 | 2 | profile patch |
 | 3 | home patch |
 | 4 | `--patch` 覆盖层 |
@@ -167,6 +168,29 @@ profile：harness home 中具名、持久的装配。harness home：`$PYH_HOME`�
 | `$PYH_HOME/profiles/<name>/data/` | SQLite 的默认位置 |
 | `$PYH_HOME/profiles/<name>/runtime/` | 当前代的 ready 标记、交接文件、last-known-good、锁 |
 | `~/Documents/pyharness/<name>/` | `Profile.documents`：用户可见的文件，在 home 之外；插件各占一个子目录 |
+
+bundle 的两种来源：
+
+| 来源 | `installed` | 启用、停用、卸载 |
+|---|---|---|
+| 随 harness 安装的环境（`base`） | `environment` | 始终启用：`set_bundle_enabled(name, False)` 抛 `ConfigError`；不可卸载 |
+| profile 的 `site/` | `profile` | `profile.yaml` 的 `bundles` 列表；可卸载 |
+
+profile 模板（`pyh init --template`，`config.toml` 的 `profile.TEMPLATES`）：
+
+| 模板 | `bundles` | profile patch |
+|---|---|---|
+| `web` | `base` | 空 |
+| `creator` | `base` | `agent-loop` 的 `default_preset: creator` |
+| `empty` | 无 | 空 |
+
+已并入 `base` 的 bundle 名（`config.toml` 的 `profile.RETIRED`）：manifest 中出现时不作为 bundle 加载，各自换成一段 patch。
+
+| 名称 | 列在 `bundles` | 列在 `disabled` |
+|---|---|---|
+| `toolkit` | 无 | 无 |
+| `web` | 无 | `web-tools` 的 `agent_tools: false` |
+| `creator` | `agent-loop` 的 `default_preset: creator` | 无 |
 
 ## 凭据（`credentials.py`）
 

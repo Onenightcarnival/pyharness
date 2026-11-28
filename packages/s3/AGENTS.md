@@ -4,7 +4,7 @@ S3 兼容对象存储浏览器（MinIO / OSS / COS / R2 / AWS）。
 
 | 项 | 值 |
 |---|---|
-| 条目 | `s3`（`toolkit` bundle） |
+| 条目 | `s3`（`base` bundle） |
 | 服务 | `S3Service`，`ctx.s3` |
 | 注入 | `tools`、`prompt`、`http` |
 | 路由前缀 | `/api/s3` |

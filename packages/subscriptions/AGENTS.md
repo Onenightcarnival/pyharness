@@ -4,7 +4,7 @@ ChatGPT 订阅作为模型路由：经「Sign in with ChatGPT」的 OAuth 流程
 
 | 项 | 值 |
 |---|---|
-| 条目 | `subscriptions`（`toolkit` bundle） |
+| 条目 | `subscriptions`（`base` bundle） |
 | 服务 | `SubscriptionsService`，`ctx.subscriptions` |
 | 注入 | `llm`、`http`、`webui` |
 | 路由前缀 | `/api/subscriptions` |

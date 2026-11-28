@@ -4,7 +4,7 @@ agent 回合的 OpenTelemetry 导出（GenAI 语义约定），目标为 OTLP/HT
 
 | 项 | 值 |
 |---|---|
-| 条目 | `otel`（`toolkit` bundle） |
+| 条目 | `otel`（`base` bundle） |
 | 服务 | `OtelService`，`ctx.otel` |
 | 注入 | `http`、`webui` |
 | 路由前缀 | `/api/otel` |
