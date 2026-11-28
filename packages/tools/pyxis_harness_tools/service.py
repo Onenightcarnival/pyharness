@@ -44,6 +44,9 @@ class ToolError(RuntimeError):
     pass
 
 
+CHANGED = "tools/changed"
+
+
 class ToolsService(Service):
     """Tool registry and the ``tools/execute`` → ``tools/result`` pipeline."""
 
@@ -68,6 +71,7 @@ class ToolsService(Service):
             ).strip(),
         )
         self.ctx.define_event("tools/result", "parallel", "listener(call: ToolCall, result) after each tool call.")
+        self.ctx.define_event(CHANGED, "emit", "listener() after a tool is registered or withdrawn.")
 
     # ------------------------------------------------------------------ registry
     def register(
@@ -93,13 +97,20 @@ class ToolsService(Service):
             raise ToolError(f"tool {name!r} is already registered by {self._records[name].owner!r}")
         owner = self.caller.entry_id
         self._records[name] = ToolRecord(tool=tool, owner=owner, approval=approval, tags=tuple(tags))
+        self._changed()
 
         def dispose() -> None:
             record = self._records.get(name)
             if record is not None and record.tool is tool:
                 del self._records[name]
+                self._changed()
 
         return self.caller.on_dispose(dispose)
+
+    def _changed(self) -> None:
+        """Dispatch ``tools/changed`` while the event is declared: from this service's start to its stop."""
+        if self.ctx.events.declaration(CHANGED) is not None:
+            self.ctx.emit(CHANGED)
 
     def require_approval(self, tool_name: str, config: bool | dict[str, Any] = True) -> Callable[[], Any]:
         """

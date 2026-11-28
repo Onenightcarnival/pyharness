@@ -29,6 +29,7 @@
 |---|---|---|
 | `tools/execute` | waterfall | `(call, next)` |
 | `tools/result` | parallel | `(call, result)`；每次调用之后 |
+| `tools/changed` | emit | `()`；工具注册或撤销之后。`pyxis-harness-agent` 据此丢弃已构建的图：下一轮按当前工具集构建 |
 
 `tools/execute` 监听者：
 

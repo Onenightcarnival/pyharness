@@ -1,7 +1,0 @@
-title: Creator
-description: New sessions start in the Creator preset (plugin-authoring skills, plugin manager and inspection tools).
-patch:
-  - id: agent-loop
-    merge: true
-    config:
-      default_preset: creator

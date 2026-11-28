@@ -30,7 +30,7 @@
 | 拒绝 | 重启挂起 → `AgentService.start_run` 抛出 `RestartPending` |
 | 续跑 | 受 supervisor 管理的一代在 `app/started` 时：向每个列出的会话发送一条续跑消息 |
 | 模型 | `session.model`（`route:model`）以 `configurable.model_spec` 到达 loop |
-| 图 | 会话的每组（`workspace`、`mode`、`preset`）一张图，首次使用时构建；临时会话共用一张聊天图 |
+| 图 | 会话的每组（`workspace`、`mode`、`preset`）一张图，首次使用时构建；临时会话共用一张聊天图；`tools/changed`（工具注册或撤销）之后全部丢弃，下一轮重新构建 |
 
 ## 临时会话
 

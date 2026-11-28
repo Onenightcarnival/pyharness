@@ -105,6 +105,7 @@ class AgentService(Service):
             "agent/session-delete", "parallel", "listener(session: dict) before a session's records are removed."
         )
         self.ctx.on("app/ready", self._build)
+        self.ctx.on("tools/changed", self.invalidate_graphs)
         self.ctx.on("agent/model-retry", self._on_model_retry)
         self.ctx.on("agent/model-request", self._limit_steps)
         self.ctx.on("app/started", self._resume_after_restart)
@@ -146,6 +147,7 @@ class AgentService(Service):
         return self._chat_graph
 
     def invalidate_graphs(self) -> None:
+        """Drop the graphs built so far: the next turn of every session builds on the current tool set."""
         self._graphs.clear()
         self._chat_graph = None
 

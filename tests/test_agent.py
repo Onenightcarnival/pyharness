@@ -483,3 +483,22 @@ async def test_tool_calls_of_a_step_run_within_the_parallel_limit(profile):
         assert serial >= 1.2 > together  # four calls of 0.3 s: in turn, then at once
         assert (await c.put("/api/settings/agent", json={"max_parallel_tool_calls": 0})).status_code == 422
         assert yaml_of(profile)["agent-loop"] == {"max_parallel_tool_calls": 4}
+
+
+async def test_a_tool_change_at_run_time_reaches_the_next_turn(profile):
+    async with Harness(profile, patch=[{"id": "http", "config": {"serve": False}}]) as h:
+        agents = h.get("agents")
+        session = await agents.create_session(title="tools")
+        chat = await agents.create_session(temporary=True)
+        built = (await agents.graph_for(session), await agents.graph_for(chat))
+        assert (await agents.graph_for(session), await agents.graph_for(chat)) == built  # cached between turns
+
+        def ping() -> str:
+            """Answer pong."""
+            return "pong"
+
+        withdraw = h.ctx.tools.register(ping)
+        with_tool = await agents.graph_for(session)
+        assert with_tool is not built[0] and await agents.graph_for(chat) is not built[1]
+        withdraw()
+        assert await agents.graph_for(session) is not with_tool
